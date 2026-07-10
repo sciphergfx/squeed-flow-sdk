@@ -1,0 +1,40 @@
+.cytoscape-react-nodes-and-edges {
+  position: absolute !important;
+  z-index: 10 !important;
+  pointer-events: none !important;
+  overflow: visible !important;
+}
+
+.cytoscape-react-node {
+  z-index: 0 !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
+  user-select: none !important;
+}
+
+.cytoscape-react-node input,
+.cytoscape-react-node textarea {
+  pointer-events: auto !important;
+  user-select: text !important;
+  cursor: text !important;
+}
+
+.cytoscape-react-edge {
+  overflow: visible !important;
+  pointer-events: none !important;
+}
+
+.cytoscape-react-cy-container {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: visible !important;
+  background: transparent !important;
+}
+
+.cytoscape-react-cy-container canvas {
+  overflow: visible !important;
+}
+
+.cytoscape-react-cy-container > div {
+  overflow: visible !important;
+}

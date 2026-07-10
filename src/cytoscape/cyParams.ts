@@ -1,0 +1,45 @@
+export const BASE_CY_PARAMS = {
+  padding: 20,
+  motionBlur: false,
+  compound: true,
+  pixelRatio: "auto",
+  zoomingEnabled: true,
+  userZoomingEnabled: true,
+  dragpan: true,
+  avoidOverlap: true,
+  panningEnabled: true,
+  userPanningEnabled: true,
+  boxSelectionEnabled: false,
+  selectionType: "additive",
+  minZoom: 0.01,
+  maxZoom: 1.5,
+  autoungrabify: true,
+  styleEnabled: true,
+  hideEdgesOnViewport: false,
+  hideLabelsOnViewport: true,
+  headless: false,
+  touchTapThreshold: 8,
+  desktopTapThreshold: 4,
+  touchHoldDuration: 500,
+  desktopHoldDuration: 1000,
+  autolock: false,
+  autounselectify: false,
+  wheelPanEnabled: true,
+  wheelPanThreshold: 1,
+  wheelPanDebounce: 10,
+  wheelAction: "pan",
+};
+
+export const LARGE_GRAPH_CY_PARAMS = {
+  ...BASE_CY_PARAMS,
+  pixelRatio: 1,
+  motionBlur: true,
+  textureOnViewport: true,
+  wheelPanDebounce: 20,
+};
+
+export const PERF_CY_PARAMS = {
+  ...LARGE_GRAPH_CY_PARAMS,
+  hideEdgesOnViewport: true,
+  hideLabelsOnViewport: true,
+};
