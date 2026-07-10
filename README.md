@@ -232,3 +232,7 @@ import { useCustomColors, getChakraColorHex, getColorVariant } from "@squeed/flo
 const { background, colorText, border } = useCustomColors();
 const hex = getChakraColorHex("blue.500"); // → "#3182ce"
 ```
+
+---
+
+Author: **seyi ogunbowale**
