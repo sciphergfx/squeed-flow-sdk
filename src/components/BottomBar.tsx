@@ -63,7 +63,7 @@ const BottomBar = () => {
   const [isHoveringIndicator, setIsHoveringIndicator] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
   const [showDirectionMenu, setShowDirectionMenu] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     const checkDevice = () => setIsDesktop(window.innerWidth >= 768);

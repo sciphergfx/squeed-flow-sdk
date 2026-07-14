@@ -72,8 +72,6 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       pan: viewport.pan,
       minZoom: config.minZoom ?? 0.01,
       maxZoom: config.maxZoom ?? 1.5,
-      userZoomingEnabled: false,
-      userPanningEnabled: false,
     };
   }, [chartStylesMemoized, viewport, nodes.length, config.minZoom, config.maxZoom]);
 

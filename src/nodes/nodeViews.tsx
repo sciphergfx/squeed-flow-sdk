@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Box, Divider, Flex, Text } from "@chakra-ui/react";
+import { PiGear, PiNotepad } from "react-icons/pi";
 import NodeView from "./NodeView";
 import { NodeText } from "./nodeText";
 import { NodeTextInput } from "./nodeTextInput";
@@ -45,6 +47,7 @@ const arrayView = (props) => (
 
 const NodeJsonObjectView = (props) => {
   const { themeColor } = useFlowDiagramContext();
+  const [objVisible, setObjVisible] = useState(false);
 
   return (
     <NodeView {...props}>
@@ -53,6 +56,7 @@ const NodeJsonObjectView = (props) => {
         const hasConfig = Object.entries(data.description || {}).length > 0;
         const uniformKeyWidth = calculateUniformKeyWidth(data.description);
         const icon = props.data?.config?.icon;
+        const content = props.data?.config?.content;
 
         return (
           <Flex
@@ -86,13 +90,13 @@ const NodeJsonObjectView = (props) => {
                   minWidth="max-content !important"
                   width="100%"
                   textTransform="capitalize"
-                  align="center"
+                  align={content ? "left" : "center"}
                   textOverflow="ellipsis"
                   alignItems="center"
                   fontWeight="bold"
                   textColor={colors.propertyColor}
                   bgColor={colors.highlightColor}
-                  borderBottomColor={!hasConfig ? "transparent" : colors.hexborderColor}
+                  borderBottomColor={!hasConfig && !content ? "transparent" : colors.hexborderColor}
                 >
                   {!!icon && (
                     <Box mr={8} justifyContent="flex-start" height="100%" w={50} alignItems="center" rounded="full">
@@ -108,51 +112,78 @@ const NodeJsonObjectView = (props) => {
                   >
                     {formatHeaderTitle(data.headerTitle)}
                   </Text>
+                  {!!content && (
+                    <Box ml={10} onClick={() => setObjVisible(!objVisible)}>
+                      {objVisible ? <PiGear size={30} style={{ cursor: "pointer" }} /> : <PiNotepad size={30} style={{ cursor: "pointer" }} />}
+                    </Box>
+                  )}
                 </Flex>
               )}
-              <Box>
-                {Object.entries(data.description || {}).map(([key, value], index) => {
-                  const typeColor = contentObjTheme(colors.wordBeforeDot)[typeof value];
-                  const keyColor = contentObjTheme(colors.wordBeforeDot)["property"];
+              {content && !objVisible ? (
+                <Flex
+                  w="100%"
+                  overflow="auto"
+                  justifyContent="start"
+                  background={colors.highlightColor}
+                  p={10}
+                  fontSize="5xl"
+                  lineHeight="normal"
+                  cursor="text"
+                >
+                  <Text
+                    whiteSpace="pre-wrap"
+                    overflow="hidden"
+                    textOverflow="ellipsis"
+                    color={data?.viewProps?.textColor}
+                  >
+                    {content}
+                  </Text>
+                </Flex>
+              ) : (
+                <Box>
+                  {Object.entries(data.description || {}).map(([key, value], index) => {
+                    const typeColor = contentObjTheme(colors.wordBeforeDot)[typeof value];
+                    const keyColor = contentObjTheme(colors.wordBeforeDot)["property"];
 
-                  return (
-                    <Box key={index}>
-                      <Flex flexWrap="nowrap" overflow="hidden">
-                        <Flex
-                          justifyContent="start"
-                          align="center"
-                          background={colors.highlightColor}
-                          width={`${uniformKeyWidth}px`}
-                          minWidth={`${uniformKeyWidth}px`}
-                          borderRightColor={colors.hexborderColor}
-                          borderRightWidth={1}
-                        >
-                          <Text py={5} px={10} w="100%" whiteSpace="nowrap" fontWeight="bold" fontSize="4xl" textColor={data?.viewProps?.textColor || keyColor}>
-                            {key}
-                          </Text>
-                        </Flex>
-                        <Flex flex={1} justifyContent="start" overflow="hidden" p={4} background={colors.hexbgColor} w={600} maxH={200}>
-                          <Text
-                            overflow="hidden"
-                            py={3}
-                            px={4}
-                            whiteSpace="normal"
-                            textOverflow="ellipsis"
-                            fontSize="4xl"
-                            textColor={data?.viewProps?.textColor || typeColor}
-                            fontWeight={400}
+                    return (
+                      <Box key={index}>
+                        <Flex flexWrap="nowrap" overflow="hidden">
+                          <Flex
+                            justifyContent="start"
+                            align="center"
+                            background={colors.highlightColor}
+                            width={`${uniformKeyWidth}px`}
+                            minWidth={`${uniformKeyWidth}px`}
+                            borderRightColor={colors.hexborderColor}
+                            borderRightWidth={1}
                           >
-                            {truncateText(value)}
-                          </Text>
+                            <Text py={5} px={10} w="100%" whiteSpace="nowrap" fontWeight="bold" fontSize="4xl" textColor={data?.viewProps?.textColor || keyColor}>
+                              {key}
+                            </Text>
+                          </Flex>
+                          <Flex flex={1} justifyContent="start" overflow="hidden" p={4} background={colors.hexbgColor} w={600} maxH={200}>
+                            <Text
+                              overflow="hidden"
+                              py={3}
+                              px={4}
+                              whiteSpace="normal"
+                              textOverflow="ellipsis"
+                              fontSize="4xl"
+                              textColor={data?.viewProps?.textColor || typeColor}
+                              fontWeight={400}
+                            >
+                              {truncateText(value)}
+                            </Text>
+                          </Flex>
                         </Flex>
-                      </Flex>
-                      {index !== Object.entries(data.description || {}).length - 1 && (
-                        <Divider borderWidth={1} orientation="horizontal" my={0} borderColor={colors.hexborderColor} />
-                      )}
-                    </Box>
-                  );
-                })}
-              </Box>
+                        {index !== Object.entries(data.description || {}).length - 1 && (
+                          <Divider borderWidth={1} orientation="horizontal" my={0} borderColor={colors.hexborderColor} />
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Box>
+              )}
             </Flex>
           </Flex>
         );

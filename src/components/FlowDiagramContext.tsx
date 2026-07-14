@@ -50,10 +50,10 @@ export function FlowDiagramProvider({
   const cyRef = useRef<any>(null);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
-  const [isZoomMode, setIsZoomMode] = useState(false);
+  const [isZoomMode, setIsZoomMode] = useState(true);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
-  const [isDragMode, setIsDragMode] = useState(false);
-  const [isEdgeHandlesEnabled, setIsEdgeHandlesEnabled] = useState(config.edgeHandles !== false);
+  const [isDragMode, setIsDragMode] = useState(true);
+  const [isEdgeHandlesEnabled, setIsEdgeHandlesEnabled] = useState(config.edgeHandles === true);
   const [isArrayNodeMode, setIsArrayNodeMode] = useState(false);
   const [isPinned, setIsPinned] = useState(true);
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
