@@ -34,7 +34,7 @@ export function FlowDiagram({
 }: FlowDiagramProps & { showBottomBar?: boolean }) {
   injectStyles();
   const isCntr = (config.direction as string) === "C";
-  const isExternal = !!(externalNodes && externalEdges);
+  const isExternal = !!(externalNodes || externalEdges);
 
   const [computed, setComputed] = useState<{ nodes: FlowDiagramNode[]; edges: FlowDiagramEdge[] } | null>(
     isExternal ? null : null,
