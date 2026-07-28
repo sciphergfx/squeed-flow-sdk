@@ -1,14 +1,15 @@
 import { v4 as uuidv4 } from "uuid";
-import {
-  nodeArrayConfig,
-  nodeJsonObjectConfig,
-  nodePlainTextConfig,
-  nodeWorkflowStepConfig,
-} from "./nodeConfigs";
 
+import { nodeArrayConfig, nodeJsonObjectConfig, nodePlainTextConfig, nodeWorkflowStepConfig } from "./nodeConfigs";
 export const isObject = (value) => typeof value === "object";
+export const isObj = (value) => typeof value === "object" && !Array.isArray(value);
+export const isObjectEmpty = (value) => Object.keys(value).length === 0;
 const isArray = (value) => Array.isArray(value);
 
+/**
+ * Reserved Cytoscape property names that conflict with user data.
+ * These are used internally by Cytoscape and its layout algorithms.
+ */
 const CYTOSCAPE_RESERVED_KEYS = [
   "order",
   "position",
@@ -22,6 +23,19 @@ const CYTOSCAPE_RESERVED_KEYS = [
 export const collectPlainObject = (data) => {
   return Object.entries(data).reduce((acc, [key, value]) => {
     if (!isObject(value) && !key.startsWith("$")) {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+};
+
+export const collectNonInterObject = (data) => {
+  if (typeof data === "string") {
+    return {};
+  }
+
+  return Object.entries(data).reduce((acc, [key, value]) => {
+    if (!isObject(value)) {
       acc[key] = value;
     }
     return acc;
@@ -141,7 +155,7 @@ export const getCustomizations = (view, newConfig) => {
 };
 
 export const processIdenticalPaths = (path, nodes) => {
-  const hsPth = nodes.find((i) => i.data?.id === path || i === path);
+  const hsPth = nodes.find((i) => i.data.id === path);
   path = hsPth ? `${path}.#` : path;
   return path;
 };

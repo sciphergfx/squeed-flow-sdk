@@ -131,8 +131,6 @@ export interface FlowDiagramConfig {
   renderSelectedEdgeToolbar?: (props: SelectedEdgeToolbarProps) => React.ReactNode;
   /** Custom render function to replace the entire built-in bottom bar */
   renderBottomBar?: (props: BottomBarRenderProps) => React.ReactNode;
-  /** Auto-collapse deep nodes for large data. `true` uses defaults, or pass config for custom thresholds */
-  autoCollapse?: AutoCollapseConfig | boolean;
   /** Custom node view components to override SDK defaults. Keys: objectView, arrayView, text, parentContainer */
   customViews?: Record<string, React.ComponentType<any>>;
   /** Disable built-in keyboard shortcuts (Z/M/D) when the consumer handles its own */
@@ -145,15 +143,6 @@ export interface FlowDiagramConfig {
   isEdgeHandlesEnabled?: boolean;
   /** Externally controlled drag/pan mode (overrides internal state when provided) */
   isDragMode?: boolean;
-}
-
-export interface AutoCollapseConfig {
-  /** Min lines threshold to trigger (default: 800) */
-  minLines?: number;
-  /** Min depth threshold to trigger (default: 5) */
-  minDepth?: number;
-  /** Collapse every Nth depth level (default: 3) */
-  collapseEveryNLevels?: number;
 }
 
 /** Event callbacks for the flow diagram */
@@ -209,13 +198,11 @@ export interface FlowDiagramCallbacks {
 
 /** Top-level props for the FlowDiagram component */
 export interface FlowDiagramProps {
-  /** JSON object to render as a flow diagram */
-  json?: any;
   /** Title shown on the root node */
   title?: string;
-  /** Pre-computed nodes (alternative to json) */
+  /** Pre-computed nodes */
   nodes?: FlowDiagramNode[];
-  /** Pre-computed edges (alternative to json) */
+  /** Pre-computed edges */
   edges?: FlowDiagramEdge[];
   /** Diagram configuration */
   config?: FlowDiagramConfig;

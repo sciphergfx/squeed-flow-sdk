@@ -5,7 +5,6 @@ export { FlowDiagram } from "./components/FlowDiagram";
 
 // Core diagram generation
 export { createFlowDiagram } from "./core/createFlowDiagram";
-export { getJsonSize, applyAutoCollapse } from "./core/autoCollapse";
 
 // Theme utilities (for consumers building custom overlays)
 export { useCustomColors, useThemeContentColors } from "./theme/useCustomColors";
@@ -32,5 +31,4 @@ export type {
   SelectedNodeToolbarProps,
   SelectedEdgeToolbarProps,
   BottomBarRenderProps,
-  AutoCollapseConfig,
 } from "./types";

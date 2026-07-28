@@ -122,7 +122,7 @@ export function FlowDiagramProvider({
     get renderSelectedNodeToolbar() { return configRef.current.renderSelectedNodeToolbar; },
     get renderSelectedEdgeToolbar() { return configRef.current.renderSelectedEdgeToolbar; },
     get renderBottomBar() { return configRef.current.renderBottomBar; },
-    get autoCollapse() { return configRef.current.autoCollapse; },
+
     get customViews() { return configRef.current.customViews; },
     get disableKeyboardShortcuts() { return configRef.current.disableKeyboardShortcuts; },
     get isZoomMode() { return configRef.current.isZoomMode; },

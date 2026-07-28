@@ -1,17 +1,17 @@
+
 import { isArray } from "lodash";
-import {
-  collectConfigObject,
-  collectIterObject,
-  collectPlainObject,
-  getCustomizations,
-  isObject,
-} from "./createFlowDiagramComponents";
+
+import { collectConfigObject, collectIterObject, collectPlainObject, getCustomizations, isObject, processIdenticalPaths } from "./createFlowDiagramComponents";
+
+
+const invrtdRtPths = []
+let initalObjIds
 
 export function createFlowDiagramIds(
   jsnObjct: any,
   path: string = "root",
   nodes: any[] = [],
-): { nodes: any[] } {
+): { nodes: any[]; } {
   try {
     const { arrayObject } = collectConfigObject(jsnObjct);
 
@@ -24,19 +24,27 @@ export function createFlowDiagramIds(
 
     if (!isObject(jsnObjct)) {
       nodes.push(path);
-    } else if (isArray(jsnObjct) || (isArray(jsnObjct) && path === "root")) {
-      nodes.push(path);
-    } else if ((!isArray(jsnObjct) && Object.keys(plnObjct).length) || path === "root") {
+    }
+    else if (isArray(jsnObjct) || (isArray(jsnObjct) && path === "root")) {
+      nodes.push(path)
+    }
+    else if (!isArray(jsnObjct) && Object.keys(plnObjct).length || path === "root") {
       nodes.push(path);
     }
 
     if (Object.keys(itrblObjct).length && !isArray(jsnObjct)) {
-      handleObj({ chldPth: null, itrblObjct, nodes, path });
+      handleObj({
+        chldPth: null,
+        itrblObjct: itrblObjct,
+        nodes,
+        path
+      })
     } else if (isArray(jsnObjct)) {
       jsnObjct.forEach((item, index) => {
         const plnObjct = collectPlainObject(item);
         const itrblObjct = collectIterObject(item);
         const { newConfig, arrayObject } = collectConfigObject(item);
+
 
         let chldPth = `${path}.${index}`;
 
@@ -46,13 +54,21 @@ export function createFlowDiagramIds(
           createFlowDiagramIds(plnObjct, chldPth, nodes);
 
           if (Object.keys(itrblObjct).length && !isArray(item))
-            handleObj({ chldPth, itrblObjct, nodes, path });
+            handleObj({
+              chldPth, itrblObjct, nodes, path
+            })
         } else if (Object.keys(itrblObjct).length && !isArray(item)) {
-          handleObj({ chldPth, itrblObjct, nodes, path });
+          handleObj({
+            chldPth, itrblObjct, nodes, path,
+          })
         } else if (isArray(item)) {
-          handleArray({ chldPth, item, nodes, path });
+          handleArray({
+            chldPth, item, nodes, path
+          })
         }
       });
+    } else {
+      //---CONFIGS---
     }
 
     return { nodes };
@@ -61,7 +77,12 @@ export function createFlowDiagramIds(
   }
 }
 
-const handleObj = ({ chldPth, itrblObjct, nodes, path }) => {
+export const handleObj = ({
+  chldPth,
+  itrblObjct,
+  nodes,
+  path,
+}) => {
   return Object.entries(itrblObjct).forEach(([key, value], index) => {
     const plnObjct = collectPlainObject(value);
     const itrblObjct = collectIterObject(value);
@@ -70,25 +91,32 @@ const handleObj = ({ chldPth, itrblObjct, nodes, path }) => {
     if (arrayObject.length) {
       value = arrayObject;
     }
+    const rootPath = path.split('.').slice(0, 2).join('.');
+    const isChldOfRt = invrtdRtPths.includes(rootPath);
 
     let sbChldPth = chldPth ? `${chldPth}.${key}` : `${path}.${key}`;
 
     if (isObject(value) && !isArray(value)) {
-      const crtKyNd = Object.keys(plnObjct).length === 0;
+      const crtKyNd = Object.keys(plnObjct).length === 0
       if (crtKyNd) {
-        const { config } = getCustomizations("array", newConfig);
+        const { config } = getCustomizations('array', newConfig);
         nodes.push(sbChldPth);
       }
 
       if (Object.keys(plnObjct).length) {
         const vlCntLbl = isArray(value) ? `${value.length || ""}` : `{${Object.keys(value).length || ""}}`;
+
         let cPath = sbChldPth;
         if (crtKyNd) {
           cPath = `${sbChldPth}.${vlCntLbl}`;
         }
         createFlowDiagramIds(value, cPath, nodes);
+
       } else if (Object.keys(itrblObjct).length && !isArray(value)) {
-        handleObj({ chldPth: sbChldPth, itrblObjct, path: sbChldPth, nodes });
+
+        handleObj({
+          chldPth: sbChldPth, itrblObjct, path: sbChldPth, nodes,
+        });
       } else {
         createFlowDiagramIds(value, sbChldPth, nodes);
       }
@@ -98,7 +126,12 @@ const handleObj = ({ chldPth, itrblObjct, nodes, path }) => {
   });
 };
 
-const handleArray = ({ chldPth, item, nodes, path }) => {
+export const handleArray = ({
+  chldPth,
+  item,
+  nodes,
+  path
+}) => {
   return item.forEach((itm, i) => {
     let sbChldPth = `${chldPth}.${i}`;
 
@@ -110,9 +143,14 @@ const handleArray = ({ chldPth, item, nodes, path }) => {
     } else if (!isArray(itm) && Object.keys(plnObjct).length) {
       createFlowDiagramIds(itm, sbChldPth, nodes);
     } else if (Object.keys(itrblObjct).length && !isArray(itm)) {
-      handleObj({ chldPth: sbChldPth, itrblObjct, path, nodes });
+      handleObj({
+        chldPth: sbChldPth,
+        itrblObjct, path, nodes
+      });
     } else if (isArray(itm)) {
-      handleArray({ chldPth: sbChldPth, item: itm, nodes, path });
+      handleArray({
+        chldPth: sbChldPth, item: itm, nodes, path
+      })
     }
   });
-};
+}
