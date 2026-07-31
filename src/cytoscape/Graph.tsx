@@ -47,7 +47,7 @@ function Graph({
       ...cyParams,
     });
 
-    const domContainer = domRef.current.querySelector(".cytoscape-react-nodes-and-edges");
+    const domContainer = domRef.current.parentElement?.querySelector(".cytoscape-react-nodes-and-edges");
     if (domContainer) {
       (cy as any).domNode({ dom_container: domContainer });
     }
@@ -168,8 +168,6 @@ function Graph({
 
   return (
     <div
-      ref={domRef}
-      className="cytoscape-react-cy-container"
       style={{
         width: "100%",
         height: "100%",
@@ -177,6 +175,16 @@ function Graph({
         background: "transparent",
       }}
     >
+      <div
+        ref={domRef}
+        className="cytoscape-react-cy-container"
+        style={{
+          width: "100%",
+          height: "100%",
+          position: "relative",
+          background: "transparent",
+        }}
+      />
       <div
         className="cytoscape-react-nodes-and-edges"
         style={{ pointerEvents: "none", position: "absolute", top: 0, left: 0, transformOrigin: "0 0", zIndex: 10 }}
