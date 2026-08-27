@@ -32,6 +32,21 @@ const DIRECTIONS: { value: FlowDirection; label: string; icon: any; flowType: st
   { value: "RL", label: "Right to Left", icon: PiArrowArcLeftLight, flowType: FlowType.RIGHT_LEFT },
 ];
 
+function ToolbarTooltip({ label, children }: { label: string; children: React.ReactElement }) {
+  return (
+    <Tooltip.Root positioning={{ placement: "top" }}>
+      <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
+      <Tooltip.Positioner>
+        <Tooltip.Content fontSize="xs">{label}</Tooltip.Content>
+      </Tooltip.Positioner>
+    </Tooltip.Root>
+  );
+}
+
+function ToolbarIconButton({ icon, ...props }: React.ComponentProps<typeof IconButton> & { icon: React.ReactElement }) {
+  return <IconButton {...props}>{icon}</IconButton>;
+}
+
 const BottomBar = () => {
   const {
     cyRef,
@@ -247,7 +262,7 @@ const BottomBar = () => {
 
       {!isPinned && (
         <Box position="absolute" bottom={5} left={0} zIndex={101} w={3}>
-          <Tooltip label="Show Bottom Bar" placement="top" fontSize="xs">
+          <ToolbarTooltip label="Show Bottom Bar">
             <Flex
               align="center"
               bg={background}
@@ -268,7 +283,7 @@ const BottomBar = () => {
             >
               <Icon ml={-1} as={PiLineVerticalBold} boxSize={5} color={border} />
             </Flex>
-          </Tooltip>
+          </ToolbarTooltip>
         </Box>
       )}
 
@@ -295,10 +310,10 @@ const BottomBar = () => {
       >
         <Flex w="100%" px={5} position="absolute" bottom={5} flexDirection="row" justifyContent="space-between" alignItems="center">
           <Box bg={background} alignContent="center" h={50} borderColor={border} borderWidth={1} borderRadius="15px">
-            <HStack px={2} spacing={1}>
+            <HStack px={2} gap={1}>
               {/* Pin/Unpin */}
-              <Tooltip label={isPinned ? "Unpin" : "Pin"} placement="top" fontSize="xs">
-                <IconButton
+              <ToolbarTooltip label={isPinned ? "Unpin" : "Pin"}>
+                <ToolbarIconButton
                   aria-label="Pin"
                   icon={<Icon as={isPinned ? PiPushPinFill : PiPushPin} boxSize={5} />}
                   size="sm"
@@ -310,27 +325,27 @@ const BottomBar = () => {
                     setShowToolbar(next);
                   }}
                 />
-              </Tooltip>
+              </ToolbarTooltip>
 
               <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />
 
               {/* Zoom controls */}
-              <Tooltip label="Zoom Out" placement="top" fontSize="xs">
-                <IconButton aria-label="Zoom out" icon={<Icon as={HiMinus} boxSize={5} />} size="sm" variant="ghost" color={colorText} onClick={() => handleZoom("decrease")} />
-              </Tooltip>
-              <Tooltip label="Zoom In" placement="top" fontSize="xs">
-                <IconButton aria-label="Zoom in" icon={<Icon as={VscAdd} boxSize={5} />} size="sm" variant="ghost" color={colorText} onClick={() => handleZoom("increase")} />
-              </Tooltip>
-              <Tooltip label="Reset Zoom" placement="top" fontSize="xs">
-                <IconButton aria-label="Reset zoom" icon={<Icon as={GrPowerReset} boxSize={5} />} size="sm" variant="ghost" color={colorText} onClick={() => handleZoom("reset")} />
-              </Tooltip>
+              <ToolbarTooltip label="Zoom Out">
+                <ToolbarIconButton aria-label="Zoom out" icon={<Icon as={HiMinus} boxSize={5} />} size="sm" variant="ghost" color={colorText} onClick={() => handleZoom("decrease")} />
+              </ToolbarTooltip>
+              <ToolbarTooltip label="Zoom In">
+                <ToolbarIconButton aria-label="Zoom in" icon={<Icon as={VscAdd} boxSize={5} />} size="sm" variant="ghost" color={colorText} onClick={() => handleZoom("increase")} />
+              </ToolbarTooltip>
+              <ToolbarTooltip label="Reset Zoom">
+                <ToolbarIconButton aria-label="Reset zoom" icon={<Icon as={GrPowerReset} boxSize={5} />} size="sm" variant="ghost" color={colorText} onClick={() => handleZoom("reset")} />
+              </ToolbarTooltip>
               {!isCollapsed && (
                 <>
                   <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />
 
                   {/* Zoom/Pan mode */}
-                  <Tooltip label={isZoomMode ? "Zoom Mode (z)" : "Pan Mode (z)"} placement="top" fontSize="xs">
-                    <IconButton
+                  <ToolbarTooltip label={isZoomMode ? "Zoom Mode (z)" : "Pan Mode (z)"}>
+                    <ToolbarIconButton
                       aria-label="Toggle zoom mode"
                       icon={<Icon as={isZoomMode ? VscZoomIn : VscMove} boxSize={5} />}
                       size="sm"
@@ -338,12 +353,12 @@ const BottomBar = () => {
                       color={isZoomMode ? themeColor : colorInactive}
                       onClick={() => setIsZoomMode(!isZoomMode)}
                     />
-                  </Tooltip>
+                  </ToolbarTooltip>
 
                   <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />
 
                   {/* Multi-select */}
-                  <Tooltip label={isMultiSelectMode ? "Multi-Select On (m)" : "Multi-Select Off (m)"} placement="top" fontSize="xs">
+                  {/* <Tooltip label={isMultiSelectMode ? "Multi-Select On (m)" : "Multi-Select Off (m)"} placement="top" fontSize="xs">
                     <IconButton
                       aria-label="Toggle multi-select"
                       icon={<Icon as={VscGroupByRefType} boxSize={5} />}
@@ -352,13 +367,13 @@ const BottomBar = () => {
                       color={isMultiSelectMode ? themeColor : colorInactive}
                       onClick={() => setIsMultiSelectMode(!isMultiSelectMode)}
                     />
-                  </Tooltip>
+                  </Tooltip> */}
 
-                  <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />
+                  {/* <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} /> */}
 
                   {/* Drag mode */}
-                  <Tooltip label={isDragMode ? "Drag Mode On (d)" : "Drag Mode Off (d)"} placement="top" fontSize="xs">
-                    <IconButton
+                  <ToolbarTooltip label={isDragMode ? "Drag Mode On (d)" : "Drag Mode Off (d)"}>
+                    <ToolbarIconButton
                       aria-label="Toggle drag mode"
                       icon={<Icon as={PiHandGrabbing} boxSize={5} />}
                       size="sm"
@@ -366,9 +381,9 @@ const BottomBar = () => {
                       color={isDragMode ? themeColor : colorInactive}
                       onClick={() => setIsDragMode(!isDragMode)}
                     />
-                  </Tooltip>
+                  </ToolbarTooltip>
 
-                  {config.edgeHandles !== false && (
+                  {/* {config.edgeHandles !== false && (
                     <>
                       <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />
                       <Tooltip label={isEdgeHandlesEnabled ? "Draw Mode On" : "Draw Mode Off"} placement="top" fontSize="xs">
@@ -382,11 +397,11 @@ const BottomBar = () => {
                         />
                       </Tooltip>
                     </>
-                  )}
+                  )} */}
+{/* 
+                  <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} /> */}
 
-                  <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />
-
-                  <Tooltip label={isArrayNodeMode ? "List mode" : "Set mode"} placement="top" fontSize="xs">
+                  {/* <Tooltip label={isArrayNodeMode ? "List mode" : "Set mode"} placement="top" fontSize="xs">
                     <Flex
                       cursor="pointer"
                       align="center"
@@ -401,14 +416,14 @@ const BottomBar = () => {
                         {isArrayNodeMode ? "[]" : "{}"}
                       </Text>
                     </Flex>
-                  </Tooltip>
+                  </Tooltip> */}
                 </>
               )}
 
               <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />
 
-              <Tooltip label={isCollapsed ? "Expand toolbar" : "Collapse toolbar"} placement="top" fontSize="xs">
-                <IconButton
+              <ToolbarTooltip label={isCollapsed ? "Expand toolbar" : "Collapse toolbar"}>
+                <ToolbarIconButton
                   aria-label="Toggle toolbar collapse"
                   icon={<Icon as={isCollapsed ? PiCaretRight : PiCaretLeft} boxSize={5} />}
                   size="sm"
@@ -416,7 +431,7 @@ const BottomBar = () => {
                   color={colorInactive}
                   onClick={() => setIsCollapsed(!isCollapsed)}
                 />
-              </Tooltip>
+              </ToolbarTooltip>
             </HStack>
           </Box>
 
@@ -424,15 +439,15 @@ const BottomBar = () => {
           <Box position="relative" ml="auto">
             <Box bg={background} borderWidth={1} borderColor={border} borderRadius="15px" h={50} px={3} cursor="pointer" onClick={() => setShowDirectionMenu(!showDirectionMenu)}>
               <Flex align="center" h="100%">
-                <Tooltip label="Flow Direction" placement="top" fontSize="xs">
-                  <IconButton
+                <ToolbarTooltip label="Flow Direction">
+                  <ToolbarIconButton
                     aria-label="Direction"
                     icon={<Icon as={PiCaretUp} boxSize={4} />}
                     size="sm"
                     variant="ghost"
                     color={colorInactive}
                   />
-                </Tooltip>
+                </ToolbarTooltip>
                 <Text fontSize="xs" color={isDark ? "whiteAlpha.600" : "blackAlpha.500"} ml={1}>
                   {direction}
                 </Text>

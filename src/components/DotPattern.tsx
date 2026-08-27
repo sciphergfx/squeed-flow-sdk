@@ -1,8 +1,11 @@
-import { Box, useColorModeValue } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
+import { useFlowDiagramContext } from "./FlowDiagramContext";
 
 const DotPatternBackground = ({ children, pattern = "dot", backgroundColor }: { children: React.ReactNode; pattern?: string; backgroundColor?: string }) => {
-  const bgColor = useColorModeValue("--chakra-colors-gray-500", "--chakra-colors-gray-700");
-  const bgAltColor = useColorModeValue("--chakra-colors-gray-800", "--chakra-colors-gray-700");
+  const { colorMode } = useFlowDiagramContext();
+  const isDark = colorMode === "dark";
+  const bgColor = isDark ? "--chakra-colors-gray-700" : "--chakra-colors-gray-500";
+  const bgAltColor = isDark ? "--chakra-colors-gray-700" : "--chakra-colors-gray-800";
 
   if (pattern === "none") {
     return <Box width="100%" height="100%" padding={0} bg={backgroundColor}>{children}</Box>;

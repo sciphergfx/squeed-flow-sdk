@@ -1,6 +1,6 @@
 {
   "name": "@squeed/flow-sdk",
-  "version": "0.1.9",
+  "version": "0.1.14",
   "description": "Standalone React component for rendering interactive flow diagrams from JSON",
   "license": "AGPL-3.0",
   "author": "seyi ogunbowale",
@@ -24,16 +24,14 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
-    "@chakra-ui/icons": "^2.0.0",
-    "@chakra-ui/react": "^2.0.0",
+    "@chakra-ui/react": "^3.36.0",
     "@emotion/react": "^11.0.0",
     "@emotion/styled": "^11.0.0",
-    "framer-motion": "^11.0.0",
+    "framer-motion": "^11.0.0 || ^12.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },
   "dependencies": {
-    "@squeed/flow-sdk": "^0.1.7",
     "cytoscape": "^3.33.0",
     "cytoscape-dagre": "^2.5.0",
     "cytoscape-dom-node": "github:sciphergfx/cytoscape-dom-node",

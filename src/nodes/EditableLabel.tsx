@@ -70,7 +70,8 @@ export const EditableLabel = ({ nodeId, label, color, fontWeight = "bold", fontS
         color={color}
         fontWeight={fontWeight}
         fontSize={fontSize}
-        variant="unstyled"
+        bg="transparent"
+        borderWidth={0}
         p={0}
         h="auto"
         lineHeight="normal"

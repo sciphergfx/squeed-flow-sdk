@@ -19,7 +19,7 @@ export default defineConfig({
       external: (id) => {
         return [
           "react", "react-dom", "react/jsx-runtime",
-          "@chakra-ui/react", "@chakra-ui/icons",
+          "@chakra-ui/react",
           "@emotion/react", "@emotion/styled",
           "framer-motion",
         ].includes(id) || id.startsWith("react-icons");

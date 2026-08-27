@@ -84,8 +84,8 @@ export const chartStyles = (getChakraColorHex) => [
       "transition-duration": "0.5s",
       "source-endpoint": "outside-to-node",
       "target-endpoint": "outside-to-node",
-      "source-distance-from-node": 120,
-      "target-distance-from-node": 120,
+      "source-distance-from-node": 80,
+      "target-distance-from-node": 80,
     },
   },
 ];

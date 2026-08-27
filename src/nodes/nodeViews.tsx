@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Divider, Flex, Text } from "@chakra-ui/react";
+import { Box, Flex, Text } from "@chakra-ui/react";
 import { PiGear, PiNotepad } from "react-icons/pi";
 import NodeView from "./NodeView";
 import { NodeText } from "./nodeText";
@@ -94,7 +94,7 @@ const NodeJsonObjectView = (props) => {
                   textOverflow="ellipsis"
                   alignItems="center"
                   fontWeight="bold"
-                  textColor={colors.propertyColor}
+                  color={colors.propertyColor}
                   bgColor={colors.highlightColor}
                   borderBottomColor={!hasConfig && !content ? "transparent" : colors.hexborderColor}
                 >
@@ -105,7 +105,7 @@ const NodeJsonObjectView = (props) => {
                   )}
                   <Text
                     fontSize="5xl"
-                    noOfLines={2}
+                    lineClamp={2}
                     textOverflow="ellipsis"
                     whiteSpace="nowrap"
                     color={data?.viewProps?.textColor}
@@ -157,7 +157,7 @@ const NodeJsonObjectView = (props) => {
                             borderRightColor={colors.hexborderColor}
                             borderRightWidth={1}
                           >
-                            <Text py={5} px={10} w="100%" whiteSpace="nowrap" fontWeight="bold" fontSize="4xl" textColor={data?.viewProps?.textColor || keyColor}>
+                            <Text py={5} px={10} w="100%" whiteSpace="nowrap" fontWeight="bold" fontSize="4xl" color={data?.viewProps?.textColor || keyColor}>
                               {key}
                             </Text>
                           </Flex>
@@ -169,7 +169,7 @@ const NodeJsonObjectView = (props) => {
                               whiteSpace="normal"
                               textOverflow="ellipsis"
                               fontSize="4xl"
-                              textColor={data?.viewProps?.textColor || typeColor}
+                              color={data?.viewProps?.textColor || typeColor}
                               fontWeight={400}
                             >
                               {truncateText(value)}
@@ -177,7 +177,7 @@ const NodeJsonObjectView = (props) => {
                           </Flex>
                         </Flex>
                         {index !== Object.entries(data.description || {}).length - 1 && (
-                          <Divider borderWidth={1} orientation="horizontal" my={0} borderColor={colors.hexborderColor} />
+                          <Box borderTopWidth={1} my={0} borderColor={colors.hexborderColor} />
                         )}
                       </Box>
                     );
@@ -233,7 +233,7 @@ const ParentContainerView = (props) => {
                 align="center"
                 alignItems="center"
                 fontWeight="bold"
-                textColor={colors.propertyColor}
+                color={colors.propertyColor}
                 bgColor={colors.highlightColor}
                 borderBottomColor={colors.hexborderColor}
               >
@@ -242,7 +242,7 @@ const ParentContainerView = (props) => {
                       <DynamicIcon key={colors.hextextColor} name={icon} size={80} color={colors.hextextColor} />
                     </Box>
                   )}
-                  <Text fontSize="5xl" noOfLines={2} textOverflow="ellipsis" whiteSpace="nowrap" color={data?.viewProps?.textColor}>
+                  <Text fontSize="5xl" lineClamp={2} textOverflow="ellipsis" whiteSpace="nowrap" color={data?.viewProps?.textColor}>
                     {formatHeaderTitle(data.headerTitle)}
                   </Text>
               </Flex>

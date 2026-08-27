@@ -167,7 +167,7 @@ const NodeView = ({
                   onMouseLeave={handleMouseLeave}
                   willChange="transform"
                 >
-                  <HStack px={2} spacing={2}>
+                  <HStack px={2} gap={2}>
                     {overlayActions!.map((action, i) => (
                       <Box key={action.id} display="contents">
                         {i > 0 && (
@@ -229,7 +229,6 @@ const NodeView = ({
                     transform: "translateY(-50%)",
                   })}
               aria-label={nodeData.config.collapsed ? "Expand" : "Collapse"}
-              icon={nodeData.config.collapsed ? <PiPlusBold size={30} color="gray.800" /> : <PiMinusBold size={30} color="gray.800" />}
               onClick={(e) => {
                 e.stopPropagation();
                 callbacks.onNodeCollapse?.(id, !nodeData.config.collapsed);
@@ -241,7 +240,9 @@ const NodeView = ({
               mr={2}
               px={2}
               py={4}
-            />
+            >
+              {nodeData.config.collapsed ? <PiPlusBold size={30} color="gray.800" /> : <PiMinusBold size={30} color="gray.800" />}
+            </IconButton>
           );
         })()}
       </Box>
@@ -313,7 +314,7 @@ const NodeView = ({
                 onMouseLeave={handleMouseLeave}
                 willChange="transform"
               >
-                <HStack px={2} spacing={2}>
+                <HStack px={2} gap={2}>
                   {overlayActions!.map((action, i) => (
                     <Box key={action.id} display="contents">
                       {i > 0 && (
@@ -368,13 +369,6 @@ const NodeView = ({
                       alignSelf: "center",
                     })}
                 aria-label={nodeData.config.collapsed ? "Expand" : "Collapse"}
-                icon={
-                  nodeData.config.collapsed ? (
-                    <PiPlusBold size={30} color="gray.800" />
-                  ) : (
-                    <PiMinusBold size={30} color="gray.800" />
-                  )
-                }
                 onClick={(e) => {
                   e.stopPropagation();
                   callbacks.onNodeCollapse?.(id, !nodeData.config.collapsed);
@@ -388,7 +382,13 @@ const NodeView = ({
                 mr={2}
                 px={2}
                 py={4}
-              />
+              >
+                {nodeData.config.collapsed ? (
+                  <PiPlusBold size={30} color="gray.800" />
+                ) : (
+                  <PiMinusBold size={30} color="gray.800" />
+                )}
+              </IconButton>
             );
           })()}
         {children({
