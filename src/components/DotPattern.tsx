@@ -1,18 +1,40 @@
 import { Box } from "@chakra-ui/react";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
 
-const DotPatternBackground = ({ children, pattern = "dot", backgroundColor }: { children: React.ReactNode; pattern?: string; backgroundColor?: string }) => {
+const DotPatternBackground = ({
+  children,
+  pattern = "dot",
+  backgroundColor,
+}: {
+  children: React.ReactNode;
+  pattern?: string;
+  backgroundColor?: string;
+}) => {
   const { colorMode } = useFlowDiagramContext();
   const isDark = colorMode === "dark";
-  const bgColor = isDark ? "--chakra-colors-gray-700" : "--chakra-colors-gray-500";
-  const bgAltColor = isDark ? "--chakra-colors-gray-700" : "--chakra-colors-gray-800";
+  const bgColor = isDark
+    ? "--chakra-colors-gray-700"
+    : "--chakra-colors-gray-500";
+  const bgAltColor = isDark
+    ? "--chakra-colors-gray-700"
+    : "--chakra-colors-gray-800";
 
   if (pattern === "none") {
-    return <Box width="100%" height="100%" padding={0} bg={backgroundColor}>{children}</Box>;
+    return (
+      <Box width="100%" height="100%" padding={0} bg={backgroundColor}>
+        {children}
+      </Box>
+    );
   }
 
   return (
-    <Box position="relative" width="100%" height="100%" padding={0} bg={backgroundColor}>
+    <Box
+      position="relative"
+      width="100%"
+      height="100%"
+      padding={0}
+      bg={backgroundColor}
+    >
       <Box
         position="absolute"
         top={0}
@@ -34,7 +56,13 @@ const DotPatternBackground = ({ children, pattern = "dot", backgroundColor }: { 
           opacity: 0.3,
         }}
       />
-      <Box position="relative" width="100%" height="100%" zIndex={1} padding={0}>
+      <Box
+        position="relative"
+        width="100%"
+        height="100%"
+        zIndex={1}
+        padding={0}
+      >
         {children}
       </Box>
     </Box>

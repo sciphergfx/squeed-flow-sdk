@@ -1,13 +1,26 @@
 import { Flex, Icon, Tooltip } from "@chakra-ui/react";
 import { useCustomColors } from "../theme/useCustomColors";
 
-const TooltipIconButton = ({ icon, label, onClick, color, boxSize = 6, ...props }) => {
+const TooltipIconButton = ({
+  icon,
+  label,
+  onClick,
+  color,
+  boxSize = 6,
+  ...props
+}) => {
   const { background, border, colorText } = useCustomColors();
   return (
     <Tooltip.Root positioning={{ placement: props.placement || "top" }}>
       <Tooltip.Trigger asChild>
         <Flex>
-          <Icon as={icon} boxSize={boxSize} color={color} cursor={onClick ? "pointer" : undefined} onClick={onClick} />
+          <Icon
+            as={icon}
+            boxSize={boxSize}
+            color={color}
+            cursor={onClick ? "pointer" : undefined}
+            onClick={onClick}
+          />
         </Flex>
       </Tooltip.Trigger>
       <Tooltip.Positioner>

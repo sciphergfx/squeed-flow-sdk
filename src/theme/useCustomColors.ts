@@ -1,5 +1,9 @@
-import { contentObjTheme, getColorVariant, getChakraColorHex } from "./colorUtils";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
+import {
+  contentObjTheme,
+  getChakraColorHex,
+  getColorVariant,
+} from "./colorUtils";
 
 function colorModeValue<T>(isDark: boolean, light: T, dark: T): T {
   return isDark ? dark : light;
@@ -21,7 +25,16 @@ export function useThemeContentColors(color: any) {
   bgColorFaint = getChakraColorHex(bgColorFaint) + 50;
   highlightColorFaint = getChakraColorHex(highlightColorFaint) + 20;
 
-  return { bgColor, highlightColor, borderColor, textColor, propertyColor, secondary, bgColorFaint, highlightColorFaint };
+  return {
+    bgColor,
+    highlightColor,
+    borderColor,
+    textColor,
+    propertyColor,
+    secondary,
+    bgColorFaint,
+    highlightColorFaint,
+  };
 }
 
 export function useCustomColors(theme = null) {
@@ -30,8 +43,16 @@ export function useCustomColors(theme = null) {
   const darkMode = colorMode === "dark";
 
   const background = colorModeValue(darkMode, "gray.100", "gray.900");
-  const backgroundSecondary = colorModeValue(darkMode, "gray.200", "blackAlpha.400");
-  const darkBackgroundSecondary = colorModeValue(darkMode, "gray.200", "blackAlpha.600");
+  const backgroundSecondary = colorModeValue(
+    darkMode,
+    "gray.200",
+    "blackAlpha.400",
+  );
+  const darkBackgroundSecondary = colorModeValue(
+    darkMode,
+    "gray.200",
+    "blackAlpha.600",
+  );
 
   const border = colorModeValue(darkMode, "gray.500", "gray.800");
   const borderSecondary = colorModeValue(darkMode, "gray.700", "gray.700");
@@ -41,16 +62,32 @@ export function useCustomColors(theme = null) {
   const colorActive = colorModeValue(darkMode, "gray.400", "gray.500");
   const colorInactive = colorModeValue(darkMode, "gray.400", "gray.700");
   const colorText = colorModeValue(darkMode, "gray.900", "gray.200");
-  const themedColorText = colorModeValue(darkMode, isDark ? "gray.900" : "gray.200", isDark ? "gray.200" : "gray.900");
+  const themedColorText = colorModeValue(
+    darkMode,
+    isDark ? "gray.900" : "gray.200",
+    isDark ? "gray.200" : "gray.900",
+  );
 
   const iconColor = colorModeValue(darkMode, "gray.900", "gray.200");
-  const logoColor = colorModeValue(darkMode, !theme ? theme : "#000000", !!theme ? theme : "#ffffff");
-  const logoColorSecondary = colorModeValue(darkMode, !!theme ? theme : "#ffffff", !theme ? "#ffffff" : "#000000");
+  const logoColor = colorModeValue(
+    darkMode,
+    !theme ? theme : "#000000",
+    !!theme ? theme : "#ffffff",
+  );
+  const logoColorSecondary = colorModeValue(
+    darkMode,
+    !!theme ? theme : "#ffffff",
+    !theme ? "#ffffff" : "#000000",
+  );
 
   const moreIconColor = borderSecondary;
 
   const darkColorActive = colorModeValue(darkMode, "gray.300", "gray.800");
-  const backgroundWhiteColor = colorModeValue(darkMode, "white", "blackAlpha.400");
+  const backgroundWhiteColor = colorModeValue(
+    darkMode,
+    "white",
+    "blackAlpha.400",
+  );
   const greenColor = colorModeValue(darkMode, "green.100", "green.700");
 
   return {

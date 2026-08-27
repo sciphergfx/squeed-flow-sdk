@@ -1,38 +1,76 @@
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Flex, HStack, Icon, IconButton, Text, Tooltip } from "@chakra-ui/react";
 import {
-  PiArrowUpLight,
-  PiArrowDownLight,
-  PiArrowArcRightLight,
+  Box,
+  Flex,
+  HStack,
+  Icon,
+  IconButton,
+  Text,
+  Tooltip,
+} from "@chakra-ui/react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { GrPowerReset } from "react-icons/gr";
+import { HiMinus } from "react-icons/hi2";
+import { IoCheckmark } from "react-icons/io5";
+import {
   PiArrowArcLeftLight,
-  PiLineVerticalThin,
-  PiLineVerticalBold,
-  PiPushPin,
-  PiPushPinFill,
-  PiCaretUp,
+  PiArrowArcRightLight,
+  PiArrowDownLight,
+  PiArrowUpLight,
   PiCaretLeft,
   PiCaretRight,
+  PiCaretUp,
   PiHandGrabbing,
-  PiPencilSimpleLine,
+  PiLineVerticalBold,
+  PiLineVerticalThin,
+  PiPushPin,
+  PiPushPinFill,
 } from "react-icons/pi";
-import { HiMinus } from "react-icons/hi2";
-import { GrPowerReset } from "react-icons/gr";
-import { VscAdd, VscMove, VscZoomIn, VscGroupByRefType } from "react-icons/vsc";
 import { TbAlignCenter } from "react-icons/tb";
-import { IoCheckmark } from "react-icons/io5";
-import { useFlowDiagramContext } from "./FlowDiagramContext";
-import { useCustomColors, useThemeContentColors } from "../theme/useCustomColors";
+import { VscAdd, VscMove, VscZoomIn } from "react-icons/vsc";
+import { useCustomColors } from "../theme/useCustomColors";
 import type { FlowDirection } from "../types";
 import { FlowType } from "../types";
+import { useFlowDiagramContext } from "./FlowDiagramContext";
 
-const DIRECTIONS: { value: FlowDirection; label: string; icon: any; flowType: string }[] = [
-  { value: "BT", label: "Bottom to Up", icon: PiArrowUpLight, flowType: FlowType.BOTTOM_UP },
-  { value: "TB", label: "Top to Bottom", icon: PiArrowDownLight, flowType: FlowType.TOP_DOWN },
-  { value: "LR", label: "Left to Right", icon: PiArrowArcRightLight, flowType: FlowType.LEFT_RIGHT },
-  { value: "RL", label: "Right to Left", icon: PiArrowArcLeftLight, flowType: FlowType.RIGHT_LEFT },
+const DIRECTIONS: {
+  value: FlowDirection;
+  label: string;
+  icon: any;
+  flowType: string;
+}[] = [
+  {
+    value: "BT",
+    label: "Bottom to Up",
+    icon: PiArrowUpLight,
+    flowType: FlowType.BOTTOM_UP,
+  },
+  {
+    value: "TB",
+    label: "Top to Bottom",
+    icon: PiArrowDownLight,
+    flowType: FlowType.TOP_DOWN,
+  },
+  {
+    value: "LR",
+    label: "Left to Right",
+    icon: PiArrowArcRightLight,
+    flowType: FlowType.LEFT_RIGHT,
+  },
+  {
+    value: "RL",
+    label: "Right to Left",
+    icon: PiArrowArcLeftLight,
+    flowType: FlowType.RIGHT_LEFT,
+  },
 ];
 
-function ToolbarTooltip({ label, children }: { label: string; children: React.ReactElement }) {
+function ToolbarTooltip({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactElement;
+}) {
   return (
     <Tooltip.Root positioning={{ placement: "top" }}>
       <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
@@ -43,7 +81,10 @@ function ToolbarTooltip({ label, children }: { label: string; children: React.Re
   );
 }
 
-function ToolbarIconButton({ icon, ...props }: React.ComponentProps<typeof IconButton> & { icon: React.ReactElement }) {
+function ToolbarIconButton({
+  icon,
+  ...props
+}: React.ComponentProps<typeof IconButton> & { icon: React.ReactElement }) {
   return <IconButton {...props}>{icon}</IconButton>;
 }
 
@@ -73,7 +114,14 @@ const BottomBar = () => {
   } = useFlowDiagramContext();
 
   const isDark = config.colorMode === "dark";
-  const { background, border, colorInactive, colorText, colorActive, darkBackgroundSecondary } = useCustomColors();
+  const {
+    background,
+    border,
+    colorInactive,
+    colorText,
+    colorActive,
+    darkBackgroundSecondary,
+  } = useCustomColors();
   const [showToolbar, setShowToolbar] = useState(true);
   const [isHoveringIndicator, setIsHoveringIndicator] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
@@ -148,7 +196,8 @@ const BottomBar = () => {
   const visible = showToolbar || isHoveringIndicator;
 
   const renderSelectedNodeToolbar = config.renderSelectedNodeToolbar;
-  const hasNodeSelection = selectedNodeIds.length > 0 && !!renderSelectedNodeToolbar;
+  const hasNodeSelection =
+    selectedNodeIds.length > 0 && !!renderSelectedNodeToolbar;
 
   const selectedNodeData = useMemo(() => {
     if (!hasNodeSelection) return [];
@@ -190,7 +239,13 @@ const BottomBar = () => {
     return (
       <>
         {hasNodeSelection && (
-          <Box position="absolute" bottom={5} left="50%" transform="translateX(-50%)" zIndex={101}>
+          <Box
+            position="absolute"
+            bottom={5}
+            left="50%"
+            transform="translateX(-50%)"
+            zIndex={101}
+          >
             {renderSelectedNodeToolbar!({
               selectedNodeIds,
               selectedNodeData,
@@ -200,7 +255,13 @@ const BottomBar = () => {
         )}
 
         {hasEdgeSelection && selectedEdgeData && (
-          <Box position="absolute" bottom={5} left="50%" transform="translateX(-50%)" zIndex={101}>
+          <Box
+            position="absolute"
+            bottom={5}
+            left="50%"
+            transform="translateX(-50%)"
+            zIndex={101}
+          >
             {renderSelectedEdgeToolbar!({
               edgeId: selectedEdgeId!,
               edgeData: selectedEdgeData,
@@ -209,7 +270,14 @@ const BottomBar = () => {
           </Box>
         )}
 
-        <Box position="absolute" bottom={0} left={0} right={0} zIndex={100} w="100%">
+        <Box
+          position="absolute"
+          bottom={0}
+          left={0}
+          right={0}
+          zIndex={100}
+          w="100%"
+        >
           {customRenderBottomBar({
             zoomIn: () => handleZoom("increase"),
             zoomOut: () => handleZoom("decrease"),
@@ -241,7 +309,13 @@ const BottomBar = () => {
   return (
     <>
       {hasNodeSelection && (
-        <Box position="absolute" bottom={5} left="50%" transform="translateX(-50%)" zIndex={101}>
+        <Box
+          position="absolute"
+          bottom={5}
+          left="50%"
+          transform="translateX(-50%)"
+          zIndex={101}
+        >
           {renderSelectedNodeToolbar!({
             selectedNodeIds,
             selectedNodeData,
@@ -251,7 +325,13 @@ const BottomBar = () => {
       )}
 
       {hasEdgeSelection && selectedEdgeData && (
-        <Box position="absolute" bottom={5} left="50%" transform="translateX(-50%)" zIndex={101}>
+        <Box
+          position="absolute"
+          bottom={5}
+          left="50%"
+          transform="translateX(-50%)"
+          zIndex={101}
+        >
           {renderSelectedEdgeToolbar!({
             edgeId: selectedEdgeId!,
             edgeData: selectedEdgeData,
@@ -281,7 +361,12 @@ const BottomBar = () => {
               onMouseLeave={() => setIsHoveringIndicator(false)}
               _hover={{ bg: darkBackgroundSecondary }}
             >
-              <Icon ml={-1} as={PiLineVerticalBold} boxSize={5} color={border} />
+              <Icon
+                ml={-1}
+                as={PiLineVerticalBold}
+                boxSize={5}
+                color={border}
+              />
             </Flex>
           </ToolbarTooltip>
         </Box>
@@ -308,14 +393,34 @@ const BottomBar = () => {
           }
         }}
       >
-        <Flex w="100%" px={5} position="absolute" bottom={5} flexDirection="row" justifyContent="space-between" alignItems="center">
-          <Box bg={background} alignContent="center" h={50} borderColor={border} borderWidth={1} borderRadius="15px">
+        <Flex
+          w="100%"
+          px={5}
+          position="absolute"
+          bottom={5}
+          flexDirection="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Box
+            bg={background}
+            alignContent="center"
+            h={50}
+            borderColor={border}
+            borderWidth={1}
+            borderRadius="15px"
+          >
             <HStack px={2} gap={1}>
               {/* Pin/Unpin */}
               <ToolbarTooltip label={isPinned ? "Unpin" : "Pin"}>
                 <ToolbarIconButton
                   aria-label="Pin"
-                  icon={<Icon as={isPinned ? PiPushPinFill : PiPushPin} boxSize={5} />}
+                  icon={
+                    <Icon
+                      as={isPinned ? PiPushPinFill : PiPushPin}
+                      boxSize={5}
+                    />
+                  }
                   size="sm"
                   variant="ghost"
                   color={isPinned ? themeColor : colorInactive}
@@ -327,27 +432,65 @@ const BottomBar = () => {
                 />
               </ToolbarTooltip>
 
-              <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />
+              <Icon
+                mx={-1}
+                as={PiLineVerticalThin}
+                boxSize={5}
+                color={border}
+              />
 
               {/* Zoom controls */}
               <ToolbarTooltip label="Zoom Out">
-                <ToolbarIconButton aria-label="Zoom out" icon={<Icon as={HiMinus} boxSize={5} />} size="sm" variant="ghost" color={colorText} onClick={() => handleZoom("decrease")} />
+                <ToolbarIconButton
+                  aria-label="Zoom out"
+                  icon={<Icon as={HiMinus} boxSize={5} />}
+                  size="sm"
+                  variant="ghost"
+                  color={colorText}
+                  onClick={() => handleZoom("decrease")}
+                />
               </ToolbarTooltip>
               <ToolbarTooltip label="Zoom In">
-                <ToolbarIconButton aria-label="Zoom in" icon={<Icon as={VscAdd} boxSize={5} />} size="sm" variant="ghost" color={colorText} onClick={() => handleZoom("increase")} />
+                <ToolbarIconButton
+                  aria-label="Zoom in"
+                  icon={<Icon as={VscAdd} boxSize={5} />}
+                  size="sm"
+                  variant="ghost"
+                  color={colorText}
+                  onClick={() => handleZoom("increase")}
+                />
               </ToolbarTooltip>
               <ToolbarTooltip label="Reset Zoom">
-                <ToolbarIconButton aria-label="Reset zoom" icon={<Icon as={GrPowerReset} boxSize={5} />} size="sm" variant="ghost" color={colorText} onClick={() => handleZoom("reset")} />
+                <ToolbarIconButton
+                  aria-label="Reset zoom"
+                  icon={<Icon as={GrPowerReset} boxSize={5} />}
+                  size="sm"
+                  variant="ghost"
+                  color={colorText}
+                  onClick={() => handleZoom("reset")}
+                />
               </ToolbarTooltip>
               {!isCollapsed && (
                 <>
-                  <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />
+                  <Icon
+                    mx={-1}
+                    as={PiLineVerticalThin}
+                    boxSize={5}
+                    color={border}
+                  />
 
                   {/* Zoom/Pan mode */}
-                  <ToolbarTooltip label={isZoomMode ? "Zoom Mode (z)" : "Pan Mode (z)"}>
+                  <ToolbarTooltip
+                    label={isZoomMode ? "Zoom Mode (z)" : "Pan Mode (z)"}
+                  >
                     <ToolbarIconButton
                       aria-label="Toggle zoom mode"
-                      icon={<Icon as={isZoomMode ? VscZoomIn : VscMove} boxSize={5} />}
+                      icon={
+                        <Icon
+                          as={isZoomMode ? VscZoomIn : VscMove}
+                          boxSize={5}
+                        />
+                      }
                       size="sm"
                       variant="ghost"
                       color={isZoomMode ? themeColor : colorInactive}
@@ -355,7 +498,12 @@ const BottomBar = () => {
                     />
                   </ToolbarTooltip>
 
-                  <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />
+                  <Icon
+                    mx={-1}
+                    as={PiLineVerticalThin}
+                    boxSize={5}
+                    color={border}
+                  />
 
                   {/* Multi-select */}
                   {/* <Tooltip label={isMultiSelectMode ? "Multi-Select On (m)" : "Multi-Select Off (m)"} placement="top" fontSize="xs">
@@ -372,7 +520,11 @@ const BottomBar = () => {
                   {/* <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} /> */}
 
                   {/* Drag mode */}
-                  <ToolbarTooltip label={isDragMode ? "Drag Mode On (d)" : "Drag Mode Off (d)"}>
+                  <ToolbarTooltip
+                    label={
+                      isDragMode ? "Drag Mode On (d)" : "Drag Mode Off (d)"
+                    }
+                  >
                     <ToolbarIconButton
                       aria-label="Toggle drag mode"
                       icon={<Icon as={PiHandGrabbing} boxSize={5} />}
@@ -398,7 +550,7 @@ const BottomBar = () => {
                       </Tooltip>
                     </>
                   )} */}
-{/* 
+                  {/* 
                   <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} /> */}
 
                   {/* <Tooltip label={isArrayNodeMode ? "List mode" : "Set mode"} placement="top" fontSize="xs">
@@ -420,12 +572,24 @@ const BottomBar = () => {
                 </>
               )}
 
-              <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />
+              <Icon
+                mx={-1}
+                as={PiLineVerticalThin}
+                boxSize={5}
+                color={border}
+              />
 
-              <ToolbarTooltip label={isCollapsed ? "Expand toolbar" : "Collapse toolbar"}>
+              <ToolbarTooltip
+                label={isCollapsed ? "Expand toolbar" : "Collapse toolbar"}
+              >
                 <ToolbarIconButton
                   aria-label="Toggle toolbar collapse"
-                  icon={<Icon as={isCollapsed ? PiCaretRight : PiCaretLeft} boxSize={5} />}
+                  icon={
+                    <Icon
+                      as={isCollapsed ? PiCaretRight : PiCaretLeft}
+                      boxSize={5}
+                    />
+                  }
                   size="sm"
                   variant="ghost"
                   color={colorInactive}
@@ -437,7 +601,16 @@ const BottomBar = () => {
 
           {/* Direction picker */}
           <Box position="relative" ml="auto">
-            <Box bg={background} borderWidth={1} borderColor={border} borderRadius="15px" h={50} px={3} cursor="pointer" onClick={() => setShowDirectionMenu(!showDirectionMenu)}>
+            <Box
+              bg={background}
+              borderWidth={1}
+              borderColor={border}
+              borderRadius="15px"
+              h={50}
+              px={3}
+              cursor="pointer"
+              onClick={() => setShowDirectionMenu(!showDirectionMenu)}
+            >
               <Flex align="center" h="100%">
                 <ToolbarTooltip label="Flow Direction">
                   <ToolbarIconButton
@@ -448,7 +621,11 @@ const BottomBar = () => {
                     color={colorInactive}
                   />
                 </ToolbarTooltip>
-                <Text fontSize="xs" color={isDark ? "whiteAlpha.600" : "blackAlpha.500"} ml={1}>
+                <Text
+                  fontSize="xs"
+                  color={isDark ? "whiteAlpha.600" : "blackAlpha.500"}
+                  ml={1}
+                >
                   {direction}
                 </Text>
               </Flex>
@@ -485,10 +662,17 @@ const BottomBar = () => {
                     }}
                   >
                     <Icon as={d.icon} boxSize={5} color={colorText} />
-                    <Text fontSize="sm" color={colorText} flex={1} whiteSpace="nowrap">
+                    <Text
+                      fontSize="sm"
+                      color={colorText}
+                      flex={1}
+                      whiteSpace="nowrap"
+                    >
                       {d.label}
                     </Text>
-                    {direction === d.value && <Icon as={IoCheckmark} boxSize={4} color={colorActive} />}
+                    {direction === d.value && (
+                      <Icon as={IoCheckmark} boxSize={4} color={colorActive} />
+                    )}
                   </Flex>
                 ))}
                 <Flex
@@ -505,10 +689,17 @@ const BottomBar = () => {
                   }}
                 >
                   <Icon as={TbAlignCenter} boxSize={5} color={colorText} />
-                  <Text fontSize="sm" color={colorText} flex={1} whiteSpace="nowrap">
+                  <Text
+                    fontSize="sm"
+                    color={colorText}
+                    flex={1}
+                    whiteSpace="nowrap"
+                  >
                     Center
                   </Text>
-                  {(direction as string) === "C" && <Icon as={IoCheckmark} boxSize={4} color={colorActive} />}
+                  {(direction as string) === "C" && (
+                    <Icon as={IoCheckmark} boxSize={4} color={colorActive} />
+                  )}
                 </Flex>
               </Box>
             )}

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
 import { Input, Text } from "@chakra-ui/react";
+import { useEffect, useRef, useState } from "react";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import { useStopPropagation } from "../hooks/useStopPropagation";
 
@@ -14,7 +14,16 @@ interface EditableLabelProps {
   onEditEnd: () => void;
 }
 
-export const EditableLabel = ({ nodeId, label, color, fontWeight = "bold", fontSize = "5xl", isEditing, onEditStart, onEditEnd }: EditableLabelProps) => {
+export const EditableLabel = ({
+  nodeId,
+  label,
+  color,
+  fontWeight = "bold",
+  fontSize = "5xl",
+  isEditing,
+  onEditStart,
+  onEditEnd,
+}: EditableLabelProps) => {
   const { callbacks, config, readOnly } = useFlowDiagramContext();
   const editable = config.editable && !readOnly;
   const [editValue, setEditValue] = useState(label);
@@ -48,7 +57,15 @@ export const EditableLabel = ({ nodeId, label, color, fontWeight = "bold", fontS
         color={color}
         fontWeight={fontWeight}
         fontSize={fontSize}
-        onDoubleClick={editable ? (e) => { e.stopPropagation(); setEditValue(label); onEditStart(); } : undefined}
+        onDoubleClick={
+          editable
+            ? (e) => {
+                e.stopPropagation();
+                setEditValue(label);
+                onEditStart();
+              }
+            : undefined
+        }
         cursor={editable ? "text" : undefined}
       >
         {label}

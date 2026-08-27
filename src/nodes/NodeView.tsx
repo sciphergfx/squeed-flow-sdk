@@ -1,10 +1,10 @@
-import { memo, useCallback, useRef, useState } from "react";
 import { Box, HStack, IconButton } from "@chakra-ui/react";
-import { PiPlusBold, PiMinusBold } from "react-icons/pi";
+import { memo, useCallback, useRef, useState } from "react";
+import { PiMinusBold, PiPlusBold } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
-import { useCustomColors } from "../theme/useCustomColors";
-import { getChakraColorHex } from "../theme/colorUtils";
 import TooltipIconButton from "../components/TooltipIconButton";
+import { getChakraColorHex } from "../theme/colorUtils";
+import { useCustomColors } from "../theme/useCustomColors";
 
 interface NodeViewProps {
   data: any;
@@ -114,7 +114,8 @@ const NodeView = ({
         position="relative"
       >
         {!isPerformanceMode &&
-          (renderNodeOverlay || (overlayActions && overlayActions.length > 0)) &&
+          (renderNodeOverlay ||
+            (overlayActions && overlayActions.length > 0)) &&
           isHovered &&
           !isLowZoom && (
             <>
@@ -210,41 +211,48 @@ const NodeView = ({
           onEditStart: () => setIsEditing(true),
           onEditEnd: () => setIsEditing(false),
         })}
-        {nodeData?.config?.collapsed !== undefined && (() => {
-          const pillVertical = direction === "TB" || direction === "BT";
-          const pillOnLeft = isInverted || direction === "RL";
-          return (
-            <IconButton
-              position="absolute"
-              {...(pillVertical
-                ? {
-                    [direction === "BT" ? "top" : "bottom"]: "-75px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                  }
-                : {
-                    right: pillOnLeft ? undefined : "-75px",
-                    left: pillOnLeft ? "-75px" : undefined,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                  })}
-              aria-label={nodeData.config.collapsed ? "Expand" : "Collapse"}
-              onClick={(e) => {
-                e.stopPropagation();
-                callbacks.onNodeCollapse?.(id, !nodeData.config.collapsed);
-              }}
-              bgColor={getChakraColorHex(nodeData?.viewProps?.bgColor || themeColor)}
-              size="md"
-              color="gray.100"
-              rounded="full"
-              mr={2}
-              px={2}
-              py={4}
-            >
-              {nodeData.config.collapsed ? <PiPlusBold size={30} color="gray.800" /> : <PiMinusBold size={30} color="gray.800" />}
-            </IconButton>
-          );
-        })()}
+        {nodeData?.config?.collapsed !== undefined &&
+          (() => {
+            const pillVertical = direction === "TB" || direction === "BT";
+            const pillOnLeft = isInverted || direction === "RL";
+            return (
+              <IconButton
+                position="absolute"
+                {...(pillVertical
+                  ? {
+                      [direction === "BT" ? "top" : "bottom"]: "-75px",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                    }
+                  : {
+                      right: pillOnLeft ? undefined : "-75px",
+                      left: pillOnLeft ? "-75px" : undefined,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                    })}
+                aria-label={nodeData.config.collapsed ? "Expand" : "Collapse"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  callbacks.onNodeCollapse?.(id, !nodeData.config.collapsed);
+                }}
+                bgColor={getChakraColorHex(
+                  nodeData?.viewProps?.bgColor || themeColor,
+                )}
+                size="md"
+                color="gray.100"
+                rounded="full"
+                mr={2}
+                px={2}
+                py={4}
+              >
+                {nodeData.config.collapsed ? (
+                  <PiPlusBold size={30} color="gray.800" />
+                ) : (
+                  <PiMinusBold size={30} color="gray.800" />
+                )}
+              </IconButton>
+            );
+          })()}
       </Box>
     );
   }

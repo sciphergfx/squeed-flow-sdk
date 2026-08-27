@@ -1,24 +1,37 @@
-import { useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
+import { useState } from "react";
 import { PiGear, PiNotepad } from "react-icons/pi";
+import { useFlowDiagramContext } from "../components/FlowDiagramContext";
+import { contentObjTheme, getChakraColorHex } from "../theme/colorUtils";
+import { useThemeContentColors } from "../theme/useCustomColors";
+import DynamicIcon from "../utils/DynamicIcon";
 import NodeView from "./NodeView";
 import { NodeText } from "./nodeText";
 import { NodeTextInput } from "./nodeTextInput";
-import { useFlowDiagramContext } from "../components/FlowDiagramContext";
-import { useThemeContentColors } from "../theme/useCustomColors";
-import { contentObjTheme, getChakraColorHex } from "../theme/colorUtils";
-import DynamicIcon from "../utils/DynamicIcon";
 
 const getColorVars = (data, themeColor) => {
   const bg = data?.viewProps?.bgColor || themeColor;
   const [wordBeforeDot] = bg.split(".");
   const colors = useThemeContentColors(bg);
 
-  const hexbgColor = bg?.startsWith("#") ? getChakraColorHex(bg) : getChakraColorHex(colors.bgColor);
-  const hextextColor = getChakraColorHex(data?.viewProps?.textColor || colors.textColor);
-  const hexborderColor = getChakraColorHex(data?.viewProps?.borderColor || colors.borderColor);
+  const hexbgColor = bg?.startsWith("#")
+    ? getChakraColorHex(bg)
+    : getChakraColorHex(colors.bgColor);
+  const hextextColor = getChakraColorHex(
+    data?.viewProps?.textColor || colors.textColor,
+  );
+  const hexborderColor = getChakraColorHex(
+    data?.viewProps?.borderColor || colors.borderColor,
+  );
 
-  return { ...colors, bg, wordBeforeDot, hexbgColor, hextextColor, hexborderColor };
+  return {
+    ...colors,
+    bg,
+    wordBeforeDot,
+    hexbgColor,
+    hextextColor,
+    hexborderColor,
+  };
 };
 
 const truncateText = (value, maxLength = 350) =>
@@ -28,21 +41,20 @@ const formatHeaderTitle = (title) =>
   title?.includes("root") ? title.replace("root", "untitled") : title;
 
 const calculateUniformKeyWidth = (description) => {
-  const longestKeyLength = Math.max(...Object.keys(description || {}).map((key) => key.length), 0);
+  const longestKeyLength = Math.max(
+    ...Object.keys(description || {}).map((key) => key.length),
+    0,
+  );
   const charWidth = 28;
   return Math.max(longestKeyLength * charWidth + 30, 200);
 };
 
 const text = (props) => (
-  <NodeView {...props}>
-    {(args) => <NodeText {...args} />}
-  </NodeView>
+  <NodeView {...props}>{(args) => <NodeText {...args} />}</NodeView>
 );
 
 const arrayView = (props) => (
-  <NodeView {...props}>
-    {(args) => <NodeTextInput {...args} />}
-  </NodeView>
+  <NodeView {...props}>{(args) => <NodeTextInput {...args} />}</NodeView>
 );
 
 const NodeJsonObjectView = (props) => {
@@ -67,7 +79,10 @@ const NodeJsonObjectView = (props) => {
             borderRadius={data?.viewProps?.borderRadius}
             overflow="hidden"
             alignItems="center"
-            style={{ backgroundColor: colors.hexbgColor, transition: "border-color 0.2s ease-in-out" }}
+            style={{
+              backgroundColor: colors.hexbgColor,
+              transition: "border-color 0.2s ease-in-out",
+            }}
             width="100%"
             borderColor={!isActive ? colors.hexborderColor : "white"}
             _hover={{ borderColor: "white" }}
@@ -96,11 +111,27 @@ const NodeJsonObjectView = (props) => {
                   fontWeight="bold"
                   color={colors.propertyColor}
                   bgColor={colors.highlightColor}
-                  borderBottomColor={!hasConfig && !content ? "transparent" : colors.hexborderColor}
+                  borderBottomColor={
+                    !hasConfig && !content
+                      ? "transparent"
+                      : colors.hexborderColor
+                  }
                 >
                   {!!icon && (
-                    <Box mr={8} justifyContent="flex-start" height="100%" w={50} alignItems="center" rounded="full">
-                      <DynamicIcon key={colors.hextextColor} name={icon} size={80} color={colors.hextextColor} />
+                    <Box
+                      mr={8}
+                      justifyContent="flex-start"
+                      height="100%"
+                      w={50}
+                      alignItems="center"
+                      rounded="full"
+                    >
+                      <DynamicIcon
+                        key={colors.hextextColor}
+                        name={icon}
+                        size={80}
+                        color={colors.hextextColor}
+                      />
                     </Box>
                   )}
                   <Text
@@ -114,7 +145,11 @@ const NodeJsonObjectView = (props) => {
                   </Text>
                   {!!content && (
                     <Box ml={10} onClick={() => setObjVisible(!objVisible)}>
-                      {objVisible ? <PiGear size={30} style={{ cursor: "pointer" }} /> : <PiNotepad size={30} style={{ cursor: "pointer" }} />}
+                      {objVisible ? (
+                        <PiGear size={30} style={{ cursor: "pointer" }} />
+                      ) : (
+                        <PiNotepad size={30} style={{ cursor: "pointer" }} />
+                      )}
                     </Box>
                   )}
                 </Flex>
@@ -141,47 +176,75 @@ const NodeJsonObjectView = (props) => {
                 </Flex>
               ) : (
                 <Box>
-                  {Object.entries(data.description || {}).map(([key, value], index) => {
-                    const typeColor = contentObjTheme(colors.wordBeforeDot)[typeof value];
-                    const keyColor = contentObjTheme(colors.wordBeforeDot)["property"];
+                  {Object.entries(data.description || {}).map(
+                    ([key, value], index) => {
+                      const typeColor = contentObjTheme(colors.wordBeforeDot)[
+                        typeof value
+                      ];
+                      const keyColor = contentObjTheme(colors.wordBeforeDot)[
+                        "property"
+                      ];
 
-                    return (
-                      <Box key={index}>
-                        <Flex flexWrap="nowrap" overflow="hidden">
-                          <Flex
-                            justifyContent="start"
-                            align="center"
-                            background={colors.highlightColor}
-                            width={`${uniformKeyWidth}px`}
-                            minWidth={`${uniformKeyWidth}px`}
-                            borderRightColor={colors.hexborderColor}
-                            borderRightWidth={1}
-                          >
-                            <Text py={5} px={10} w="100%" whiteSpace="nowrap" fontWeight="bold" fontSize="4xl" color={data?.viewProps?.textColor || keyColor}>
-                              {key}
-                            </Text>
-                          </Flex>
-                          <Flex flex={1} justifyContent="start" overflow="hidden" p={4} background={colors.hexbgColor} w={600} maxH={200}>
-                            <Text
-                              overflow="hidden"
-                              py={3}
-                              px={4}
-                              whiteSpace="normal"
-                              textOverflow="ellipsis"
-                              fontSize="4xl"
-                              color={data?.viewProps?.textColor || typeColor}
-                              fontWeight={400}
+                      return (
+                        <Box key={index}>
+                          <Flex flexWrap="nowrap" overflow="hidden">
+                            <Flex
+                              justifyContent="start"
+                              align="center"
+                              background={colors.highlightColor}
+                              width={`${uniformKeyWidth}px`}
+                              minWidth={`${uniformKeyWidth}px`}
+                              borderRightColor={colors.hexborderColor}
+                              borderRightWidth={1}
                             >
-                              {truncateText(value)}
-                            </Text>
+                              <Text
+                                py={5}
+                                px={10}
+                                w="100%"
+                                whiteSpace="nowrap"
+                                fontWeight="bold"
+                                fontSize="4xl"
+                                color={data?.viewProps?.textColor || keyColor}
+                              >
+                                {key}
+                              </Text>
+                            </Flex>
+                            <Flex
+                              flex={1}
+                              justifyContent="start"
+                              overflow="hidden"
+                              p={4}
+                              background={colors.hexbgColor}
+                              w={600}
+                              maxH={200}
+                            >
+                              <Text
+                                overflow="hidden"
+                                py={3}
+                                px={4}
+                                whiteSpace="normal"
+                                textOverflow="ellipsis"
+                                fontSize="4xl"
+                                color={data?.viewProps?.textColor || typeColor}
+                                fontWeight={400}
+                              >
+                                {truncateText(value)}
+                              </Text>
+                            </Flex>
                           </Flex>
-                        </Flex>
-                        {index !== Object.entries(data.description || {}).length - 1 && (
-                          <Box borderTopWidth={1} my={0} borderColor={colors.hexborderColor} />
-                        )}
-                      </Box>
-                    );
-                  })}
+                          {index !==
+                            Object.entries(data.description || {}).length -
+                              1 && (
+                            <Box
+                              borderTopWidth={1}
+                              my={0}
+                              borderColor={colors.hexborderColor}
+                            />
+                          )}
+                        </Box>
+                      );
+                    },
+                  )}
                 </Box>
               )}
             </Flex>
@@ -216,7 +279,10 @@ const ParentContainerView = (props) => {
             right={0}
             bottom={0}
             alignItems="center"
-            style={{ backgroundColor: colors.hexbgColor, transition: "border-color 0.2s ease-in-out" }}
+            style={{
+              backgroundColor: colors.hexbgColor,
+              transition: "border-color 0.2s ease-in-out",
+            }}
             borderColor={!isActive ? colors.hexborderColor : "white"}
             _hover={{ borderColor: "white" }}
             borderWidth={3}
@@ -237,14 +303,32 @@ const ParentContainerView = (props) => {
                 bgColor={colors.highlightColor}
                 borderBottomColor={colors.hexborderColor}
               >
-                  {!!icon && (
-                    <Box mr={8} justifyContent="flex-start" height="100%" w={50} alignItems="center" rounded="full">
-                      <DynamicIcon key={colors.hextextColor} name={icon} size={80} color={colors.hextextColor} />
-                    </Box>
-                  )}
-                  <Text fontSize="5xl" lineClamp={2} textOverflow="ellipsis" whiteSpace="nowrap" color={data?.viewProps?.textColor}>
-                    {formatHeaderTitle(data.headerTitle)}
-                  </Text>
+                {!!icon && (
+                  <Box
+                    mr={8}
+                    justifyContent="flex-start"
+                    height="100%"
+                    w={50}
+                    alignItems="center"
+                    rounded="full"
+                  >
+                    <DynamicIcon
+                      key={colors.hextextColor}
+                      name={icon}
+                      size={80}
+                      color={colors.hextextColor}
+                    />
+                  </Box>
+                )}
+                <Text
+                  fontSize="5xl"
+                  lineClamp={2}
+                  textOverflow="ellipsis"
+                  whiteSpace="nowrap"
+                  color={data?.viewProps?.textColor}
+                >
+                  {formatHeaderTitle(data.headerTitle)}
+                </Text>
               </Flex>
             )}
           </Flex>

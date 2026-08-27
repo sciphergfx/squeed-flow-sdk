@@ -1,13 +1,10 @@
-import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import dts from "vite-plugin-dts";
 import { resolve } from "path";
+import { defineConfig } from "vite";
+import dts from "vite-plugin-dts";
 
 export default defineConfig({
-  plugins: [
-    react(),
-    dts({ rollupTypes: true }),
-  ],
+  plugins: [react(), dts({ rollupTypes: true })],
   build: {
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
@@ -17,12 +14,17 @@ export default defineConfig({
     },
     rollupOptions: {
       external: (id) => {
-        return [
-          "react", "react-dom", "react/jsx-runtime",
-          "@chakra-ui/react",
-          "@emotion/react", "@emotion/styled",
-          "framer-motion",
-        ].includes(id) || id.startsWith("react-icons");
+        return (
+          [
+            "react",
+            "react-dom",
+            "react/jsx-runtime",
+            "@chakra-ui/react",
+            "@emotion/react",
+            "@emotion/styled",
+            "framer-motion",
+          ].includes(id) || id.startsWith("react-icons")
+        );
       },
       output: {
         globals: {
