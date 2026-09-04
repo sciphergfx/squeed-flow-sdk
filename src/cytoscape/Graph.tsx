@@ -1,6 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { cytoscape } from "./setupCytoscape";
 import debounce from "lodash/debounce";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { cytoscape } from "./setupCytoscape";
 
 interface GraphProps {
   cyParams: any;
@@ -46,7 +52,9 @@ function Graph({
   );
 
   useEffect(() => {
-    return () => { debouncedRunLayout.cancel(); };
+    return () => {
+      debouncedRunLayout.cancel();
+    };
   }, [debouncedRunLayout]);
 
   useEffect(() => {
@@ -57,7 +65,9 @@ function Graph({
       ...cyParams,
     });
 
-    const domContainer = domRef.current.parentElement?.querySelector(".cytoscape-react-nodes-and-edges");
+    const domContainer = domRef.current.parentElement?.querySelector(
+      ".cytoscape-react-nodes-and-edges",
+    );
     if (domContainer) {
       (cy as any).domNode({ dom_container: domContainer });
     }
@@ -81,7 +91,10 @@ function Graph({
         targetWidth = parentElement.clientWidth;
 
         if (targetHeight === 0) {
-          targetHeight = window.innerHeight - parentElement.getBoundingClientRect().top - 100;
+          targetHeight =
+            window.innerHeight -
+            parentElement.getBoundingClientRect().top -
+            100;
         }
         if (targetWidth === 0) {
           targetWidth = window.innerWidth;
@@ -95,7 +108,10 @@ function Graph({
 
       cytoscapeRef.current.resize();
       if (cyParams.zoom && cyParams.pan) {
-        cytoscapeRef.current.viewport({ zoom: cyParams.zoom, pan: cyParams.pan });
+        cytoscapeRef.current.viewport({
+          zoom: cyParams.zoom,
+          pan: cyParams.pan,
+        });
       }
     }
 
@@ -113,7 +129,10 @@ function Graph({
             targetWidth = parentElement.clientWidth;
 
             if (targetHeight === 0) {
-              targetHeight = window.innerHeight - parentElement.getBoundingClientRect().top - 100;
+              targetHeight =
+                window.innerHeight -
+                parentElement.getBoundingClientRect().top -
+                100;
             }
             if (targetWidth === 0) {
               targetWidth = window.innerWidth;
@@ -125,9 +144,13 @@ function Graph({
             }
           }
 
-          const currentViewport = cytoscapeRef.current.zoom() !== undefined
-            ? { zoom: cytoscapeRef.current.zoom(), pan: cytoscapeRef.current.pan() }
-            : null;
+          const currentViewport =
+            cytoscapeRef.current.zoom() !== undefined
+              ? {
+                  zoom: cytoscapeRef.current.zoom(),
+                  pan: cytoscapeRef.current.pan(),
+                }
+              : null;
 
           cytoscapeRef.current.resize();
 
@@ -164,14 +187,16 @@ function Graph({
 
   const memoizedChildren = useMemo(() => {
     if (cytoscapeRef.current !== null) {
-      return React.Children.map(children, (child) => {
-        if (!child) return null;
-        return React.cloneElement(child as React.ReactElement, {
-          key: (child as React.ReactElement)?.props?.id,
-          cytoInstance: cytoscapeRef.current,
-          layout: debouncedRunLayout,
-        });
-      })?.filter(Boolean) || [];
+      return (
+        React.Children.map(children, (child) => {
+          if (!child) return null;
+          return React.cloneElement(child as React.ReactElement, {
+            key: (child as React.ReactElement)?.props?.id,
+            cytoInstance: cytoscapeRef.current,
+            layout: debouncedRunLayout,
+          });
+        })?.filter(Boolean) || []
+      );
     }
     return [];
   }, [children, ready, debouncedRunLayout]);
@@ -197,7 +222,14 @@ function Graph({
       />
       <div
         className="cytoscape-react-nodes-and-edges"
-        style={{ pointerEvents: "none", position: "absolute", top: 0, left: 0, transformOrigin: "0 0", zIndex: 10 }}
+        style={{
+          pointerEvents: "none",
+          position: "absolute",
+          top: 0,
+          left: 0,
+          transformOrigin: "0 0",
+          zIndex: 10,
+        }}
       >
         {memoizedChildren}
       </div>

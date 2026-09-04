@@ -1,6 +1,16 @@
 import React, { useEffect, useRef } from "react";
 
-function Node({ cytoInstance, id, parent, label, children, layout, classes, styleCallback, parentBgColor }: any) {
+function Node({
+  cytoInstance,
+  id,
+  parent,
+  label,
+  children,
+  layout,
+  classes,
+  styleCallback,
+  parentBgColor,
+}: any) {
   const domRef = useRef<HTMLDivElement>(null);
   const lastSizeRef = useRef<string>("");
 

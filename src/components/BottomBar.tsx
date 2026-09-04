@@ -8,25 +8,31 @@ import {
   Tooltip,
 } from "@chakra-ui/react";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { GrPowerReset } from "react-icons/gr";
-import { HiMinus } from "react-icons/hi2";
-import { IoCheckmark } from "react-icons/io5";
 import {
-  PiArrowArcLeftLight,
-  PiArrowArcRightLight,
-  PiArrowDownLight,
-  PiArrowUpLight,
+  PiAlignCenterHorizontal,
+  PiArrowCounterClockwise,
+  PiArrowDown,
+  PiArrowLeft,
+  PiArrowRight,
+  PiArrowUp,
+  PiArrowsOutCardinal,
+  PiBracketsCurly,
+  PiBracketsSquare,
   PiCaretLeft,
   PiCaretRight,
   PiCaretUp,
+  PiCheck,
   PiHandGrabbing,
   PiLineVerticalBold,
   PiLineVerticalThin,
+  PiMagnifyingGlassPlus,
+  PiMinus,
+  PiPencilSimpleLine,
+  PiPlus,
   PiPushPin,
   PiPushPinFill,
+  PiSelectionPlus,
 } from "react-icons/pi";
-import { TbAlignCenter } from "react-icons/tb";
-import { VscAdd, VscMove, VscZoomIn } from "react-icons/vsc";
 import { useCustomColors } from "../theme/useCustomColors";
 import type { FlowDirection } from "../types";
 import { FlowType } from "../types";
@@ -41,25 +47,25 @@ const DIRECTIONS: {
   {
     value: "BT",
     label: "Bottom to Up",
-    icon: PiArrowUpLight,
+    icon: PiArrowUp,
     flowType: FlowType.BOTTOM_UP,
   },
   {
     value: "TB",
     label: "Top to Bottom",
-    icon: PiArrowDownLight,
+    icon: PiArrowDown,
     flowType: FlowType.TOP_DOWN,
   },
   {
     value: "LR",
     label: "Left to Right",
-    icon: PiArrowArcRightLight,
+    icon: PiArrowRight,
     flowType: FlowType.LEFT_RIGHT,
   },
   {
     value: "RL",
     label: "Right to Left",
-    icon: PiArrowArcLeftLight,
+    icon: PiArrowLeft,
     flowType: FlowType.RIGHT_LEFT,
   },
 ];
@@ -71,6 +77,20 @@ function ToolbarTooltip({
   label: string;
   children: React.ReactElement;
 }) {
+  if (!Tooltip.Root) {
+    const LegacyTooltip = Tooltip as unknown as React.ComponentType<{
+      label: string;
+      placement: "top";
+      fontSize: "xs";
+      children: React.ReactElement;
+    }>;
+    return (
+      <LegacyTooltip label={label} placement="top" fontSize="xs">
+        {children}
+      </LegacyTooltip>
+    );
+  }
+
   return (
     <Tooltip.Root positioning={{ placement: "top" }}>
       <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
@@ -126,7 +146,7 @@ const BottomBar = () => {
   const [isHoveringIndicator, setIsHoveringIndicator] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
   const [showDirectionMenu, setShowDirectionMenu] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   useEffect(() => {
     const checkDevice = () => setIsDesktop(window.innerWidth >= 768);
@@ -193,7 +213,8 @@ const BottomBar = () => {
     [cyRef, config.minZoom, config.maxZoom],
   );
 
-  const visible = showToolbar || isHoveringIndicator;
+  // Open menu extends above the 250px auto-hide threshold; keep bar mounted
+  const visible = showToolbar || isHoveringIndicator || showDirectionMenu;
 
   const renderSelectedNodeToolbar = config.renderSelectedNodeToolbar;
   const hasNodeSelection =
@@ -443,7 +464,7 @@ const BottomBar = () => {
               <ToolbarTooltip label="Zoom Out">
                 <ToolbarIconButton
                   aria-label="Zoom out"
-                  icon={<Icon as={HiMinus} boxSize={5} />}
+                  icon={<Icon as={PiMinus} boxSize={5} />}
                   size="sm"
                   variant="ghost"
                   color={colorText}
@@ -453,7 +474,7 @@ const BottomBar = () => {
               <ToolbarTooltip label="Zoom In">
                 <ToolbarIconButton
                   aria-label="Zoom in"
-                  icon={<Icon as={VscAdd} boxSize={5} />}
+                  icon={<Icon as={PiPlus} boxSize={5} />}
                   size="sm"
                   variant="ghost"
                   color={colorText}
@@ -463,7 +484,7 @@ const BottomBar = () => {
               <ToolbarTooltip label="Reset Zoom">
                 <ToolbarIconButton
                   aria-label="Reset zoom"
-                  icon={<Icon as={GrPowerReset} boxSize={5} />}
+                  icon={<Icon as={PiArrowCounterClockwise} boxSize={5} />}
                   size="sm"
                   variant="ghost"
                   color={colorText}
@@ -487,7 +508,7 @@ const BottomBar = () => {
                       aria-label="Toggle zoom mode"
                       icon={
                         <Icon
-                          as={isZoomMode ? VscZoomIn : VscMove}
+                          as={isZoomMode ? PiMagnifyingGlassPlus : PiArrowsOutCardinal}
                           boxSize={5}
                         />
                       }
@@ -506,18 +527,29 @@ const BottomBar = () => {
                   />
 
                   {/* Multi-select */}
-                  {/* <Tooltip label={isMultiSelectMode ? "Multi-Select On (m)" : "Multi-Select Off (m)"} placement="top" fontSize="xs">
-                    <IconButton
+                  <ToolbarTooltip
+                    label={
+                      isMultiSelectMode
+                        ? "Multi-Select On (m)"
+                        : "Multi-Select Off (m)"
+                    }
+                  >
+                    <ToolbarIconButton
                       aria-label="Toggle multi-select"
-                      icon={<Icon as={VscGroupByRefType} boxSize={5} />}
+                      icon={<Icon as={PiSelectionPlus} boxSize={5} />}
                       size="sm"
                       variant="ghost"
                       color={isMultiSelectMode ? themeColor : colorInactive}
                       onClick={() => setIsMultiSelectMode(!isMultiSelectMode)}
                     />
-                  </Tooltip> */}
+                  </ToolbarTooltip>
 
-                  {/* <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} /> */}
+                  <Icon
+                    mx={-1}
+                    as={PiLineVerticalThin}
+                    boxSize={5}
+                    color={border}
+                  />
 
                   {/* Drag mode */}
                   <ToolbarTooltip
@@ -535,40 +567,68 @@ const BottomBar = () => {
                     />
                   </ToolbarTooltip>
 
-                  {/* {config.edgeHandles !== false && (
+                  {config.edgeHandles !== false && (
                     <>
-                      <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />
-                      <Tooltip label={isEdgeHandlesEnabled ? "Draw Mode On" : "Draw Mode Off"} placement="top" fontSize="xs">
-                        <IconButton
+                      <Icon
+                        mx={-1}
+                        as={PiLineVerticalThin}
+                        boxSize={5}
+                        color={border}
+                      />
+
+                      {/* Draw mode */}
+                      <ToolbarTooltip
+                        label={
+                          isEdgeHandlesEnabled
+                            ? "Draw Mode On"
+                            : "Draw Mode Off"
+                        }
+                      >
+                        <ToolbarIconButton
                           aria-label="Toggle draw mode"
                           icon={<Icon as={PiPencilSimpleLine} boxSize={5} />}
                           size="sm"
                           variant="ghost"
-                          color={isEdgeHandlesEnabled ? themeColor : colorInactive}
-                          onClick={() => setIsEdgeHandlesEnabled(!isEdgeHandlesEnabled)}
+                          color={
+                            isEdgeHandlesEnabled ? themeColor : colorInactive
+                          }
+                          onClick={() =>
+                            setIsEdgeHandlesEnabled(!isEdgeHandlesEnabled)
+                          }
                         />
-                      </Tooltip>
+                      </ToolbarTooltip>
                     </>
-                  )} */}
-                  {/* 
-                  <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} /> */}
+                  )}
 
-                  {/* <Tooltip label={isArrayNodeMode ? "List mode" : "Set mode"} placement="top" fontSize="xs">
-                    <Flex
-                      cursor="pointer"
-                      align="center"
+                  <Icon
+                    mx={-1}
+                    as={PiLineVerticalThin}
+                    boxSize={5}
+                    color={border}
+                  />
+
+                  {/* Set / Array node mode */}
+                  <ToolbarTooltip
+                    label={isArrayNodeMode ? "Array Mode [ ]" : "Set Mode { }"}
+                  >
+                    <ToolbarIconButton
+                      aria-label="Toggle array mode"
+                      icon={
+                        <Icon
+                          as={isArrayNodeMode ? PiBracketsSquare : PiBracketsCurly}
+                          boxSize={5}
+                        />
+                      }
+                      size="sm"
+                      variant="ghost"
+                      color={isArrayNodeMode ? themeColor : colorInactive}
                       onClick={() => {
                         const next = !isArrayNodeMode;
                         setIsArrayNodeMode(next);
                         callbacks.onArrayModeChange?.(next);
                       }}
-                      _hover={{ color: themeColor }}
-                    >
-                      <Text fontSize="23px" color={isArrayNodeMode ? themeColor : colorInactive}>
-                        {isArrayNodeMode ? "[]" : "{}"}
-                      </Text>
-                    </Flex>
-                  </Tooltip> */}
+                    />
+                  </ToolbarTooltip>
                 </>
               )}
 
@@ -600,7 +660,11 @@ const BottomBar = () => {
           </Box>
 
           {/* Direction picker */}
-          <Box position="relative" ml="auto">
+          <Box
+            position="relative"
+            ml="auto"
+            onMouseLeave={() => setShowDirectionMenu(false)}
+          >
             <Box
               bg={background}
               borderWidth={1}
@@ -615,7 +679,7 @@ const BottomBar = () => {
                 <ToolbarTooltip label="Flow Direction">
                   <ToolbarIconButton
                     aria-label="Direction"
-                    icon={<Icon as={PiCaretUp} boxSize={4} />}
+                    icon={<Icon as={PiCaretUp} boxSize={5} />}
                     size="sm"
                     variant="ghost"
                     color={colorInactive}
@@ -632,23 +696,53 @@ const BottomBar = () => {
             </Box>
 
             {showDirectionMenu && (
+              // pb bridges the gap so the pointer never leaves the wrapper
               <Box
                 position="absolute"
-                bottom="60px"
+                bottom="100%"
                 right={0}
-                bg={background}
-                borderWidth={1}
-                borderColor={border}
-                borderRadius="15px"
-                p={2}
+                pb="10px"
                 zIndex={200}
-                minW="180px"
-                shadow="lg"
-                onMouseLeave={() => setShowDirectionMenu(false)}
               >
-                {DIRECTIONS.map((d) => (
+                <Box
+                  bg={background}
+                  borderWidth={1}
+                  borderColor={border}
+                  borderRadius="15px"
+                  p={2}
+                  minW="180px"
+                  shadow="lg"
+                >
+                  {DIRECTIONS.map((d) => (
+                    <Flex
+                      key={d.value}
+                      align="center"
+                      gap={3}
+                      px={3}
+                      py={2}
+                      borderRadius="10px"
+                      cursor="pointer"
+                      _hover={{ bg: isDark ? "whiteAlpha.100" : "blackAlpha.50" }}
+                      onClick={() => {
+                        callbacks.onDirectionChange?.(d.value);
+                        setShowDirectionMenu(false);
+                      }}
+                    >
+                      <Icon as={d.icon} boxSize={5} color={colorText} />
+                      <Text
+                        fontSize="sm"
+                        color={colorText}
+                        flex={1}
+                        whiteSpace="nowrap"
+                      >
+                        {d.label}
+                      </Text>
+                      {direction === d.value && (
+                        <Icon as={PiCheck} boxSize={4} color={colorActive} />
+                      )}
+                    </Flex>
+                  ))}
                   <Flex
-                    key={d.value}
                     align="center"
                     gap={3}
                     px={3}
@@ -657,50 +751,24 @@ const BottomBar = () => {
                     cursor="pointer"
                     _hover={{ bg: isDark ? "whiteAlpha.100" : "blackAlpha.50" }}
                     onClick={() => {
-                      callbacks.onDirectionChange?.(d.value);
+                      callbacks.onDirectionChange?.("C");
                       setShowDirectionMenu(false);
                     }}
                   >
-                    <Icon as={d.icon} boxSize={5} color={colorText} />
+                    <Icon as={PiAlignCenterHorizontal} boxSize={5} color={colorText} />
                     <Text
                       fontSize="sm"
                       color={colorText}
                       flex={1}
                       whiteSpace="nowrap"
                     >
-                      {d.label}
+                      Center
                     </Text>
-                    {direction === d.value && (
-                      <Icon as={IoCheckmark} boxSize={4} color={colorActive} />
+                    {direction === "C" && (
+                      <Icon as={PiCheck} boxSize={4} color={colorActive} />
                     )}
                   </Flex>
-                ))}
-                <Flex
-                  align="center"
-                  gap={3}
-                  px={3}
-                  py={2}
-                  borderRadius="10px"
-                  cursor="pointer"
-                  _hover={{ bg: isDark ? "whiteAlpha.100" : "blackAlpha.50" }}
-                  onClick={() => {
-                    callbacks.onDirectionChange?.("LR" as FlowDirection);
-                    setShowDirectionMenu(false);
-                  }}
-                >
-                  <Icon as={TbAlignCenter} boxSize={5} color={colorText} />
-                  <Text
-                    fontSize="sm"
-                    color={colorText}
-                    flex={1}
-                    whiteSpace="nowrap"
-                  >
-                    Center
-                  </Text>
-                  {(direction as string) === "C" && (
-                    <Icon as={IoCheckmark} boxSize={4} color={colorActive} />
-                  )}
-                </Flex>
+                </Box>
               </Box>
             )}
           </Box>

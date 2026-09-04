@@ -2,9 +2,9 @@ import { memo, useEffect, useRef, useMemo, useCallback } from "react";
 import { Box } from "@chakra-ui/react";
 import DotPatternBackground from "./DotPattern";
 import DefaultViews from "../nodes/nodeViews";
-import { chartStyles } from "../cytoscape/chartStyles";
+import { chartStyles, PARENT_BG_OPACITY } from "../cytoscape/chartStyles";
 import { useCustomColors, useThemeContentColors } from "../theme/useCustomColors";
-import { getChakraColorHex } from "../theme/colorUtils";
+import { blendHexColors, getChakraColorHex } from "../theme/colorUtils";
 import { calculateOptimalSpacing } from "../core/layoutCalculations";
 import { Edge, Graph, Node } from "../cytoscape";
 import { dagreLayout } from "../cytoscape/layouts";
@@ -38,7 +38,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   const { edgeSep, rankSep } = useMemo(() => calculateOptimalSpacing(nodes.length), [nodes.length]);
 
   const { bgColor: highlightColor } = useThemeContentColors(themeColor);
-  const { background: bgColor, borderSecondary: borderColor } = useCustomColors();
+  const { canvas: bgColor, borderSecondary: borderColor } = useCustomColors();
 
   const effectiveBgColor = config.backgroundColor || bgColor;
 
@@ -82,9 +82,11 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     return () => { clearTimeout(layoutSettleTimerRef.current); };
   }, []);
 
+  const layoutDirection = direction === "C" ? "LR" : direction;
+
   const layoutParams = useMemo(() => ({
     ...dagreLayout,
-    ...(direction && { rankDir: direction }),
+    ...(layoutDirection && { rankDir: layoutDirection }),
     edgeSep,
     rankSep,
     get animate() { return hasLayoutRunRef.current && !isPerformanceMode; },
@@ -103,7 +105,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         }, 500);
       }
     },
-  }), [direction, edgeSep, rankSep, cyRef, isPerformanceMode]);
+  }), [layoutDirection, edgeSep, rankSep, cyRef, isPerformanceMode]);
 
   const applyParentNodeStyles = useCallback(
     (nodeColor?: string) => {
@@ -117,6 +119,37 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     },
     [themeColor, getColorHex],
   );
+
+  const nodeById = useMemo(() => {
+    const m = new Map<string, FlowDiagramNode>();
+    for (const n of nodes) if (n.data?.id) m.set(n.data.id, n);
+    return m;
+  }, [nodes]);
+
+  // Spread parallel/opposite edges so round-taxi segments and labels don't stack
+  const parallelTurns = useMemo(() => {
+    const groups = new Map<string, { id: string; source: string }[]>();
+    for (const e of edges) {
+      const s = e.data?.source;
+      const t = e.data?.target;
+      if (!s || !t || s === t) continue;
+      const key = s < t ? `${s}|${t}` : `${t}|${s}`;
+      const g = groups.get(key);
+      if (g) g.push({ id: e.data.id, source: s });
+      else groups.set(key, [{ id: e.data.id, source: s }]);
+    }
+    const turns = new Map<string, string>();
+    for (const [key, group] of groups) {
+      if (group.length < 2) continue;
+      const first = key.split("|")[0];
+      const step = Math.min(20, 70 / group.length);
+      group.forEach(({ id, source }, i) => {
+        const t = 50 + (i - (group.length - 1) / 2) * step;
+        turns.set(id, `${source === first ? t : 100 - t}%`);
+      });
+    }
+    return turns;
+  }, [edges]);
 
   const applyEdgeStyles = useCallback(
     (edge, source, target, edgeData?) => {
@@ -141,38 +174,51 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         style["line-dash-offset"] = 0;
       }
 
-      if (direction === "TB") style["taxi-direction"] = "downward";
-      if (direction === "BT") style["taxi-direction"] = "upward";
-      if (direction === "LR") style["taxi-direction"] = "rightward";
-      if (direction === "RL") style["taxi-direction"] = "leftward";
+      if (layoutDirection === "TB") style["taxi-direction"] = "downward";
+      if (layoutDirection === "BT") style["taxi-direction"] = "upward";
+      if (layoutDirection === "LR") style["taxi-direction"] = "rightward";
+      if (layoutDirection === "RL") style["taxi-direction"] = "leftward";
+
+      style["taxi-turn"] = parallelTurns.get(edgeData?.id) ?? "50%";
 
       style["line-color"] = lineColor;
       style["color"] = lineColor;
       style["target-arrow-color"] = lineColor;
       style["source-arrow-color"] = lineColor;
 
+      // Label box inside a compound node should match the container, not the canvas
+      const sp = nodeById.get(edgeData?.source)?.data?.parent;
+      const tp = nodeById.get(edgeData?.target)?.data?.parent;
+      if (sp && sp === tp) {
+        const parentBg = nodeById.get(sp)?.data?.viewProps?.bgColor || themeColor;
+        const blended = blendHexColors(getColorHex("dark"), getColorHex(parentBg), PARENT_BG_OPACITY);
+        if (blended) style["text-background-color"] = blended;
+      }
+
       return style;
     },
-    [lineColor, direction],
+    [lineColor, layoutDirection, parallelTurns, nodeById, themeColor, getColorHex],
   );
 
-  const nodesRef = useRef(nodes);
-  nodesRef.current = nodes;
+  const nodeByIdRef = useRef(nodeById);
+  nodeByIdRef.current = nodeById;
   const applyParentNodeStylesRef = useRef(applyParentNodeStyles);
   applyParentNodeStylesRef.current = applyParentNodeStyles;
-  const applyEdgeStylesRef = useRef(applyEdgeStyles);
-  applyEdgeStylesRef.current = applyEdgeStyles;
 
   useEffect(() => {
     if (!cyRef.current) return;
     const cy = cyRef.current;
-    const onAdd = () => {
-      cy.nodes().forEach((node) => {
-        if (node.isParent()) {
-          const nd = nodesRef.current.find((n) => n.data?.id === node.id());
-          node.style(applyParentNodeStylesRef.current(nd?.data?.viewProps?.bgColor));
-        }
-      });
+    const styleParent = (p) => {
+      const nd = nodeByIdRef.current.get(p.id());
+      p.style(applyParentNodeStylesRef.current(nd?.data?.viewProps?.bgColor));
+    };
+    // Only the added node and its parent can change compound status
+    const onAdd = (ev) => {
+      const t = ev.target;
+      if (!t.isNode()) return;
+      if (t.isParent()) styleParent(t);
+      const p = t.parent();
+      if (p.length) styleParent(p);
     };
     cy.on("add", onAdd);
     return () => { cy.off("add", onAdd); };
@@ -181,11 +227,10 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   useEffect(() => {
     if (!cyRef.current) return;
     const cy = cyRef.current;
-    cy.nodes().forEach((node) => {
-      if (node.isParent()) {
-        const nd = nodes.find((n) => n.data?.id === node.id());
-        node.style(applyParentNodeStyles(nd?.data?.viewProps?.bgColor));
-      }
+    cy.startBatch();
+    cy.nodes(":parent").forEach((node) => {
+      const nd = nodeById.get(node.id());
+      node.style(applyParentNodeStyles(nd?.data?.viewProps?.bgColor));
     });
     edges.forEach(({ data }) => {
       const cyEdge = cy.getElementById(data.id);
@@ -193,7 +238,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       cyEdge.data({ isEdgeAnimated: data.isEdgeAnimated, isEdgeDashed: data.isEdgeDashed });
       cyEdge.style(applyEdgeStyles(cyEdge, data.source, data.target, data));
     });
-  }, [nodes, edges, lineColor, applyParentNodeStyles, applyEdgeStyles]);
+    cy.endBatch();
+  }, [nodeById, edges, lineColor, applyParentNodeStyles, applyEdgeStyles]);
 
   const configRef = useRef(config);
   configRef.current = config;
@@ -357,7 +403,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   const backgroundPattern = config.backgroundPattern || "dot";
 
   return (
-    <DotPatternBackground pattern={backgroundPattern} backgroundColor={config.backgroundColor}>
+    <DotPatternBackground pattern={backgroundPattern} backgroundColor={effectiveBgColor}>
       <Box ref={containerRef} padding={0} width="100%" height="100%" flex={1} position="relative">
         <Graph
           cyParams={cyParams}
@@ -484,7 +530,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
             const edgeData = edgeBySource.get(node.data?.id);
 
             return (
-              <Node key={node.data?.id} id={node.data?.id} parent={node.data?.parent} label={nodeLabel} styleCallback={() => applyParentNodeStyles(node.data?.viewProps?.bgColor)}>
+              <Node key={node.data?.id} id={node.data?.id} parent={node.data?.parent} label={nodeLabel} styleCallback={applyParentNodeStyles} parentBgColor={node.data?.viewProps?.bgColor}>
                 <ViewComponent {...node} isInverted={edgeData?.isInverted} isParent={isParentContainer} key={`${node.data?.id}-${themeColor}`} />
               </Node>
             );
@@ -497,7 +543,10 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
               target={data?.target}
               label={data?.label}
               isPerformanceMode={isPerformanceMode}
-              styleCallback={(edge, source, target) => applyEdgeStyles(edge, source, target, data)}
+              animated={!!data?.isEdgeAnimated}
+              inverted={!!data?.isInverted}
+              edgeData={data}
+              styleCallback={applyEdgeStyles}
             />
           ))}
         </Graph>

@@ -8,7 +8,12 @@ export enum FlowType {
 
 /** "C" = center: root in the middle, children fan out both ways (generate with `isCntr: true`); laid out as LR */
 export type FlowDirection = "LR" | "RL" | "TB" | "BT" | "C";
-export type LayoutAlgorithm = "dagre" | "elk" | "tidytree" | "concentric" | "cose";
+export type LayoutAlgorithm =
+  | "dagre"
+  | "elk"
+  | "tidytree"
+  | "concentric"
+  | "cose";
 export type BackgroundPattern = "dot" | "steel" | "grid" | "none";
 
 export interface FlowDiagramNode {
@@ -127,9 +132,13 @@ export interface FlowDiagramConfig {
   /** Custom render function for node hover overlay */
   renderNodeOverlay?: (props: NodeOverlayProps) => React.ReactNode;
   /** Custom render function for multi-select toolbar */
-  renderSelectedNodeToolbar?: (props: SelectedNodeToolbarProps) => React.ReactNode;
+  renderSelectedNodeToolbar?: (
+    props: SelectedNodeToolbarProps,
+  ) => React.ReactNode;
   /** Custom render function for edge selection toolbar */
-  renderSelectedEdgeToolbar?: (props: SelectedEdgeToolbarProps) => React.ReactNode;
+  renderSelectedEdgeToolbar?: (
+    props: SelectedEdgeToolbarProps,
+  ) => React.ReactNode;
   /** Custom render function to replace the entire built-in bottom bar */
   renderBottomBar?: (props: BottomBarRenderProps) => React.ReactNode;
   /** Custom node view components to override SDK defaults. Keys: objectView, arrayView, text, parentContainer */
@@ -156,7 +165,12 @@ export interface FlowDiagramCallbacks {
   /** Fires on double-click of a node */
   onNodeDoubleClick?: (nodeId: string, nodeData: any) => void;
   /** Fires when a node is created via edge drawing into empty space */
-  onNodeCreate?: (params: { type: string; position: any; sourceNodeId?: string; isArrayMode?: boolean }) => void;
+  onNodeCreate?: (params: {
+    type: string;
+    position: any;
+    sourceNodeId?: string;
+    isArrayMode?: boolean;
+  }) => void;
   /** Fires when a node is deleted */
   onNodeDelete?: (nodeId: string, nodeData: any) => void;
   /** Fires when a node label is edited inline */
@@ -164,7 +178,11 @@ export interface FlowDiagramCallbacks {
   /** Fires when a node's collapse toggle is clicked */
   onNodeCollapse?: (nodeId: string, collapsed: boolean) => void;
   /** Fires when a node's color is changed via the toolbar */
-  onNodeColorChange?: (nodeId: string, colorType: "text" | "bg", color: string) => void;
+  onNodeColorChange?: (
+    nodeId: string,
+    colorType: "text" | "bg",
+    color: string,
+  ) => void;
   /** Fires when a node's icon is changed via the toolbar */
   onNodeIconChange?: (nodeId: string, iconName: string) => void;
   /** Fires when a hover overlay action is clicked */
@@ -184,11 +202,17 @@ export interface FlowDiagramCallbacks {
   /** Fires when an edge's label is changed */
   onEdgeLabelChange?: (edgeId: string, newLabel: string) => void;
   /** Fires when an edge's style is changed (solid, dashed, animated) */
-  onEdgeStyleChange?: (edgeId: string, style: "solid" | "dashed" | "animated") => void;
+  onEdgeStyleChange?: (
+    edgeId: string,
+    style: "solid" | "dashed" | "animated",
+  ) => void;
 
   // ── Diagram events ──
   /** Fires when the viewport (pan/zoom) changes */
-  onViewportChange?: (viewport: { pan: { x: number; y: number }; zoom: number }) => void;
+  onViewportChange?: (viewport: {
+    pan: { x: number; y: number };
+    zoom: number;
+  }) => void;
   /** Fires when the flow direction changes via bottom bar */
   onDirectionChange?: (direction: FlowDirection) => void;
   /** Fires when array/set mode toggles in bottom bar */

@@ -1,3 +1,5 @@
+export const PARENT_BG_OPACITY = 0.4;
+
 export const chartStyles = (getChakraColorHex) => [
   {
     selector: "node",
@@ -34,7 +36,7 @@ export const chartStyles = (getChakraColorHex) => [
     selector: ":parent",
     style: {
       shape: "round-rectangle",
-      "background-opacity": 0.4,
+      "background-opacity": PARENT_BG_OPACITY,
       "corner-radius": 50,
       "line-color": getChakraColorHex("light"),
       "background-color": getChakraColorHex(),
@@ -88,4 +90,17 @@ export const chartStyles = (getChakraColorHex) => [
       "target-distance-from-node": 80,
     },
   },
+  {
+    // taxi can't route self-loops; the default 10px step makes the bezier loop invisible
+    selector: "edge:loop",
+    style: {
+      "curve-style": "bezier",
+      "control-point-step-size": 350,
+      "loop-direction": "-90deg",
+      "loop-sweep": "-60deg",
+      "source-distance-from-node": 0,
+      "target-distance-from-node": 0,
+    },
+  },
 ];
+

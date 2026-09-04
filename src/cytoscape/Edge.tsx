@@ -29,13 +29,16 @@ function Edge({
   const [missing, setMissing] = useState(2);
 
   function applyStyle(edge) {
-    if (styleCallback) edge.style(styleCallback(edge, source, target, edgeData));
+    if (styleCallback)
+      edge.style(styleCallback(edge, source, target, edgeData));
   }
 
   function syncEdge() {
     const existing = cytoInstance.getElementById(id);
     if (existing.length === 0) {
-      applyStyle(cytoInstance.add({ data: { id, source, target, label, type } }));
+      applyStyle(
+        cytoInstance.add({ data: { id, source, target, label, type } }),
+      );
       layout();
     } else {
       existing.data({ source, target, label, type });
@@ -85,7 +88,8 @@ function Edge({
 
   useEffect(() => {
     const edge = cytoInstance.getElementById(id);
-    const on = animated && !isPerformanceMode && missing === 0 && edge.length > 0;
+    const on =
+      animated && !isPerformanceMode && missing === 0 && edge.length > 0;
     setEdgeAnimation(animKey.current, on ? edge : null, inverted);
   }, [animated, inverted, isPerformanceMode, missing, cytoInstance, id]);
 

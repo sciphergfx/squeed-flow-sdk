@@ -24,7 +24,11 @@ function tick() {
 }
 
 /** Pass `edge` to (re)register under `key`, or `null` to unregister. */
-export function setEdgeAnimation(key: object, edge: any | null, inverted = false) {
+export function setEdgeAnimation(
+  key: object,
+  edge: any | null,
+  inverted = false,
+) {
   if (edge) {
     entries.set(key, { edge, inverted });
     if (rafId === null) rafId = requestAnimationFrame(tick);
