@@ -508,7 +508,11 @@ const BottomBar = () => {
                       aria-label="Toggle zoom mode"
                       icon={
                         <Icon
-                          as={isZoomMode ? PiMagnifyingGlassPlus : PiArrowsOutCardinal}
+                          as={
+                            isZoomMode
+                              ? PiMagnifyingGlassPlus
+                              : PiArrowsOutCardinal
+                          }
                           boxSize={5}
                         />
                       }
@@ -615,7 +619,9 @@ const BottomBar = () => {
                       aria-label="Toggle array mode"
                       icon={
                         <Icon
-                          as={isArrayNodeMode ? PiBracketsSquare : PiBracketsCurly}
+                          as={
+                            isArrayNodeMode ? PiBracketsSquare : PiBracketsCurly
+                          }
                           boxSize={5}
                         />
                       }
@@ -722,7 +728,9 @@ const BottomBar = () => {
                       py={2}
                       borderRadius="10px"
                       cursor="pointer"
-                      _hover={{ bg: isDark ? "whiteAlpha.100" : "blackAlpha.50" }}
+                      _hover={{
+                        bg: isDark ? "whiteAlpha.100" : "blackAlpha.50",
+                      }}
                       onClick={() => {
                         callbacks.onDirectionChange?.(d.value);
                         setShowDirectionMenu(false);
@@ -755,7 +763,11 @@ const BottomBar = () => {
                       setShowDirectionMenu(false);
                     }}
                   >
-                    <Icon as={PiAlignCenterHorizontal} boxSize={5} color={colorText} />
+                    <Icon
+                      as={PiAlignCenterHorizontal}
+                      boxSize={5}
+                      color={colorText}
+                    />
                     <Text
                       fontSize="sm"
                       color={colorText}

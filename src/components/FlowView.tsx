@@ -1,16 +1,23 @@
-import { memo, useEffect, useRef, useMemo, useCallback } from "react";
 import { Box } from "@chakra-ui/react";
-import DotPatternBackground from "./DotPattern";
-import DefaultViews from "../nodes/nodeViews";
-import { chartStyles, PARENT_BG_OPACITY } from "../cytoscape/chartStyles";
-import { useCustomColors, useThemeContentColors } from "../theme/useCustomColors";
-import { blendHexColors, getChakraColorHex } from "../theme/colorUtils";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { calculateOptimalSpacing } from "../core/layoutCalculations";
 import { Edge, Graph, Node } from "../cytoscape";
+import { chartStyles, PARENT_BG_OPACITY } from "../cytoscape/chartStyles";
+import {
+  BASE_CY_PARAMS,
+  LARGE_GRAPH_CY_PARAMS,
+  PERF_CY_PARAMS,
+} from "../cytoscape/cyParams";
 import { dagreLayout } from "../cytoscape/layouts";
-import { BASE_CY_PARAMS, LARGE_GRAPH_CY_PARAMS, PERF_CY_PARAMS } from "../cytoscape/cyParams";
+import DefaultViews from "../nodes/nodeViews";
+import { blendHexColors, getChakraColorHex } from "../theme/colorUtils";
+import {
+  useCustomColors,
+  useThemeContentColors,
+} from "../theme/useCustomColors";
+import type { FlowDiagramEdge, FlowDiagramNode } from "../types";
+import DotPatternBackground from "./DotPattern";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
-import type { FlowDiagramNode, FlowDiagramEdge } from "../types";
 
 interface FlowViewProps {
   nodes: FlowDiagramNode[];
@@ -19,12 +26,22 @@ interface FlowViewProps {
 
 const FlowView = ({ nodes, edges }: FlowViewProps) => {
   const {
-    themeColor, edgeColor, direction, cyRef, callbacks, config,
-    selectedNodeIds, setSelectedNodeIds, setSelectedEdgeId,
+    themeColor,
+    edgeColor,
+    direction,
+    cyRef,
+    callbacks,
+    config,
+    selectedNodeIds,
+    setSelectedNodeIds,
+    setSelectedEdgeId,
     setIsPerformanceMode,
-    isZoomMode, setIsZoomMode,
-    isMultiSelectMode, setIsMultiSelectMode,
-    isDragMode, setIsDragMode,
+    isZoomMode,
+    setIsZoomMode,
+    isMultiSelectMode,
+    setIsMultiSelectMode,
+    isDragMode,
+    setIsDragMode,
     isEdgeHandlesEnabled,
     isArrayNodeMode,
   } = useFlowDiagramContext();
@@ -33,9 +50,14 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   const isArrayNodeModeRef = useRef(isArrayNodeMode);
 
   const isPerformanceMode = nodes.length > 200;
-  useEffect(() => { setIsPerformanceMode(isPerformanceMode); }, [isPerformanceMode, setIsPerformanceMode]);
+  useEffect(() => {
+    setIsPerformanceMode(isPerformanceMode);
+  }, [isPerformanceMode, setIsPerformanceMode]);
 
-  const { edgeSep, rankSep } = useMemo(() => calculateOptimalSpacing(nodes.length), [nodes.length]);
+  const { edgeSep, rankSep } = useMemo(
+    () => calculateOptimalSpacing(nodes.length),
+    [nodes.length],
+  );
 
   const { bgColor: highlightColor } = useThemeContentColors(themeColor);
   const { canvas: bgColor, borderSecondary: borderColor } = useCustomColors();
@@ -47,23 +69,39 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       if (color?.includes("gray")) return "whitesmoke";
       if (!color) return getChakraColorHex(themeColor);
       switch (color) {
-        case "dark": return getChakraColorHex(effectiveBgColor);
-        case "light": return getChakraColorHex(borderColor);
-        default: return getChakraColorHex(color);
+        case "dark":
+          return getChakraColorHex(effectiveBgColor);
+        case "light":
+          return getChakraColorHex(borderColor);
+        default:
+          return getChakraColorHex(color);
       }
     },
     [themeColor, effectiveBgColor, borderColor],
   );
 
   const isDark = config.colorMode === "dark";
-  const autoLineColor = useMemo(() => (!isDark ? "dark" : getColorHex(highlightColor)), [isDark, highlightColor, getColorHex]);
+  const autoLineColor = useMemo(
+    () => (!isDark ? "dark" : getColorHex(highlightColor)),
+    [isDark, highlightColor, getColorHex],
+  );
   const lineColor = edgeColor ? getColorHex(edgeColor) : autoLineColor;
-  const chartStylesMemoized = useMemo(() => chartStyles(getColorHex), [getColorHex]);
+  const chartStylesMemoized = useMemo(
+    () => chartStyles(getColorHex),
+    [getColorHex],
+  );
 
-  const viewport = config.initialViewport || { pan: { x: 0, y: 0 }, zoom: 0.01 };
+  const viewport = config.initialViewport || {
+    pan: { x: 0, y: 0 },
+    zoom: 0.01,
+  };
 
   const cyParams = useMemo(() => {
-    const baseParams = isPerformanceMode ? PERF_CY_PARAMS : nodes.length > 100 ? LARGE_GRAPH_CY_PARAMS : BASE_CY_PARAMS;
+    const baseParams = isPerformanceMode
+      ? PERF_CY_PARAMS
+      : nodes.length > 100
+        ? LARGE_GRAPH_CY_PARAMS
+        : BASE_CY_PARAMS;
 
     return {
       ...baseParams,
@@ -73,39 +111,52 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       minZoom: config.minZoom ?? 0.01,
       maxZoom: config.maxZoom ?? 1.5,
     };
-  }, [chartStylesMemoized, viewport, nodes.length, config.minZoom, config.maxZoom]);
+  }, [
+    chartStylesMemoized,
+    viewport,
+    nodes.length,
+    config.minZoom,
+    config.maxZoom,
+  ]);
 
   const hasLayoutRunRef = useRef(false);
   const layoutSettleTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    return () => { clearTimeout(layoutSettleTimerRef.current); };
+    return () => {
+      clearTimeout(layoutSettleTimerRef.current);
+    };
   }, []);
 
   const layoutDirection = direction === "C" ? "LR" : direction;
 
-  const layoutParams = useMemo(() => ({
-    ...dagreLayout,
-    ...(layoutDirection && { rankDir: layoutDirection }),
-    edgeSep,
-    rankSep,
-    get animate() { return hasLayoutRunRef.current && !isPerformanceMode; },
-    animationDuration: 300,
-    animationEasing: "ease-in-out-cubic",
-    stop: () => {
-      if (cyRef.current) {
-        if (!hasLayoutRunRef.current) {
-          setTimeout(() => {
-            cyRef.current?.fit(undefined, 50);
-          }, 100);
+  const layoutParams = useMemo(
+    () => ({
+      ...dagreLayout,
+      ...(layoutDirection && { rankDir: layoutDirection }),
+      edgeSep,
+      rankSep,
+      get animate() {
+        return hasLayoutRunRef.current && !isPerformanceMode;
+      },
+      animationDuration: 300,
+      animationEasing: "ease-in-out-cubic",
+      stop: () => {
+        if (cyRef.current) {
+          if (!hasLayoutRunRef.current) {
+            setTimeout(() => {
+              cyRef.current?.fit(undefined, 50);
+            }, 100);
+          }
+          clearTimeout(layoutSettleTimerRef.current);
+          layoutSettleTimerRef.current = setTimeout(() => {
+            hasLayoutRunRef.current = true;
+          }, 500);
         }
-        clearTimeout(layoutSettleTimerRef.current);
-        layoutSettleTimerRef.current = setTimeout(() => {
-          hasLayoutRunRef.current = true;
-        }, 500);
-      }
-    },
-  }), [layoutDirection, edgeSep, rankSep, cyRef, isPerformanceMode]);
+      },
+    }),
+    [layoutDirection, edgeSep, rankSep, cyRef, isPerformanceMode],
+  );
 
   const applyParentNodeStyles = useCallback(
     (nodeColor?: string) => {
@@ -190,14 +241,26 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       const sp = nodeById.get(edgeData?.source)?.data?.parent;
       const tp = nodeById.get(edgeData?.target)?.data?.parent;
       if (sp && sp === tp) {
-        const parentBg = nodeById.get(sp)?.data?.viewProps?.bgColor || themeColor;
-        const blended = blendHexColors(getColorHex("dark"), getColorHex(parentBg), PARENT_BG_OPACITY);
+        const parentBg =
+          nodeById.get(sp)?.data?.viewProps?.bgColor || themeColor;
+        const blended = blendHexColors(
+          getColorHex("dark"),
+          getColorHex(parentBg),
+          PARENT_BG_OPACITY,
+        );
         if (blended) style["text-background-color"] = blended;
       }
 
       return style;
     },
-    [lineColor, layoutDirection, parallelTurns, nodeById, themeColor, getColorHex],
+    [
+      lineColor,
+      layoutDirection,
+      parallelTurns,
+      nodeById,
+      themeColor,
+      getColorHex,
+    ],
   );
 
   const nodeByIdRef = useRef(nodeById);
@@ -221,7 +284,9 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       if (p.length) styleParent(p);
     };
     cy.on("add", onAdd);
-    return () => { cy.off("add", onAdd); };
+    return () => {
+      cy.off("add", onAdd);
+    };
   }, []);
 
   useEffect(() => {
@@ -235,7 +300,10 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     edges.forEach(({ data }) => {
       const cyEdge = cy.getElementById(data.id);
       if (!cyEdge?.length) return;
-      cyEdge.data({ isEdgeAnimated: data.isEdgeAnimated, isEdgeDashed: data.isEdgeDashed });
+      cyEdge.data({
+        isEdgeAnimated: data.isEdgeAnimated,
+        isEdgeDashed: data.isEdgeDashed,
+      });
       cyEdge.style(applyEdgeStyles(cyEdge, data.source, data.target, data));
     });
     cy.endBatch();
@@ -283,9 +351,18 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
             accZoomDY = 0;
 
             let newZoom = zoom - (dy * 0.05) / 100;
-            newZoom = Math.max(cfg.minZoom ?? 0.01, Math.min(cfg.maxZoom ?? 1.5, newZoom));
+            newZoom = Math.max(
+              cfg.minZoom ?? 0.01,
+              Math.min(cfg.maxZoom ?? 1.5, newZoom),
+            );
             const rect = el.getBoundingClientRect();
-            cy.zoom({ level: newZoom, renderedPosition: { x: lastZoomClientX - rect.left, y: lastZoomClientY - rect.top } });
+            cy.zoom({
+              level: newZoom,
+              renderedPosition: {
+                x: lastZoomClientX - rect.left,
+                y: lastZoomClientY - rect.top,
+              },
+            });
           });
         }
       } else {
@@ -303,7 +380,10 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
             accPanDX = 0;
             accPanDY = 0;
 
-            cy.pan({ x: pan.x + (-dx * panSpeed) / zoom, y: pan.y + (-dy * panSpeed) / zoom });
+            cy.pan({
+              x: pan.x + (-dx * panSpeed) / zoom,
+              y: pan.y + (-dy * panSpeed) / zoom,
+            });
           });
         }
       }
@@ -347,13 +427,22 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     if (config.disableKeyboardShortcuts) return;
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      )
+        return;
 
       if (e.key === "z" || e.key === "Z") setIsZoomMode(!isZoomModeRef.current);
-      if (e.key === "m" || e.key === "M") setIsMultiSelectMode(!isMultiSelectMode);
+      if (e.key === "m" || e.key === "M")
+        setIsMultiSelectMode(!isMultiSelectMode);
       if (e.key === "d" || e.key === "D") setIsDragMode(!isDragMode);
 
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedNodeIdsRef.current.length > 0) {
+      if (
+        (e.key === "Delete" || e.key === "Backspace") &&
+        selectedNodeIdsRef.current.length > 0
+      ) {
         e.preventDefault();
         const ids = selectedNodeIdsRef.current.filter((id) => id !== "root");
         if (ids.length === 0) return;
@@ -367,12 +456,24 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [isMultiSelectMode, isDragMode, setIsZoomMode, setIsMultiSelectMode, setIsDragMode, config.disableKeyboardShortcuts, callbacks, setSelectedNodeIds, cyRef]);
+  }, [
+    isMultiSelectMode,
+    isDragMode,
+    setIsZoomMode,
+    setIsMultiSelectMode,
+    setIsDragMode,
+    config.disableKeyboardShortcuts,
+    callbacks,
+    setSelectedNodeIds,
+    cyRef,
+  ]);
 
   useEffect(() => {
     return () => {
       if (cyRef.current) {
-        try { cyRef.current.removeAllListeners(); } catch {}
+        try {
+          cyRef.current.removeAllListeners();
+        } catch {}
       }
     };
   }, []);
@@ -395,7 +496,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   const edgeBySource = useMemo(() => {
     const map = new Map<string, any>();
     for (const e of edges) {
-      if (e.data?.source && !map.has(e.data.source)) map.set(e.data.source, e.data);
+      if (e.data?.source && !map.has(e.data.source))
+        map.set(e.data.source, e.data);
     }
     return map;
   }, [edges]);
@@ -403,8 +505,18 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   const backgroundPattern = config.backgroundPattern || "dot";
 
   return (
-    <DotPatternBackground pattern={backgroundPattern} backgroundColor={effectiveBgColor}>
-      <Box ref={containerRef} padding={0} width="100%" height="100%" flex={1} position="relative">
+    <DotPatternBackground
+      pattern={backgroundPattern}
+      backgroundColor={effectiveBgColor}
+    >
+      <Box
+        ref={containerRef}
+        padding={0}
+        width="100%"
+        height="100%"
+        flex={1}
+        position="relative"
+      >
         <Graph
           cyParams={cyParams}
           layoutParams={layoutParams}
@@ -482,7 +594,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
               cy.on("ehstart", (event, srcNode) => {
                 sourceNode = srcNode;
-                const me = (event.originalEvent || (window as any).event) as MouseEvent;
+                const me = (event.originalEvent ||
+                  (window as any).event) as MouseEvent;
                 if (me?.clientX && me?.clientY) {
                   drawStartPos = { x: me.clientX, y: me.clientY };
                 } else {
@@ -493,7 +606,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
               cy.on("ehcancel", (event) => {
                 if (!drawStartPos || !sourceNode) return;
-                const mouseEvent = (event.originalEvent || (window as any).event) as MouseEvent;
+                const mouseEvent = (event.originalEvent ||
+                  (window as any).event) as MouseEvent;
                 const mouseX = mouseEvent?.clientX;
                 const mouseY = mouseEvent?.clientY;
 
@@ -502,7 +616,9 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
                   const deltaY = Math.abs(mouseY - drawStartPos.y);
 
                   if (Math.max(deltaX, deltaY) > 30) {
-                    const modelPos = cy.renderer().projectIntoViewport(mouseX, mouseY);
+                    const modelPos = cy
+                      .renderer()
+                      .projectIntoViewport(mouseX, mouseY);
                     callbacks.onNodeCreate({
                       type: "text",
                       sourceNodeId: sourceNode.id(),
@@ -518,20 +634,40 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
               cy.on("ehcomplete", (_event, src, tgt) => {
                 callbacks.onEdgeCreate?.(src.id(), tgt.id());
               });
-              cy.on("ehstop", () => { drawStartPos = null; sourceNode = null; });
+              cy.on("ehstop", () => {
+                drawStartPos = null;
+                sourceNode = null;
+              });
             }
           }}
         >
           {(nodes || []).map((node) => {
             const Views = config.customViews || DefaultViews;
-            const isParentContainer = parentIds.has(node.data?.id) && !node.data?.parent;
-            const nodeLabel = isParentContainer ? node.data?.label || node.data?.headerTitle || "Container" : undefined;
-            const ViewComponent = isParentContainer ? Views.parentContainer : Views[node?.data.type] || Views.text;
+            const isParentContainer =
+              parentIds.has(node.data?.id) && !node.data?.parent;
+            const nodeLabel = isParentContainer
+              ? node.data?.label || node.data?.headerTitle || "Container"
+              : undefined;
+            const ViewComponent = isParentContainer
+              ? Views.parentContainer
+              : Views[node?.data.type] || Views.text;
             const edgeData = edgeBySource.get(node.data?.id);
 
             return (
-              <Node key={node.data?.id} id={node.data?.id} parent={node.data?.parent} label={nodeLabel} styleCallback={applyParentNodeStyles} parentBgColor={node.data?.viewProps?.bgColor}>
-                <ViewComponent {...node} isInverted={edgeData?.isInverted} isParent={isParentContainer} key={`${node.data?.id}-${themeColor}`} />
+              <Node
+                key={node.data?.id}
+                id={node.data?.id}
+                parent={node.data?.parent}
+                label={nodeLabel}
+                styleCallback={applyParentNodeStyles}
+                parentBgColor={node.data?.viewProps?.bgColor}
+              >
+                <ViewComponent
+                  {...node}
+                  isInverted={edgeData?.isInverted}
+                  isParent={isParentContainer}
+                  key={`${node.data?.id}-${themeColor}`}
+                />
               </Node>
             );
           })}
