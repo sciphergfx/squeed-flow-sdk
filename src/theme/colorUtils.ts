@@ -10,6 +10,20 @@ export function getDarkerHexColor(hex: string, factor: number = 0.2): string {
   return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
 }
 
+/** Composite `overlay` at `alpha` over opaque `base`; null if either isn't #RRGGBB */
+export function blendHexColors(base: string, overlay: string, alpha: number): string | null {
+  const parse = (h: string) => {
+    const m = /^#?([0-9a-f]{6})$/i.exec(h?.trim() ?? "");
+    return m ? parseInt(m[1], 16) : null;
+  };
+  const b = parse(base);
+  const o = parse(overlay);
+  if (b === null || o === null) return null;
+  const ch = (shift: number) =>
+    Math.round(((b >> shift) & 0xff) * (1 - alpha) + ((o >> shift) & 0xff) * alpha);
+  return "#" + ((1 << 24) + (ch(16) << 16) + (ch(8) << 8) + ch(0)).toString(16).slice(1).toUpperCase();
+}
+
 export const contentObjTheme = (color) => {
   if (color?.startsWith("#")) {
     return {

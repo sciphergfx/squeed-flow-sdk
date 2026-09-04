@@ -42,7 +42,9 @@ export function useCustomColors(theme = null) {
   const isDark = theme?.includes("gray");
   const darkMode = colorMode === "dark";
 
-  const background = colorModeValue(darkMode, "gray.100", "gray.900");
+  // canvas = diagram backdrop (also masks edge labels); background = elevated surfaces
+  const canvas = colorModeValue(darkMode, "white", "gray.900");
+  const background = colorModeValue(darkMode, "gray.100", "gray.800");
   const backgroundSecondary = colorModeValue(
     darkMode,
     "gray.200",
@@ -54,7 +56,7 @@ export function useCustomColors(theme = null) {
     "blackAlpha.600",
   );
 
-  const border = colorModeValue(darkMode, "gray.500", "gray.800");
+  const border = colorModeValue(darkMode, "gray.500", "gray.700");
   const borderSecondary = colorModeValue(darkMode, "gray.700", "gray.700");
 
   const darkColor = colorModeValue(darkMode, "gray.900", "gray.900");
@@ -91,6 +93,7 @@ export function useCustomColors(theme = null) {
   const greenColor = colorModeValue(darkMode, "green.100", "green.700");
 
   return {
+    canvas,
     background,
     backgroundSecondary,
     darkBackgroundSecondary,

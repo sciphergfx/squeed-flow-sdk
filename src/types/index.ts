@@ -6,7 +6,8 @@ export enum FlowType {
   CENTER = "C",
 }
 
-export type FlowDirection = "LR" | "RL" | "TB" | "BT";
+/** "C" = center: root in the middle, children fan out both ways (generate with `isCntr: true`); laid out as LR */
+export type FlowDirection = "LR" | "RL" | "TB" | "BT" | "C";
 export type LayoutAlgorithm = "dagre" | "elk" | "tidytree" | "concentric" | "cose";
 export type BackgroundPattern = "dot" | "steel" | "grid" | "none";
 

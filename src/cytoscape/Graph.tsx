@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cytoscape } from "./setupCytoscape";
-import lodash from "lodash";
+import debounce from "lodash/debounce";
 
 interface GraphProps {
   cyParams: any;
@@ -26,18 +26,28 @@ function Graph({
   const cytoscapeRef = useRef<any>(null);
   const layoutRef = useRef<any>(null);
   const isInitialLayoutRef = useRef(true);
+  // Read via ref so a pending debounced call always uses the latest params
+  const layoutParamsRef = useRef(layoutParams);
+  layoutParamsRef.current = layoutParams;
 
   const runLayout = useCallback(() => {
     if (layoutRef.current !== null) {
       layoutRef.current.stop();
     }
     if (cytoscapeRef.current) {
-      layoutRef.current = cytoscapeRef.current.layout(layoutParams);
+      layoutRef.current = cytoscapeRef.current.layout(layoutParamsRef.current);
       layoutRef.current?.run();
     }
-  }, [layoutParams]);
+  }, []);
 
-  const debouncedRunLayout = lodash.debounce(runLayout, layoutDebounce);
+  const debouncedRunLayout = useMemo(
+    () => debounce(runLayout, layoutDebounce),
+    [runLayout, layoutDebounce],
+  );
+
+  useEffect(() => {
+    return () => { debouncedRunLayout.cancel(); };
+  }, [debouncedRunLayout]);
 
   useEffect(() => {
     if (!domRef.current) return;
@@ -92,7 +102,7 @@ function Graph({
     setReady(true);
 
     const resizeObserver = new ResizeObserver(
-      lodash.debounce(() => {
+      debounce(() => {
         if (domRef.current && cytoscapeRef.current) {
           const parentElement = domRef.current.parentElement;
           let targetHeight = 0;
