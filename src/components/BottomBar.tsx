@@ -1,12 +1,4 @@
-import {
-  Box,
-  Flex,
-  HStack,
-  Icon,
-  IconButton,
-  Text,
-  Tooltip,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, Text } from "@chakra-ui/react";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   PiAlignCenterHorizontal,
@@ -36,7 +28,9 @@ import {
 import { useCustomColors } from "../theme/useCustomColors";
 import type { FlowDirection } from "../types";
 import { FlowType } from "../types";
-import { useFlowDiagramContext } from "./FlowDiagramContext";
+import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
+import { EdgeTools, NodeTools } from "./SelectionToolbar";
+import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
 
 const DIRECTIONS: {
   value: FlowDirection;
@@ -70,44 +64,6 @@ const DIRECTIONS: {
   },
 ];
 
-function ToolbarTooltip({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactElement;
-}) {
-  if (!Tooltip.Root) {
-    const LegacyTooltip = Tooltip as unknown as React.ComponentType<{
-      label: string;
-      placement: "top";
-      fontSize: "xs";
-      children: React.ReactElement;
-    }>;
-    return (
-      <LegacyTooltip label={label} placement="top" fontSize="xs">
-        {children}
-      </LegacyTooltip>
-    );
-  }
-
-  return (
-    <Tooltip.Root positioning={{ placement: "top" }}>
-      <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
-      <Tooltip.Positioner>
-        <Tooltip.Content fontSize="xs">{label}</Tooltip.Content>
-      </Tooltip.Positioner>
-    </Tooltip.Root>
-  );
-}
-
-function ToolbarIconButton({
-  icon,
-  ...props
-}: React.ComponentProps<typeof IconButton> & { icon: React.ReactElement }) {
-  return <IconButton {...props}>{icon}</IconButton>;
-}
-
 const BottomBar = () => {
   const {
     cyRef,
@@ -131,7 +87,9 @@ const BottomBar = () => {
     setIsPinned,
     callbacks,
     config,
+    readOnly,
   } = useFlowDiagramContext();
+  const { nodeById } = useFlowData();
 
   const isDark = config.colorMode === "dark";
   const {
@@ -213,9 +171,6 @@ const BottomBar = () => {
     [cyRef, config.minZoom, config.maxZoom],
   );
 
-  // Open menu extends above the 250px auto-hide threshold; keep bar mounted
-  const visible = showToolbar || isHoveringIndicator || showDirectionMenu;
-
   const renderSelectedNodeToolbar = config.renderSelectedNodeToolbar;
   const hasNodeSelection =
     selectedNodeIds.length > 0 && !!renderSelectedNodeToolbar;
@@ -223,13 +178,13 @@ const BottomBar = () => {
   const selectedNodeData = useMemo(() => {
     if (!hasNodeSelection) return [];
     const cy = cyRef.current;
-    if (!cy) return [];
     return selectedNodeIds.map((nid) => {
-      const ele = cy.getElementById(nid);
-      if (!ele?.length) return { id: nid };
-      return { ...ele.data(), isParent: ele.isParent() };
+      const ele = cy?.getElementById(nid);
+      const base =
+        nodeById.get(nid)?.data ?? (ele?.length ? ele.data() : { id: nid });
+      return { ...base, isParent: !!ele?.length && ele.isParent() };
     });
-  }, [hasNodeSelection, selectedNodeIds, cyRef]);
+  }, [hasNodeSelection, selectedNodeIds, cyRef, nodeById]);
 
   const handleNodeDeselect = useCallback(() => {
     setSelectedNodeIds([]);
@@ -253,6 +208,21 @@ const BottomBar = () => {
     if (cy) cy.edges().unselect();
     callbacks.onEdgeDeselect?.();
   }, [setSelectedEdgeId, cyRef, callbacks]);
+
+  // Built-in selection tools replace the left tool group ([x] label | style | color | ...)
+  const builtInSelection = config.selectionToolbar !== false && !readOnly;
+  const edgeToolsActive =
+    builtInSelection && !!selectedEdgeId && !renderSelectedEdgeToolbar;
+  const nodeToolsActive =
+    builtInSelection &&
+    !edgeToolsActive &&
+    selectedNodeIds.length > 0 &&
+    !renderSelectedNodeToolbar;
+  const selectionActive = edgeToolsActive || nodeToolsActive;
+
+  // Open menu / active selection extend beyond the 250px auto-hide threshold; keep bar mounted
+  const visible =
+    showToolbar || isHoveringIndicator || showDirectionMenu || selectionActive;
 
   const customRenderBottomBar = config.renderBottomBar;
 
@@ -432,94 +402,33 @@ const BottomBar = () => {
             borderRadius="15px"
           >
             <HStack px={2} gap={1}>
-              {/* Pin/Unpin */}
-              <ToolbarTooltip label={isPinned ? "Unpin" : "Pin"}>
-                <ToolbarIconButton
-                  aria-label="Pin"
-                  icon={
-                    <Icon
-                      as={isPinned ? PiPushPinFill : PiPushPin}
-                      boxSize={5}
-                    />
-                  }
-                  size="sm"
-                  variant="ghost"
-                  color={isPinned ? themeColor : colorInactive}
-                  onClick={() => {
-                    const next = !isPinned;
-                    setIsPinned(next);
-                    setShowToolbar(next);
-                  }}
+              {edgeToolsActive ? (
+                <EdgeTools
+                  edgeId={selectedEdgeId!}
+                  onClose={handleEdgeDeselect}
                 />
-              </ToolbarTooltip>
-
-              <Icon
-                mx={-1}
-                as={PiLineVerticalThin}
-                boxSize={5}
-                color={border}
-              />
-
-              {/* Zoom controls */}
-              <ToolbarTooltip label="Zoom Out">
-                <ToolbarIconButton
-                  aria-label="Zoom out"
-                  icon={<Icon as={PiMinus} boxSize={5} />}
-                  size="sm"
-                  variant="ghost"
-                  color={colorText}
-                  onClick={() => handleZoom("decrease")}
-                />
-              </ToolbarTooltip>
-              <ToolbarTooltip label="Zoom In">
-                <ToolbarIconButton
-                  aria-label="Zoom in"
-                  icon={<Icon as={PiPlus} boxSize={5} />}
-                  size="sm"
-                  variant="ghost"
-                  color={colorText}
-                  onClick={() => handleZoom("increase")}
-                />
-              </ToolbarTooltip>
-              <ToolbarTooltip label="Reset Zoom">
-                <ToolbarIconButton
-                  aria-label="Reset zoom"
-                  icon={<Icon as={PiArrowCounterClockwise} boxSize={5} />}
-                  size="sm"
-                  variant="ghost"
-                  color={colorText}
-                  onClick={() => handleZoom("reset")}
-                />
-              </ToolbarTooltip>
-              {!isCollapsed && (
+              ) : nodeToolsActive ? (
+                <NodeTools ids={selectedNodeIds} onClose={handleNodeDeselect} />
+              ) : (
                 <>
-                  <Icon
-                    mx={-1}
-                    as={PiLineVerticalThin}
-                    boxSize={5}
-                    color={border}
-                  />
-
-                  {/* Zoom/Pan mode */}
-                  <ToolbarTooltip
-                    label={isZoomMode ? "Zoom Mode (z)" : "Pan Mode (z)"}
-                  >
+                  {/* Pin/Unpin */}
+                  <ToolbarTooltip label={isPinned ? "Unpin" : "Pin"}>
                     <ToolbarIconButton
-                      aria-label="Toggle zoom mode"
+                      aria-label="Pin"
                       icon={
                         <Icon
-                          as={
-                            isZoomMode
-                              ? PiMagnifyingGlassPlus
-                              : PiArrowsOutCardinal
-                          }
+                          as={isPinned ? PiPushPinFill : PiPushPin}
                           boxSize={5}
                         />
                       }
                       size="sm"
                       variant="ghost"
-                      color={isZoomMode ? themeColor : colorInactive}
-                      onClick={() => setIsZoomMode(!isZoomMode)}
+                      color={isPinned ? themeColor : colorInactive}
+                      onClick={() => {
+                        const next = !isPinned;
+                        setIsPinned(next);
+                        setShowToolbar(next);
+                      }}
                     />
                   </ToolbarTooltip>
 
@@ -530,48 +439,38 @@ const BottomBar = () => {
                     color={border}
                   />
 
-                  {/* Multi-select */}
-                  <ToolbarTooltip
-                    label={
-                      isMultiSelectMode
-                        ? "Multi-Select On (m)"
-                        : "Multi-Select Off (m)"
-                    }
-                  >
+                  {/* Zoom controls */}
+                  <ToolbarTooltip label="Zoom Out">
                     <ToolbarIconButton
-                      aria-label="Toggle multi-select"
-                      icon={<Icon as={PiSelectionPlus} boxSize={5} />}
+                      aria-label="Zoom out"
+                      icon={<Icon as={PiMinus} boxSize={5} />}
                       size="sm"
                       variant="ghost"
-                      color={isMultiSelectMode ? themeColor : colorInactive}
-                      onClick={() => setIsMultiSelectMode(!isMultiSelectMode)}
+                      color={colorText}
+                      onClick={() => handleZoom("decrease")}
                     />
                   </ToolbarTooltip>
-
-                  <Icon
-                    mx={-1}
-                    as={PiLineVerticalThin}
-                    boxSize={5}
-                    color={border}
-                  />
-
-                  {/* Drag mode */}
-                  <ToolbarTooltip
-                    label={
-                      isDragMode ? "Drag Mode On (d)" : "Drag Mode Off (d)"
-                    }
-                  >
+                  <ToolbarTooltip label="Zoom In">
                     <ToolbarIconButton
-                      aria-label="Toggle drag mode"
-                      icon={<Icon as={PiHandGrabbing} boxSize={5} />}
+                      aria-label="Zoom in"
+                      icon={<Icon as={PiPlus} boxSize={5} />}
                       size="sm"
                       variant="ghost"
-                      color={isDragMode ? themeColor : colorInactive}
-                      onClick={() => setIsDragMode(!isDragMode)}
+                      color={colorText}
+                      onClick={() => handleZoom("increase")}
                     />
                   </ToolbarTooltip>
-
-                  {config.edgeHandles !== false && (
+                  <ToolbarTooltip label="Reset Zoom">
+                    <ToolbarIconButton
+                      aria-label="Reset zoom"
+                      icon={<Icon as={PiArrowCounterClockwise} boxSize={5} />}
+                      size="sm"
+                      variant="ghost"
+                      color={colorText}
+                      onClick={() => handleZoom("reset")}
+                    />
+                  </ToolbarTooltip>
+                  {!isCollapsed && (
                     <>
                       <Icon
                         mx={-1}
@@ -580,25 +479,149 @@ const BottomBar = () => {
                         color={border}
                       />
 
-                      {/* Draw mode */}
+                      {/* Zoom/Pan mode */}
+                      <ToolbarTooltip
+                        label={isZoomMode ? "Zoom Mode (z)" : "Pan Mode (z)"}
+                      >
+                        <ToolbarIconButton
+                          aria-label="Toggle zoom mode"
+                          icon={
+                            <Icon
+                              as={
+                                isZoomMode
+                                  ? PiMagnifyingGlassPlus
+                                  : PiArrowsOutCardinal
+                              }
+                              boxSize={5}
+                            />
+                          }
+                          size="sm"
+                          variant="ghost"
+                          color={isZoomMode ? themeColor : colorInactive}
+                          onClick={() => setIsZoomMode(!isZoomMode)}
+                        />
+                      </ToolbarTooltip>
+
+                      <Icon
+                        mx={-1}
+                        as={PiLineVerticalThin}
+                        boxSize={5}
+                        color={border}
+                      />
+
+                      {/* Multi-select */}
                       <ToolbarTooltip
                         label={
-                          isEdgeHandlesEnabled
-                            ? "Draw Mode On"
-                            : "Draw Mode Off"
+                          isMultiSelectMode
+                            ? "Multi-Select On (m)"
+                            : "Multi-Select Off (m)"
                         }
                       >
                         <ToolbarIconButton
-                          aria-label="Toggle draw mode"
-                          icon={<Icon as={PiPencilSimpleLine} boxSize={5} />}
+                          aria-label="Toggle multi-select"
+                          icon={<Icon as={PiSelectionPlus} boxSize={5} />}
                           size="sm"
                           variant="ghost"
-                          color={
-                            isEdgeHandlesEnabled ? themeColor : colorInactive
-                          }
+                          color={isMultiSelectMode ? themeColor : colorInactive}
                           onClick={() =>
-                            setIsEdgeHandlesEnabled(!isEdgeHandlesEnabled)
+                            setIsMultiSelectMode(!isMultiSelectMode)
                           }
+                        />
+                      </ToolbarTooltip>
+
+                      <Icon
+                        mx={-1}
+                        as={PiLineVerticalThin}
+                        boxSize={5}
+                        color={border}
+                      />
+
+                      {/* Drag mode */}
+                      <ToolbarTooltip
+                        label={
+                          isDragMode ? "Drag Mode On (d)" : "Drag Mode Off (d)"
+                        }
+                      >
+                        <ToolbarIconButton
+                          aria-label="Toggle drag mode"
+                          icon={<Icon as={PiHandGrabbing} boxSize={5} />}
+                          size="sm"
+                          variant="ghost"
+                          color={isDragMode ? themeColor : colorInactive}
+                          onClick={() => setIsDragMode(!isDragMode)}
+                        />
+                      </ToolbarTooltip>
+
+                      {config.edgeHandles !== false && (
+                        <>
+                          <Icon
+                            mx={-1}
+                            as={PiLineVerticalThin}
+                            boxSize={5}
+                            color={border}
+                          />
+
+                          {/* Draw mode */}
+                          <ToolbarTooltip
+                            label={
+                              isEdgeHandlesEnabled
+                                ? "Draw Mode On"
+                                : "Draw Mode Off"
+                            }
+                          >
+                            <ToolbarIconButton
+                              aria-label="Toggle draw mode"
+                              icon={
+                                <Icon as={PiPencilSimpleLine} boxSize={5} />
+                              }
+                              size="sm"
+                              variant="ghost"
+                              color={
+                                isEdgeHandlesEnabled
+                                  ? themeColor
+                                  : colorInactive
+                              }
+                              onClick={() =>
+                                setIsEdgeHandlesEnabled(!isEdgeHandlesEnabled)
+                              }
+                            />
+                          </ToolbarTooltip>
+                        </>
+                      )}
+
+                      <Icon
+                        mx={-1}
+                        as={PiLineVerticalThin}
+                        boxSize={5}
+                        color={border}
+                      />
+
+                      {/* Set / Array node mode */}
+                      <ToolbarTooltip
+                        label={
+                          isArrayNodeMode ? "Array Mode [ ]" : "Set Mode { }"
+                        }
+                      >
+                        <ToolbarIconButton
+                          aria-label="Toggle array mode"
+                          icon={
+                            <Icon
+                              as={
+                                isArrayNodeMode
+                                  ? PiBracketsSquare
+                                  : PiBracketsCurly
+                              }
+                              boxSize={5}
+                            />
+                          }
+                          size="sm"
+                          variant="ghost"
+                          color={isArrayNodeMode ? themeColor : colorInactive}
+                          onClick={() => {
+                            const next = !isArrayNodeMode;
+                            setIsArrayNodeMode(next);
+                            callbacks.onArrayModeChange?.(next);
+                          }}
                         />
                       </ToolbarTooltip>
                     </>
@@ -611,117 +634,115 @@ const BottomBar = () => {
                     color={border}
                   />
 
-                  {/* Set / Array node mode */}
                   <ToolbarTooltip
-                    label={isArrayNodeMode ? "Array Mode [ ]" : "Set Mode { }"}
+                    label={isCollapsed ? "Expand toolbar" : "Collapse toolbar"}
                   >
                     <ToolbarIconButton
-                      aria-label="Toggle array mode"
+                      aria-label="Toggle toolbar collapse"
                       icon={
                         <Icon
-                          as={
-                            isArrayNodeMode ? PiBracketsSquare : PiBracketsCurly
-                          }
+                          as={isCollapsed ? PiCaretRight : PiCaretLeft}
                           boxSize={5}
                         />
                       }
                       size="sm"
                       variant="ghost"
-                      color={isArrayNodeMode ? themeColor : colorInactive}
-                      onClick={() => {
-                        const next = !isArrayNodeMode;
-                        setIsArrayNodeMode(next);
-                        callbacks.onArrayModeChange?.(next);
-                      }}
+                      color={colorInactive}
+                      onClick={() => setIsCollapsed(!isCollapsed)}
                     />
                   </ToolbarTooltip>
                 </>
               )}
-
-              <Icon
-                mx={-1}
-                as={PiLineVerticalThin}
-                boxSize={5}
-                color={border}
-              />
-
-              <ToolbarTooltip
-                label={isCollapsed ? "Expand toolbar" : "Collapse toolbar"}
-              >
-                <ToolbarIconButton
-                  aria-label="Toggle toolbar collapse"
-                  icon={
-                    <Icon
-                      as={isCollapsed ? PiCaretRight : PiCaretLeft}
-                      boxSize={5}
-                    />
-                  }
-                  size="sm"
-                  variant="ghost"
-                  color={colorInactive}
-                  onClick={() => setIsCollapsed(!isCollapsed)}
-                />
-              </ToolbarTooltip>
             </HStack>
           </Box>
 
           {/* Direction picker */}
-          <Box
-            position="relative"
-            ml="auto"
-            onMouseLeave={() => setShowDirectionMenu(false)}
-          >
+          {!selectionActive && (
             <Box
-              bg={background}
-              borderWidth={1}
-              borderColor={border}
-              borderRadius="15px"
-              h={50}
-              px={3}
-              cursor="pointer"
-              onClick={() => setShowDirectionMenu(!showDirectionMenu)}
+              position="relative"
+              ml="auto"
+              onMouseLeave={() => setShowDirectionMenu(false)}
             >
-              <Flex align="center" h="100%">
-                <ToolbarTooltip label="Flow Direction">
-                  <ToolbarIconButton
-                    aria-label="Direction"
-                    icon={<Icon as={PiCaretUp} boxSize={5} />}
-                    size="sm"
-                    variant="ghost"
-                    color={colorInactive}
-                  />
-                </ToolbarTooltip>
-                <Text
-                  fontSize="xs"
-                  color={isDark ? "whiteAlpha.600" : "blackAlpha.500"}
-                  ml={1}
-                >
-                  {direction}
-                </Text>
-              </Flex>
-            </Box>
-
-            {showDirectionMenu && (
-              // pb bridges the gap so the pointer never leaves the wrapper
               <Box
-                position="absolute"
-                bottom="100%"
-                right={0}
-                pb="10px"
-                zIndex={200}
+                bg={background}
+                borderWidth={1}
+                borderColor={border}
+                borderRadius="15px"
+                h={50}
+                px={3}
+                cursor="pointer"
+                onClick={() => setShowDirectionMenu(!showDirectionMenu)}
               >
+                <Flex align="center" h="100%">
+                  <ToolbarTooltip label="Flow Direction">
+                    <ToolbarIconButton
+                      aria-label="Direction"
+                      icon={<Icon as={PiCaretUp} boxSize={5} />}
+                      size="sm"
+                      variant="ghost"
+                      color={colorInactive}
+                    />
+                  </ToolbarTooltip>
+                  <Text
+                    fontSize="xs"
+                    color={isDark ? "whiteAlpha.600" : "blackAlpha.500"}
+                    ml={1}
+                  >
+                    {direction}
+                  </Text>
+                </Flex>
+              </Box>
+
+              {showDirectionMenu && (
+                // pb bridges the gap so the pointer never leaves the wrapper
                 <Box
-                  bg={background}
-                  borderWidth={1}
-                  borderColor={border}
-                  borderRadius="15px"
-                  p={2}
-                  minW="180px"
-                  shadow="lg"
+                  position="absolute"
+                  bottom="100%"
+                  right={0}
+                  pb="10px"
+                  zIndex={200}
                 >
-                  {DIRECTIONS.map((d) => (
+                  <Box
+                    bg={background}
+                    borderWidth={1}
+                    borderColor={border}
+                    borderRadius="15px"
+                    p={2}
+                    minW="180px"
+                    shadow="lg"
+                  >
+                    {DIRECTIONS.map((d) => (
+                      <Flex
+                        key={d.value}
+                        align="center"
+                        gap={3}
+                        px={3}
+                        py={2}
+                        borderRadius="10px"
+                        cursor="pointer"
+                        _hover={{
+                          bg: isDark ? "whiteAlpha.100" : "blackAlpha.50",
+                        }}
+                        onClick={() => {
+                          callbacks.onDirectionChange?.(d.value);
+                          setShowDirectionMenu(false);
+                        }}
+                      >
+                        <Icon as={d.icon} boxSize={5} color={colorText} />
+                        <Text
+                          fontSize="sm"
+                          color={colorText}
+                          flex={1}
+                          whiteSpace="nowrap"
+                        >
+                          {d.label}
+                        </Text>
+                        {direction === d.value && (
+                          <Icon as={PiCheck} boxSize={4} color={colorActive} />
+                        )}
+                      </Flex>
+                    ))}
                     <Flex
-                      key={d.value}
                       align="center"
                       gap={3}
                       px={3}
@@ -732,58 +753,32 @@ const BottomBar = () => {
                         bg: isDark ? "whiteAlpha.100" : "blackAlpha.50",
                       }}
                       onClick={() => {
-                        callbacks.onDirectionChange?.(d.value);
+                        callbacks.onDirectionChange?.("C");
                         setShowDirectionMenu(false);
                       }}
                     >
-                      <Icon as={d.icon} boxSize={5} color={colorText} />
+                      <Icon
+                        as={PiAlignCenterHorizontal}
+                        boxSize={5}
+                        color={colorText}
+                      />
                       <Text
                         fontSize="sm"
                         color={colorText}
                         flex={1}
                         whiteSpace="nowrap"
                       >
-                        {d.label}
+                        Center
                       </Text>
-                      {direction === d.value && (
+                      {direction === "C" && (
                         <Icon as={PiCheck} boxSize={4} color={colorActive} />
                       )}
                     </Flex>
-                  ))}
-                  <Flex
-                    align="center"
-                    gap={3}
-                    px={3}
-                    py={2}
-                    borderRadius="10px"
-                    cursor="pointer"
-                    _hover={{ bg: isDark ? "whiteAlpha.100" : "blackAlpha.50" }}
-                    onClick={() => {
-                      callbacks.onDirectionChange?.("C");
-                      setShowDirectionMenu(false);
-                    }}
-                  >
-                    <Icon
-                      as={PiAlignCenterHorizontal}
-                      boxSize={5}
-                      color={colorText}
-                    />
-                    <Text
-                      fontSize="sm"
-                      color={colorText}
-                      flex={1}
-                      whiteSpace="nowrap"
-                    >
-                      Center
-                    </Text>
-                    {direction === "C" && (
-                      <Icon as={PiCheck} boxSize={4} color={colorActive} />
-                    )}
-                  </Flex>
+                  </Box>
                 </Box>
-              </Box>
-            )}
-          </Box>
+              )}
+            </Box>
+          )}
         </Flex>
       </Box>
     </>

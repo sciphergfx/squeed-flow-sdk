@@ -12,6 +12,14 @@
   user-select: none !important;
 }
 
+/* Draw mode: let the canvas receive node mousedown so edgehandles can start a drag */
+.flow-draw-mode .cytoscape-react-node {
+  pointer-events: none !important;
+}
+.flow-draw-mode .cytoscape-react-cy-container {
+  cursor: crosshair;
+}
+
 .cytoscape-react-node input,
 .cytoscape-react-node textarea {
   pointer-events: auto !important;

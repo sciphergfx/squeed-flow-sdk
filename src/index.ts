@@ -6,9 +6,44 @@ export { FlowDiagram } from "./components/FlowDiagram";
 // Core diagram generation
 export { createFlowDiagram } from "./core/createFlowDiagram";
 
+// Squeed JSON editing: translate toolbar callbacks into `$` schema keys, then recompile
+export { bindSqueedCallbacks } from "./core/squeedBinding";
+export type { SqueedChange } from "./core/squeedBinding";
+export {
+  addChild,
+  addressToPath,
+  addTargetEdge,
+  applyCollapsed,
+  compileSqueed,
+  getNode,
+  removeEdge,
+  removeNode,
+  resolveEdgeOwner,
+  setCollapsed,
+  setEdgeProp,
+  setEdgeStyle,
+  setNodeProp,
+  updateNode,
+} from "./core/squeedEdits";
+export type {
+  CompileOptions,
+  RenderedEdgeRef,
+  SqueedEdgeKey,
+  SqueedJson,
+  SqueedNodeKey,
+} from "./core/squeedEdits";
+
 // Theme utilities (for consumers building custom overlays)
-export { useCustomColors, useThemeContentColors } from "./theme/useCustomColors";
-export { getChakraColorHex, getColorVariant, contentObjTheme, getDarkerHexColor } from "./theme/colorUtils";
+export {
+  contentObjTheme,
+  getChakraColorHex,
+  getColorVariant,
+  getDarkerHexColor,
+} from "./theme/colorUtils";
+export {
+  useCustomColors,
+  useThemeContentColors,
+} from "./theme/useCustomColors";
 
 // Hooks (for consumers building custom editable node content)
 export { useStopPropagation } from "./hooks/useStopPropagation";
@@ -18,17 +53,20 @@ export { default as DynamicIcon } from "./utils/DynamicIcon";
 
 // Types
 export type {
-  FlowDiagramProps,
-  FlowDiagramConfig,
+  BackgroundPattern,
+  BottomBarRenderProps,
   FlowDiagramCallbacks,
-  FlowDiagramNode,
+  FlowDiagramConfig,
   FlowDiagramEdge,
+  FlowDiagramNode,
+  FlowDiagramProps,
   FlowDirection,
   LayoutAlgorithm,
-  BackgroundPattern,
   NodeOverlayAction,
   NodeOverlayProps,
-  SelectedNodeToolbarProps,
+  ParentNodeStyle,
   SelectedEdgeToolbarProps,
-  BottomBarRenderProps,
+  SelectedNodeToolbarProps,
+  SelectionToolbarConfig,
+  SqueedChangeInfo,
 } from "./types";

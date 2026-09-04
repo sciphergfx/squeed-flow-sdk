@@ -17,15 +17,25 @@ export function useStopPropagation<T extends HTMLElement>(active = true) {
 
   useEffect(() => {
     if (!active || !ref.current) return;
+    // React 17+ delegates from the root, so stopping an event on any ancestor kills React's
+    // handlers for it. Keyboard/input/focus are therefore left alone (FlowView's window keydown
+    // handler already ignores INPUT/TEXTAREA targets); only pointer events are contained.
     const stopProp = (e: Event) => {
       e.stopPropagation();
-      e.stopImmediatePropagation();
     };
     const el = ref.current;
-    const events = ["mousedown", "mouseup", "click", "pointerdown", "pointerup", "keydown", "keyup", "keypress", "input", "focus"];
-    events.forEach((evt) => el.addEventListener(evt, stopProp, true));
+    const events = [
+      "mousedown",
+      "mouseup",
+      "click",
+      "dblclick",
+      "pointerdown",
+      "pointerup",
+      "wheel",
+    ];
+    events.forEach((evt) => el.addEventListener(evt, stopProp));
     return () => {
-      events.forEach((evt) => el.removeEventListener(evt, stopProp, true));
+      events.forEach((evt) => el.removeEventListener(evt, stopProp));
     };
   }, [active]);
 

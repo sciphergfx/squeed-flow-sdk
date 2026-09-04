@@ -9,7 +9,7 @@ function Node({
   layout,
   classes,
   styleCallback,
-  parentBgColor,
+  parentViewProps,
 }: any) {
   const domRef = useRef<HTMLDivElement>(null);
   const lastSizeRef = useRef<string>("");
@@ -17,7 +17,7 @@ function Node({
   function applyStyle(node) {
     if (styleCallback && node.isParent()) {
       node.style("shape", "roundrectangle");
-      node.style(styleCallback(parentBgColor));
+      node.style(styleCallback(parentViewProps));
     }
   }
 
@@ -41,16 +41,16 @@ function Node({
     };
   }, [domRef, parent, label]);
 
-  // Re-layout only when the rendered box actually changes size (not on every render)
+  // Re-layout when the rendered box changes size (incl. first measurement, which
+  // lands after the add-effect's layout call; the debounce coalesces them)
   useEffect(() => {
     const el = domRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(() => {
       const size = `${el.offsetWidth}x${el.offsetHeight}`;
       if (size === lastSizeRef.current) return;
-      const first = lastSizeRef.current === "";
       lastSizeRef.current = size;
-      if (!first) layout();
+      layout();
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -60,7 +60,7 @@ function Node({
     if (!styleCallback) return;
     const node = cytoInstance.getElementById(id);
     if (node.length) applyStyle(node);
-  }, [styleCallback, parentBgColor]);
+  }, [styleCallback, parentViewProps]);
 
   function newChild(c) {
     return React.cloneElement(c, { cytoInstance, layout });

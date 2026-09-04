@@ -32,6 +32,7 @@ const NodeView = ({
   const {
     selectedNodeIds,
     setSelectedNodeIds,
+    setSelectedEdgeId,
     isMultiSelectMode,
     isPerformanceMode,
     cyRef,
@@ -62,6 +63,9 @@ const NodeView = ({
 
   const handleClick = useCallback(() => {
     if (isEditing) return;
+    // one selection toolbar at a time
+    setSelectedEdgeId(null);
+    cyRef.current?.edges(":selected").unselect();
     if (isMultiSelectMode) {
       const isAlreadySelected = selectedNodeIds.includes(id);
       const newIds = isAlreadySelected
@@ -84,6 +88,8 @@ const NodeView = ({
     isMultiSelectMode,
     isEditing,
     setSelectedNodeIds,
+    setSelectedEdgeId,
+    cyRef,
     callbacks,
   ]);
 

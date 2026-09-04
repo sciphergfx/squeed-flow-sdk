@@ -37,10 +37,48 @@ export interface FlowDiagramEdge {
     source: string;
     target: string;
     label?: string;
+    /** Chakra token or hex; overrides the theme/edgeColor line color for this edge */
+    color?: string;
     isInverted?: boolean;
     isEdgeAnimated?: boolean;
     isEdgeDashed?: boolean;
   };
+}
+
+/** Built-in selection toolbars (shown in the bottom bar when a node/edge is selected) */
+export interface SelectionToolbarConfig {
+  /** Swatches offered for node/edge colors (Chakra tokens or hex). Default: 9 Chakra 500s */
+  palette?: string[];
+  /** Hide individual controls */
+  hide?: Array<
+    "label" | "color" | "textColor" | "style" | "icon" | "collapse" | "delete"
+  >;
+}
+
+/**
+ * Style for compound (container) nodes. Set per node via `data.viewProps`,
+ * or for all containers via `config.parentNodeStyle` (per-node wins).
+ * Colors accept Chakra tokens ("purple.500") or hex.
+ */
+export interface ParentNodeStyle {
+  /** Fill color; also the default border/label color (default: themeColor) */
+  bgColor?: string;
+  /** Fill opacity 0–1 (default 0.4) */
+  bgOpacity?: number;
+  borderColor?: string;
+  /** px (default 6) */
+  borderWidth?: number;
+  borderStyle?: "solid" | "dashed" | "dotted" | "double";
+  /** Corner radius px (default 50) */
+  borderRadius?: number;
+  /** Label color (default: bgColor) */
+  textColor?: string;
+  /** Label size px (default 70) */
+  fontSize?: number;
+  /** Inner padding px (default 120) */
+  padding?: number;
+  /** Label placement (default "top") */
+  labelPosition?: "top" | "center" | "bottom";
 }
 
 /** Actions shown in the hover overlay above nodes */
@@ -115,6 +153,8 @@ export interface FlowDiagramConfig {
   backgroundColor?: string;
   /** Edge/line color override */
   edgeColor?: string;
+  /** Default style for all compound/container nodes (per-node `viewProps` override it) */
+  parentNodeStyle?: ParentNodeStyle;
   /** Min zoom level (default: 0.01) */
   minZoom?: number;
   /** Max zoom level (default: 1.5) */
@@ -141,6 +181,8 @@ export interface FlowDiagramConfig {
   ) => React.ReactNode;
   /** Custom render function to replace the entire built-in bottom bar */
   renderBottomBar?: (props: BottomBarRenderProps) => React.ReactNode;
+  /** Built-in node/edge selection toolbars (bottom bar swaps to them on select). `false` disables. */
+  selectionToolbar?: SelectionToolbarConfig | false;
   /** Custom node view components to override SDK defaults. Keys: objectView, arrayView, text, parentContainer */
   customViews?: Record<string, React.ComponentType<any>>;
   /** Disable built-in keyboard shortcuts (Z/M/D) when the consumer handles its own */
@@ -197,6 +239,8 @@ export interface FlowDiagramCallbacks {
   onEdgeDeselect?: () => void;
   /** Fires when an edge is removed */
   onEdgeRemove?: (edgeId: string, edgeData: any) => void;
+  /** Fires when the user deletes an edge from the selection toolbar */
+  onEdgeDelete?: (edgeId: string, edgeData: any) => void;
   /** Fires when an edge's color is changed */
   onEdgeColorChange?: (edgeId: string, color: string) => void;
   /** Fires when an edge's label is changed */
@@ -219,12 +263,47 @@ export interface FlowDiagramCallbacks {
   onArrayModeChange?: (isArrayMode: boolean) => void;
   /** Fires when Cytoscape instance is initialized (for advanced use) */
   onCyInit?: (cy: any) => void;
+
+  // ── Squeed document mode (when `json` prop is used) ──
+  /**
+   * Fires with the updated Squeed JSON after any toolbar/inline edit. The SDK applies the
+   * edit with `$` schema keys; store the result and pass it back as `json`.
+   */
+  onJsonChange?: (
+    json: Record<string, any> | any[],
+    change: SqueedChangeInfo,
+  ) => void;
+}
+
+/** Describes the edit behind an `onJsonChange` */
+export interface SqueedChangeInfo {
+  type:
+    | "nodeLabel"
+    | "nodeColor"
+    | "nodeIcon"
+    | "nodeCollapse"
+    | "nodeCreate"
+    | "nodeDelete"
+    | "edgeLabel"
+    | "edgeStyle"
+    | "edgeColor"
+    | "edgeCreate"
+    | "edgeDelete";
+  address?: string;
+  edge?: { source: string; target: string; isInverted?: boolean | null };
+  key?: string;
+  value?: unknown;
 }
 
 /** Top-level props for the FlowDiagram component */
 export interface FlowDiagramProps {
   /** Title shown on the root node */
   title?: string;
+  /**
+   * Squeed JSON document. When provided, nodes/edges are compiled from it and every
+   * edit is reported through `callbacks.onJsonChange`. Takes precedence over nodes/edges.
+   */
+  json?: Record<string, any> | any[];
   /** Pre-computed nodes */
   nodes?: FlowDiagramNode[];
   /** Pre-computed edges */

@@ -15,7 +15,11 @@ import {
   useCustomColors,
   useThemeContentColors,
 } from "../theme/useCustomColors";
-import type { FlowDiagramEdge, FlowDiagramNode } from "../types";
+import type {
+  FlowDiagramEdge,
+  FlowDiagramNode,
+  ParentNodeStyle,
+} from "../types";
 import DotPatternBackground from "./DotPattern";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
 
@@ -29,6 +33,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     themeColor,
     edgeColor,
     direction,
+    parentNodeStyle: parentDefaults,
     cyRef,
     callbacks,
     config,
@@ -81,8 +86,9 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   );
 
   const isDark = config.colorMode === "dark";
+  // light mode: "light" resolves to the dark border token; the literal "dark" was an invalid cy color
   const autoLineColor = useMemo(
-    () => (!isDark ? "dark" : getColorHex(highlightColor)),
+    () => (!isDark ? getColorHex("light") : getColorHex(highlightColor)),
     [isDark, highlightColor, getColorHex],
   );
   const lineColor = edgeColor ? getColorHex(edgeColor) : autoLineColor;
@@ -158,17 +164,52 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     [layoutDirection, edgeSep, rankSep, cyRef, isPerformanceMode],
   );
 
-  const applyParentNodeStyles = useCallback(
-    (nodeColor?: string) => {
-      const c = nodeColor ? getColorHex(nodeColor) : getColorHex(themeColor);
+  // Resolve container style: per-node viewProps > config.parentNodeStyle > theme defaults
+  const resolveParentStyle = useCallback(
+    (
+      viewProps?: ParentNodeStyle,
+    ): Required<Pick<ParentNodeStyle, "bgColor" | "bgOpacity">> &
+      ParentNodeStyle => {
+      const s = { ...parentDefaults, ...viewProps };
       return {
-        "corner-radius": 50,
-        "background-color": c,
-        color: c,
-        "border-color": c,
+        ...s,
+        bgColor: s.bgColor || themeColor,
+        bgOpacity: s.bgOpacity ?? PARENT_BG_OPACITY,
       };
     },
-    [themeColor, getColorHex],
+    [parentDefaults, themeColor],
+  );
+
+  const applyParentNodeStyles = useCallback(
+    (viewProps?: ParentNodeStyle) => {
+      const s = resolveParentStyle(viewProps);
+      const fill = getChakraColorHex(s.bgColor);
+      const style: Record<string, any> = {
+        // cytoscape-dom-node's ResizeObserver bypasses `shape: rectangle` on every node;
+        // a rectangle ignores corner-radius, so restate the shape with each parent restyle
+        shape: "round-rectangle",
+        "background-color": fill,
+        "background-opacity": s.bgOpacity,
+        "border-color": s.borderColor ? getChakraColorHex(s.borderColor) : fill,
+        color: s.textColor ? getChakraColorHex(s.textColor) : fill,
+        "corner-radius": s.borderRadius ?? 50,
+      };
+      if (s.borderWidth !== undefined) style["border-width"] = s.borderWidth;
+      if (s.borderStyle) style["border-style"] = s.borderStyle;
+      if (s.fontSize !== undefined) style["font-size"] = `${s.fontSize}px`;
+      if (s.padding !== undefined) style.padding = `${s.padding}px`;
+      if (s.labelPosition) {
+        style["text-valign"] = s.labelPosition;
+        style["text-margin-y"] =
+          s.labelPosition === "top"
+            ? 90
+            : s.labelPosition === "bottom"
+              ? -90
+              : 0;
+      }
+      return style;
+    },
+    [resolveParentStyle],
   );
 
   const nodeById = useMemo(() => {
@@ -232,21 +273,24 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
       style["taxi-turn"] = parallelTurns.get(edgeData?.id) ?? "50%";
 
-      style["line-color"] = lineColor;
-      style["color"] = lineColor;
-      style["target-arrow-color"] = lineColor;
-      style["source-arrow-color"] = lineColor;
+      const c = edgeData?.color ? getChakraColorHex(edgeData.color) : lineColor;
+      style["line-color"] = c;
+      style["color"] = c;
+      style["target-arrow-color"] = c;
+      style["source-arrow-color"] = c;
 
-      // Label box inside a compound node should match the container, not the canvas
+      // Stylesheet values are fixed at cy creation; theme-dependent label bg must be a bypass.
+      // Inside a compound node it should match the container, not the canvas.
+      const canvasHex = getColorHex("dark");
+      style["text-background-color"] = canvasHex;
       const sp = nodeById.get(edgeData?.source)?.data?.parent;
       const tp = nodeById.get(edgeData?.target)?.data?.parent;
       if (sp && sp === tp) {
-        const parentBg =
-          nodeById.get(sp)?.data?.viewProps?.bgColor || themeColor;
+        const ps = resolveParentStyle(nodeById.get(sp)?.data?.viewProps);
         const blended = blendHexColors(
-          getColorHex("dark"),
-          getColorHex(parentBg),
-          PARENT_BG_OPACITY,
+          canvasHex,
+          getChakraColorHex(ps.bgColor),
+          ps.bgOpacity,
         );
         if (blended) style["text-background-color"] = blended;
       }
@@ -258,7 +302,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       layoutDirection,
       parallelTurns,
       nodeById,
-      themeColor,
+      resolveParentStyle,
       getColorHex,
     ],
   );
@@ -273,7 +317,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     const cy = cyRef.current;
     const styleParent = (p) => {
       const nd = nodeByIdRef.current.get(p.id());
-      p.style(applyParentNodeStylesRef.current(nd?.data?.viewProps?.bgColor));
+      p.style(applyParentNodeStylesRef.current(nd?.data?.viewProps));
     };
     // Only the added node and its parent can change compound status
     const onAdd = (ev) => {
@@ -283,9 +327,17 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       const p = t.parent();
       if (p.length) styleParent(p);
     };
+    // dom-node plugin writes `shape: rectangle` from its ResizeObserver (async, after add)
+    const onStyle = (ev) => {
+      const t = ev.target;
+      if (t.isNode() && t.isParent() && t.style("shape") === "rectangle")
+        styleParent(t);
+    };
     cy.on("add", onAdd);
+    cy.on("style", "node", onStyle);
     return () => {
       cy.off("add", onAdd);
+      cy.off("style", "node", onStyle);
     };
   }, []);
 
@@ -295,7 +347,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     cy.startBatch();
     cy.nodes(":parent").forEach((node) => {
       const nd = nodeById.get(node.id());
-      node.style(applyParentNodeStyles(nd?.data?.viewProps?.bgColor));
+      node.style(applyParentNodeStyles(nd?.data?.viewProps));
     });
     edges.forEach(({ data }) => {
       const cyEdge = cy.getElementById(data.id);
@@ -511,6 +563,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     >
       <Box
         ref={containerRef}
+        // DOM nodes sit above the canvas; in draw mode they must let mousedown reach cytoscape/edgehandles
+        className={isEdgeHandlesEnabled ? "flow-draw-mode" : undefined}
         padding={0}
         width="100%"
         height="100%"
@@ -539,6 +593,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
             cy.on("select", "edge", (e) => {
               const edge = e.target;
+              // one selection toolbar at a time
+              if (selectedNodeIdsRef.current.length) setSelectedNodeIds([]);
               setSelectedEdgeId(edge.id());
               callbacks.onEdgeSelect?.(edge.id(), edge.data());
             });
@@ -549,6 +605,25 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
             cy.on("remove", "edge", (e) => {
               const edge = e.target;
               callbacks.onEdgeRemove?.(edge.id(), edge.data());
+            });
+
+            // Box selection (multi-select mode) happens on the canvas; mirror it into React state
+            cy.on("boxselect", "node", (e) => {
+              const id = e.target.id();
+              const cur = selectedNodeIdsRef.current;
+              if (!cur.includes(id)) {
+                setSelectedNodeIds([...cur, id]);
+                callbacks.onNodeSelect?.(id, e.target.data());
+              }
+            });
+
+            // Tap on empty canvas clears the node selection (edges unselect natively)
+            cy.on("tap", (e) => {
+              if (e.target !== cy) return;
+              if (selectedNodeIdsRef.current.length) {
+                setSelectedNodeIds([]);
+                callbacks.onNodeDeselect?.();
+              }
             });
 
             cy.on("tap", ":parent", (e) => {
@@ -660,7 +735,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
                 parent={node.data?.parent}
                 label={nodeLabel}
                 styleCallback={applyParentNodeStyles}
-                parentBgColor={node.data?.viewProps?.bgColor}
+                parentViewProps={node.data?.viewProps}
               >
                 <ViewComponent
                   {...node}
