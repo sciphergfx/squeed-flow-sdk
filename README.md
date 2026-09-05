@@ -192,25 +192,25 @@ default route. The SDK retains selection, colors, dash animation, and labels.
 
 ### Node Events
 
-| Callback                  | Signature                                      | Description                                                                                      |
-| ------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `onNodeSelect`            | `(nodeId, nodeData) => void`                   | Node clicked/selected                                                                            |
-| `onNodeDeselect`          | `() => void`                                   | Selection cleared                                                                                |
-| `onNodeDoubleClick`       | `(nodeId, nodeData) => void`                   | Node double-clicked                                                                              |
-| `onNodeCreate`            | `(params) => void`                             | Node created via edge drawing into empty space                                                   |
-| `onNodeDelete`            | `(nodeId, nodeData) => void`                   | Node deleted                                                                                     |
-| `onNodeLabelChange`       | `(nodeId, newLabel) => void`                   | Node label edited inline                                                                         |
-| `onNodeContentChange`     | `(nodeId, content: string) => void`            | Multiline content saved; raw-graph consumers store `data.config.content`                         |
-| `onNodeAnimationChange`   | `(nodeId, animated: boolean) => void`          | Border animation toggled; raw-graph consumers store `data.isNodeAnimated`                        |
-| `onNodeCollapse`          | `(nodeId, collapsed) => void`                  | Collapse toggle clicked                                                                          |
-| `onNodeColorChange`       | `(nodeId, colorType, color) => void`           | Node color changed via toolbar                                                                   |
-| `onNodeBorderColorChange` | `(nodeId, color: string) => void`              | Border color picked; raw consumers update `data.viewProps.borderColor` (empty string resets)     |
-| `onNodeBorderStyleChange` | `(nodeId, "solid" \| "dashed") => void`        | Border style changed; raw consumers update `data.viewProps.borderStyle`                          |
-| `onNodeBorderWidthChange` | `(nodeId, width: number \| undefined) => void` | Border thickness changed; raw consumers update `data.viewProps.borderWidth` (`undefined` resets) |
-| `onNodeBorderRadiusChange` | `(nodeId, radius: number \| undefined) => void` | Corner radius changed; raw consumers update `data.viewProps.borderRadius` (`undefined` resets) |
-| `onNodeIconChange`        | `(nodeId, iconName) => void`                   | Node icon changed via toolbar                                                                    |
-| `onNodeOutlineChange`     | `(nodeId, outline: boolean) => void`           | Outline toggled; raw-graph consumers store `data.viewProps.outline`                              |
-| `onNodeHoverAction`       | `(actionId, nodeId, nodeData) => void`         | Hover overlay action clicked                                                                     |
+| Callback                   | Signature                                       | Description                                                                                      |
+| -------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `onNodeSelect`             | `(nodeId, nodeData) => void`                    | Node clicked/selected                                                                            |
+| `onNodeDeselect`           | `() => void`                                    | Selection cleared                                                                                |
+| `onNodeDoubleClick`        | `(nodeId, nodeData) => void`                    | Node double-clicked                                                                              |
+| `onNodeCreate`             | `(params) => void`                              | Node created via edge drawing into empty space                                                   |
+| `onNodeDelete`             | `(nodeId, nodeData) => void`                    | Node deleted                                                                                     |
+| `onNodeLabelChange`        | `(nodeId, newLabel) => void`                    | Node label edited inline                                                                         |
+| `onNodeContentChange`      | `(nodeId, content: string) => void`             | Multiline content saved; raw-graph consumers store `data.config.content`                         |
+| `onNodeAnimationChange`    | `(nodeId, animated: boolean) => void`           | Border animation toggled; raw-graph consumers store `data.isNodeAnimated`                        |
+| `onNodeCollapse`           | `(nodeId, collapsed) => void`                   | Collapse toggle clicked                                                                          |
+| `onNodeColorChange`        | `(nodeId, colorType, color) => void`            | Node color changed via toolbar                                                                   |
+| `onNodeBorderColorChange`  | `(nodeId, color: string) => void`               | Border color picked; raw consumers update `data.viewProps.borderColor` (empty string resets)     |
+| `onNodeBorderStyleChange`  | `(nodeId, "solid" \| "dashed") => void`         | Border style changed; raw consumers update `data.viewProps.borderStyle`                          |
+| `onNodeBorderWidthChange`  | `(nodeId, width: number \| undefined) => void`  | Border thickness changed; raw consumers update `data.viewProps.borderWidth` (`undefined` resets) |
+| `onNodeBorderRadiusChange` | `(nodeId, radius: number \| undefined) => void` | Corner radius changed; raw consumers update `data.viewProps.borderRadius` (`undefined` resets)   |
+| `onNodeIconChange`         | `(nodeId, iconName) => void`                    | Node icon changed via toolbar                                                                    |
+| `onNodeOutlineChange`      | `(nodeId, outline: boolean) => void`            | Outline toggled; raw-graph consumers store `data.viewProps.outline`                              |
+| `onNodeHoverAction`        | `(actionId, nodeId, nodeData) => void`          | Hover overlay action clicked                                                                     |
 
 ### Edge Events
 
@@ -247,7 +247,7 @@ Special `$`-prefixed keys control node rendering:
 | `$borderColor`                      | Border color; accepts Chakra tokens, hex, or `"transparent"`                                                |
 | `$borderStyle`                      | Border style; the toolbar toggles `"solid"` / `"dashed"`                                                    |
 | `$borderWidth`                      | Nonnegative border thickness in diagram pixels; `0` hides the border, removing the key restores the default |
-| `$borderRadius`                     | Nonnegative corner radius; `0` makes square corners, removing the key restores the default |
+| `$borderRadius`                     | Nonnegative corner radius; `0` makes square corners, removing the key restores the default                  |
 | `$outline`                          | `true` for an unfilled node with a border; `false` restores its saved fill                                  |
 | `$content`                          | Markdown source, including an empty string; editable when `config.editable` is enabled                      |
 | `$isNodeAnimated`                   | `true` for a clockwise circulating border stroke; independent of edge animation and off by default          |
@@ -349,6 +349,43 @@ Store mappings on the source node. Property references are exact row keys, while
 ```
 
 Use **Nodes / Properties** for edge-mode controls: `"nodes"` (the default) attaches edges to node boxes; `"properties"` attaches to rows. The previous `"workflow"` value remains accepted as an alias for `"nodes"`. Switching modes does not change the document or graph connections. Edges without property references keep their ordinary node attachment. Row ports stay left/right, reversed in `RL`, even for vertical layouts.
+
+### Workflow Interfaces
+
+The bottom toolbar includes the Nodes/Properties dropdown after Graph theme, with a divider before the theme swatches. Properties mode exposes an upload icon for `.ts` interfaces or `.json` JSON Schema. Uploads stay local and separate from graph JSON. Incompatible connections remain editable and turn red; missing declarations are amber/unverified. Hover the `!` marker for the reason. Validation compares the declared source property type to the target type, not the current property values. Node-only edges are not validated.
+
+TypeScript contracts use a `Graph` interface or type alias keyed by node ID. A single declaration may use another name. Exact IDs are checked first; `root.alpha` also matches `alpha`. Labels are not used for matching.
+
+```ts
+interface Graph {
+  alpha: { output: string; optional?: number };
+  beta: { input: string; count: number };
+}
+```
+
+Equivalent JSON Schema:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "alpha": {
+      "type": "object",
+      "properties": { "output": { "type": "string" }, "optional": { "type": "number" } },
+      "required": ["output"]
+    },
+    "beta": {
+      "type": "object",
+      "properties": { "input": { "type": "string" }, "count": { "type": "number" } },
+      "required": ["input", "count"]
+    }
+  }
+}
+```
+
+Supported types are string, number, boolean, null, primitive literals/unions, arrays, and nested structural objects. JSON additionally supports integer and nonrecursive local `$ref`. Properties are optional unless included in JSON Schema `required`; optional sources cannot supply required targets. Extra object fields are allowed. This is a bounded structural compatibility checker, not the complete TypeScript type system or a full JSON Schema validator. Unsupported constraints (including closed objects), recursion, inheritance, generics, imports and executable code are rejected. Files are limited to 256 KB and expansion to 512 type nodes. TypeScript is parsed, never executed; its runtime dependency loads lazily on `.ts` uploads. Vite hosts may pre-optimize `typescript` to avoid a development-only reload on its first use.
+
+For host-owned state, supply `config.edgeMode` and `config.workflowContract`, and apply `callbacks.onEdgeModeChange(mode)` and `callbacks.onWorkflowContractChange(contract)` to that state. Omit these config fields for local state. An explicitly present `workflowContract: undefined` clears a controlled contract; a failed upload retains the previous one. Read-only mode disables mode changes and uploads. Exported `parseJsonContract(source, name)`, async `parseTypeScriptContract(source, name)`, `readWorkflowContract(file)`, and `connectionIssue(contract, edgeData)` let workflow hosts reuse the same check outside the UI. `connectionIssue` returns a reason or `undefined`; it does not block workflow execution itself.
 
 Drag an output port to an input port or destination row to append a mapping. Property drags into empty space cancel. Existing node-level drawing still writes `$target`. The edge toolbar edits/deletes only the selected mapping. In document mode, store the full `onJsonChange` document; in raw `nodes`/`edges` mode, store the optional third `onEdgeCreate` argument in the edge's `data`.
 

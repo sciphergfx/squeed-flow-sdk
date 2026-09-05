@@ -27,6 +27,7 @@ export default defineConfig({
             "@emotion/react",
             "@emotion/styled",
             "framer-motion",
+            "typescript",
           ].includes(id) ||
           id.startsWith("react-icons") ||
           id === "markdown-to-jsx" ||

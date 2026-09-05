@@ -11,6 +11,9 @@ import type {
 } from "../types";
 
 export interface FlowDiagramContextValue {
+  setEdgeMode: (mode: EdgeMode) => void;
+  workflowContract?: import("../core/workflowContract").WorkflowContract;
+  setWorkflowContract: (contract: import("../core/workflowContract").WorkflowContract | undefined) => void;
   themeColor: string;
   setThemeColor: (color: string) => void;
   backgroundSelected: boolean;
@@ -102,6 +105,9 @@ export function FlowDiagramProvider({
   const [isArrayNodeMode, setIsArrayNodeMode] = useState(false);
   const [isPinned, setIsPinned] = useState(true);
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
+  const [localEdgeMode, setEdgeMode] = useState<EdgeMode>("nodes");
+  const [localContract, setWorkflowContract] = useState<import("../core/workflowContract").WorkflowContract>();
+  const workflowContract = Object.prototype.hasOwnProperty.call(config, "workflowContract") ? config.workflowContract : localContract;
   const [localThemeColor, setThemeColor] = useState("blue.500");
   const [backgroundSelected, setBackgroundSelected] = useState(false);
 
@@ -145,6 +151,8 @@ export function FlowDiagramProvider({
       onViewportChange: wrap("onViewportChange"),
       onDirectionChange: wrap("onDirectionChange"),
       onThemeColorChange: wrap("onThemeColorChange"),
+      onEdgeModeChange: wrap("onEdgeModeChange"),
+      onWorkflowContractChange: wrap("onWorkflowContractChange"),
       onArrayModeChange: wrap("onArrayModeChange"),
       onInit: wrap("onInit"),
       onJsonChange: wrap("onJsonChange"),
@@ -157,7 +165,7 @@ export function FlowDiagramProvider({
   const direction = config.direction || "LR";
   const nodeAlignment = config.nodeAlignment ?? "center";
   const edgeMode =
-    config.edgeMode === "workflow" ? "nodes" : (config.edgeMode ?? "nodes");
+    config.edgeMode === "workflow" ? "nodes" : (config.edgeMode ?? localEdgeMode);
   const readOnly = config.readOnly ?? false;
   // Value-stable so inline literals don't re-render every consumer
   const parentNodeStyleKey = JSON.stringify(config.parentNodeStyle ?? null);
@@ -288,6 +296,9 @@ export function FlowDiagramProvider({
       direction,
       nodeAlignment,
       edgeMode,
+      setEdgeMode,
+      workflowContract,
+      setWorkflowContract,
       parentNodeStyle,
       selectedNodeIds,
       setSelectedNodeIds,
@@ -320,6 +331,7 @@ export function FlowDiagramProvider({
       direction,
       nodeAlignment,
       edgeMode,
+      workflowContract,
       parentNodeStyle,
       selectedNodeIds,
       selectedEdgeId,

@@ -137,7 +137,8 @@ export function bindSqueedCallbacks(
       });
     },
     onNodeBorderRadiusChange: (id, radius) => {
-      if (radius !== undefined && (!Number.isFinite(radius) || radius < 0)) return;
+      if (radius !== undefined && (!Number.isFinite(radius) || radius < 0))
+        return;
       callbacks.onNodeBorderRadiusChange?.(id, radius);
       emit(setNodeProp(json, id, "$borderRadius", radius), {
         type: "nodeStyle",

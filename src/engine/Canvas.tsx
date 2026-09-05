@@ -50,6 +50,7 @@ export interface CanvasNode {
 }
 
 export interface CanvasEdge extends FlowEdgeProperties {
+  validationIssue?: string;
   id: string;
   data: FlowDiagramEdge["data"];
   type: string;
@@ -1000,6 +1001,7 @@ function Canvas(props: CanvasProps) {
                   key={e.id}
                   id={e.id}
                   edgeData={e.data}
+                  validationIssue={e.validationIssue}
                   edgeType={e.type}
                   propertyMode={edgeMode === "properties"}
                   customEdgeTypes={props.customEdgeTypes}

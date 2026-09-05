@@ -46,7 +46,13 @@ export function ToolbarSelect(props: React.ComponentProps<"select">) {
       bg="transparent"
       color={dark ? "gray.200" : "gray.800"}
       _hover={{ bg: "transparent" }}
-      css={{ "& option": { background: dark ? "var(--chakra-colors-gray-800)" : "var(--chakra-colors-white)" } }}
+      css={{
+        "& option": {
+          background: dark
+            ? "var(--chakra-colors-gray-800)"
+            : "var(--chakra-colors-white)",
+        },
+      }}
       {...props}
     />
   );

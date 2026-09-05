@@ -15,13 +15,18 @@ import {
   PiTrash,
   PiX,
 } from "react-icons/pi";
+import { TbBorderRadius } from "react-icons/tb";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
 import { getNodeBorderWidth } from "../nodes/nodeBorder";
 import { NodeIconPicker } from "./NodeIconPicker";
 import type { SelectionToolbarConfig } from "../types";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
-import { ToolbarIconButton, ToolbarSelect, ToolbarTooltip } from "./toolbarControls";
+import {
+  ToolbarIconButton,
+  ToolbarSelect,
+  ToolbarTooltip,
+} from "./toolbarControls";
 
 export const DEFAULT_PALETTE = [
   "blue.500",
@@ -155,7 +160,9 @@ export function Swatches({
   const { colorInactive, colorText } = useCustomColors();
   return (
     <HStack gap={1} aria-label={label} role="group">
-      {[...new Set([...colors, ...(includeTransparent ? ["transparent"] : [])])].map((c) => {
+      {[
+        ...new Set([...colors, ...(includeTransparent ? ["transparent"] : [])]),
+      ].map((c) => {
         const active = value === c;
         return (
           <ToolbarTooltip key={c} label={`${label}: ${c}`}>
@@ -329,33 +336,48 @@ export function EdgeTools({
 
 function BorderRadiusControl({ ids }: { ids: string[] }) {
   const { callbacks, config } = useFlowDiagramContext();
+  const { colorInactive } = useCustomColors();
   const { nodeById } = useFlowData();
   const [custom, setCustom] = useState(false);
-  const radii = ids.map(id => nodeById.get(id)?.data.viewProps?.borderRadius);
-  const mixed = !radii.every(radius => radius === radii[0]);
+  const radii = ids.map((id) => nodeById.get(id)?.data.viewProps?.borderRadius);
+  const mixed = !radii.every((radius) => radius === radii[0]);
   const value = mixed ? "mixed" : String(radii[0] ?? "");
   const presets = ["0", "8", "16", "30", "53", "100"];
-  const customMode = custom || (!mixed && value !== "" && !presets.includes(value));
-  const update = (radius: number | undefined) => ids.forEach(id => callbacks.onNodeBorderRadiusChange?.(id, radius));
+  const customMode =
+    custom || (!mixed && value !== "" && !presets.includes(value));
+  const update = (radius: number | undefined) =>
+    ids.forEach((id) => callbacks.onNodeBorderRadiusChange?.(id, radius));
   return (
     <>
       <Divider />
+      <Box position="relative" w="36px" h="30px" display="grid" placeItems="center">
+      <Icon as={TbBorderRadius} boxSize={5} color={colorInactive} aria-hidden="true" />
       <ToolbarSelect
         aria-label="Node border radius"
-        title="Node border radius"
+        title={`Border radius: ${mixed ? "Mixed" : radii[0] === undefined ? "Default" : `${radii[0]}px`}`}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }}
         value={customMode ? "custom" : value}
         disabled={config.readOnly}
-        onChange={event => {
+        onChange={(event) => {
           const next = event.target.value;
           setCustom(next === "custom");
           if (next !== "custom") update(next === "" ? undefined : Number(next));
         }}
       >
         <option value="">Default radius</option>
-        {mixed && <option value="mixed" disabled>Mixed radii</option>}
-        {presets.map(radius => <option key={radius} value={radius}>{radius}px radius</option>)}
+        {mixed && (
+          <option value="mixed" disabled>
+            Mixed radii
+          </option>
+        )}
+        {presets.map((radius) => (
+          <option key={radius} value={radius}>
+            {radius}px radius
+          </option>
+        ))}
         <option value="custom">Custom radius</option>
       </ToolbarSelect>
+      </Box>
       {customMode && (
         <CommitInput
           ariaLabel="Custom border radius"
@@ -364,7 +386,7 @@ function BorderRadiusControl({ ids }: { ids: string[] }) {
           min={0}
           width="72px"
           value={mixed ? "" : value}
-          onCommit={next => update(next === "" ? undefined : Number(next))}
+          onCommit={(next) => update(next === "" ? undefined : Number(next))}
         />
       )}
     </>
@@ -438,7 +460,9 @@ export function NodeTools({
           {ids.length} selected
         </Text>
       )}
-      {show("style") && <BorderRadiusControl key={ids.join("\u0000")} ids={ids} />}
+      {show("style") && (
+        <BorderRadiusControl key={ids.join("\u0000")} ids={ids} />
+      )}
       {show("outline") && (
         <>
           <Divider />
@@ -585,7 +609,11 @@ export function NodeTools({
       {single && show("icon") && (
         <>
           <Divider />
-          <NodeIconPicker key={ids[0]} nodeId={ids[0]} value={data?.config?.icon} />
+          <NodeIconPicker
+            key={ids[0]}
+            nodeId={ids[0]}
+            value={data?.config?.icon}
+          />
           <CommitInput
             ariaLabel="Node icon"
             placeholder="Icon (e.g. PiGear)"

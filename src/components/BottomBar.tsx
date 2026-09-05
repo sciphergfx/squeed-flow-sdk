@@ -29,8 +29,15 @@ import { useCustomColors } from "../theme/useCustomColors";
 import type { FlowDirection } from "../types";
 import { FlowType } from "../types";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
-import { DEFAULT_PALETTE, EdgeTools, NodeTools, Swatches } from "./SelectionToolbar";
+import {
+  DEFAULT_PALETTE,
+  EdgeTools,
+  NodeTools,
+  Swatches,
+} from "./SelectionToolbar";
 import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
+import { WorkflowControls } from "./WorkflowControls";
+import { ToolbarScrollContainer } from "./ToolbarScrollContainer";
 
 const DIRECTIONS: {
   value: FlowDirection;
@@ -189,7 +196,14 @@ const BottomBar = () => {
       setIsPinned(true);
       setIsCollapsed(false);
     }
-  }, [backgroundSelected, selectedNodeIds.length, selectedEdgeId, readOnly, setBackgroundSelected, setIsPinned]);
+  }, [
+    backgroundSelected,
+    selectedNodeIds.length,
+    selectedEdgeId,
+    readOnly,
+    setBackgroundSelected,
+    setIsPinned,
+  ]);
 
   const customRenderBottomBar = config.renderBottomBar;
 
@@ -355,26 +369,7 @@ const BottomBar = () => {
           alignItems="center"
           gap={2}
         >
-          <Box
-            bg={background}
-            alignContent="center"
-            data-flow-toolbar-scroll=""
-            h={50}
-            minH={50}
-            minW={0}
-            maxW="100%"
-            flex="0 1 auto"
-            overflowX="auto"
-            overflowY="hidden"
-            css={{
-              scrollbarWidth: "none",
-              "&::-webkit-scrollbar": { display: "none" },
-            }}
-            borderColor={isDark ? border : "gray.300"}
-            borderWidth={1}
-            borderRadius="30px"
-            boxShadow={`0 0 0 8px color-mix(in srgb, var(--chakra-colors-${background.replace(".", "-")}) 60%, transparent)`}
-          >
+          <ToolbarScrollContainer background={background} border={isDark ? border : "gray.300"}>
             <HStack
               px={2}
               gap={1}
@@ -607,6 +602,8 @@ const BottomBar = () => {
                         />
                       </ToolbarTooltip>
                       {backgroundSelected && !readOnly && (
+                        <>
+                        <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />
                         <Swatches
                           label="Graph theme"
                           colors={DEFAULT_PALETTE}
@@ -617,7 +614,9 @@ const BottomBar = () => {
                             callbacks.onThemeColorChange?.(color);
                           }}
                         />
+                        </>
                       )}
+                      <WorkflowControls />
                     </>
                   )}
 
@@ -648,7 +647,7 @@ const BottomBar = () => {
                 </>
               )}
             </HStack>
-          </Box>
+          </ToolbarScrollContainer>
 
           {/* Direction picker */}
           {!selectionActive && (

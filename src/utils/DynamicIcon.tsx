@@ -50,37 +50,91 @@ const DynamicIcon = ({ name, ...props }) => {
 
         let icons;
         switch (library) {
-          case "md": icons = await import("react-icons/md"); break;
-          case "fa6": icons = await import("react-icons/fa6"); break;
-          case "io5": icons = await import("react-icons/io5"); break;
-          case "io": icons = await import("react-icons/io"); break;
-          case "ti": icons = await import("react-icons/ti"); break;
-          case "go": icons = await import("react-icons/go"); break;
-          case "fi": icons = await import("react-icons/fi"); break;
-          case "di": icons = await import("react-icons/di"); break;
-          case "ai": icons = await import("react-icons/ai"); break;
-          case "bs": icons = await import("react-icons/bs"); break;
-          case "ri": icons = await import("react-icons/ri"); break;
-          case "fc": icons = await import("react-icons/fc"); break;
-          case "gi": icons = await import("react-icons/gi"); break;
-          case "hi2": icons = await import("react-icons/hi2"); break;
-          case "hi": icons = await import("react-icons/hi"); break;
-          case "si": icons = await import("react-icons/si"); break;
-          case "sl": icons = await import("react-icons/sl"); break;
-          case "im": icons = await import("react-icons/im"); break;
-          case "bi": icons = await import("react-icons/bi"); break;
-          case "pi": icons = await import("react-icons/pi"); break;
-          case "vsc": icons = await import("react-icons/vsc"); break;
-          case "tb": icons = await import("react-icons/tb"); break;
-          case "tfi": icons = await import("react-icons/tfi"); break;
-          case "cg": icons = await import("react-icons/cg"); break;
-          case "lia": icons = await import("react-icons/lia"); break;
-          case "lu": icons = await import("react-icons/lu"); break;
-          default: throw new Error(`Unsupported library: ${library}`);
+          case "md":
+            icons = await import("react-icons/md");
+            break;
+          case "fa6":
+            icons = await import("react-icons/fa6");
+            break;
+          case "io5":
+            icons = await import("react-icons/io5");
+            break;
+          case "io":
+            icons = await import("react-icons/io");
+            break;
+          case "ti":
+            icons = await import("react-icons/ti");
+            break;
+          case "go":
+            icons = await import("react-icons/go");
+            break;
+          case "fi":
+            icons = await import("react-icons/fi");
+            break;
+          case "di":
+            icons = await import("react-icons/di");
+            break;
+          case "ai":
+            icons = await import("react-icons/ai");
+            break;
+          case "bs":
+            icons = await import("react-icons/bs");
+            break;
+          case "ri":
+            icons = await import("react-icons/ri");
+            break;
+          case "fc":
+            icons = await import("react-icons/fc");
+            break;
+          case "gi":
+            icons = await import("react-icons/gi");
+            break;
+          case "hi2":
+            icons = await import("react-icons/hi2");
+            break;
+          case "hi":
+            icons = await import("react-icons/hi");
+            break;
+          case "si":
+            icons = await import("react-icons/si");
+            break;
+          case "sl":
+            icons = await import("react-icons/sl");
+            break;
+          case "im":
+            icons = await import("react-icons/im");
+            break;
+          case "bi":
+            icons = await import("react-icons/bi");
+            break;
+          case "pi":
+            icons = await import("react-icons/pi");
+            break;
+          case "vsc":
+            icons = await import("react-icons/vsc");
+            break;
+          case "tb":
+            icons = await import("react-icons/tb");
+            break;
+          case "tfi":
+            icons = await import("react-icons/tfi");
+            break;
+          case "cg":
+            icons = await import("react-icons/cg");
+            break;
+          case "lia":
+            icons = await import("react-icons/lia");
+            break;
+          case "lu":
+            icons = await import("react-icons/lu");
+            break;
+          default:
+            throw new Error(`Unsupported library: ${library}`);
         }
 
         const icon = icons[name];
-        if (!icon) throw new Error(`Icon ${name} not found in library ${library}`);
+        if (!icon)
+          throw new Error(`Icon ${name} not found in library ${library}`);
 
         setIconComponent(() => icon);
       } catch (err) {
@@ -97,7 +151,17 @@ const DynamicIcon = ({ name, ...props }) => {
 
   if (image) {
     const { size = 80, style, ...imageProps } = props;
-    return <img {...imageProps} src={name} alt="" width={size} height={size} referrerPolicy="no-referrer" style={{ objectFit: "contain", ...style }} />;
+    return (
+      <img
+        {...imageProps}
+        src={name}
+        alt=""
+        width={size}
+        height={size}
+        referrerPolicy="no-referrer"
+        style={{ objectFit: "contain", ...style }}
+      />
+    );
   }
   if (loading) return null;
   if (!IconComponent) return null;

@@ -37,6 +37,7 @@ const LABEL_FONT = `${LABEL_FONT_SIZE}px ${EDGE_LABEL_FONT_FAMILY}`;
 export const DASH_PATTERN = "32 18";
 
 export interface EdgeViewProps {
+  validationIssue?: string;
   id: string;
   edgeData?: FlowDiagramEdge["data"];
   edgeType?: string;
@@ -70,6 +71,7 @@ const stop = (e: { stopPropagation(): void }) => e.stopPropagation();
 function EdgeView({
   id,
   edgeData,
+  validationIssue,
   edgeType = "rounded-orthogonal",
   customEdgeTypes,
   source,
@@ -107,9 +109,11 @@ function EdgeView({
       tgtDist: STANDOFF,
       arrowGap: ARROW_GAP,
       arrowSize: ARROW_SIZE,
-      headShape: propertyMode && (inverted ? sourceY !== undefined : targetY !== undefined)
-        ? "square"
-        : "triangle",
+      headShape:
+        propertyMode &&
+        (inverted ? sourceY !== undefined : targetY !== undefined)
+          ? "square"
+          : "triangle",
       radius: labelAtTarget ? 40 : TAXI_RADIUS,
       arrowAt: inverted ? "source" : "target",
       labelTargetLength: labelAtTarget
@@ -215,6 +219,17 @@ function EdgeView({
 
   if (!geo) return null;
 
+  const validationColor = validationIssue?.startsWith("Unverified:") ? "#b45309" : "#dc2626";
+  const displayColor = validationIssue ? validationColor : color;
+  const validationEl = validationIssue ? (
+    <g className="flow-sdk-edge-validation" role="img" aria-label={validationIssue}
+      transform={`translate(${geo.label.x} ${geo.label.y - (lines.length * LABEL_FONT_SIZE / 2) - 55})`}>
+      <title>{validationIssue}</title>
+      <circle r={24} fill={validationColor} stroke={labelBg} strokeWidth={4} />
+      <text textAnchor="middle" dominantBaseline="central" fontSize={32} fontWeight="bold" fill="white">!</text>
+    </g>
+  ) : null;
+
   const dashArray = dashed || animated ? DASH_PATTERN : undefined;
   const animClass = animated
     ? `flow-sdk-edge-anim${inverted ? " flow-sdk-edge-anim-rev" : ""}`
@@ -267,6 +282,8 @@ function EdgeView({
       data-edge-id={id}
       data-source-property={sourceProperty}
       data-target-property={targetProperty}
+      data-validation={validationIssue ? (validationIssue.startsWith("Unverified:") ? "unverified" : "invalid") : undefined}
+      aria-label={validationIssue}
       onPointerDown={stop}
       onClick={(e) => {
         e.stopPropagation();
@@ -276,13 +293,14 @@ function EdgeView({
       <path
         d={geo.d}
         fill="none"
-        stroke={color}
+        stroke={displayColor}
         strokeWidth={EDGE_WIDTH}
         strokeDasharray={dashArray}
         className={animClass}
       />
-      {geo.arrow && <path d={geo.arrow} fill={color} />}
+      {geo.arrow && <path d={geo.arrow} fill={displayColor} />}
       {labelLayer && labelEl ? createPortal(labelEl, labelLayer) : labelEl}
+      {labelLayer && validationEl ? createPortal(validationEl, labelLayer) : validationEl}
       <path className="flow-sdk-edge-hit" d={geo.d} />
     </g>
   );

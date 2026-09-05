@@ -192,6 +192,7 @@ export interface FlowDiagramConfig {
   direction?: FlowDirection;
   nodeAlignment?: NodeAlignment;
   edgeMode?: EdgeMode;
+  workflowContract?: import("../core/workflowContract").WorkflowContract;
   /** Layout algorithm */
   layout?: LayoutAlgorithm;
   /** Theme accent color (Chakra token e.g. "blue.500") */
@@ -283,7 +284,10 @@ export interface FlowDiagramCallbacks {
   onNodeBorderColorChange?: (nodeId: string, color: string) => void;
   onNodeBorderStyleChange?: (nodeId: string, style: "solid" | "dashed") => void;
   onNodeBorderWidthChange?: (nodeId: string, width: number | undefined) => void;
-  onNodeBorderRadiusChange?: (nodeId: string, radius: number | undefined) => void;
+  onNodeBorderRadiusChange?: (
+    nodeId: string,
+    radius: number | undefined,
+  ) => void;
   onNodeAnimationChange?: (nodeId: string, animated: boolean) => void;
   /** Fires when a hover overlay action is clicked */
   onNodeHoverAction?: (actionId: string, nodeId: string, nodeData: any) => void;
@@ -323,6 +327,8 @@ export interface FlowDiagramCallbacks {
   /** Fires when the flow direction changes via bottom bar */
   onDirectionChange?: (direction: FlowDirection) => void;
   onThemeColorChange?: (color: string) => void;
+  onEdgeModeChange?: (mode: EdgeMode) => void;
+  onWorkflowContractChange?: (contract: import("../core/workflowContract").WorkflowContract | undefined) => void;
   /** Fires when array/set mode toggles in bottom bar */
   onArrayModeChange?: (isArrayMode: boolean) => void;
   /** Fires once the renderer is ready with the engine handle (zoom/pan/fit/coordinate helpers) */

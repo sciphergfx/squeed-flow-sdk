@@ -107,7 +107,12 @@ function shorten(p: Point, toward: Point, amount: number): Point {
   return { x: toward.x + ratio * dx, y: toward.y + ratio * dy };
 }
 
-function arrowPath(tip: Point, from: Point, size: number, shape: "triangle" | "square" = "triangle"): string {
+function arrowPath(
+  tip: Point,
+  from: Point,
+  size: number,
+  shape: "triangle" | "square" = "triangle",
+): string {
   const dx = tip.x - from.x;
   const dy = tip.y - from.y;
   const len = Math.hypot(dx, dy) || 1;
@@ -354,7 +359,12 @@ export function propertyGeometry(
     options.arrowAt === "source"
       ? arrowPath(start, interior[0], options.arrowSize, options.headShape)
       : options.arrowAt === "target"
-        ? arrowPath(end, interior[interior.length - 1], options.arrowSize, options.headShape)
+        ? arrowPath(
+            end,
+            interior[interior.length - 1],
+            options.arrowSize,
+            options.headShape,
+          )
         : undefined;
   return roundedGeometry(
     lineStart,
@@ -438,7 +448,12 @@ export function bezierGeometry(
       options.arrowAt === "source"
         ? arrowPath(source, controlSource, options.arrowSize, options.headShape)
         : options.arrowAt === "target"
-          ? arrowPath(target, controlTarget, options.arrowSize, options.headShape)
+          ? arrowPath(
+              target,
+              controlTarget,
+              options.arrowSize,
+              options.headShape,
+            )
           : undefined,
     label: {
       x: (start.x + 3 * controlSource.x + 3 * controlTarget.x + end.x) / 8,

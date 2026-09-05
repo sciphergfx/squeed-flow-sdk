@@ -150,6 +150,8 @@ function Fixture() {
     },
     onViewportChange: (viewport) => record("viewport", viewport),
     onThemeColorChange: (color) => record("theme-color", color),
+    onEdgeModeChange: (mode) => record("edge-mode", mode),
+    onWorkflowContractChange: (contract) => record("workflow-contract", contract),
     onNodeSelect: (id) => record("select-node", id),
     onNodeDeselect: () => record("deselect-node"),
     onNodeDoubleClick: (id) => record("double-click", id),

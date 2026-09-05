@@ -1,6 +1,7 @@
 import { Box } from "@chakra-ui/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { calculateOptimalSpacing } from "../core/layoutCalculations";
+import { connectionIssue } from "../core/workflowContract";
 import {
   Canvas,
   type CanvasEdge,
@@ -49,6 +50,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     direction,
     nodeAlignment,
     edgeMode,
+    workflowContract,
     parentNodeStyle: parentDefaults,
     engineRef,
     callbacks,
@@ -250,6 +252,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           sourceProperty: data.sourceProperty,
           targetProperty: data.targetProperty,
           label: data.label,
+          validationIssue: edgeMode === "properties" && workflowContract ? connectionIssue(workflowContract, data) : undefined,
           color: data.color ? getChakraColorHex(data.color) : lineColor,
           labelBg,
           dashed: !!data.isEdgeDashed,
@@ -263,6 +266,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     lineColor,
     parallelTurns,
     config.edgeType,
+    edgeMode,
+    workflowContract,
     nodeById,
     resolveParentStyle,
     getColorHex,

@@ -5,6 +5,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   root: fileURLToPath(new URL("./browser/fixture", import.meta.url)),
   plugins: [react()],
+  optimizeDeps: { include: ["typescript"] },
   resolve: {
     dedupe: ["react", "react-dom", "@chakra-ui/react"],
     alias: {
