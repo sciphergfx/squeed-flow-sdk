@@ -28,11 +28,19 @@ for (const colorMode of ["light", "dark"] as const) {
     });
     await expect(radius).toHaveCSS("width", "36px");
     await expect(radius.locator("svg")).toHaveCount(1);
-    await expect.poll(() => radius.evaluate(element => {
-      const arc = element.querySelector("svg")!;
-      const neighbor = document.querySelector('[aria-label="Toggle node outline"]')!;
-      return getComputedStyle(arc).color === getComputedStyle(neighbor).color;
-    })).toBe(true);
+    await expect
+      .poll(() =>
+        radius.evaluate((element) => {
+          const arc = element.querySelector("svg")!;
+          const neighbor = document.querySelector(
+            '[aria-label="Toggle node outline"]',
+          )!;
+          return (
+            getComputedStyle(arc).color === getComputedStyle(neighbor).color
+          );
+        }),
+      )
+      .toBe(true);
     await panel.evaluate((element) => {
       element.scrollLeft = (element.scrollWidth - element.clientWidth) / 2;
     });
@@ -56,7 +64,7 @@ for (const colorMode of ["light", "dark"] as const) {
       ),
     ).toBe("separator");
     const separators = panel.getByRole("separator");
-    await expect(separators).toHaveCount(3);
+    await expect(separators).toHaveCount(4);
     for (const separator of await separators.all()) {
       await expect(separator).toBeVisible();
       await expect(separator).toHaveCSS("width", "1px");

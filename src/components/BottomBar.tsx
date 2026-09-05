@@ -184,10 +184,6 @@ const BottomBar = () => {
     !renderSelectedNodeToolbar;
   const selectionActive = edgeToolsActive || nodeToolsActive;
 
-  useEffect(() => {
-    if (selectionActive) setIsPinned(true);
-  }, [selectionActive, setIsPinned]);
-
   const visible = isPinned || showDirectionMenu || selectionActive;
 
   useEffect(() => {

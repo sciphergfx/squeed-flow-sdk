@@ -111,7 +111,9 @@ function Fixture() {
     isEdgeHandlesEnabled: false,
     editable: true,
     ...(query.has("custom") ? { customViews: { text: CustomNode } } : {}),
-    ...(query.get("custom") === "svg-icons" ? { customViews: { text: SvgIconNode } } : {}),
+    ...(query.get("custom") === "svg-icons"
+      ? { customViews: { text: SvgIconNode } }
+      : {}),
     ...(query.get("custom") === "editable"
       ? {
           customViews: {
@@ -153,7 +155,9 @@ function Fixture() {
     onViewportChange: (viewport) => record("viewport", viewport),
     onThemeColorChange: (color) => record("theme-color", color),
     onSpacingChange: (spacing) => record("spacing", spacing),
-    onBackgroundVariantChange: (variant) => record("background-variant", variant),
+    onEdgeRadiusChange: (radius) => record("edgeRadius", radius),
+    onBackgroundVariantChange: (variant) =>
+      record("background-variant", variant),
     onEdgeModeChange: (mode) => record("edge-mode", mode),
     onWorkflowContractChange: (contract) =>
       record("workflow-contract", contract),
@@ -166,7 +170,14 @@ function Fixture() {
     onEdgeSelect: (id) => record("select-edge", id),
     onEdgeIconChange: (id, icon) => {
       record("edge-icon", { id, icon });
-      if (raw) setEdges(current => current.map(edge => edge.data.id === id ? { ...edge, data: { ...edge.data, icon: icon || undefined } } : edge));
+      if (raw)
+        setEdges((current) =>
+          current.map((edge) =>
+            edge.data.id === id
+              ? { ...edge, data: { ...edge.data, icon: icon || undefined } }
+              : edge,
+          ),
+        );
     },
     onEdgeDeselect: () => record("deselect-edge"),
     onEdgeRemove: (id, data) => record("remove-edge", { id, data }),

@@ -51,14 +51,23 @@ export function WorkflowControls() {
       <ToolbarDivider />
       <ToolbarSelect
         aria-label="Edge mode"
-        title={edgeMode === "properties" ? "Connections: Properties" : "Connections: Nodes"}
-        icon={edgeMode === "properties" ? <PiTable size={20} /> : <PiTreeStructure size={20} />}
+        title={
+          edgeMode === "properties"
+            ? "Connections: Properties"
+            : "Connections: Nodes"
+        }
+        icon={
+          edgeMode === "properties" ? (
+            <PiTable size={20} />
+          ) : (
+            <PiTreeStructure size={20} />
+          )
+        }
         style={{ width: 36 }}
         value={edgeMode}
         disabled={readOnly}
         onValueChange={(value) => {
-          const mode =
-            value === "properties" ? "properties" : "nodes";
+          const mode = value === "properties" ? "properties" : "nodes";
           setEdgeMode(mode);
           callbacks.onEdgeModeChange?.(mode);
         }}

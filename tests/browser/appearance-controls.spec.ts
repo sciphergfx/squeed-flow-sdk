@@ -13,6 +13,11 @@ for (const width of [1440, 390]) {
     const slider = popup.getByRole("slider", { name: "Node spacing percentage", exact: true });
     await expect(popup).toHaveCSS("border-radius", "30px");
     await expect(slider).toHaveValue("100");
+    await expect(slider).toHaveCSS("appearance", "none");
+    await expect(slider).toHaveCSS("border-width", "0px");
+    await expect(slider).toHaveCSS("box-shadow", "none");
+    const inactiveColor = await trigger.evaluate(element => getComputedStyle(element).color);
+    expect(await slider.evaluate(element => getComputedStyle(element).backgroundImage)).toContain(inactiveColor);
     for (const themeColor of ["#e5484d", "#30a46c"]) {
       await page.evaluate(color => window.__flowTest.configure({ themeColor: color }), themeColor);
       await expect(slider).toHaveCSS("accent-color", themeColor === "#e5484d" ? "rgb(229, 72, 77)" : "rgb(48, 164, 108)");

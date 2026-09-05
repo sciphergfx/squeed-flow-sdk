@@ -307,7 +307,10 @@ function Canvas(props: CanvasProps) {
   }, []);
 
   useEffect(() => {
-    if (previousSpacingFactor.current !== spacingFactor && positionsRef.current.size > 0) {
+    if (
+      previousSpacingFactor.current !== spacingFactor &&
+      positionsRef.current.size > 0
+    ) {
       hasLayoutRunRef.current = true;
       pendingFitRef.current = false;
       clearTimeout(settleTimerRef.current);

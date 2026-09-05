@@ -12,7 +12,6 @@ for (const colorMode of ["light", "dark"] as const) {
         tags: {
           $: ["Region", "Production"],
           $label: "Deployment",
-          $collapsed: false,
           $bgColor: "#e0f2fe",
         },
       });
@@ -40,6 +39,24 @@ for (const colorMode of ["light", "dark"] as const) {
         page.locator('.flow-sdk-node[data-node-id="root.tags.0"]'),
       ).toHaveCount(action === "Collapse" ? 0 : 1);
     }
+  });
+}
+
+for (const [kind, value, childId] of [
+  ["plain array", ["Region", "Production"], "root.branch.0"],
+  ["nested object", { child: { value: "Region" } }, "root.branch.child"],
+] as const) {
+  test(`${kind} exposes collapse without explicit metadata`, async ({ page }) => {
+    await ready(page, "?graph=json");
+    await page.evaluate(value => window.__flowTest.replaceDocument({ branch: value, leaf: "Leaf" }), value);
+    const node = page.locator('.flow-sdk-node[data-node-id="root.branch"]');
+    const child = page.locator(`.flow-sdk-node[data-node-id="${childId}"]`);
+    await expect(child).toBeVisible();
+    await node.getByRole("button", { name: "Collapse", exact: true }).click();
+    await expect(child).toHaveCount(0);
+    await node.getByRole("button", { name: "Expand", exact: true }).click();
+    await expect(child).toBeVisible();
+    await expect(page.locator('.flow-sdk-node[data-node-id="root.leaf"]').getByRole("button", { name: /^(Collapse|Expand)$/ })).toHaveCount(0);
   });
 }
 

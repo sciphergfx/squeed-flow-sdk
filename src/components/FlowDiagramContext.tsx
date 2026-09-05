@@ -14,6 +14,8 @@ import type {
 
 export interface FlowDiagramContextValue {
   spacing: number;
+  edgeRadius: number | undefined;
+  setEdgeRadius: (radius: number) => void;
   setSpacing: (spacing: NodeSpacing) => void;
   backgroundVariant: BackgroundVariant;
   setBackgroundVariant: (variant: BackgroundVariant) => void;
@@ -115,12 +117,31 @@ export function FlowDiagramProvider({
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
   const [localEdgeMode, setEdgeMode] = useState<EdgeMode>("nodes");
   const [localSpacing, setSpacing] = useState<NodeSpacing>("normal");
-  const [localBackgroundVariant, setBackgroundVariant] = useState<BackgroundVariant>();
+  const [localEdgeRadius, setEdgeRadius] = useState<number>();
+  const requestedEdgeRadius = config.edgeRadius ?? localEdgeRadius;
+  const edgeRadius = requestedEdgeRadius !== undefined && Number.isFinite(requestedEdgeRadius)
+    ? Math.min(500, Math.max(0, requestedEdgeRadius))
+    : undefined;
+  const [localBackgroundVariant, setBackgroundVariant] =
+    useState<BackgroundVariant>();
   const requestedSpacing = config.spacing ?? localSpacing;
-  const spacing = typeof requestedSpacing === "number"
-    ? Number.isFinite(requestedSpacing) ? Math.min(2, Math.max(0.5, requestedSpacing)) : 1
-    : requestedSpacing === "compact" ? 0.5 : requestedSpacing === "spacious" ? 2 : 1;
-  const backgroundVariant = config.backgroundVariant ?? localBackgroundVariant ?? (config.backgroundPattern === "none" && config.backgroundColor === "transparent" ? "transparent" : config.backgroundPattern ?? "dot");
+  const spacing =
+    typeof requestedSpacing === "number"
+      ? Number.isFinite(requestedSpacing)
+        ? Math.min(2, Math.max(0.5, requestedSpacing))
+        : 1
+      : requestedSpacing === "compact"
+        ? 0.5
+        : requestedSpacing === "spacious"
+          ? 2
+          : 1;
+  const backgroundVariant =
+    config.backgroundVariant ??
+    localBackgroundVariant ??
+    (config.backgroundPattern === "none" &&
+    config.backgroundColor === "transparent"
+      ? "transparent"
+      : (config.backgroundPattern ?? "dot"));
   const [localContract, setWorkflowContract] =
     useState<import("../core/workflowContract").WorkflowContract>();
   const workflowContract = Object.prototype.hasOwnProperty.call(
@@ -174,6 +195,7 @@ export function FlowDiagramProvider({
       onDirectionChange: wrap("onDirectionChange"),
       onThemeColorChange: wrap("onThemeColorChange"),
       onSpacingChange: wrap("onSpacingChange"),
+      onEdgeRadiusChange: wrap("onEdgeRadiusChange"),
       onBackgroundVariantChange: wrap("onBackgroundVariantChange"),
       onEdgeModeChange: wrap("onEdgeModeChange"),
       onWorkflowContractChange: wrap("onWorkflowContractChange"),
@@ -315,6 +337,8 @@ export function FlowDiagramProvider({
     () => ({
       spacing,
       setSpacing,
+      edgeRadius,
+      setEdgeRadius,
       backgroundVariant,
       setBackgroundVariant,
       themeColor,
@@ -357,6 +381,7 @@ export function FlowDiagramProvider({
       themeColor,
       spacing,
       backgroundVariant,
+      edgeRadius,
       config.backgroundColor,
       backgroundSelected,
       edgeColor,

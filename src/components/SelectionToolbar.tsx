@@ -288,10 +288,7 @@ export function EdgeTools({
             value={data?.type ?? ""}
             disabled={config.readOnly}
             onValueChange={(value) =>
-              callbacks.onEdgeTypeChange?.(
-                edgeId,
-                value || undefined,
-              )
+              callbacks.onEdgeTypeChange?.(edgeId, value || undefined)
             }
           >
             <option value="">Default</option>
@@ -307,8 +304,12 @@ export function EdgeTools({
         <>
           <Divider />
           <NodeIconPicker key={edgeId} edgeId={edgeId} value={data?.icon} />
-          <CommitInput ariaLabel="Edge icon" placeholder="Icon name or SVG URL" value={data?.icon ?? ""}
-            onCommit={(icon) => callbacks.onEdgeIconChange?.(edgeId, icon)} />
+          <CommitInput
+            ariaLabel="Edge icon"
+            placeholder="Icon name or SVG URL"
+            value={data?.icon ?? ""}
+            onCommit={(icon) => callbacks.onEdgeIconChange?.(edgeId, icon)}
+          />
         </>
       )}
       {show("color") && (
@@ -369,7 +370,14 @@ function BorderRadiusControl({ ids }: { ids: string[] }) {
         placeItems="center"
       >
         <ToolbarSelect
-          icon={<Icon as={TbBorderRadius} boxSize={5} color={colorInactive} aria-hidden="true" />}
+          icon={
+            <Icon
+              as={TbBorderRadius}
+              boxSize={5}
+              color={colorInactive}
+              aria-hidden="true"
+            />
+          }
           aria-label="Node border radius"
           title={`Border radius: ${mixed ? "Mixed" : radii[0] === undefined ? "Default" : `${radii[0]}px`}`}
           style={{

@@ -191,6 +191,7 @@ export interface BottomBarRenderProps {
 /** Configuration for the flow diagram appearance and behavior */
 export interface FlowDiagramConfig {
   spacing?: NodeSpacing;
+  edgeRadius?: number;
   backgroundVariant?: BackgroundVariant;
   edgeType?: BuiltInEdgeType | (string & {});
   customEdgeTypes?: Record<string, CustomEdgeFactory>;
@@ -258,6 +259,7 @@ export interface FlowDiagramConfig {
 /** Event callbacks for the flow diagram */
 export interface FlowDiagramCallbacks {
   onSpacingChange?: (spacing: NodeSpacing) => void;
+  onEdgeRadiusChange?: (radius: number) => void;
   onBackgroundVariantChange?: (variant: BackgroundVariant) => void;
   // ── Node events ──
   /** Fires when a node is clicked/selected */

@@ -82,8 +82,11 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   const { edgeSep, rankSep, spacingFactor } = useMemo(() => {
     const base = calculateOptimalSpacing(nodes.length);
     const scale = spacing < 1 ? 0.3 + 0.7 * spacing : 0.5 + 0.5 * spacing;
-    return { edgeSep: base.edgeSep * scale, rankSep: base.rankSep * scale,
-      spacingFactor: 1.3 + (spacing - 1) * (spacing < 1 ? 0.4 : 0.3) };
+    return {
+      edgeSep: base.edgeSep * scale,
+      rankSep: base.rankSep * scale,
+      spacingFactor: 1.3 + (spacing - 1) * (spacing < 1 ? 0.4 : 0.3),
+    };
   }, [nodes.length, spacing]);
 
   const { bgColor: highlightColor } = useThemeContentColors(themeColor);
@@ -93,7 +96,10 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     colorText,
   } = useCustomColors();
 
-  const effectiveBgColor = backgroundVariant === "transparent" ? "transparent" : config.backgroundColor || bgColor;
+  const effectiveBgColor =
+    backgroundVariant === "transparent"
+      ? "transparent"
+      : config.backgroundColor || bgColor;
 
   const getColorHex = useCallback(
     (color) => {
@@ -587,7 +593,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
   const drawMode =
     !config.readOnly && isEdgeHandlesEnabled && config.edgeHandles !== false;
-  const backgroundPattern = backgroundVariant === "transparent" ? "none" : backgroundVariant;
+  const backgroundPattern =
+    backgroundVariant === "transparent" ? "none" : backgroundVariant;
 
   return (
     <DotPatternBackground

@@ -371,7 +371,7 @@ export function propertyGeometry(
     interior,
     lineEnd,
     arrow,
-    Math.min(options.radius, 40),
+    options.radius,
   );
 }
 

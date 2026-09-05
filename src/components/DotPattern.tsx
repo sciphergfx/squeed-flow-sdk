@@ -21,7 +21,13 @@ const DotPatternBackground = ({
 
   if (pattern === "none") {
     return (
-      <Box data-flow-background="none" width="100%" height="100%" padding={0} bg={backgroundColor}>
+      <Box
+        data-flow-background="none"
+        width="100%"
+        height="100%"
+        padding={0}
+        bg={backgroundColor}
+      >
         {children}
       </Box>
     );

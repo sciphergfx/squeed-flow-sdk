@@ -1,5 +1,6 @@
 import { memo, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import DynamicIcon from "../utils/DynamicIcon";
 import type {
   FlowDiagramConfig,
@@ -96,16 +97,16 @@ function EdgeView({
   loopIndex = 0,
   onSelect,
 }: EdgeViewProps) {
+  const { edgeRadius } = useFlowDiagramContext();
   const lines = useMemo(
     () => (label ? wrapText(label, LABEL_FONT, LABEL_MAX_WIDTH) : []),
     [label],
   );
   const icon = edgeData?.icon;
   const iconWidth = icon ? 48 + (lines.length ? 12 : 0) : 0;
-  const labelWidth = iconWidth + Math.max(
-    0,
-    ...lines.map((line) => measureText(line, LABEL_FONT)),
-  );
+  const labelWidth =
+    iconWidth +
+    Math.max(0, ...lines.map((line) => measureText(line, LABEL_FONT)));
   const geo = useMemo(() => {
     const opts: EdgeGeometryOptions = {
       srcDist: STANDOFF,
@@ -117,7 +118,7 @@ function EdgeView({
         (inverted ? sourceY !== undefined : targetY !== undefined)
           ? "square"
           : "triangle",
-      radius: labelAtTarget ? 40 : TAXI_RADIUS,
+      radius: edgeRadius ?? (labelAtTarget ? 40 : TAXI_RADIUS),
       arrowAt: inverted ? "source" : "target",
       labelTargetLength: labelAtTarget
         ? labelWidth + 2 * LABEL_PADDING
@@ -131,6 +132,7 @@ function EdgeView({
           ...opts,
           srcDist: 18,
           tgtDist: 18,
+          radius: edgeRadius ?? Math.min(opts.radius, 40),
         })
       : loop
         ? loopGeometry(source, loopIndex, {
@@ -206,6 +208,7 @@ function EdgeView({
     id,
     edgeData,
     edgeType,
+    edgeRadius,
     customEdgeTypes,
     target,
     propertyMode,
@@ -234,7 +237,14 @@ function EdgeView({
       transform={`translate(${geo.label.x} ${geo.label.y - (lines.length * LABEL_FONT_SIZE) / 2 - 55})`}
     >
       <title>{validationIssue}</title>
-      <DynamicIcon name="PiWarningCircleFill" svg size={48} x={-24} y={-24} color={validationColor} />
+      <DynamicIcon
+        name="PiWarningCircleFill"
+        svg
+        size={48}
+        x={-24}
+        y={-24}
+        color={validationColor}
+      />
     </g>
   ) : null;
 
@@ -280,11 +290,29 @@ function EdgeView({
             </tspan>
           ))}
         </text>
-        {icon && <g className="flow-sdk-edge-icon" opacity={color === "transparent" ? 0 : 1}>
-          <title>{label ? `Edge icon: ${label}` : "Edge icon"}</title>
-          <rect x={-w / 2} y={-24} width={48} height={48} fill="transparent" />
-          <DynamicIcon name={icon} svg size={48} x={-w / 2} y={-24} color={color} />
-        </g>}
+        {icon && (
+          <g
+            className="flow-sdk-edge-icon"
+            opacity={color === "transparent" ? 0 : 1}
+          >
+            <title>{label ? `Edge icon: ${label}` : "Edge icon"}</title>
+            <rect
+              x={-w / 2}
+              y={-24}
+              width={48}
+              height={48}
+              fill="transparent"
+            />
+            <DynamicIcon
+              name={icon}
+              svg
+              size={48}
+              x={-w / 2}
+              y={-24}
+              color={color}
+            />
+          </g>
+        )}
       </g>
     );
   }

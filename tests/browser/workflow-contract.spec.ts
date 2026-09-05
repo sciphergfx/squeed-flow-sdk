@@ -199,7 +199,10 @@ test("new incompatible mappings remain editable and revalidate after graph chang
 }) => {
   await ready(page, "?graph=connections");
   await page.mouse.click(10, 10);
-  await chooseToolbarOption(page.getByRole("combobox", { name: "Edge mode", exact: true }), "Properties");
+  await chooseToolbarOption(
+    page.getByRole("combobox", { name: "Edge mode", exact: true }),
+    "Properties",
+  );
   await page
     .getByLabel("Workflow interface file", { exact: true })
     .setInputFiles({

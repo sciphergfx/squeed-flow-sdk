@@ -69,7 +69,7 @@ test("direction picker stays open until toggled closed or a direction is chosen"
   ).toContainText("TB");
 });
 
-test("opening selection tools keeps the toolbar visible after deselection", async ({
+test("selecting the background keeps the toolbar visible after deselection", async ({
   page,
 }) => {
   await ready(page);
@@ -88,6 +88,26 @@ test("opening selection tools keeps the toolbar visible after deselection", asyn
   ).toHaveCount(0);
   await expect(toolbar).toBeVisible();
 });
+
+for (const width of [1440, 390]) {
+  for (const pinned of [true, false]) {
+    test(`selection preserves ${pinned ? "pinned" : "unpinned"} toolbar at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 950 });
+      await ready(page);
+      const toolbar = page.getByRole("toolbar", { name: "Diagram controls" }).locator(":scope > div");
+      if (!pinned) await page.getByRole("button", { name: "Pin", exact: true }).click();
+      for (const kind of ["node", "edge"]) {
+        if (kind === "node") await page.locator('.flow-sdk-node[data-node-id="alpha"]').click();
+        else await page.locator(".flow-sdk-edge").first().dispatchEvent("click");
+        await expect(toolbar).toBeVisible();
+        await expect(page.getByRole("textbox", { name: kind === "node" ? "Node label" : "Edge label", exact: true })).toBeVisible();
+        await page.getByRole("button", { name: "Close selection tools", exact: true }).click();
+        if (pinned) await expect(toolbar).toBeVisible();
+        else await expect(toolbar).toBeHidden();
+      }
+    });
+  }
+}
 
 test.describe("touch toolbar", () => {
   test.use({

@@ -151,16 +151,17 @@ const DynamicIcon = ({ name, svg = false, ...props }) => {
 
   if (image) {
     const { size = 80, style, ...imageProps } = props;
-    if (svg) return (
-      <image
-        {...imageProps}
-        href={name}
-        width={size}
-        height={size}
-        preserveAspectRatio="xMidYMid meet"
-        style={style}
-      />
-    );
+    if (svg)
+      return (
+        <image
+          {...imageProps}
+          href={name}
+          width={size}
+          height={size}
+          preserveAspectRatio="xMidYMid meet"
+          style={style}
+        />
+      );
     return (
       <img
         {...imageProps}

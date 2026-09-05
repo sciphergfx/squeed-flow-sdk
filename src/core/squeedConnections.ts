@@ -76,7 +76,8 @@ export function prepareConnections(document: SqueedJson): {
             typeof connection.type === "string" ? connection.type : undefined,
           sourceProperty: connection.sourceProperty,
           targetProperty: connection.targetProperty,
-          icon: typeof connection.icon === "string" ? connection.icon : undefined,
+          icon:
+            typeof connection.icon === "string" ? connection.icon : undefined,
           label:
             typeof connection.label === "string" ? connection.label : undefined,
           color:

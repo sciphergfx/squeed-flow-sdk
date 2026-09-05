@@ -203,7 +203,7 @@ export function setEdgeProp(
         ? "$targetEdgeType"
         : kind === "target" && key === "$edgeIcon"
           ? "$targetIcon"
-        : key;
+          : key;
   return updateNode(json, address, (n) => withKey(n, k, value));
 }
 
@@ -410,6 +410,13 @@ export function compileSqueed(
     const id = canonicalAddress(n.data.id);
     const src = getNode(json, id);
     const data = { ...n.data, id };
+    const childSource = src && typeof src === "object" && !Array.isArray(src) && "$" in src ? src.$ : src;
+    const hasChildren = Array.isArray(childSource)
+      ? childSource.length > 0
+      : childSource && typeof childSource === "object" && Object.keys(childSource).some((key) => !key.startsWith("$"));
+    if (hasChildren) {
+      data.config = { ...data.config, collapsed: !!src.$collapsed };
+    }
     if (!parentIds.has(id)) {
       data.viewProps = { ...data.viewProps };
       delete data.viewProps.borderWidth;
@@ -470,7 +477,8 @@ export function compileSqueed(
       const type =
         owner[edgeOwner.kind === "target" ? "$targetEdgeType" : "$edgeType"];
       if (typeof type === "string") data.type = type;
-      const icon = owner[edgeOwner.kind === "target" ? "$targetIcon" : "$edgeIcon"];
+      const icon =
+        owner[edgeOwner.kind === "target" ? "$targetIcon" : "$edgeIcon"];
       if (typeof icon === "string") data.icon = icon;
       if (owner.$isEdgeAnimated !== undefined)
         data.isEdgeAnimated = !!owner.$isEdgeAnimated;

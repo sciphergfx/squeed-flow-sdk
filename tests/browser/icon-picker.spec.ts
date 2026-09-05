@@ -44,7 +44,10 @@ for (const width of [1440, 390]) {
     ).toBe("PiGear");
     await expect(node.locator('svg[width="80"]')).toHaveCount(1);
     await trigger.click();
-    await chooseToolbarOption(page.getByRole("combobox", { name: "Icon source", exact: true }), "Custom SVG");
+    await chooseToolbarOption(
+      page.getByRole("combobox", { name: "Icon source", exact: true }),
+      "Custom SVG",
+    );
     const upload = page.getByLabel("Upload SVG icon", { exact: true });
     await upload.setInputFiles({
       name: "bad.svg",
