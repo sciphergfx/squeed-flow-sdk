@@ -37,8 +37,10 @@ import {
 } from "./SelectionToolbar";
 import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
 import { WorkflowControls } from "./WorkflowControls";
+import { FormSchemaUpload } from "./FormSchemaUpload";
 import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
 import { ToolbarScrollContainer } from "./ToolbarScrollContainer";
+import { SvgExportButton } from "./SvgExportButton";
 
 const DIRECTIONS: {
   value: FlowDirection;
@@ -622,6 +624,7 @@ const BottomBar = () => {
                         </>
                       )}
                       <WorkflowControls />
+                      <FormSchemaUpload />
                       <DiagramAppearanceControls />
                     </>
                   )}
@@ -650,6 +653,7 @@ const BottomBar = () => {
                       onClick={() => setIsCollapsed(!isCollapsed)}
                     />
                   </ToolbarTooltip>
+                  {!isCollapsed && <SvgExportButton />}
                 </>
               )}
             </HStack>

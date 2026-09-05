@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ready, chooseToolbarOption } from "./helpers";
+import { ready } from "./helpers";
 
 const svg =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>&#9733; icon</title><circle cx="12" cy="12" r="10" fill="#16a34a"/></svg>';
@@ -28,6 +28,13 @@ for (const width of [1440, 390]) {
       name: "Choose node icon",
       exact: true,
     });
+    const choices = dialog.locator('button[aria-label^="Choose Pi"]');
+    await expect(choices).toHaveCount(36);
+    const first = await choices.first().getAttribute("aria-label");
+    await dialog.getByRole("button", { name: "Next icons", exact: true }).click();
+    await expect(choices.first()).not.toHaveAttribute("aria-label", first!);
+    await dialog.getByRole("button", { name: "Previous icons", exact: true }).click();
+    await expect(choices.first()).toHaveAttribute("aria-label", first!);
     await page
       .getByRole("textbox", { name: "Search icons", exact: true })
       .fill("gear");
@@ -42,12 +49,9 @@ for (const width of [1440, 390]) {
     expect(
       await page.evaluate(() => window.__flowTest.document.alpha.$icon),
     ).toBe("PiGear");
-    await expect(node.locator('svg[width="80"]')).toHaveCount(1);
+    await expect(node.locator('svg[width="100"]')).toHaveCount(1);
     await trigger.click();
-    await chooseToolbarOption(
-      page.getByRole("combobox", { name: "Icon source", exact: true }),
-      "Custom SVG",
-    );
+    await dialog.getByRole("tab", { name: "Custom SVG", exact: true }).click();
     const upload = page.getByLabel("Upload SVG icon", { exact: true });
     await upload.setInputFiles({
       name: "bad.svg",
@@ -104,8 +108,8 @@ for (const width of [1440, 390]) {
     await page.screenshot({ path: testInfo.outputPath("uploaded-icon.png") });
     await trigger.click();
     await expect(
-      page.getByRole("combobox", { name: "Icon source", exact: true }),
-    ).toHaveText("Custom SVG");
+      dialog.getByRole("tab", { name: "Custom SVG", exact: true }),
+    ).toHaveAttribute("aria-selected", "true");
     const url = page.getByRole("textbox", { name: "SVG URL", exact: true });
     await url.fill("javascript:alert(1)");
     await page.getByRole("button", { name: "Apply URL", exact: true }).click();

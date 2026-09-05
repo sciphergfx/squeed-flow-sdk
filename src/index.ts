@@ -2,6 +2,7 @@
 
 // Main component
 export { FlowDiagram } from "./components/FlowDiagram";
+export { exportSvg, downloadSvg } from "./utils/exportSvg";
 export { readFormSchema, applyFormChange, formValueError } from "./core/forms";
 export { parseTypeScriptForm } from "./core/workflowContract";
 export type {

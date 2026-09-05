@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { PiImage, PiUploadSimple, PiX, PiTrash } from "react-icons/pi";
+import { useEffect, useId, useRef, useState } from "react";
+import { PiImage, PiUploadSimple, PiX, PiTrash, PiCaretLeft, PiCaretRight, PiArrowRight } from "react-icons/pi";
 import DynamicIcon from "../utils/DynamicIcon";
 import {
   isIconImage,
@@ -11,7 +11,6 @@ import { useCustomColors } from "../theme/useCustomColors";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
 import {
   ToolbarIconButton,
-  ToolbarSelect,
   ToolbarTooltip,
 } from "./toolbarControls";
 
@@ -28,6 +27,7 @@ export function NodeIconPicker({
   const { background, backgroundSecondary, border, colorText } =
     useCustomColors();
   const dialog = useRef<HTMLDialogElement>(null);
+  const tabId = useId();
   const upload = useRef<HTMLInputElement>(null);
   const uploadVersion = useRef(0);
   const [open, setOpen] = useState(false);
@@ -35,6 +35,7 @@ export function NodeIconPicker({
   const [icons, setIcons] = useState<string[]>([]);
   const [catalogState, setCatalogState] = useState("loading");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
   const [url, setUrl] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -73,21 +74,24 @@ export function NodeIconPicker({
     else if (nodeId) callbacks.onNodeIconChange?.(nodeId, icon);
     dialog.current?.close();
   };
-  const filtered = icons
+  const matches = icons
     .filter((name) =>
       name
         .replace(/([a-z])([A-Z])/g, "$1 $2")
         .toLowerCase()
         .includes(search.trim().toLowerCase()),
-    )
-    .slice(0, 40);
+    );
+  const pageSize = 36;
+  const pageCount = Math.max(1, Math.ceil(matches.length / pageSize));
+  const currentPage = Math.min(page, pageCount - 1);
+  const filtered = matches.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
   const inputStyle = {
     width: "100%",
-    padding: "8px",
+    padding: "8px 14px",
     background: "transparent",
     color: "inherit",
     border: `1px solid ${getChakraColorHex(border)}`,
-    borderRadius: 4,
+    borderRadius: 30,
   };
   return (
     <>
@@ -126,19 +130,20 @@ export function NodeIconPicker({
         onKeyDown={(event) => event.stopPropagation()}
         style={{
           margin: "auto",
-          padding: 16,
-          width: 360,
+          padding: 12,
+          width: 336,
           maxWidth: "calc(100vw - 32px)",
           maxHeight: "calc(100vh - 32px)",
           overflowY: "auto",
           border: `1px solid ${getChakraColorHex(border)}`,
-          borderRadius: 8,
+          borderRadius: 30,
+          boxShadow: `0 0 0 8px color-mix(in srgb, ${getChakraColorHex(background)} 60%, transparent)`,
           background: getChakraColorHex(background),
           color: getChakraColorHex(colorText),
         }}
       >
         {open && (
-          <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ display: "grid", gap: 8 }}>
             <div
               style={{
                 display: "flex",
@@ -148,6 +153,17 @@ export function NodeIconPicker({
               }}
             >
               <strong>{edgeId ? "Edge icon" : "Node icon"}</strong>
+              <div style={{ display: "flex", alignItems: "center", marginLeft: "auto", gap: 4 }}>
+                {value && <ToolbarTooltip label="Remove icon">
+                  <ToolbarIconButton
+                    aria-label={edgeId ? "Remove edge icon" : "Remove node icon"}
+                    icon={<PiTrash size={18} />}
+                    size="sm"
+                    variant="ghost"
+                    disabled={readOnly || busy}
+                    onClick={() => pick("")}
+                  />
+                </ToolbarTooltip>}
               <ToolbarIconButton
                 aria-label="Close icon picker"
                 icon={<PiX size={20} />}
@@ -155,21 +171,25 @@ export function NodeIconPicker({
                 variant="ghost"
                 onClick={() => dialog.current?.close()}
               />
+              </div>
             </div>
-            <ToolbarSelect
-              aria-label="Icon source"
-              value={mode}
-              onValueChange={(value) => {
-                setMode(value);
-                setError("");
-                if (value === "custom") upload.current?.click();
-              }}
-            >
-              {catalogState !== "unavailable" && (
-                <option value="icons">React icons</option>
-              )}
-              <option value="custom">Custom SVG</option>
-            </ToolbarSelect>
+            <div role="tablist" aria-label="Icon source" style={{ display: "flex", borderBottom: `1px solid ${getChakraColorHex(border)}` }}>
+              {(["icons", "custom"] as const).map(source => (
+                <button key={source} id={`${tabId}-${source}`} type="button" role="tab"
+                  aria-selected={mode === source} aria-controls={`${tabId}-panel`} tabIndex={mode === source ? 0 : -1}
+                  onClick={() => { setMode(source); setError(""); }}
+                  onKeyDown={event => {
+                    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                    event.preventDefault();
+                    const next = event.key === "Home" ? "icons" : event.key === "End" ? "custom" : source === "icons" ? "custom" : "icons";
+                    setMode(next); setError("");
+                    document.getElementById(`${tabId}-${next}`)?.focus();
+                  }}
+                  style={{ flex: 1, padding: "8px 12px", background: "transparent", border: 0, borderBottom: `2px solid ${mode === source ? getChakraColorHex(themeColor) : "transparent"}`, color: mode === source ? getChakraColorHex(themeColor) : "inherit", cursor: "pointer", fontSize: 13 }}>
+                  {source === "icons" ? "React icons" : "Custom SVG"}
+                </button>
+              ))}
+            </div>
             <input
               ref={upload}
               type="file"
@@ -199,23 +219,24 @@ export function NodeIconPicker({
                 }
               }}
             />
+            <div id={`${tabId}-panel`} role="tabpanel" aria-labelledby={`${tabId}-${mode}`} style={{ display: "grid", gap: 8 }}>
             {mode === "icons" ? (
               <>
                 <input
                   aria-label="Search icons"
                   placeholder="Search icons..."
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event) => { setSearch(event.target.value); setPage(0); }}
                   style={inputStyle}
                 />
                 <div
                   style={{
-                    height: 300,
+                    height: 244,
                     overflowY: "auto",
                     display: "grid",
                     gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
-                    gridAutoRows: 40,
-                    gap: 6,
+                    gridAutoRows: 36,
+                    gap: 4,
                   }}
                 >
                   {filtered.map((name) => (
@@ -251,6 +272,17 @@ export function NodeIconPicker({
                     </span>
                   )}
                 </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <span role="status" style={{ fontSize: 12 }}>{matches.length} icons · {currentPage + 1} / {pageCount}</span>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <ToolbarTooltip label="Previous icons">
+                      <ToolbarIconButton aria-label="Previous icons" icon={<PiCaretLeft size={18} />} size="sm" variant="ghost" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)} />
+                    </ToolbarTooltip>
+                    <ToolbarTooltip label="Next icons">
+                      <ToolbarIconButton aria-label="Next icons" icon={<PiCaretRight size={18} />} size="sm" variant="ghost" disabled={currentPage + 1 >= pageCount} onClick={() => setPage(currentPage + 1)} />
+                    </ToolbarTooltip>
+                  </div>
+                </div>
               </>
             ) : (
               <>
@@ -273,46 +305,38 @@ export function NodeIconPicker({
                   <PiUploadSimple />
                   {busy ? "Uploading..." : "Upload SVG"}
                 </button>
+                <form
+                  style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (busy || readOnly) return;
+                    if (!isIconImage(url.trim()) || url.trim().startsWith(SVG_DATA_PREFIX))
+                      setError("Enter an HTTP or HTTPS image URL.");
+                    else pick(url.trim());
+                  }}
+                >
                 <input
                   type="url"
                   aria-label="SVG URL"
                   placeholder="https://example.com/icon.svg"
                   value={url}
-                  onChange={(event) => setUrl(event.target.value)}
-                  style={inputStyle}
-                />
-                <button
-                  type="button"
                   disabled={busy || readOnly}
-                  onClick={() => {
-                    if (
-                      !isIconImage(url.trim()) ||
-                      url.trim().startsWith(SVG_DATA_PREFIX)
-                    )
-                      setError("Enter an HTTP or HTTPS image URL.");
-                    else pick(url.trim());
-                  }}
-                  style={inputStyle}
-                >
-                  Apply URL
-                </button>
+                  onChange={(event) => setUrl(event.target.value)}
+                  style={{ ...inputStyle, flex: 1, minWidth: 0 }}
+                />
+                <ToolbarTooltip label="Apply URL">
+                  <ToolbarIconButton type="submit" aria-label="Apply URL" icon={<PiArrowRight size={20} />}
+                    size="sm" variant="ghost" disabled={busy || readOnly || !url.trim()} style={{ flexShrink: 0 }} />
+                </ToolbarTooltip>
+                </form>
               </>
             )}
+            </div>
             {error && (
               <div role="alert" style={{ fontSize: 13 }}>
                 {error}
               </div>
             )}
-            <ToolbarTooltip label="Remove icon">
-              <ToolbarIconButton
-                aria-label={edgeId ? "Remove edge icon" : "Remove node icon"}
-                icon={<PiTrash size={18} />}
-                size="sm"
-                variant="ghost"
-                disabled={readOnly}
-                onClick={() => pick("")}
-              />
-            </ToolbarTooltip>
           </div>
         )}
       </dialog>

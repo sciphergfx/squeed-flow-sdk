@@ -51,11 +51,12 @@
     "framer-motion": "^11.0.0 || ^12.0.0",
     "markdown-to-jsx": "^9.10.2",
     "react": "^18.0.0",
-    "react-icons": "^5.3.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "react-icons": "^5.3.0"
   },
   "dependencies": {
     "dagre": "0.8.5",
+    "html-to-image": "^1.11.13",
     "lodash": "^4.18.1",
     "lodash-es": "^4.18.1",
     "typescript": "^5.6.3",

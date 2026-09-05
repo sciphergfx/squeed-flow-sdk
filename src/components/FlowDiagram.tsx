@@ -1,5 +1,5 @@
 import { Box } from "@chakra-ui/react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { recolorGraph } from "../core/recolorGraph";
 import { bindSqueedCallbacks } from "../core/squeedBinding";
 import { compileSqueed } from "../core/squeedEdits";
@@ -44,6 +44,8 @@ export function FlowDiagram({
   showBottomBar = true,
 }: FlowDiagramProps) {
   injectStyles();
+  const [localFormSchema, setLocalFormSchema] = useState<import("../core/forms").FormSchema>();
+  const formSchema = config.formSchema ?? localFormSchema;
 
   const isCenter = config.direction === "C";
   const compileDocument = useMemo(() => {
@@ -66,9 +68,9 @@ export function FlowDiagram({
 
   const resolvedNodes: FlowDiagramNode[] = useMemo(() => {
     const source = compiled?.nodes ?? nodes ?? [];
-    if (!json || !config.formSchema) return source;
+    if (!json || !formSchema) return source;
     return source.map((node) =>
-      resolveFormNode(json, node.data.id, config.formSchema!)
+      resolveFormNode(json, node.data.id, formSchema)
         ? {
             ...node,
             data: {
@@ -79,7 +81,7 @@ export function FlowDiagram({
           }
         : node,
     );
-  }, [compiled, nodes, json, config.formSchema]);
+  }, [compiled, nodes, json, formSchema]);
   const resolvedEdges: FlowDiagramEdge[] = compiled?.edges ?? edges ?? [];
 
   // Document mode: edits are applied to the JSON and surfaced via onJsonChange
@@ -100,7 +102,8 @@ export function FlowDiagram({
     <FormDocumentContext.Provider
       value={{
         data: json,
-        schema: config.formSchema,
+        schema: formSchema,
+        setSchema: schema => { setLocalFormSchema(schema); callbacks.onFormSchemaChange?.(schema); },
         callbacks: boundCallbacks,
       }}
     >
@@ -112,6 +115,7 @@ export function FlowDiagram({
       >
         <Box
           className={className}
+          data-flow-diagram=""
           style={style}
           width="100%"
           height="100%"

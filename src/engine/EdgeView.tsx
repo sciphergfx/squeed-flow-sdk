@@ -350,7 +350,7 @@ function EdgeView({
       {labelLayer && validationEl
         ? createPortal(validationEl, labelLayer)
         : validationEl}
-      <path className="flow-sdk-edge-hit" d={geo.d} />
+      <path className="flow-sdk-edge-hit" d={geo.d} fill="none" stroke="transparent" />
     </g>
   );
 }

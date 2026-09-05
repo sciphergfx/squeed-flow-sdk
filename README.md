@@ -183,6 +183,19 @@ the source tree. Edit this single JSON source to keep the guide current.
 
 ## Callbacks
 
+### SVG Download
+
+The expanded toolbar's **Download SVG** icon exports the current graph view,
+including HTML nodes, SVG edges and the background, without toolbar buttons or
+drawing handles. Pan and zoom are preserved; off-screen content is not fitted
+automatically. The exporter is loaded on demand.
+
+For custom UI, call `downloadSvg(element, "diagram.svg")`, or use
+`await exportSvg(element)` to obtain an SVG data URL. Pass the diagram's
+`[data-flow-background]` element. The SVG embeds styled HTML via `foreignObject`:
+it works in browsers but is not a pure-path SVG for every vector editor.
+Remote images/fonts need accessible URLs and may be limited by CORS.
+
 ### Edge Shapes
 
 Set `config.edgeType` to `straight`, `bezier`, `orthogonal`, or

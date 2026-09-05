@@ -28,6 +28,7 @@ import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
 
 export const FormDocumentContext = createContext<{
+  setSchema?: (schema: FormSchema) => void;
   data?: SqueedJson;
   schema?: FormSchema;
   callbacks: FlowDiagramCallbacks;

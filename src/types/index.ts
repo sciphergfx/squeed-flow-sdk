@@ -259,6 +259,7 @@ export interface FlowDiagramConfig {
 
 /** Event callbacks for the flow diagram */
 export interface FlowDiagramCallbacks {
+  onFormSchemaChange?: (schema: import("../core/forms").FormSchema) => void;
   onFormChange?: (
     event: import("../core/forms").FormChange,
   ) => import("../core/forms").FormEdit[] | void;

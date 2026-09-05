@@ -50,10 +50,7 @@ for (const width of [1440, 390]) {
       original.alpha.$connections[1],
     ]);
     await trigger.click();
-    await chooseToolbarOption(
-      dialog.getByRole("combobox", { name: "Icon source", exact: true }),
-      "Custom SVG",
-    );
+    await dialog.getByRole("tab", { name: "Custom SVG", exact: true }).click();
     await dialog
       .getByLabel("Upload SVG icon", { exact: true })
       .setInputFiles({

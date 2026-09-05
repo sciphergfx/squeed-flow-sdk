@@ -81,19 +81,12 @@ for (const width of [1440, 390]) {
       name: "Choose node icon",
       exact: true,
     });
-    await dialog
-      .getByRole("combobox", { name: "Icon source", exact: true })
-      .click();
-    const sources = page.getByRole("listbox", {
-      name: "Icon source",
-      exact: true,
-    });
     await expect(
-      sources.getByRole("option", { name: "React icons", exact: true }),
+      dialog.getByRole("tab", { name: "React icons", exact: true }),
     ).toHaveAttribute("aria-selected", "true");
-    await sources
-      .getByRole("option", { name: "Custom SVG", exact: true })
-      .click();
+    await dialog.getByRole("tab", { name: "React icons", exact: true }).press("ArrowRight");
+    await expect(dialog.getByRole("tab", { name: "Custom SVG", exact: true })).toBeFocused();
+    await expect(dialog.getByRole("tabpanel", { name: "Custom SVG", exact: true })).toBeVisible();
     await expect(
       dialog.getByRole("textbox", { name: "SVG URL", exact: true }),
     ).toBeVisible();
