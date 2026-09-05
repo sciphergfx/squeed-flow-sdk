@@ -41,6 +41,7 @@ export type SqueedNodeKey =
 
 /** Schema keys that describe the edge *into* a node (parent → child) */
 export type SqueedEdgeKey =
+  | "$edgeIcon"
   | "$edgeType"
   | "$sourceLabel"
   | "$isEdgeAnimated"
@@ -177,6 +178,7 @@ export function setEdgeProp(
     const reference = edge.connection;
     return updateNode(json, reference.address, (node) =>
       updateConnection(node, reference.key, (connection) => {
+        if (key === "$edgeIcon") return withKey(connection, "icon", value);
         if (key === "$edgeType") return withKey(connection, "type", value);
         if (key === "$sourceLabel" || key === "$edgeColor")
           return withKey(
@@ -199,6 +201,8 @@ export function setEdgeProp(
       ? "$targetLabel"
       : kind === "target" && key === "$edgeType"
         ? "$targetEdgeType"
+        : kind === "target" && key === "$edgeIcon"
+          ? "$targetIcon"
         : key;
   return updateNode(json, address, (n) => withKey(n, k, value));
 }
@@ -466,6 +470,8 @@ export function compileSqueed(
       const type =
         owner[edgeOwner.kind === "target" ? "$targetEdgeType" : "$edgeType"];
       if (typeof type === "string") data.type = type;
+      const icon = owner[edgeOwner.kind === "target" ? "$targetIcon" : "$edgeIcon"];
+      if (typeof icon === "string") data.icon = icon;
       if (owner.$isEdgeAnimated !== undefined)
         data.isEdgeAnimated = !!owner.$isEdgeAnimated;
       if (owner.$isEdgeDashed !== undefined)

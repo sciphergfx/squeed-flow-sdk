@@ -8,12 +8,20 @@ import type {
   NodeAlignment,
   EdgeMode,
   ParentNodeStyle,
+  NodeSpacing,
+  BackgroundVariant,
 } from "../types";
 
 export interface FlowDiagramContextValue {
+  spacing: number;
+  setSpacing: (spacing: NodeSpacing) => void;
+  backgroundVariant: BackgroundVariant;
+  setBackgroundVariant: (variant: BackgroundVariant) => void;
   setEdgeMode: (mode: EdgeMode) => void;
   workflowContract?: import("../core/workflowContract").WorkflowContract;
-  setWorkflowContract: (contract: import("../core/workflowContract").WorkflowContract | undefined) => void;
+  setWorkflowContract: (
+    contract: import("../core/workflowContract").WorkflowContract | undefined,
+  ) => void;
   themeColor: string;
   setThemeColor: (color: string) => void;
   backgroundSelected: boolean;
@@ -106,8 +114,21 @@ export function FlowDiagramProvider({
   const [isPinned, setIsPinned] = useState(true);
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
   const [localEdgeMode, setEdgeMode] = useState<EdgeMode>("nodes");
-  const [localContract, setWorkflowContract] = useState<import("../core/workflowContract").WorkflowContract>();
-  const workflowContract = Object.prototype.hasOwnProperty.call(config, "workflowContract") ? config.workflowContract : localContract;
+  const [localSpacing, setSpacing] = useState<NodeSpacing>("normal");
+  const [localBackgroundVariant, setBackgroundVariant] = useState<BackgroundVariant>();
+  const requestedSpacing = config.spacing ?? localSpacing;
+  const spacing = typeof requestedSpacing === "number"
+    ? Number.isFinite(requestedSpacing) ? Math.min(2, Math.max(0.5, requestedSpacing)) : 1
+    : requestedSpacing === "compact" ? 0.5 : requestedSpacing === "spacious" ? 2 : 1;
+  const backgroundVariant = config.backgroundVariant ?? localBackgroundVariant ?? (config.backgroundPattern === "none" && config.backgroundColor === "transparent" ? "transparent" : config.backgroundPattern ?? "dot");
+  const [localContract, setWorkflowContract] =
+    useState<import("../core/workflowContract").WorkflowContract>();
+  const workflowContract = Object.prototype.hasOwnProperty.call(
+    config,
+    "workflowContract",
+  )
+    ? config.workflowContract
+    : localContract;
   const [localThemeColor, setThemeColor] = useState("blue.500");
   const [backgroundSelected, setBackgroundSelected] = useState(false);
 
@@ -145,12 +166,15 @@ export function FlowDiagramProvider({
       onEdgeDelete: wrap("onEdgeDelete"),
       onEdgeColorChange: wrap("onEdgeColorChange"),
       onEdgeTypeChange: wrap("onEdgeTypeChange"),
+      onEdgeIconChange: wrap("onEdgeIconChange"),
       onEdgeLabelChange: wrap("onEdgeLabelChange"),
       onEdgeStyleChange: wrap("onEdgeStyleChange"),
       // Diagram events
       onViewportChange: wrap("onViewportChange"),
       onDirectionChange: wrap("onDirectionChange"),
       onThemeColorChange: wrap("onThemeColorChange"),
+      onSpacingChange: wrap("onSpacingChange"),
+      onBackgroundVariantChange: wrap("onBackgroundVariantChange"),
       onEdgeModeChange: wrap("onEdgeModeChange"),
       onWorkflowContractChange: wrap("onWorkflowContractChange"),
       onArrayModeChange: wrap("onArrayModeChange"),
@@ -165,7 +189,9 @@ export function FlowDiagramProvider({
   const direction = config.direction || "LR";
   const nodeAlignment = config.nodeAlignment ?? "center";
   const edgeMode =
-    config.edgeMode === "workflow" ? "nodes" : (config.edgeMode ?? localEdgeMode);
+    config.edgeMode === "workflow"
+      ? "nodes"
+      : (config.edgeMode ?? localEdgeMode);
   const readOnly = config.readOnly ?? false;
   // Value-stable so inline literals don't re-render every consumer
   const parentNodeStyleKey = JSON.stringify(config.parentNodeStyle ?? null);
@@ -287,6 +313,10 @@ export function FlowDiagramProvider({
 
   const value: FlowDiagramContextValue = useMemo(
     () => ({
+      spacing,
+      setSpacing,
+      backgroundVariant,
+      setBackgroundVariant,
       themeColor,
       setThemeColor,
       backgroundSelected,
@@ -325,6 +355,9 @@ export function FlowDiagramProvider({
     }),
     [
       themeColor,
+      spacing,
+      backgroundVariant,
+      config.backgroundColor,
       backgroundSelected,
       edgeColor,
       colorMode,

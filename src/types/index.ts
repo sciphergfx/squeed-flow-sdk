@@ -27,6 +27,7 @@ export interface FlowEdgeProperties {
 }
 
 export interface SqueedConnection extends FlowEdgeProperties {
+  icon?: string;
   target: string;
   type?: string;
   id?: string;
@@ -47,6 +48,8 @@ export type LayoutAlgorithm =
   | "concentric"
   | "cose";
 export type BackgroundPattern = "dot" | "steel" | "grid" | "none";
+export type BackgroundVariant = BackgroundPattern | "transparent";
+export type NodeSpacing = number | "compact" | "normal" | "spacious";
 
 export interface FlowDiagramNode {
   data: {
@@ -74,6 +77,7 @@ export interface FlowDiagramEdge {
     targetProperty?: string;
     connection?: SqueedConnectionRef;
     label?: string;
+    icon?: string;
     /** Chakra token or hex; overrides the theme/edgeColor line color for this edge */
     color?: string;
     isInverted?: boolean;
@@ -186,6 +190,8 @@ export interface BottomBarRenderProps {
 
 /** Configuration for the flow diagram appearance and behavior */
 export interface FlowDiagramConfig {
+  spacing?: NodeSpacing;
+  backgroundVariant?: BackgroundVariant;
   edgeType?: BuiltInEdgeType | (string & {});
   customEdgeTypes?: Record<string, CustomEdgeFactory>;
   /** Layout direction: "LR", "RL", "TB", "BT" */
@@ -251,6 +257,8 @@ export interface FlowDiagramConfig {
 
 /** Event callbacks for the flow diagram */
 export interface FlowDiagramCallbacks {
+  onSpacingChange?: (spacing: NodeSpacing) => void;
+  onBackgroundVariantChange?: (variant: BackgroundVariant) => void;
   // ── Node events ──
   /** Fires when a node is clicked/selected */
   onNodeSelect?: (nodeId: string, nodeData: any) => void;
@@ -310,6 +318,7 @@ export interface FlowDiagramCallbacks {
   /** Fires when an edge's color is changed */
   onEdgeColorChange?: (edgeId: string, color: string) => void;
   onEdgeTypeChange?: (edgeId: string, type: string | undefined) => void;
+  onEdgeIconChange?: (edgeId: string, icon: string) => void;
   /** Fires when an edge's label is changed */
   onEdgeLabelChange?: (edgeId: string, newLabel: string) => void;
   /** Fires when an edge's style is changed (solid, dashed, animated) */
@@ -328,7 +337,9 @@ export interface FlowDiagramCallbacks {
   onDirectionChange?: (direction: FlowDirection) => void;
   onThemeColorChange?: (color: string) => void;
   onEdgeModeChange?: (mode: EdgeMode) => void;
-  onWorkflowContractChange?: (contract: import("../core/workflowContract").WorkflowContract | undefined) => void;
+  onWorkflowContractChange?: (
+    contract: import("../core/workflowContract").WorkflowContract | undefined,
+  ) => void;
   /** Fires when array/set mode toggles in bottom bar */
   onArrayModeChange?: (isArrayMode: boolean) => void;
   /** Fires once the renderer is ready with the engine handle (zoom/pan/fit/coordinate helpers) */

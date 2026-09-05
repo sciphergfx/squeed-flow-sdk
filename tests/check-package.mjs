@@ -70,13 +70,18 @@ try {
     expected.peerDependencies["markdown-to-jsx"],
   );
   assert.ok(!("markdown-to-jsx" in manifest.dependencies));
-  assert.equal(manifest.dependencies.typescript, expected.dependencies.typescript);
+  assert.equal(
+    manifest.dependencies.typescript,
+    expected.dependencies.typescript,
+  );
   for (const format of ["js", "cjs"]) {
     const map = JSON.parse(
       await readFile(join(root, `dist/index.${format}.map`), "utf8"),
     );
     assert.ok(
-      !map.sources.some((source) => source.includes("node_modules/typescript/")),
+      !map.sources.some((source) =>
+        source.includes("node_modules/typescript/"),
+      ),
       `TypeScript was bundled into ${format}`,
     );
     assert.ok(

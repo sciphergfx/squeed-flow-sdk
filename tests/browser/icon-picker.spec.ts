@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ready } from "./helpers";
+import { ready, chooseToolbarOption } from "./helpers";
 
 const svg =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>&#9733; icon</title><circle cx="12" cy="12" r="10" fill="#16a34a"/></svg>';
@@ -44,9 +44,7 @@ for (const width of [1440, 390]) {
     ).toBe("PiGear");
     await expect(node.locator('svg[width="80"]')).toHaveCount(1);
     await trigger.click();
-    await page
-      .getByRole("combobox", { name: "Icon source", exact: true })
-      .selectOption("custom");
+    await chooseToolbarOption(page.getByRole("combobox", { name: "Icon source", exact: true }), "Custom SVG");
     const upload = page.getByLabel("Upload SVG icon", { exact: true });
     await upload.setInputFiles({
       name: "bad.svg",
@@ -104,7 +102,7 @@ for (const width of [1440, 390]) {
     await trigger.click();
     await expect(
       page.getByRole("combobox", { name: "Icon source", exact: true }),
-    ).toHaveValue("custom");
+    ).toHaveText("Custom SVG");
     const url = page.getByRole("textbox", { name: "SVG URL", exact: true });
     await url.fill("javascript:alert(1)");
     await page.getByRole("button", { name: "Apply URL", exact: true }).click();

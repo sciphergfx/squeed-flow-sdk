@@ -22,7 +22,7 @@ for (const width of [684, 390, 320]) {
     const row = panel.locator(":scope > div");
     await expect(row).toHaveCSS("flex-wrap", "nowrap");
     const centers = await row.locator(":scope > *").evaluateAll((elements) =>
-      elements.map((element) => {
+      elements.filter(element => element.getBoundingClientRect().height > 0).map((element) => {
         const rect = element.getBoundingClientRect();
         return rect.y + rect.height / 2;
       }),

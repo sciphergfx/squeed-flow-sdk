@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ready } from "./helpers";
+import { ready, chooseToolbarOption } from "./helpers";
 
 for (const width of [1440, 390]) {
   test(`selected connection shape persists independently at ${width}px`, async ({
@@ -26,8 +26,8 @@ for (const width of [1440, 390]) {
       name: "Edge shape",
       exact: true,
     });
-    await picker.selectOption("wave");
-    await expect(picker).toHaveValue("wave");
+    await chooseToolbarOption(picker, "wave");
+    await expect(picker).toHaveAttribute("title", "Edge shape: wave");
     await expect(edge.locator("path").first()).toHaveAttribute("d", / Q/);
     await picker.scrollIntoViewIfNeeded();
     await page.screenshot({
@@ -49,7 +49,7 @@ for (const width of [1440, 390]) {
     await expect(edge.locator("path").first()).toHaveClass(
       /flow-sdk-edge-anim/,
     );
-    await picker.selectOption("");
+    await chooseToolbarOption(picker, "Default");
     expect(
       await page.evaluate(
         () => window.__flowTest.document.alpha.$connections[1].type,

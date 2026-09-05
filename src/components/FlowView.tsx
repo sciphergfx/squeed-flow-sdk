@@ -45,6 +45,8 @@ interface FlowViewProps {
 const FlowView = ({ nodes, edges }: FlowViewProps) => {
   const {
     themeColor,
+    spacing,
+    backgroundVariant,
     setBackgroundSelected,
     edgeColor,
     direction,
@@ -77,10 +79,12 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     setIsPerformanceMode(isPerformanceMode);
   }, [isPerformanceMode, setIsPerformanceMode]);
 
-  const { edgeSep, rankSep } = useMemo(
-    () => calculateOptimalSpacing(nodes.length),
-    [nodes.length],
-  );
+  const { edgeSep, rankSep, spacingFactor } = useMemo(() => {
+    const base = calculateOptimalSpacing(nodes.length);
+    const scale = spacing < 1 ? 0.3 + 0.7 * spacing : 0.5 + 0.5 * spacing;
+    return { edgeSep: base.edgeSep * scale, rankSep: base.rankSep * scale,
+      spacingFactor: 1.3 + (spacing - 1) * (spacing < 1 ? 0.4 : 0.3) };
+  }, [nodes.length, spacing]);
 
   const { bgColor: highlightColor } = useThemeContentColors(themeColor);
   const {
@@ -89,7 +93,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     colorText,
   } = useCustomColors();
 
-  const effectiveBgColor = config.backgroundColor || bgColor;
+  const effectiveBgColor = backgroundVariant === "transparent" ? "transparent" : config.backgroundColor || bgColor;
 
   const getColorHex = useCallback(
     (color) => {
@@ -252,7 +256,10 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           sourceProperty: data.sourceProperty,
           targetProperty: data.targetProperty,
           label: data.label,
-          validationIssue: edgeMode === "properties" && workflowContract ? connectionIssue(workflowContract, data) : undefined,
+          validationIssue:
+            edgeMode === "properties" && workflowContract
+              ? connectionIssue(workflowContract, data)
+              : undefined,
           color: data.color ? getChakraColorHex(data.color) : lineColor,
           labelBg,
           dashed: !!data.isEdgeDashed,
@@ -580,7 +587,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
   const drawMode =
     !config.readOnly && isEdgeHandlesEnabled && config.edgeHandles !== false;
-  const backgroundPattern = config.backgroundPattern || "dot";
+  const backgroundPattern = backgroundVariant === "transparent" ? "none" : backgroundVariant;
 
   return (
     <DotPatternBackground
@@ -605,6 +612,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           customEdgeTypes={config.customEdgeTypes}
           rankSep={rankSep}
           edgeSep={edgeSep}
+          spacingFactor={spacingFactor}
           layoutDebounce={layoutDebounce}
           isPerformanceMode={isPerformanceMode}
           minZoom={config.minZoom ?? 0.01}

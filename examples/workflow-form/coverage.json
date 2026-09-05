@@ -1,0 +1,1812 @@
+{
+  "sources": [
+    "Workflows.tsx",
+    "workflows/types.ts",
+    "workflows/constants.ts",
+    "workflows/workflow-editor-modal.tsx",
+    "workflows/workflow-workflow-tab.tsx",
+    "workflows/step-config-forms.tsx"
+  ],
+  "notes": [
+    "Full snapshot preserves any/index signatures from source types.",
+    "Text controls JSON.parse when possible, so string/textarea fields are any, not fabricated string-only contracts.",
+    "Select controls accept advanced values, so their type is string; options remain in this manifest.",
+    "Conditionally required fields are optional in the merged interface; showWhen is preserved here, not enforced by structural validation.",
+    "Dynamic tool params/custom step config cannot be enumerated without runtime schemas.",
+    "Supported projection explicitly omits unsupported members; it is not full-form validation."
+  ],
+  "enabledStepTypes": [
+    "http",
+    "custom",
+    "backflow_tool",
+    "database",
+    "transform",
+    "output",
+    "llm",
+    "notification",
+    "storage",
+    "cache",
+    "conditional",
+    "emit_event",
+    "browser",
+    "websocket_call",
+    "spawn_workflow",
+    "handoff",
+    "web_search",
+    "delay",
+    "await_results",
+    "bulk_import",
+    "bulk_export",
+    "write_to_disk",
+    "render_scene",
+    "execute_code",
+    "shell_command"
+  ],
+  "schemaCount": 26,
+  "fieldCount": 138,
+  "workflowDefaults": {
+    "name": "",
+    "id": "",
+    "description": "",
+    "trigger": "manual",
+    "tools": [],
+    "steps": [],
+    "input": {},
+    "isPublic": false,
+    "tags": [],
+    "planOnly": false,
+    "version": 1,
+    "executionMode": "local",
+    "maxRetries": 3
+  },
+  "fields": {
+    "output": [
+      {
+        "name": "mapping",
+        "label": "Output Mapping (JSON)",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "{\"key\":\"{{steps.gen_key.result.key}}\"}",
+        "hint": "Used by route integrations only; maps workflow values into the route response."
+      }
+    ],
+    "http": [
+      {
+        "name": "url",
+        "label": "URL",
+        "type": "string",
+        "placeholder": "https://api.example.com/endpoint",
+        "required": true,
+        "hint": "Supports {{variable}} syntax"
+      },
+      {
+        "name": "method",
+        "label": "Method",
+        "type": "select",
+        "options": [
+          "GET",
+          "POST",
+          "PUT",
+          "PATCH",
+          "DELETE"
+        ],
+        "required": true
+      },
+      {
+        "name": "headers",
+        "label": "Headers",
+        "type": "keyvalue",
+        "placeholder": "{\"Authorization\": \"Bearer {{token}}\"}"
+      },
+      {
+        "name": "body",
+        "label": "Body",
+        "type": "textarea",
+        "placeholder": "{\"key\": \"value\"}",
+        "showWhen": {
+          "field": "method",
+          "values": [
+            "POST",
+            "PUT",
+            "PATCH"
+          ]
+        }
+      },
+      {
+        "name": "queryParams",
+        "label": "Query Parameters",
+        "type": "keyvalue",
+        "placeholder": "{\"page\": \"1\", \"limit\": \"{{input.limit}}\"}",
+        "hint": "Appended to URL as ?key=value"
+      },
+      {
+        "name": "timeout",
+        "label": "Timeout (ms)",
+        "type": "number",
+        "placeholder": "30000"
+      }
+    ],
+    "backflow_tool": [
+      {
+        "name": "name",
+        "label": "Tool",
+        "type": "select",
+        "required": true,
+        "description": "Platform tool to run (API keys, products, users, billing extensions...).",
+        "fetchOptions": {
+          "url": "/agent/tools",
+          "dataPath": "tools",
+          "valueKey": "name"
+        }
+      },
+      {
+        "name": "params",
+        "label": "Input (JSON)",
+        "type": "textarea",
+        "placeholder": "{\"name\": \"qhey_claude\", \"resourceScopes\": \"[]\"}",
+        "hint": "Tool input; supports {{variable}} syntax"
+      }
+    ],
+    "database": [
+      {
+        "name": "provider",
+        "label": "Provider",
+        "type": "select",
+        "options": [
+          {
+            "value": "database",
+            "label": "Database",
+            "description": "Firestore/Firebase backend"
+          },
+          {
+            "value": "in-memory",
+            "label": "In-Memory",
+            "description": "Redis backend"
+          }
+        ],
+        "required": true,
+        "defaultValue": "database"
+      },
+      {
+        "name": "collection",
+        "label": "Collection / Table",
+        "type": "string",
+        "required": true
+      },
+      {
+        "name": "operation",
+        "label": "Operation",
+        "type": "select",
+        "options": [
+          "get",
+          "select",
+          "query",
+          "insert",
+          "update",
+          "delete",
+          "upsert"
+        ],
+        "required": true,
+        "defaultValue": "select"
+      },
+      {
+        "name": "id",
+        "label": "Document ID",
+        "type": "string",
+        "placeholder": "{{steps.find.result.0.id}}",
+        "hint": "Targets a specific record for get/update/delete. Supports {{steps.N.output}} references.",
+        "showWhen": {
+          "field": "operation",
+          "values": [
+            "get",
+            "update",
+            "delete",
+            "upsert"
+          ]
+        }
+      },
+      {
+        "name": "where",
+        "label": "Filters",
+        "type": "filter-builder",
+        "hint": "Add filter conditions. Conditions in the AND section and OR section are combined together."
+      },
+      {
+        "name": "data",
+        "label": "Data (JSON)",
+        "type": "textarea",
+        "placeholder": "{\"field\": \"value\"}",
+        "showWhen": {
+          "field": "operation",
+          "values": [
+            "insert",
+            "update",
+            "upsert"
+          ]
+        }
+      },
+      {
+        "name": "single",
+        "label": "Return Single",
+        "type": "boolean",
+        "hint": "When enabled, returns the first matching record as a single object instead of an array. Use when you expect exactly one result (e.g. lookup by unique field)."
+      },
+      {
+        "name": "limit",
+        "label": "Limit",
+        "type": "number",
+        "placeholder": "10"
+      }
+    ],
+    "transform": [
+      {
+        "name": "mode",
+        "label": "Mode",
+        "type": "select",
+        "options": [
+          {
+            "value": "transform",
+            "label": "Transform",
+            "description": "Apply a transform operation to the input data"
+          },
+          {
+            "value": "expression",
+            "label": "Expression",
+            "description": "Evaluate a custom expression using {{var.variable}} syntax"
+          }
+        ],
+        "defaultValue": "transform"
+      },
+      {
+        "name": "transform",
+        "label": "Transform Type",
+        "type": "select",
+        "options": [
+          {
+            "value": "parseClassifyResponse",
+            "label": "Parse Classify Response",
+            "description": "Parse and structure the response from a classify step"
+          },
+          {
+            "value": "validateAndNormalizeIntent",
+            "label": "Validate & Normalize Intent",
+            "description": "Validate and normalize the detected user intent"
+          },
+          {
+            "value": "parseWorkflowJson",
+            "label": "Parse Workflow JSON",
+            "description": "Parse a raw JSON string into a structured workflow"
+          },
+          {
+            "value": "validateWorkflowStructure",
+            "label": "Validate Workflow Structure",
+            "description": "Validate that a workflow has the correct structure"
+          },
+          {
+            "value": "extractImagePrompts",
+            "label": "Extract Image Prompts",
+            "description": "Extract image generation prompts from step output"
+          },
+          {
+            "value": "mergeImagesIntoWorkflow",
+            "label": "Merge Images Into Workflow",
+            "description": "Merge generated images into the workflow context"
+          },
+          {
+            "value": "mergeTodosIntoWorkflow",
+            "label": "Merge Todos Into Workflow",
+            "description": "Merge generated todo items into the workflow"
+          },
+          {
+            "value": "parseEditResult",
+            "label": "Parse Edit Result",
+            "description": "Parse and process the result of an edit operation"
+          },
+          {
+            "value": "parseResourceManifest",
+            "label": "Parse Resource Manifest",
+            "description": "Parse a resource manifest into structured data"
+          },
+          {
+            "value": "incrementVersion",
+            "label": "Increment Version",
+            "description": "Increment a version number in the workflow state"
+          },
+          {
+            "value": "resolveWorkflow",
+            "label": "Resolve Workflow",
+            "description": "Resolve and finalize a workflow definition"
+          },
+          {
+            "value": "buildClassifySystemPrompt",
+            "label": "Build Classify System Prompt",
+            "description": "Build a system prompt for classification"
+          },
+          {
+            "value": "buildRegenerateSystemPrompt",
+            "label": "Build Regenerate System Prompt",
+            "description": "Build a system prompt for regeneration"
+          },
+          {
+            "value": "buildEditUserPrompt",
+            "label": "Build Edit User Prompt",
+            "description": "Build a user-facing edit prompt"
+          },
+          {
+            "value": "identity",
+            "label": "Identity",
+            "description": "Pass input through unchanged"
+          },
+          {
+            "value": "splitTodosIntoPhases",
+            "label": "Split Todos Into Phases",
+            "description": "Split todo items into distinct phases"
+          }
+        ],
+        "showWhen": {
+          "field": "mode",
+          "values": [
+            "transform"
+          ]
+        }
+      },
+      {
+        "name": "input",
+        "label": "Input",
+        "type": "string",
+        "placeholder": "{{step_name.output}}",
+        "hint": "Reference a previous step's output",
+        "showWhen": {
+          "field": "mode",
+          "values": [
+            "transform"
+          ]
+        }
+      },
+      {
+        "name": "expression",
+        "label": "Expression",
+        "type": "string",
+        "placeholder": "{{var.variable}}",
+        "hint": "Reference a workflow variable, e.g. {{var.user_name}}",
+        "showWhen": {
+          "field": "mode",
+          "values": [
+            "expression"
+          ]
+        }
+      }
+    ],
+    "llm": [
+      {
+        "name": "prompt",
+        "label": "Prompt",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "Write your prompt here. Use {{variable}} syntax for dynamic values."
+      },
+      {
+        "name": "model",
+        "label": "Model",
+        "type": "select",
+        "options": []
+      },
+      {
+        "name": "provider",
+        "label": "Provider",
+        "type": "select",
+        "options": [],
+        "readOnly": true
+      },
+      {
+        "name": "temperature",
+        "label": "Temperature",
+        "type": "number",
+        "placeholder": "0.7"
+      },
+      {
+        "name": "maxTokens",
+        "label": "Max Tokens",
+        "type": "number",
+        "placeholder": "2000"
+      },
+      {
+        "name": "streamPreview",
+        "label": "Stream Preview",
+        "type": "boolean",
+        "description": "Emit workflow_partial events during LLM streaming for live preview"
+      },
+      {
+        "name": "tools",
+        "label": "Tool IDs",
+        "type": "multiselect",
+        "options": []
+      },
+      {
+        "name": "memory",
+        "label": "Memory Entity Types",
+        "type": "multiselect",
+        "options": [],
+        "hint": "Comma-separated entity types to search for context (e.g. knowledge_entry, support_qa). Leave empty to use workflow defaults."
+      },
+      {
+        "name": "instructions",
+        "label": "System Instructions",
+        "type": "textarea",
+        "placeholder": "You are a helpful assistant..."
+      },
+      {
+        "name": "webSearch",
+        "label": "Web Search",
+        "type": "boolean"
+      },
+      {
+        "name": "webSearchProvider",
+        "label": "Search Provider",
+        "type": "select",
+        "options": [
+          {
+            "value": "duckduckgo",
+            "label": "DuckDuckGo",
+            "description": "No API key needed"
+          },
+          {
+            "value": "google",
+            "label": "Google Custom Search",
+            "description": "Requires GOOGLE_CSE_API_KEY + GOOGLE_CSE_CX"
+          },
+          {
+            "value": "bing",
+            "label": "Bing Web Search",
+            "description": "Requires BING_API_KEY"
+          }
+        ],
+        "defaultValue": "duckduckgo",
+        "showWhen": {
+          "field": "webSearch",
+          "values": [
+            true
+          ]
+        }
+      }
+    ],
+    "notification": [
+      {
+        "name": "channels",
+        "label": "Channels",
+        "type": "multiselect",
+        "hint": "Select notification channels to send through. Each channel resolves to your configured provider.",
+        "fetchOptions": {
+          "url": "/tenant/notification-channels",
+          "dataPath": "channels",
+          "valueKey": "id"
+        }
+      },
+      {
+        "name": "title",
+        "label": "Title",
+        "type": "string",
+        "placeholder": "Order confirmation: {{input.orderId}}",
+        "hint": "Subject line for emails, or notification header for push/SMS. Supports {{input.field}} and {{steps.N.output.field}} variables."
+      },
+      {
+        "name": "body",
+        "label": "Body",
+        "type": "string",
+        "placeholder": "Your order {{input.orderId}} has been confirmed.",
+        "hint": "Main content body. Use {{variables}} to inject dynamic values from workflow context."
+      },
+      {
+        "name": "to",
+        "label": "Recipient (optional)",
+        "type": "string",
+        "placeholder": "email@example.com or phone number",
+        "hint": "Direct recipient address. Overrides userId. For email: email address. For SMS/WhatsApp: phone number. For Slack: channel/webhook URL."
+      },
+      {
+        "name": "userId",
+        "label": "User ID",
+        "type": "string",
+        "placeholder": "{{input.userId}}",
+        "hint": "Single user ID, or comma-separated IDs for multiple recipients. Use {{input.userId}} to reference the trigger user."
+      },
+      {
+        "name": "template",
+        "label": "Template",
+        "type": "string",
+        "placeholder": "welcome_email, order_confirmation, etc.",
+        "hint": "Name of a Handlebars template from templates/ directory, or an external template ID for email/SMS providers. Only used when the selected bundle supports templates."
+      },
+      {
+        "name": "templateData",
+        "label": "Template Variables",
+        "type": "keyvalue",
+        "hint": "Key-value pairs passed to the template renderer. Keys are variable names; values can use {{steps.N.output.field}} for step results."
+      },
+      {
+        "name": "priority",
+        "label": "Priority",
+        "type": "select",
+        "options": [
+          "low",
+          "normal",
+          "high",
+          "critical"
+        ]
+      }
+    ],
+    "storage": [
+      {
+        "name": "operation",
+        "label": "Operation",
+        "type": "select",
+        "options": [
+          "upload",
+          "download",
+          "delete",
+          "list",
+          "signedUrl",
+          "deleteByPrefix",
+          "url",
+          "publicUrl"
+        ],
+        "required": true,
+        "defaultValue": "upload"
+      },
+      {
+        "name": "bucket",
+        "label": "Bucket",
+        "type": "string",
+        "required": true,
+        "hint": "Entity-type namespace for the key (tenant/{bucket}/{path}). The physical bucket always comes from the server storage config."
+      },
+      {
+        "name": "path",
+        "label": "Path",
+        "type": "string",
+        "placeholder": "{{input.id}}",
+        "hint": "Object key (or prefix for deleteByPrefix). Supports {{variable}} syntax."
+      },
+      {
+        "name": "prefix",
+        "label": "Prefix",
+        "type": "string",
+        "placeholder": "{{input.id}}",
+        "hint": "Prefix to remove for deleteByPrefix. Defaults to path when empty.",
+        "showWhen": {
+          "field": "operation",
+          "values": [
+            "deleteByPrefix"
+          ]
+        }
+      },
+      {
+        "name": "data",
+        "label": "Data (JSON)",
+        "type": "textarea",
+        "placeholder": "{\"key\":\"value\"}",
+        "showWhen": {
+          "field": "operation",
+          "values": [
+            "upload"
+          ]
+        }
+      }
+    ],
+    "firebase": [
+      {
+        "name": "collection",
+        "label": "Collection",
+        "type": "string",
+        "required": true
+      },
+      {
+        "name": "operation",
+        "label": "Operation",
+        "type": "select",
+        "options": [
+          "get",
+          "set",
+          "update",
+          "delete",
+          "insert",
+          "upsert",
+          "query"
+        ],
+        "defaultValue": "get"
+      },
+      {
+        "name": "documentId",
+        "label": "Document ID",
+        "type": "string",
+        "placeholder": "auto-generated if empty"
+      },
+      {
+        "name": "data",
+        "label": "Data (JSON)",
+        "type": "textarea",
+        "placeholder": "{\"field\": \"value\"}"
+      },
+      {
+        "name": "where",
+        "label": "Where Clauses (JSON)",
+        "type": "textarea",
+        "placeholder": "[{\"field\": \"age\", \"op\": \">\", \"value\": 18}]"
+      }
+    ],
+    "cache": [
+      {
+        "name": "operation",
+        "label": "Operation",
+        "type": "select",
+        "options": [
+          "get",
+          "set",
+          "delete",
+          "invalidate"
+        ],
+        "required": true
+      },
+      {
+        "name": "key",
+        "label": "Cache Key",
+        "type": "string",
+        "placeholder": "my-key",
+        "required": true
+      },
+      {
+        "name": "value",
+        "label": "Value (JSON)",
+        "type": "textarea",
+        "placeholder": "{\"key\": \"value\", \"nested\": {\"field\": true}}",
+        "showWhen": {
+          "field": "operation",
+          "values": [
+            "set"
+          ]
+        }
+      },
+      {
+        "name": "ttl",
+        "label": "TTL (seconds)",
+        "type": "number",
+        "placeholder": "300",
+        "showWhen": {
+          "field": "operation",
+          "values": [
+            "set"
+          ]
+        }
+      },
+      {
+        "name": "pattern",
+        "label": "Pattern",
+        "type": "string",
+        "placeholder": "dynamic:{{tenantId}}:GET:/projects/*",
+        "showWhen": {
+          "field": "operation",
+          "values": [
+            "invalidate"
+          ]
+        },
+        "hint": "Format: dynamic:{tenant}:{method}:{path} — method GET/POST/PUT/DELETE, * as wildcard"
+      }
+    ],
+    "conditional": [
+      {
+        "name": "condition",
+        "label": "Condition (JavaScript)",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "return input.value > 10;",
+        "hint": "Must return a boolean value. Access step outputs via {{step_id.output}}."
+      },
+      {
+        "name": "onTrue",
+        "label": "True: Next Step ID",
+        "type": "string"
+      },
+      {
+        "name": "onFalse",
+        "label": "False: Next Step ID",
+        "type": "string"
+      }
+    ],
+    "emit_event": [
+      {
+        "name": "event",
+        "label": "Event Name",
+        "type": "string",
+        "required": true,
+        "placeholder": "event.name"
+      },
+      {
+        "name": "data",
+        "label": "Data (JSON)",
+        "type": "textarea",
+        "placeholder": "{\"key\": \"{{input.value}}\"}"
+      },
+      {
+        "name": "entity",
+        "label": "Entity",
+        "type": "select",
+        "placeholder": "Select collection...",
+        "fetchOptions": {
+          "url": "/tenant/entities",
+          "dataPath": "data",
+          "valueKey": "collection"
+        }
+      },
+      {
+        "name": "operation",
+        "label": "Operation",
+        "type": "select",
+        "placeholder": "Select operation...",
+        "options": [
+          "created",
+          "updated",
+          "deleted",
+          "read"
+        ]
+      },
+      {
+        "name": "id",
+        "label": "Entity ID",
+        "type": "string",
+        "placeholder": "{{steps.find.result.id}}",
+        "hint": "Optional shorthand for the changed entity id."
+      }
+    ],
+    "browser": [
+      {
+        "name": "url",
+        "label": "URL",
+        "type": "string",
+        "placeholder": "https://example.com",
+        "hint": "The webpage URL to interact with"
+      },
+      {
+        "name": "action",
+        "label": "Action",
+        "type": "select",
+        "options": [
+          "scrape",
+          "screenshot",
+          "click",
+          "fill",
+          "extract",
+          "launch",
+          "navigate",
+          "act",
+          "screencast_start",
+          "screencast_stop",
+          "stream_shared",
+          "stream_shared_stop"
+        ]
+      },
+      {
+        "name": "prompt",
+        "label": "Prompt",
+        "type": "textarea",
+        "placeholder": "What should the agent do?",
+        "showWhen": {
+          "field": "action",
+          "values": [
+            "act"
+          ]
+        }
+      },
+      {
+        "name": "maxSteps",
+        "label": "Max Agent Steps",
+        "type": "number",
+        "placeholder": "6",
+        "showWhen": {
+          "field": "action",
+          "values": [
+            "act"
+          ]
+        }
+      },
+      {
+        "name": "instructions",
+        "label": "Agent Instructions",
+        "type": "textarea",
+        "placeholder": "Respond with EXACTLY one JSON object: {\"action\":\"done\",\"summary\":\"...\",\"status\":\"passed|failed\"}",
+        "hint": "Action/verdict template for the agent. Guides how the agent decides passed/failed. Supports {{variable}} syntax.",
+        "showWhen": {
+          "field": "action",
+          "values": [
+            "act"
+          ]
+        }
+      },
+      {
+        "name": "record",
+        "label": "Record",
+        "type": "string",
+        "placeholder": "{{input.recording}}",
+        "hint": "Recording mode — set to a truthy value (e.g. {{input.recording}}) to persist the screencast",
+        "showWhen": {
+          "field": "action",
+          "values": [
+            "screencast_start"
+          ]
+        }
+      },
+      {
+        "name": "fps",
+        "label": "FPS",
+        "type": "string",
+        "placeholder": "{{input.cast_fps}}",
+        "showWhen": {
+          "field": "action",
+          "values": [
+            "screencast_start",
+            "screencast_stop"
+          ]
+        }
+      },
+      {
+        "name": "resolution",
+        "label": "Resolution",
+        "type": "string",
+        "placeholder": "{{input.cast_res}}",
+        "showWhen": {
+          "field": "action",
+          "values": [
+            "screencast_start"
+          ]
+        }
+      },
+      {
+        "name": "entityType",
+        "label": "Entity Type",
+        "type": "string",
+        "placeholder": "video",
+        "showWhen": {
+          "field": "action",
+          "values": [
+            "screencast_stop"
+          ]
+        }
+      },
+      {
+        "name": "entityId",
+        "label": "Entity ID",
+        "type": "string",
+        "placeholder": "{{steps.find.result.0.id}}",
+        "showWhen": {
+          "field": "action",
+          "values": [
+            "screencast_stop"
+          ]
+        }
+      },
+      {
+        "name": "selector",
+        "label": "CSS Selector",
+        "type": "string",
+        "placeholder": ".main-content"
+      },
+      {
+        "name": "waitMs",
+        "label": "Wait (ms)",
+        "type": "number",
+        "placeholder": "2000"
+      },
+      {
+        "name": "streamPreview",
+        "label": "Stream Live Preview",
+        "type": "boolean",
+        "description": "Stream browser activity back to the UI as a live screencast (sets streamPreview on launch)"
+      }
+    ],
+    "websocket_call": [
+      {
+        "name": "integration",
+        "label": "Integration",
+        "type": "select",
+        "required": true,
+        "fetchOptions": {
+          "url": "/tenant/integrations?limit=100",
+          "dataPath": "integrations",
+          "valueKey": "name"
+        },
+        "placeholder": "Select integration..."
+      },
+      {
+        "name": "emitEvent",
+        "label": "Emit Event",
+        "type": "select",
+        "placeholder": "Select event...",
+        "fetchOptions": {
+          "url": "/events",
+          "dataPath": "events",
+          "valueKey": "name"
+        },
+        "hint": "Choose an existing Backflow event to emit from this WebSocket subscription"
+      },
+      {
+        "name": "request",
+        "label": "Subscription Request (JSON)",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "{\"field\":\"value\"}"
+      },
+      {
+        "name": "maxDurationMs",
+        "label": "Maximum Duration (ms)",
+        "type": "number",
+        "defaultValue": 300000,
+        "hint": "Optional safety cap for the long-lived subscription"
+      },
+      {
+        "name": "subscribe",
+        "label": "Send Request on Connect",
+        "type": "boolean",
+        "defaultValue": true
+      }
+    ],
+    "delay": [
+      {
+        "name": "seconds",
+        "label": "Seconds",
+        "type": "number",
+        "required": true,
+        "placeholder": "5",
+        "hint": "Pause execution for this many seconds"
+      }
+    ],
+    "web_search": [
+      {
+        "name": "query",
+        "label": "Search Query",
+        "type": "string",
+        "required": true,
+        "placeholder": "latest AI news 2026",
+        "hint": "Supports {{variable}} syntax"
+      },
+      {
+        "name": "maxResults",
+        "label": "Max Results",
+        "type": "number",
+        "placeholder": "5",
+        "defaultValue": 5
+      }
+    ],
+    "spawn_workflow": [
+      {
+        "name": "config",
+        "label": "Child Workflow Definition (config)",
+        "type": "textarea",
+        "placeholder": "{\"id\": \"child-workflow\", \"name\": \"Child\", \"workflows\": [{\"steps\": [...]}]}",
+        "hint": "Optional — leave empty if the LLM spawns children dynamically via the spawn_workflow tool. Only fill this for non-LLM workflows."
+      },
+      {
+        "name": "resultKey",
+        "label": "Result Key",
+        "type": "string",
+        "placeholder": "child_output",
+        "hint": "Key to store spawned workflow result under"
+      },
+      {
+        "name": "allowedActions",
+        "label": "Allowed Actions (comma-separated)",
+        "type": "string",
+        "placeholder": "llm_call, api_call",
+        "hint": "Restrict which actions the child can execute"
+      },
+      {
+        "name": "timeout",
+        "label": "Timeout (ms)",
+        "type": "number",
+        "placeholder": "60000",
+        "hint": "Child auto-terminates after this. LLM sees {{_remainingSeconds}} in prompts."
+      },
+      {
+        "name": "maxDepth",
+        "label": "Max Spawn Depth",
+        "type": "number",
+        "placeholder": "5",
+        "hint": "How deep children can spawn children (1-10). Default 5."
+      },
+      {
+        "name": "weight",
+        "label": "Weight / Priority",
+        "type": "number",
+        "placeholder": "1",
+        "hint": "1=execute only, 2=delegate, 3=delegate+retry, 4=delegate+escalate, 5=full autonomy"
+      },
+      {
+        "name": "allowedTools",
+        "label": "Allowed Tools (comma-separated)",
+        "type": "string",
+        "placeholder": "search_documents, list_documents",
+        "hint": "Tools the child can use directly. Others are delegated to parent."
+      },
+      {
+        "name": "delegationConfig",
+        "label": "Delegation Config (JSON)",
+        "type": "textarea",
+        "placeholder": "{\"maxDelegationDepth\": 2, \"delegationTimeout\": 30000}",
+        "hint": "JSON config for delegation behavior: maxDelegationDepth, delegationTimeout, propagateTools, propagateWeights"
+      }
+    ],
+    "handoff": [
+      {
+        "name": "config",
+        "label": "Child Workflow Definition (config)",
+        "type": "textarea",
+        "placeholder": "{\"id\": \"child-workflow\", \"name\": \"Child\", \"workflows\": [{\"steps\": [...]}]}",
+        "hint": "Optional — leave empty if the LLM spawns children dynamically via the spawn_workflow tool. Only fill this for non-LLM workflows."
+      },
+      {
+        "name": "agent",
+        "label": "Agent Name",
+        "type": "string",
+        "hint": "Name of the receiving agent (if different from child workflow)"
+      },
+      {
+        "name": "instructions",
+        "label": "Instructions",
+        "type": "textarea",
+        "placeholder": "Continue building the app. Focus on the authentication module.",
+        "hint": "Instructions for the receiving agent"
+      },
+      {
+        "name": "context",
+        "label": "Context (JSON)",
+        "type": "textarea",
+        "placeholder": "{\"currentWorkflow\": {{step_name.output}}, \"userIntent\": \"add login\"}",
+        "hint": "Additional context to pass — use {{step_id.output}} references"
+      },
+      {
+        "name": "weight",
+        "label": "Weight / Priority",
+        "type": "number",
+        "placeholder": "1",
+        "hint": "1=execute only, 2=delegate, 3=delegate+retry, 4=delegate+escalate, 5=full autonomy"
+      },
+      {
+        "name": "allowedTools",
+        "label": "Allowed Tools (comma-separated)",
+        "type": "string",
+        "placeholder": "search_documents, list_documents",
+        "hint": "Tools the child can use directly. Others are delegated to parent."
+      },
+      {
+        "name": "timeout",
+        "label": "Timeout (ms)",
+        "type": "number",
+        "placeholder": "60000",
+        "hint": "Child auto-terminates after this. LLM sees {{_remainingSeconds}} in prompts."
+      },
+      {
+        "name": "delegationConfig",
+        "label": "Delegation Config (JSON)",
+        "type": "textarea",
+        "placeholder": "{\"maxDelegationDepth\": 1, \"delegationTimeout\": 30000}",
+        "hint": "JSON config for delegation behavior: maxDelegationDepth, delegationTimeout, propagateTools, propagateWeights"
+      }
+    ],
+    "await_results": [
+      {
+        "name": "executionIds",
+        "label": "Source Execution IDs",
+        "type": "string",
+        "placeholder": "{{spawn.output.executionId}}",
+        "hint": "Optional — leave empty to auto-discover children spawned by this workflow. Comma-separated execution IDs for explicit targeting."
+      },
+      {
+        "name": "timeout",
+        "label": "Timeout (ms)",
+        "type": "number",
+        "placeholder": "60000"
+      },
+      {
+        "name": "retryOnFailure",
+        "label": "Retry Failed Children",
+        "type": "boolean",
+        "hint": "Auto-retry child workflows that fail"
+      },
+      {
+        "name": "maxRetries",
+        "label": "Max Retries",
+        "type": "number",
+        "placeholder": "3",
+        "hint": "Number of retry attempts per child (default: 3)",
+        "showWhen": {
+          "field": "retryOnFailure",
+          "values": [
+            true
+          ]
+        }
+      },
+      {
+        "name": "retryDelay",
+        "label": "Retry Delay (ms)",
+        "type": "number",
+        "placeholder": "2000",
+        "hint": "Delay between retry attempts (default: 2000)",
+        "showWhen": {
+          "field": "retryOnFailure",
+          "values": [
+            true
+          ]
+        }
+      }
+    ],
+    "bulk_import": [
+      {
+        "name": "collection",
+        "label": "Target Collection",
+        "type": "string",
+        "required": true,
+        "placeholder": "users"
+      },
+      {
+        "name": "source",
+        "label": "Source (URL or inline JSON)",
+        "type": "string",
+        "placeholder": "https://example.com/data.json"
+      },
+      {
+        "name": "format",
+        "label": "Format",
+        "type": "select",
+        "options": [
+          "csv",
+          "json"
+        ],
+        "defaultValue": "json"
+      },
+      {
+        "name": "mode",
+        "label": "Mode",
+        "type": "select",
+        "options": [
+          "insert",
+          "upsert"
+        ],
+        "defaultValue": "insert"
+      },
+      {
+        "name": "upsertKey",
+        "label": "Upsert Key",
+        "type": "string",
+        "placeholder": "id",
+        "showWhen": {
+          "field": "mode",
+          "values": [
+            "upsert"
+          ]
+        }
+      },
+      {
+        "name": "batchSize",
+        "label": "Batch Size",
+        "type": "number",
+        "placeholder": "1000",
+        "hint": "Records per database batch"
+      }
+    ],
+    "bulk_export": [
+      {
+        "name": "collection",
+        "label": "Source Collection",
+        "type": "string",
+        "required": true,
+        "placeholder": "users"
+      },
+      {
+        "name": "format",
+        "label": "Format",
+        "type": "select",
+        "options": [
+          "csv",
+          "json"
+        ],
+        "defaultValue": "json"
+      },
+      {
+        "name": "filters",
+        "label": "Filters (JSON)",
+        "type": "textarea",
+        "placeholder": "[{\"field\": \"status\", \"op\": \"eq\", \"value\": \"active\"}]"
+      },
+      {
+        "name": "batchSize",
+        "label": "Batch Size",
+        "type": "number",
+        "placeholder": "1000",
+        "hint": "Records per database batch"
+      },
+      {
+        "name": "output",
+        "label": "Output Path",
+        "type": "string",
+        "placeholder": "download",
+        "hint": "Storage path or 'download' for direct download"
+      }
+    ],
+    "while_loop": [
+      {
+        "name": "steps",
+        "label": "Body Steps (JSON array)",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "[{\"id\":\"step1\",\"action\":\"llm_call\",\"params\":{...}}]",
+        "hint": "Array of step definitions executed each iteration"
+      },
+      {
+        "name": "condition",
+        "label": "Condition",
+        "type": "string",
+        "placeholder": "{{filesEdited}} < {{maxFiles}}",
+        "hint": "Loop continues while truthy. Omit for indefinite (use maxIterations safety cap). Supports {{var}} syntax."
+      },
+      {
+        "name": "maxIterations",
+        "label": "Max Iterations",
+        "type": "number",
+        "placeholder": "100",
+        "hint": "Safety cap — loop stops after this many iterations (max 1000)"
+      },
+      {
+        "name": "accumulate",
+        "label": "Accumulate",
+        "type": "select",
+        "options": [
+          {
+            "value": "results",
+            "label": "All results (array)"
+          },
+          {
+            "value": "last",
+            "label": "Last result only"
+          },
+          {
+            "value": "none",
+            "label": "No accumulation"
+          }
+        ],
+        "defaultValue": "results"
+      }
+    ],
+    "render_scene": [
+      {
+        "name": "sceneName",
+        "label": "Scene Name",
+        "type": "string",
+        "required": true,
+        "placeholder": "home"
+      },
+      {
+        "name": "layout",
+        "label": "Layout",
+        "type": "select",
+        "options": [
+          "vstack",
+          "hstack",
+          "row",
+          "column"
+        ],
+        "defaultValue": "vstack"
+      },
+      {
+        "name": "backgroundColor",
+        "label": "Background Color",
+        "type": "string",
+        "placeholder": "#1a1a2e"
+      },
+      {
+        "name": "spacing",
+        "label": "Spacing",
+        "type": "number",
+        "placeholder": "4"
+      },
+      {
+        "name": "align",
+        "label": "Align",
+        "type": "select",
+        "options": [
+          "start",
+          "center",
+          "end",
+          "stretch"
+        ]
+      },
+      {
+        "name": "justify",
+        "label": "Justify",
+        "type": "select",
+        "options": [
+          "start",
+          "center",
+          "end",
+          "space-between",
+          "space-around"
+        ]
+      },
+      {
+        "name": "className",
+        "label": "Class Name",
+        "type": "string",
+        "placeholder": "min-h-screen bg-gradient-to-b"
+      },
+      {
+        "name": "components",
+        "label": "Components (JSON array)",
+        "type": "textarea",
+        "placeholder": "[{\"type\":\"text\",\"props\":{\"content\":\"Hello\"}}]",
+        "hint": "Array of component definitions rendered inside this scene"
+      }
+    ],
+    "write_to_disk": [
+      {
+        "name": "baseDir",
+        "label": "Base Directory",
+        "type": "string",
+        "placeholder": "repo",
+        "defaultValue": "repo",
+        "hint": "Relative subdirectory within the scoped temp directory"
+      },
+      {
+        "name": "files",
+        "label": "Files (JSON array)",
+        "type": "textarea",
+        "placeholder": "[{\"path\":\"src/index.ts\",\"content\":\"...\"}]",
+        "hint": "Array of { path, content } objects. Content supports {{variable}} interpolation.",
+        "required": true
+      }
+    ],
+    "execute_code": [
+      {
+        "name": "code",
+        "label": "Code",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "function(input) {\n  return { result: input.value * 2 };\n}",
+        "hint": "JavaScript executed in VM sandbox. Must export a function or return a value."
+      },
+      {
+        "name": "language",
+        "label": "Language",
+        "type": "select",
+        "options": [
+          {
+            "value": "javascript",
+            "label": "JavaScript",
+            "description": "Runs via VM sandbox (same-process)"
+          },
+          {
+            "value": "typescript",
+            "label": "TypeScript",
+            "description": "Transpiles then runs via VM sandbox"
+          }
+        ],
+        "defaultValue": "javascript"
+      },
+      {
+        "name": "input",
+        "label": "Input (JSON)",
+        "type": "textarea",
+        "placeholder": "{\"value\": 42}",
+        "hint": "Optional — passed as argument to the code function."
+      },
+      {
+        "name": "timeout",
+        "label": "Timeout (ms)",
+        "type": "number",
+        "placeholder": "10000",
+        "hint": "Max execution time before forced termination"
+      }
+    ],
+    "shell_command": [
+      {
+        "name": "command",
+        "label": "Command",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "curl -sf -o /tmp/asset.png \"{{baseUrl}}/assets/{{assetId}}/content.png\"",
+        "hint": "Shell command run on the host. Supports {{variable}} interpolation."
+      },
+      {
+        "name": "cwd",
+        "label": "Working Directory",
+        "type": "string",
+        "placeholder": "/tmp",
+        "hint": "Defaults to the server process directory"
+      },
+      {
+        "name": "env",
+        "label": "Env (JSON)",
+        "type": "textarea",
+        "placeholder": "{\"MY_VAR\": \"value\"}",
+        "hint": "Extra environment variables merged into the command env"
+      },
+      {
+        "name": "timeout",
+        "label": "Timeout (ms)",
+        "type": "number",
+        "placeholder": "30000",
+        "hint": "Max execution time before forced termination"
+      }
+    ]
+  },
+  "omitted": [
+    {
+      "path": "WorkflowStep.config",
+      "original": "config: Record<string, any>;"
+    },
+    {
+      "path": "WorkflowStep.input",
+      "original": "input?: Record<string, any>;"
+    },
+    {
+      "path": "WorkflowStep.defaultValue",
+      "original": "defaultValue?: any;"
+    },
+    {
+      "path": "WorkflowStep.files",
+      "original": "files?: any[];"
+    },
+    {
+      "path": "WorkflowStep.images",
+      "original": "images?: any[];"
+    },
+    {
+      "path": "WorkflowStep.pausePoint.metadata",
+      "original": "metadata?: Record<string, any>;"
+    },
+    {
+      "path": "WorkflowForm.tools",
+      "original": "tools?: any[];"
+    },
+    {
+      "path": "WorkflowForm.[index]",
+      "original": "[key: string]: any;"
+    },
+    {
+      "path": "WorkflowForm.input",
+      "original": "input?: Record<string, any>;"
+    },
+    {
+      "path": "WorkflowForm.eventFilter",
+      "original": "eventFilter?: Record<string, any>;"
+    },
+    {
+      "path": "WorkflowForm.agent",
+      "original": "agent?: any;"
+    },
+    {
+      "path": "WorkflowForm.context",
+      "original": "context?: any;"
+    },
+    {
+      "path": "WorkflowForm.monitoring",
+      "original": "monitoring?: any;"
+    },
+    {
+      "path": "OutputConfig.mapping",
+      "original": "\"mapping\": any;"
+    },
+    {
+      "path": "HttpConfig.url",
+      "original": "\"url\": any;"
+    },
+    {
+      "path": "HttpConfig.headers",
+      "original": "\"headers\"?: Record<string, any>;"
+    },
+    {
+      "path": "HttpConfig.body",
+      "original": "\"body\"?: any;"
+    },
+    {
+      "path": "HttpConfig.queryParams",
+      "original": "\"queryParams\"?: Record<string, any>;"
+    },
+    {
+      "path": "BackflowToolConfig.params",
+      "original": "\"params\"?: any;"
+    },
+    {
+      "path": "DatabaseConfig.collection",
+      "original": "\"collection\": any;"
+    },
+    {
+      "path": "DatabaseConfig.id",
+      "original": "\"id\"?: any;"
+    },
+    {
+      "path": "DatabaseConfig.where",
+      "original": "\"where\"?: any;"
+    },
+    {
+      "path": "DatabaseConfig.data",
+      "original": "\"data\"?: any;"
+    },
+    {
+      "path": "TransformConfig.input",
+      "original": "\"input\"?: any;"
+    },
+    {
+      "path": "TransformConfig.expression",
+      "original": "\"expression\"?: any;"
+    },
+    {
+      "path": "LlmConfig.prompt",
+      "original": "\"prompt\": any;"
+    },
+    {
+      "path": "LlmConfig.instructions",
+      "original": "\"instructions\"?: any;"
+    },
+    {
+      "path": "NotificationConfig.title",
+      "original": "\"title\"?: any;"
+    },
+    {
+      "path": "NotificationConfig.body",
+      "original": "\"body\"?: any;"
+    },
+    {
+      "path": "NotificationConfig.to",
+      "original": "\"to\"?: any;"
+    },
+    {
+      "path": "NotificationConfig.userId",
+      "original": "\"userId\"?: any;"
+    },
+    {
+      "path": "NotificationConfig.template",
+      "original": "\"template\"?: any;"
+    },
+    {
+      "path": "NotificationConfig.templateData",
+      "original": "\"templateData\"?: Record<string, any>;"
+    },
+    {
+      "path": "StorageConfig.bucket",
+      "original": "\"bucket\": any;"
+    },
+    {
+      "path": "StorageConfig.path",
+      "original": "\"path\"?: any;"
+    },
+    {
+      "path": "StorageConfig.prefix",
+      "original": "\"prefix\"?: any;"
+    },
+    {
+      "path": "StorageConfig.data",
+      "original": "\"data\"?: any;"
+    },
+    {
+      "path": "FirebaseConfig.collection",
+      "original": "\"collection\": any;"
+    },
+    {
+      "path": "FirebaseConfig.documentId",
+      "original": "\"documentId\"?: any;"
+    },
+    {
+      "path": "FirebaseConfig.data",
+      "original": "\"data\"?: any;"
+    },
+    {
+      "path": "FirebaseConfig.where",
+      "original": "\"where\"?: any;"
+    },
+    {
+      "path": "CacheConfig.key",
+      "original": "\"key\": any;"
+    },
+    {
+      "path": "CacheConfig.value",
+      "original": "\"value\"?: any;"
+    },
+    {
+      "path": "CacheConfig.pattern",
+      "original": "\"pattern\"?: any;"
+    },
+    {
+      "path": "ConditionalConfig.condition",
+      "original": "\"condition\": any;"
+    },
+    {
+      "path": "ConditionalConfig.onTrue",
+      "original": "\"onTrue\"?: any;"
+    },
+    {
+      "path": "ConditionalConfig.onFalse",
+      "original": "\"onFalse\"?: any;"
+    },
+    {
+      "path": "EmitEventConfig.event",
+      "original": "\"event\": any;"
+    },
+    {
+      "path": "EmitEventConfig.data",
+      "original": "\"data\"?: any;"
+    },
+    {
+      "path": "EmitEventConfig.id",
+      "original": "\"id\"?: any;"
+    },
+    {
+      "path": "BrowserConfig.url",
+      "original": "\"url\"?: any;"
+    },
+    {
+      "path": "BrowserConfig.prompt",
+      "original": "\"prompt\"?: any;"
+    },
+    {
+      "path": "BrowserConfig.instructions",
+      "original": "\"instructions\"?: any;"
+    },
+    {
+      "path": "BrowserConfig.record",
+      "original": "\"record\"?: any;"
+    },
+    {
+      "path": "BrowserConfig.fps",
+      "original": "\"fps\"?: any;"
+    },
+    {
+      "path": "BrowserConfig.resolution",
+      "original": "\"resolution\"?: any;"
+    },
+    {
+      "path": "BrowserConfig.entityType",
+      "original": "\"entityType\"?: any;"
+    },
+    {
+      "path": "BrowserConfig.entityId",
+      "original": "\"entityId\"?: any;"
+    },
+    {
+      "path": "BrowserConfig.selector",
+      "original": "\"selector\"?: any;"
+    },
+    {
+      "path": "WebsocketCallConfig.request",
+      "original": "\"request\": any;"
+    },
+    {
+      "path": "WebSearchConfig.query",
+      "original": "\"query\": any;"
+    },
+    {
+      "path": "SpawnWorkflowConfig.config",
+      "original": "\"config\"?: any;"
+    },
+    {
+      "path": "SpawnWorkflowConfig.resultKey",
+      "original": "\"resultKey\"?: any;"
+    },
+    {
+      "path": "SpawnWorkflowConfig.allowedActions",
+      "original": "\"allowedActions\"?: any;"
+    },
+    {
+      "path": "SpawnWorkflowConfig.allowedTools",
+      "original": "\"allowedTools\"?: any;"
+    },
+    {
+      "path": "SpawnWorkflowConfig.delegationConfig",
+      "original": "\"delegationConfig\"?: any;"
+    },
+    {
+      "path": "HandoffConfig.config",
+      "original": "\"config\"?: any;"
+    },
+    {
+      "path": "HandoffConfig.agent",
+      "original": "\"agent\"?: any;"
+    },
+    {
+      "path": "HandoffConfig.instructions",
+      "original": "\"instructions\"?: any;"
+    },
+    {
+      "path": "HandoffConfig.context",
+      "original": "\"context\"?: any;"
+    },
+    {
+      "path": "HandoffConfig.allowedTools",
+      "original": "\"allowedTools\"?: any;"
+    },
+    {
+      "path": "HandoffConfig.delegationConfig",
+      "original": "\"delegationConfig\"?: any;"
+    },
+    {
+      "path": "AwaitResultsConfig.executionIds",
+      "original": "\"executionIds\"?: any;"
+    },
+    {
+      "path": "BulkImportConfig.collection",
+      "original": "\"collection\": any;"
+    },
+    {
+      "path": "BulkImportConfig.source",
+      "original": "\"source\"?: any;"
+    },
+    {
+      "path": "BulkImportConfig.upsertKey",
+      "original": "\"upsertKey\"?: any;"
+    },
+    {
+      "path": "BulkExportConfig.collection",
+      "original": "\"collection\": any;"
+    },
+    {
+      "path": "BulkExportConfig.filters",
+      "original": "\"filters\"?: any;"
+    },
+    {
+      "path": "BulkExportConfig.output",
+      "original": "\"output\"?: any;"
+    },
+    {
+      "path": "WhileLoopConfig.steps",
+      "original": "\"steps\": any;"
+    },
+    {
+      "path": "WhileLoopConfig.condition",
+      "original": "\"condition\"?: any;"
+    },
+    {
+      "path": "RenderSceneConfig.sceneName",
+      "original": "\"sceneName\": any;"
+    },
+    {
+      "path": "RenderSceneConfig.backgroundColor",
+      "original": "\"backgroundColor\"?: any;"
+    },
+    {
+      "path": "RenderSceneConfig.className",
+      "original": "\"className\"?: any;"
+    },
+    {
+      "path": "RenderSceneConfig.components",
+      "original": "\"components\"?: any;"
+    },
+    {
+      "path": "WriteToDiskConfig.baseDir",
+      "original": "\"baseDir\"?: any;"
+    },
+    {
+      "path": "WriteToDiskConfig.files",
+      "original": "\"files\": any;"
+    },
+    {
+      "path": "ExecuteCodeConfig.code",
+      "original": "\"code\": any;"
+    },
+    {
+      "path": "ExecuteCodeConfig.input",
+      "original": "\"input\"?: any;"
+    },
+    {
+      "path": "ShellCommandConfig.command",
+      "original": "\"command\": any;"
+    },
+    {
+      "path": "ShellCommandConfig.cwd",
+      "original": "\"cwd\"?: any;"
+    },
+    {
+      "path": "ShellCommandConfig.env",
+      "original": "\"env\"?: any;"
+    },
+    {
+      "path": "CustomConfig.[index]",
+      "original": "[key: string]: any"
+    }
+  ]
+}

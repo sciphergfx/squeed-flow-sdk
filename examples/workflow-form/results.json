@@ -1,0 +1,189 @@
+{
+  "fullUploadError": "Unsupported TypeScript type: any",
+  "totals": {
+    "valid": 8,
+    "invalid": 8,
+    "unverified": 1
+  },
+  "cases": [
+    {
+      "id": "case-1",
+      "label": "number",
+      "source": "root.samples",
+      "sourceProperty": "count",
+      "target": "root.workflow",
+      "targetProperty": "timeoutMs",
+      "expected": "valid",
+      "actual": "valid"
+    },
+    {
+      "id": "case-2",
+      "label": "number mismatch",
+      "source": "root.samples",
+      "sourceProperty": "text",
+      "target": "root.workflow",
+      "targetProperty": "timeoutMs",
+      "expected": "invalid",
+      "actual": "invalid",
+      "reason": "Incompatible property types: text -> timeoutMs."
+    },
+    {
+      "id": "case-3",
+      "label": "string array",
+      "source": "root.samples",
+      "sourceProperty": "names",
+      "target": "root.workflow",
+      "targetProperty": "tags",
+      "expected": "valid",
+      "actual": "valid"
+    },
+    {
+      "id": "case-4",
+      "label": "array mismatch",
+      "source": "root.samples",
+      "sourceProperty": "counts",
+      "target": "root.workflow",
+      "targetProperty": "tags",
+      "expected": "invalid",
+      "actual": "invalid",
+      "reason": "Incompatible property types: counts -> tags."
+    },
+    {
+      "id": "case-5",
+      "label": "literal union",
+      "source": "root.samples",
+      "sourceProperty": "target",
+      "target": "root.step",
+      "targetProperty": "executionTarget",
+      "expected": "valid",
+      "actual": "valid"
+    },
+    {
+      "id": "case-6",
+      "label": "invalid literal",
+      "source": "root.samples",
+      "sourceProperty": "invalidTarget",
+      "target": "root.step",
+      "targetProperty": "executionTarget",
+      "expected": "invalid",
+      "actual": "invalid",
+      "reason": "Incompatible property types: invalidTarget -> executionTarget."
+    },
+    {
+      "id": "case-7",
+      "label": "wide string to literal",
+      "source": "root.samples",
+      "sourceProperty": "broadTarget",
+      "target": "root.step",
+      "targetProperty": "executionTarget",
+      "expected": "invalid",
+      "actual": "invalid",
+      "reason": "Incompatible property types: broadTarget -> executionTarget."
+    },
+    {
+      "id": "case-8",
+      "label": "nested retry",
+      "source": "root.samples",
+      "sourceProperty": "retry",
+      "target": "root.step",
+      "targetProperty": "retry",
+      "expected": "valid",
+      "actual": "valid"
+    },
+    {
+      "id": "case-9",
+      "label": "nested retry mismatch",
+      "source": "root.samples",
+      "sourceProperty": "badRetry",
+      "target": "root.step",
+      "targetProperty": "retry",
+      "expected": "invalid",
+      "actual": "invalid",
+      "reason": "Incompatible property types: badRetry -> retry."
+    },
+    {
+      "id": "case-10",
+      "label": "nested approval",
+      "source": "root.samples",
+      "sourceProperty": "approval",
+      "target": "root.step",
+      "targetProperty": "pausePoint",
+      "expected": "valid",
+      "actual": "valid"
+    },
+    {
+      "id": "case-11",
+      "label": "missing nested required field",
+      "source": "root.samples",
+      "sourceProperty": "badApproval",
+      "target": "root.step",
+      "targetProperty": "pausePoint",
+      "expected": "invalid",
+      "actual": "invalid",
+      "reason": "Incompatible property types: badApproval -> pausePoint."
+    },
+    {
+      "id": "case-12",
+      "label": "optional to required",
+      "source": "root.step",
+      "sourceProperty": "id",
+      "target": "root.workflow",
+      "targetProperty": "name",
+      "expected": "invalid",
+      "actual": "invalid",
+      "reason": "Optional source cannot supply a required target property."
+    },
+    {
+      "id": "case-13",
+      "label": "optional to optional",
+      "source": "root.step",
+      "sourceProperty": "id",
+      "target": "root.workflow",
+      "targetProperty": "id",
+      "expected": "valid",
+      "actual": "valid"
+    },
+    {
+      "id": "case-14",
+      "label": "boolean",
+      "source": "root.samples",
+      "sourceProperty": "flag",
+      "target": "root.llm",
+      "targetProperty": "streamPreview",
+      "expected": "valid",
+      "actual": "valid"
+    },
+    {
+      "id": "case-15",
+      "label": "boolean mismatch",
+      "source": "root.samples",
+      "sourceProperty": "text",
+      "target": "root.llm",
+      "targetProperty": "streamPreview",
+      "expected": "invalid",
+      "actual": "invalid",
+      "reason": "Incompatible property types: text -> streamPreview."
+    },
+    {
+      "id": "case-16",
+      "label": "HTTP timeout",
+      "source": "root.samples",
+      "sourceProperty": "count",
+      "target": "root.http",
+      "targetProperty": "timeout",
+      "expected": "valid",
+      "actual": "valid"
+    },
+    {
+      "id": "case-17",
+      "label": "untyped text field",
+      "source": "root.samples",
+      "sourceProperty": "text",
+      "target": "root.http",
+      "targetProperty": "url",
+      "expected": "unverified",
+      "actual": "unverified",
+      "reason": "Unverified: source or target property is missing from the interface."
+    }
+  ]
+}

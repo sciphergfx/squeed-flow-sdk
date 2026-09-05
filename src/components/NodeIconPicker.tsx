@@ -17,9 +17,11 @@ import {
 
 export function NodeIconPicker({
   nodeId,
+  edgeId,
   value,
 }: {
-  nodeId: string;
+  nodeId?: string;
+  edgeId?: string;
   value?: string;
 }) {
   const { callbacks, readOnly, themeColor } = useFlowDiagramContext();
@@ -67,7 +69,8 @@ export function NodeIconPicker({
   }, [readOnly]);
   const pick = (icon: string) => {
     if (readOnly) return;
-    callbacks.onNodeIconChange?.(nodeId, icon);
+    if (edgeId) callbacks.onEdgeIconChange?.(edgeId, icon);
+    else if (nodeId) callbacks.onNodeIconChange?.(nodeId, icon);
     dialog.current?.close();
   };
   const filtered = icons
@@ -88,9 +91,9 @@ export function NodeIconPicker({
   };
   return (
     <>
-      <ToolbarTooltip label="Choose node icon">
+      <ToolbarTooltip label={edgeId ? "Choose edge icon" : "Choose node icon"}>
         <ToolbarIconButton
-          aria-label="Choose node icon"
+          aria-label={edgeId ? "Choose edge icon" : "Choose node icon"}
           icon={<PiImage size={20} />}
           size="sm"
           variant="ghost"
@@ -110,7 +113,7 @@ export function NodeIconPicker({
       </ToolbarTooltip>
       <dialog
         ref={dialog}
-        aria-label="Choose node icon"
+        aria-label={edgeId ? "Choose edge icon" : "Choose node icon"}
         onClose={() => {
           setOpen(false);
           uploadVersion.current++;
@@ -144,7 +147,7 @@ export function NodeIconPicker({
                 gap: 8,
               }}
             >
-              <strong>Node icon</strong>
+              <strong>{edgeId ? "Edge icon" : "Node icon"}</strong>
               <ToolbarIconButton
                 aria-label="Close icon picker"
                 icon={<PiX size={20} />}
@@ -156,10 +159,10 @@ export function NodeIconPicker({
             <ToolbarSelect
               aria-label="Icon source"
               value={mode}
-              onChange={(event) => {
-                setMode(event.target.value);
+              onValueChange={(value) => {
+                setMode(value);
                 setError("");
-                if (event.target.value === "custom") upload.current?.click();
+                if (value === "custom") upload.current?.click();
               }}
             >
               {catalogState !== "unavailable" && (
@@ -302,7 +305,7 @@ export function NodeIconPicker({
             )}
             <ToolbarTooltip label="Remove icon">
               <ToolbarIconButton
-                aria-label="Remove node icon"
+                aria-label={edgeId ? "Remove edge icon" : "Remove node icon"}
                 icon={<PiTrash size={18} />}
                 size="sm"
                 variant="ghost"

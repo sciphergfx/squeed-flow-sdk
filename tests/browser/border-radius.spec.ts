@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ready } from "./helpers";
+import { ready, chooseToolbarOption } from "./helpers";
 
 for (const width of [1440, 390]) {
   test(`node radius presets, custom input and reset at ${width}px`, async ({
@@ -18,7 +18,7 @@ for (const width of [1440, 390]) {
     });
     const surface = node.locator("[data-flow-node-surface]").first();
     for (const radius of [30, 0]) {
-      await picker.selectOption(String(radius));
+      await chooseToolbarOption(picker, `${radius}px radius`);
       await expect(surface).toHaveCSS("border-top-left-radius", `${radius}px`);
       expect(
         await page.evaluate(
@@ -26,7 +26,7 @@ for (const width of [1440, 390]) {
         ),
       ).toBe(radius);
     }
-    await picker.selectOption("custom");
+    await chooseToolbarOption(picker, "Custom radius");
     const input = page.getByRole("spinbutton", {
       name: "Custom border radius",
       exact: true,
@@ -39,7 +39,7 @@ for (const width of [1440, 390]) {
     await expect(surface).toHaveCSS("border-top-left-radius", "23px");
     await picker.scrollIntoViewIfNeeded();
     await page.screenshot({ path: testInfo.outputPath("radius-toolbar.png") });
-    await picker.selectOption("");
+    await chooseToolbarOption(picker, "Default radius");
     expect(await page.evaluate(() => window.__flowTest.document)).toEqual(
       original,
     );
@@ -50,7 +50,7 @@ for (const width of [1440, 390]) {
       .locator('.flow-sdk-node[data-node-id="root.beta"] p')
       .first()
       .click();
-    await picker.selectOption("16");
+    await chooseToolbarOption(picker, "16px radius");
     expect(
       await page.evaluate(() => [
         window.__flowTest.document.alpha.$borderRadius,

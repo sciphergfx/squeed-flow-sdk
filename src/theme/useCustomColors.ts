@@ -66,7 +66,7 @@ export function useCustomColors(theme = null) {
   const darkColor = colorModeValue(darkMode, "gray.900", "gray.900");
 
   const colorActive = colorModeValue(darkMode, "gray.400", "gray.500");
-  const colorInactive = colorModeValue(darkMode, "gray.400", "gray.700");
+  const colorInactive = colorModeValue(darkMode, "gray.400", "gray.500");
   const colorText = colorModeValue(darkMode, "gray.900", "gray.200");
   const themedColorText = colorModeValue(
     darkMode,

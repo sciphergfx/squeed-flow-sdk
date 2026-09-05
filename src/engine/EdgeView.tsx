@@ -1,5 +1,6 @@
 import { memo, useMemo } from "react";
 import { createPortal } from "react-dom";
+import DynamicIcon from "../utils/DynamicIcon";
 import type {
   FlowDiagramConfig,
   FlowDiagramEdge,
@@ -99,7 +100,9 @@ function EdgeView({
     () => (label ? wrapText(label, LABEL_FONT, LABEL_MAX_WIDTH) : []),
     [label],
   );
-  const labelWidth = Math.max(
+  const icon = edgeData?.icon;
+  const iconWidth = icon ? 48 + (lines.length ? 12 : 0) : 0;
+  const labelWidth = iconWidth + Math.max(
     0,
     ...lines.map((line) => measureText(line, LABEL_FONT)),
   );
@@ -219,14 +222,19 @@ function EdgeView({
 
   if (!geo) return null;
 
-  const validationColor = validationIssue?.startsWith("Unverified:") ? "#b45309" : "#dc2626";
+  const validationColor = validationIssue?.startsWith("Unverified:")
+    ? "#b45309"
+    : "#dc2626";
   const displayColor = validationIssue ? validationColor : color;
   const validationEl = validationIssue ? (
-    <g className="flow-sdk-edge-validation" role="img" aria-label={validationIssue}
-      transform={`translate(${geo.label.x} ${geo.label.y - (lines.length * LABEL_FONT_SIZE / 2) - 55})`}>
+    <g
+      className="flow-sdk-edge-validation"
+      role="img"
+      aria-label={validationIssue}
+      transform={`translate(${geo.label.x} ${geo.label.y - (lines.length * LABEL_FONT_SIZE) / 2 - 55})`}
+    >
       <title>{validationIssue}</title>
-      <circle r={24} fill={validationColor} stroke={labelBg} strokeWidth={4} />
-      <text textAnchor="middle" dominantBaseline="central" fontSize={32} fontWeight="bold" fill="white">!</text>
+      <DynamicIcon name="PiWarningCircleFill" svg size={48} x={-24} y={-24} color={validationColor} />
     </g>
   ) : null;
 
@@ -236,9 +244,9 @@ function EdgeView({
     : undefined;
 
   let labelEl: React.ReactNode = null;
-  if (lines.length) {
-    const w = Math.max(...lines.map((l) => measureText(l, LABEL_FONT)));
-    const h = lines.length * LABEL_FONT_SIZE;
+  if (lines.length || icon) {
+    const w = labelWidth;
+    const h = Math.max(lines.length * LABEL_FONT_SIZE, icon ? 48 : 0);
     labelEl = (
       <g
         className="flow-sdk-edge-label"
@@ -265,13 +273,18 @@ function EdgeView({
           {lines.map((l, i) => (
             <tspan
               key={i}
-              x={0}
+              x={iconWidth / 2}
               y={(i - (lines.length - 1) / 2) * LABEL_FONT_SIZE}
             >
               {l}
             </tspan>
           ))}
         </text>
+        {icon && <g className="flow-sdk-edge-icon" opacity={color === "transparent" ? 0 : 1}>
+          <title>{label ? `Edge icon: ${label}` : "Edge icon"}</title>
+          <rect x={-w / 2} y={-24} width={48} height={48} fill="transparent" />
+          <DynamicIcon name={icon} svg size={48} x={-w / 2} y={-24} color={color} />
+        </g>}
       </g>
     );
   }
@@ -282,7 +295,13 @@ function EdgeView({
       data-edge-id={id}
       data-source-property={sourceProperty}
       data-target-property={targetProperty}
-      data-validation={validationIssue ? (validationIssue.startsWith("Unverified:") ? "unverified" : "invalid") : undefined}
+      data-validation={
+        validationIssue
+          ? validationIssue.startsWith("Unverified:")
+            ? "unverified"
+            : "invalid"
+          : undefined
+      }
       aria-label={validationIssue}
       onPointerDown={stop}
       onClick={(e) => {
@@ -300,7 +319,9 @@ function EdgeView({
       />
       {geo.arrow && <path d={geo.arrow} fill={displayColor} />}
       {labelLayer && labelEl ? createPortal(labelEl, labelLayer) : labelEl}
-      {labelLayer && validationEl ? createPortal(validationEl, labelLayer) : validationEl}
+      {labelLayer && validationEl
+        ? createPortal(validationEl, labelLayer)
+        : validationEl}
       <path className="flow-sdk-edge-hit" d={geo.d} />
     </g>
   );

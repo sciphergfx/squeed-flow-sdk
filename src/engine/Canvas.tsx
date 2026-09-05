@@ -78,6 +78,7 @@ export interface CanvasProps {
   customEdgeTypes?: FlowDiagramConfig["customEdgeTypes"];
   rankSep: number;
   edgeSep: number;
+  spacingFactor?: number;
   layoutDebounce: number;
   isPerformanceMode: boolean;
   minZoom: number;
@@ -159,6 +160,7 @@ function Canvas(props: CanvasProps) {
     edgeMode = "nodes",
     rankSep,
     edgeSep,
+    spacingFactor = 1.3,
     minZoom,
     maxZoom,
     initialViewport,
@@ -221,6 +223,7 @@ function Canvas(props: CanvasProps) {
   const animRef = useRef<number | null>(null);
   const animFallbackRef = useRef<ReturnType<typeof setTimeout>>();
   const pendingFitRef = useRef(false);
+  const previousSpacingFactor = useRef(spacingFactor);
 
   const cancelAnim = () => {
     if (animRef.current !== null) cancelAnimationFrame(animRef.current);
@@ -280,7 +283,7 @@ function Canvas(props: CanvasProps) {
         rankSep: p.rankSep,
         edgeSep: p.edgeSep,
         nodeSep: 5,
-        spacingFactor: 1.3,
+        spacingFactor: p.spacingFactor ?? 1.3,
       });
     } catch (err) {
       console.warn("[flow-sdk] layout failed", err);
@@ -304,6 +307,12 @@ function Canvas(props: CanvasProps) {
   }, []);
 
   useEffect(() => {
+    if (previousSpacingFactor.current !== spacingFactor && positionsRef.current.size > 0) {
+      hasLayoutRunRef.current = true;
+      pendingFitRef.current = false;
+      clearTimeout(settleTimerRef.current);
+    }
+    previousSpacingFactor.current = spacingFactor;
     scheduleLayout();
   }, [
     nodes,
@@ -313,6 +322,7 @@ function Canvas(props: CanvasProps) {
     rankSep,
     edgeSep,
     scheduleLayout,
+    spacingFactor,
   ]);
 
   useEffect(

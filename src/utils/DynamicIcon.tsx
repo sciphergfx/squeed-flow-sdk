@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { isIconImage } from "./iconSources";
 
-const DynamicIcon = ({ name, ...props }) => {
+const DynamicIcon = ({ name, svg = false, ...props }) => {
   const [IconComponent, setIconComponent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -151,6 +151,16 @@ const DynamicIcon = ({ name, ...props }) => {
 
   if (image) {
     const { size = 80, style, ...imageProps } = props;
+    if (svg) return (
+      <image
+        {...imageProps}
+        href={name}
+        width={size}
+        height={size}
+        preserveAspectRatio="xMidYMid meet"
+        style={style}
+      />
+    );
     return (
       <img
         {...imageProps}

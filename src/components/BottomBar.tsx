@@ -37,6 +37,7 @@ import {
 } from "./SelectionToolbar";
 import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
 import { WorkflowControls } from "./WorkflowControls";
+import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
 import { ToolbarScrollContainer } from "./ToolbarScrollContainer";
 
 const DIRECTIONS: {
@@ -369,7 +370,10 @@ const BottomBar = () => {
           alignItems="center"
           gap={2}
         >
-          <ToolbarScrollContainer background={background} border={isDark ? border : "gray.300"}>
+          <ToolbarScrollContainer
+            background={background}
+            border={isDark ? border : "gray.300"}
+          >
             <HStack
               px={2}
               gap={1}
@@ -603,20 +607,26 @@ const BottomBar = () => {
                       </ToolbarTooltip>
                       {backgroundSelected && !readOnly && (
                         <>
-                        <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />
-                        <Swatches
-                          label="Graph theme"
-                          colors={DEFAULT_PALETTE}
-                          value={themeColor}
-                          includeTransparent={false}
-                          onPick={(color) => {
-                            setThemeColor(color);
-                            callbacks.onThemeColorChange?.(color);
-                          }}
-                        />
+                          <Icon
+                            mx={-1}
+                            as={PiLineVerticalThin}
+                            boxSize={5}
+                            color={border}
+                          />
+                          <Swatches
+                            label="Graph theme"
+                            colors={DEFAULT_PALETTE}
+                            value={themeColor}
+                            includeTransparent={false}
+                            onPick={(color) => {
+                              setThemeColor(color);
+                              callbacks.onThemeColorChange?.(color);
+                            }}
+                          />
                         </>
                       )}
                       <WorkflowControls />
+                      <DiagramAppearanceControls />
                     </>
                   )}
 

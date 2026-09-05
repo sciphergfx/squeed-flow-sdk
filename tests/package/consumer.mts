@@ -113,6 +113,18 @@ if (
 )
   throw new Error("ESM content and animation API failed");
 console.log("ESM runtime and public types passed");
-const contract: WorkflowContract = await parseTypeScriptContract("interface Graph { source: { value: string }; target: { value: number } }", "graph.ts");
-if (!connectionIssue(contract, { id: "mapping", source: "source", target: "target", sourceProperty: "value", targetProperty: "value" })) throw new Error("ESM workflow validation failed");
+const contract: WorkflowContract = await parseTypeScriptContract(
+  "interface Graph { source: { value: string }; target: { value: number } }",
+  "graph.ts",
+);
+if (
+  !connectionIssue(contract, {
+    id: "mapping",
+    source: "source",
+    target: "target",
+    sourceProperty: "value",
+    targetProperty: "value",
+  })
+)
+  throw new Error("ESM workflow validation failed");
 console.log("ESM lazy TypeScript contract parsing passed");

@@ -53,12 +53,23 @@ export { EditableLabel } from "./nodes/EditableLabel";
 
 // Utilities
 export { default as DynamicIcon } from "./utils/DynamicIcon";
-export { connectionIssue, parseJsonContract, parseTypeScriptContract, readWorkflowContract } from "./core/workflowContract";
-export type { ContractType, ContractProperty, WorkflowContract } from "./core/workflowContract";
+export {
+  connectionIssue,
+  parseJsonContract,
+  parseTypeScriptContract,
+  readWorkflowContract,
+} from "./core/workflowContract";
+export type {
+  ContractType,
+  ContractProperty,
+  WorkflowContract,
+} from "./core/workflowContract";
 
 // Types
 export type {
   BackgroundPattern,
+  BackgroundVariant,
+  NodeSpacing,
   BuiltInEdgeType,
   CustomEdgeContext,
   CustomEdgeFactory,

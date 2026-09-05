@@ -4,6 +4,7 @@ import {
   PiArrowsInLineVertical,
   PiArrowsOutLineVertical,
   PiBoundingBox,
+  PiBezierCurve,
   PiEraser,
   PiFastForward,
   PiLineSegment,
@@ -281,13 +282,15 @@ export function EdgeTools({
           ))}
           <ToolbarSelect
             aria-label="Edge shape"
-            title="Edge shape"
+            title={`Edge shape: ${data?.type ?? "Default"}`}
+            icon={<PiBezierCurve size={20} />}
+            style={{ width: 36 }}
             value={data?.type ?? ""}
             disabled={config.readOnly}
-            onChange={(event) =>
+            onValueChange={(value) =>
               callbacks.onEdgeTypeChange?.(
                 edgeId,
-                event.target.value || undefined,
+                value || undefined,
               )
             }
           >
@@ -298,6 +301,14 @@ export function EdgeTools({
               </option>
             ))}
           </ToolbarSelect>
+        </>
+      )}
+      {show("icon") && (
+        <>
+          <Divider />
+          <NodeIconPicker key={edgeId} edgeId={edgeId} value={data?.icon} />
+          <CommitInput ariaLabel="Edge icon" placeholder="Icon name or SVG URL" value={data?.icon ?? ""}
+            onCommit={(icon) => callbacks.onEdgeIconChange?.(edgeId, icon)} />
         </>
       )}
       {show("color") && (
@@ -350,33 +361,45 @@ function BorderRadiusControl({ ids }: { ids: string[] }) {
   return (
     <>
       <Divider />
-      <Box position="relative" w="36px" h="30px" display="grid" placeItems="center">
-      <Icon as={TbBorderRadius} boxSize={5} color={colorInactive} aria-hidden="true" />
-      <ToolbarSelect
-        aria-label="Node border radius"
-        title={`Border radius: ${mixed ? "Mixed" : radii[0] === undefined ? "Default" : `${radii[0]}px`}`}
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }}
-        value={customMode ? "custom" : value}
-        disabled={config.readOnly}
-        onChange={(event) => {
-          const next = event.target.value;
-          setCustom(next === "custom");
-          if (next !== "custom") update(next === "" ? undefined : Number(next));
-        }}
+      <Box
+        position="relative"
+        w="36px"
+        h="30px"
+        display="grid"
+        placeItems="center"
       >
-        <option value="">Default radius</option>
-        {mixed && (
-          <option value="mixed" disabled>
-            Mixed radii
-          </option>
-        )}
-        {presets.map((radius) => (
-          <option key={radius} value={radius}>
-            {radius}px radius
-          </option>
-        ))}
-        <option value="custom">Custom radius</option>
-      </ToolbarSelect>
+        <ToolbarSelect
+          icon={<Icon as={TbBorderRadius} boxSize={5} color={colorInactive} aria-hidden="true" />}
+          aria-label="Node border radius"
+          title={`Border radius: ${mixed ? "Mixed" : radii[0] === undefined ? "Default" : `${radii[0]}px`}`}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            cursor: "pointer",
+          }}
+          value={customMode ? "custom" : value}
+          disabled={config.readOnly}
+          onValueChange={(next) => {
+            setCustom(next === "custom");
+            if (next !== "custom")
+              update(next === "" ? undefined : Number(next));
+          }}
+        >
+          <option value="">Default radius</option>
+          {mixed && (
+            <option value="mixed" disabled>
+              Mixed radii
+            </option>
+          )}
+          {presets.map((radius) => (
+            <option key={radius} value={radius}>
+              {radius}px radius
+            </option>
+          ))}
+          <option value="custom">Custom radius</option>
+        </ToolbarSelect>
       </Box>
       {customMode && (
         <CommitInput

@@ -1,5 +1,11 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Page, type Locator } from "@playwright/test";
 import type {} from "./fixture/main";
+
+export async function chooseToolbarOption(trigger: Locator, option: string) {
+  const name = await trigger.getAttribute("aria-label");
+  await trigger.click();
+  await trigger.page().getByRole("listbox", { name: name!, exact: true }).getByRole("option", { name: option, exact: true }).click();
+}
 
 export async function ready(page: Page, query = "") {
   await page.goto(`/${query}`);

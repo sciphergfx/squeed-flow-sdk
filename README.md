@@ -352,6 +352,12 @@ Use **Nodes / Properties** for edge-mode controls: `"nodes"` (the default) attac
 
 ### Workflow Interfaces
 
+Selected edges expose **Choose edge icon** and an **Edge icon** text field. The picker supports named React icons, SVG uploads (stored as base64), and HTTP(S) image URLs, with **Remove edge icon** to clear the choice. Icons render beside the label or by themselves for unlabeled edges; arrowheads and validation markers remain independent. Named icons follow the edge color; SVG images retain their own artwork colors. `selectionToolbar.hide: ["icon"]` hides both controls.
+
+Raw graph hosts store `data.icon` through `callbacks.onEdgeIconChange(edgeId, icon)`; an empty string removes the icon. JSON mode persists automatically through `onJsonChange`: `$edgeIcon` on the child for hierarchy edges, `$targetIcon` on the source for `$target` cross-links, and `icon` on the selected `$connections` entry. Editing an icon never changes sibling connections.
+
+`DynamicIcon` works in HTML and SVG contexts. Inside an SVG, use `<DynamicIcon name={icon} svg size={48} x={-24} y={-24} color="#dc2626" />`. Named React icons render as SVG; uploaded base64 SVGs and HTTP(S) image URLs render as SVG `<image>` elements with preserved aspect ratio. Without `svg`, image sources keep using HTML `<img>`. Uploaded markup is never inserted into the DOM. Edge validation markers reuse this renderer with `PiWarningCircleFill`.
+
 The bottom toolbar includes the Nodes/Properties dropdown after Graph theme, with a divider before the theme swatches. Properties mode exposes an upload icon for `.ts` interfaces or `.json` JSON Schema. Uploads stay local and separate from graph JSON. Incompatible connections remain editable and turn red; missing declarations are amber/unverified. Hover the `!` marker for the reason. Validation compares the declared source property type to the target type, not the current property values. Node-only edges are not validated.
 
 TypeScript contracts use a `Graph` interface or type alias keyed by node ID. A single declaration may use another name. Exact IDs are checked first; `root.alpha` also matches `alpha`. Labels are not used for matching.
@@ -371,12 +377,18 @@ Equivalent JSON Schema:
   "properties": {
     "alpha": {
       "type": "object",
-      "properties": { "output": { "type": "string" }, "optional": { "type": "number" } },
+      "properties": {
+        "output": { "type": "string" },
+        "optional": { "type": "number" }
+      },
       "required": ["output"]
     },
     "beta": {
       "type": "object",
-      "properties": { "input": { "type": "string" }, "count": { "type": "number" } },
+      "properties": {
+        "input": { "type": "string" },
+        "count": { "type": "number" }
+      },
       "required": ["input", "count"]
     }
   }

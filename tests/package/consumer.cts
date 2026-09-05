@@ -85,7 +85,21 @@ if (
 )
   throw new Error("CommonJS content and animation API failed");
 console.log("CommonJS runtime and public types passed");
-void sdk.parseTypeScriptContract("interface Graph { source: { value: string }; target: { value: number } }", "graph.ts").then((contract: sdk.WorkflowContract) => {
-  if (!sdk.connectionIssue(contract, { id: "mapping", source: "source", target: "target", sourceProperty: "value", targetProperty: "value" })) throw new Error("CommonJS workflow validation failed");
-  console.log("CommonJS lazy TypeScript contract parsing passed");
-});
+void sdk
+  .parseTypeScriptContract(
+    "interface Graph { source: { value: string }; target: { value: number } }",
+    "graph.ts",
+  )
+  .then((contract: sdk.WorkflowContract) => {
+    if (
+      !sdk.connectionIssue(contract, {
+        id: "mapping",
+        source: "source",
+        target: "target",
+        sourceProperty: "value",
+        targetProperty: "value",
+      })
+    )
+      throw new Error("CommonJS workflow validation failed");
+    console.log("CommonJS lazy TypeScript contract parsing passed");
+  });
