@@ -63,9 +63,14 @@ for (const direction of [
       )!;
       assert.ok(!/NaN|Infinity/.test(geometry.d));
       const cross = vertical ? geometry.label.x : geometry.label.y;
-      const targetCross = vertical ? boxes.get(edge.target)!.x : boxes.get(edge.target)!.y;
+      const targetCross = vertical
+        ? boxes.get(edge.target)!.x
+        : boxes.get(edge.target)!.y;
       assert.ok(cross > 0 && cross <= targetCross);
-      assert.equal(Math.abs(geometry.label.angle), cross === targetCross ? (vertical ? 90 : 0) : (vertical ? 0 : 90));
+      assert.equal(
+        Math.abs(geometry.label.angle),
+        cross === targetCross ? (vertical ? 90 : 0) : vertical ? 0 : 90,
+      );
       return JSON.stringify(geometry.label);
     });
     assert.equal(new Set(labels).size, 3);

@@ -7,7 +7,13 @@ import {
   useRef,
   useState,
 } from "react";
-import type { EdgeMode, FlowEdgeProperties, NodeAlignment, FlowDiagramConfig, FlowDiagramEdge } from "../types";
+import type {
+  EdgeMode,
+  FlowEdgeProperties,
+  NodeAlignment,
+  FlowDiagramConfig,
+  FlowDiagramEdge,
+} from "../types";
 import ContainerView, { type ContainerStyle } from "./ContainerView";
 import EdgeView from "./EdgeView";
 import { placeEdgeLabels } from "./labelPlacement";
@@ -673,7 +679,11 @@ function Canvas(props: CanvasProps) {
         return;
       }
     }
-    if (target.closest(".flow-sdk-node, .flow-sdk-container, .flow-sdk-edge, .flow-sdk-edge-label, .flow-sdk-container-label"))
+    if (
+      target.closest(
+        ".flow-sdk-node, .flow-sdk-container, .flow-sdk-edge, .flow-sdk-edge-label, .flow-sdk-container-label",
+      )
+    )
       return;
     if (p.multiSelect) {
       gestureRef.current = {
@@ -1019,7 +1029,13 @@ function Canvas(props: CanvasProps) {
             <g className="flow-sdk-ghost" pointerEvents="none">
               <EdgeView
                 id="__flow-sdk-ghost"
-                edgeData={{ id: "__flow-sdk-ghost", source: ghost.source, target: ghost.target ?? "", sourceProperty: ghost.sourceProperty, targetProperty: ghost.targetProperty }}
+                edgeData={{
+                  id: "__flow-sdk-ghost",
+                  source: ghost.source,
+                  target: ghost.target ?? "",
+                  sourceProperty: ghost.sourceProperty,
+                  targetProperty: ghost.targetProperty,
+                }}
                 edgeType={props.edgeType}
                 customEdgeTypes={props.customEdgeTypes}
                 source={ghostSource}
@@ -1084,9 +1100,19 @@ function Canvas(props: CanvasProps) {
           }}
         />
       )}
-      <svg className="flow-sdk-svg flow-sdk-label-overlay" style={{ zIndex: 11, pointerEvents: "none" }}>
-        <g ref={labelGroupRef} transform={`translate(${viewport.pan.x} ${viewport.pan.y}) scale(${viewport.zoom})`}>
-          <g ref={setLabelLayer} className="flow-sdk-labels" style={{ pointerEvents: drawMode ? "none" : "visiblePainted" }} />
+      <svg
+        className="flow-sdk-svg flow-sdk-label-overlay"
+        style={{ zIndex: 11, pointerEvents: "none" }}
+      >
+        <g
+          ref={labelGroupRef}
+          transform={`translate(${viewport.pan.x} ${viewport.pan.y}) scale(${viewport.zoom})`}
+        >
+          <g
+            ref={setLabelLayer}
+            className="flow-sdk-labels"
+            style={{ pointerEvents: drawMode ? "none" : "visiblePainted" }}
+          />
         </g>
       </svg>
     </div>

@@ -42,7 +42,11 @@ export function branchRoutes(
     if (gap <= 320) continue;
     const key = JSON.stringify([edge.source, Math.sign(delta)]);
     const group = groups.get(key) ?? [];
-    group.push({ edge, gap, cross: vertical ? target.x - source.x : target.y - source.y });
+    group.push({
+      edge,
+      gap,
+      cross: vertical ? target.x - source.x : target.y - source.y,
+    });
     groups.set(key, group);
   }
 
@@ -54,17 +58,26 @@ export function branchRoutes(
       targetCounts.set(edge.target, (targetCounts.get(edge.target) ?? 0) + 1);
     for (const side of [-1, 0, 1]) {
       const branches = group.filter(({ cross }) => Math.sign(cross) === side);
-      branches.sort((left, right) => Math.abs(right.cross) - Math.abs(left.cross) || left.edge.id.localeCompare(right.edge.id));
+      branches.sort(
+        (left, right) =>
+          Math.abs(right.cross) - Math.abs(left.cross) ||
+          left.edge.id.localeCompare(right.edge.id),
+      );
       const commonGap = Math.min(...branches.map(({ gap }) => gap));
       branches.forEach(({ edge, gap, cross }, index) => {
-        const distance = branches.length === 1
-          ? commonGap / 2
-          : 120 + (commonGap - 280) * index / (branches.length - 1);
-        const nearer = branches.find((branch) => Math.abs(branch.cross) < Math.abs(cross));
+        const distance =
+          branches.length === 1
+            ? commonGap / 2
+            : 120 + ((commonGap - 280) * index) / (branches.length - 1);
+        const nearer = branches.find(
+          (branch) => Math.abs(branch.cross) < Math.abs(cross),
+        );
         routes.set(edge.id, {
           turn: distance / gap,
           labelAtTarget: targetCounts.get(edge.target) === 1,
-          labelFraction: cross ? (cross + (nearer?.cross ?? 0)) / (2 * cross) : 0.5,
+          labelFraction: cross
+            ? (cross + (nearer?.cross ?? 0)) / (2 * cross)
+            : 0.5,
         });
       });
     }

@@ -181,11 +181,20 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         fontSize: s.fontSize ?? PARENT_DEFAULTS.fontSize,
         labelPosition: s.labelPosition ?? PARENT_DEFAULTS.labelPosition,
         labelMargin: PARENT_DEFAULTS.labelMargin,
-        labelBg: blendHexColors(getColorHex("dark"), fill, s.bgOpacity) ?? getColorHex("dark"),
+        labelBg:
+          blendHexColors(getColorHex("dark"), fill, s.bgOpacity) ??
+          getColorHex("dark"),
         padding: s.padding ?? PARENT_DEFAULTS.padding,
       };
     },
-    [resolveParentStyle, nodeById, colorText, themeColor, isPerformanceMode, getColorHex],
+    [
+      resolveParentStyle,
+      nodeById,
+      colorText,
+      themeColor,
+      isPerformanceMode,
+      getColorHex,
+    ],
   );
 
   // Spread parallel/opposite edges so taxi segments and labels don't stack

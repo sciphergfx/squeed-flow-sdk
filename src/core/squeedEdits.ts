@@ -194,8 +194,12 @@ export function setEdgeProp(
     );
   }
   const { address, kind } = resolveEdgeOwner(edge);
-  const k = kind === "target" && key === "$sourceLabel" ? "$targetLabel"
-    : kind === "target" && key === "$edgeType" ? "$targetEdgeType" : key;
+  const k =
+    kind === "target" && key === "$sourceLabel"
+      ? "$targetLabel"
+      : kind === "target" && key === "$edgeType"
+        ? "$targetEdgeType"
+        : key;
   return updateNode(json, address, (n) => withKey(n, k, value));
 }
 
@@ -456,7 +460,8 @@ export function compileSqueed(
     const edgeOwner = resolveEdgeOwner(data);
     const owner = getNode(json, edgeOwner.address);
     if (owner && typeof owner === "object") {
-      const type = owner[edgeOwner.kind === "target" ? "$targetEdgeType" : "$edgeType"];
+      const type =
+        owner[edgeOwner.kind === "target" ? "$targetEdgeType" : "$edgeType"];
       if (typeof type === "string") data.type = type;
       if (owner.$isEdgeAnimated !== undefined)
         data.isEdgeAnimated = !!owner.$isEdgeAnimated;

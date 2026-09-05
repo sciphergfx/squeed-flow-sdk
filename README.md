@@ -162,6 +162,7 @@ HTML or SVG. Raw-graph callbacks must update node data; JSON mode persists edits
 through `onJsonChange`. The wrapper does not change custom SVG geometry.
 
 ## Callbacks
+
 ### Edge Shapes
 
 Set `config.edgeType` to `straight`, `bezier`, `orthogonal`, or

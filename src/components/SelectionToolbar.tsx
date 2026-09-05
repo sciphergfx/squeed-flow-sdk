@@ -213,7 +213,16 @@ export function EdgeTools({
   const { edgeById } = useFlowData();
   const { palette, show } = useToolbarConfig();
   const data = edgeById.get(edgeId)?.data;
-  const edgeTypes = [...new Set(["rounded-orthogonal", "orthogonal", "straight", "bezier", ...Object.keys(config.customEdgeTypes ?? {}), ...(data?.type ? [data.type] : [])])];
+  const edgeTypes = [
+    ...new Set([
+      "rounded-orthogonal",
+      "orthogonal",
+      "straight",
+      "bezier",
+      ...Object.keys(config.customEdgeTypes ?? {}),
+      ...(data?.type ? [data.type] : []),
+    ]),
+  ];
   const style = data?.isEdgeAnimated
     ? "animated"
     : data?.isEdgeDashed
@@ -265,11 +274,29 @@ export function EdgeTools({
             title="Edge shape"
             value={data?.type ?? ""}
             disabled={config.readOnly}
-            onChange={(event) => callbacks.onEdgeTypeChange?.(edgeId, event.target.value || undefined)}
-            style={{ width: 160, height: 30, fontSize: 12, padding: "0 6px", border: "1px solid #718096", borderRadius: 4, background: config.colorMode === "dark" ? "#1A202C" : "#ffffff", color: config.colorMode === "dark" ? "#EDF2F7" : "#1A202C" }}
+            onChange={(event) =>
+              callbacks.onEdgeTypeChange?.(
+                edgeId,
+                event.target.value || undefined,
+              )
+            }
+            style={{
+              width: 160,
+              height: 30,
+              fontSize: 12,
+              padding: "0 6px",
+              border: "1px solid #718096",
+              borderRadius: 4,
+              background: config.colorMode === "dark" ? "#1A202C" : "#ffffff",
+              color: config.colorMode === "dark" ? "#EDF2F7" : "#1A202C",
+            }}
           >
             <option value="">Default</option>
-            {edgeTypes.map(type => <option key={type} value={type}>{type}</option>)}
+            {edgeTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
           </select>
         </>
       )}

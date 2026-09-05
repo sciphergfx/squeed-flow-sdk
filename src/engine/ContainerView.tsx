@@ -60,7 +60,9 @@ function ContainerView({
         ? rect.y2 - style.labelMargin + style.fontSize / 2
         : rect.y1 + h / 2;
 
-  const labelWidth = label ? measureText(label, `bold ${style.fontSize}px ${EDGE_LABEL_FONT_FAMILY}`) : 0;
+  const labelWidth = label
+    ? measureText(label, `bold ${style.fontSize}px ${EDGE_LABEL_FONT_FAMILY}`)
+    : 0;
   const padding = style.fontSize / 5;
   const labelElement = label ? (
     <g className="flow-sdk-container-label" data-node-id={id}>
@@ -133,7 +135,9 @@ function ContainerView({
           strokeWidth={Math.max(8, bw * 1.6)}
         />
       )}
-      {labelLayer && labelElement ? createPortal(labelElement, labelLayer) : labelElement}
+      {labelLayer && labelElement
+        ? createPortal(labelElement, labelLayer)
+        : labelElement}
     </g>
   );
 }

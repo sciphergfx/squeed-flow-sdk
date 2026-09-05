@@ -1,7 +1,11 @@
 import type { FlowDiagramEdge, FlowDirection } from "./index";
 import type { Box, Point } from "../engine/types";
 
-export type BuiltInEdgeType = "straight" | "bezier" | "orthogonal" | "rounded-orthogonal";
+export type BuiltInEdgeType =
+  | "straight"
+  | "bezier"
+  | "orthogonal"
+  | "rounded-orthogonal";
 
 export interface CustomEdgeGeometry {
   d: string;
@@ -22,4 +26,6 @@ export interface CustomEdgeContext {
   defaultGeometry: CustomEdgeGeometry;
 }
 
-export type CustomEdgeFactory = (context: CustomEdgeContext) => CustomEdgeGeometry | null;
+export type CustomEdgeFactory = (
+  context: CustomEdgeContext,
+) => CustomEdgeGeometry | null;

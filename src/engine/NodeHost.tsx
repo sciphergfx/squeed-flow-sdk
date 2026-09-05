@@ -155,27 +155,30 @@ function NodeHost({
             />
           )),
         )}
-      {drawHandles && !hasCollapseControl && (!propertyMode || !rows.length) && (
-        <button
-          type="button"
-          className="flow-sdk-handle"
-          aria-label="Draw edge"
-          title="Draw edge"
-          style={{
-            color: handleColor,
-            left:
-              direction === "RL" ? -36 : direction === "LR" ? "100%" : "50%",
-            top: direction === "BT" ? -36 : direction === "TB" ? "100%" : "50%",
-            transform:
-              direction === "BT" || direction === "TB"
-                ? "translateX(-50%)"
-                : "translateY(-50%)",
-          }}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <PiPlusBold size={24} />
-        </button>
-      )}
+      {drawHandles &&
+        !hasCollapseControl &&
+        (!propertyMode || !rows.length) && (
+          <button
+            type="button"
+            className="flow-sdk-handle"
+            aria-label="Draw edge"
+            title="Draw edge"
+            style={{
+              color: handleColor,
+              left:
+                direction === "RL" ? -36 : direction === "LR" ? "100%" : "50%",
+              top:
+                direction === "BT" ? -36 : direction === "TB" ? "100%" : "50%",
+              transform:
+                direction === "BT" || direction === "TB"
+                  ? "translateX(-50%)"
+                  : "translateY(-50%)",
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <PiPlusBold size={24} />
+          </button>
+        )}
     </div>
   );
 }

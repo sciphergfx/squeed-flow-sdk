@@ -110,7 +110,15 @@ function Fixture() {
     isEdgeHandlesEnabled: false,
     editable: true,
     ...(query.has("custom") ? { customViews: { text: CustomNode } } : {}),
-    ...(query.get("custom") === "editable" ? { customViews: { text: EditableCustomNode, arrayView: EditableCustomNode, objectView: EditableCustomNode } } : {}),
+    ...(query.get("custom") === "editable"
+      ? {
+          customViews: {
+            text: EditableCustomNode,
+            arrayView: EditableCustomNode,
+            objectView: EditableCustomNode,
+          },
+        }
+      : {}),
     ...(query.has("viewport")
       ? { initialViewport: { pan: { x: 25, y: 35 }, zoom: 0.25 } }
       : {}),

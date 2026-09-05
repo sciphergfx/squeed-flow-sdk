@@ -1,6 +1,10 @@
 import { memo, useMemo } from "react";
 import { createPortal } from "react-dom";
-import type { FlowDiagramConfig, FlowDiagramEdge, FlowDirection } from "../types";
+import type {
+  FlowDiagramConfig,
+  FlowDiagramEdge,
+  FlowDirection,
+} from "../types";
 import {
   loopGeometry,
   bezierGeometry,
@@ -91,7 +95,10 @@ function EdgeView({
     () => (label ? wrapText(label, LABEL_FONT, LABEL_MAX_WIDTH) : []),
     [label],
   );
-  const labelWidth = Math.max(0, ...lines.map((line) => measureText(line, LABEL_FONT)));
+  const labelWidth = Math.max(
+    0,
+    ...lines.map((line) => measureText(line, LABEL_FONT)),
+  );
   const geo = useMemo(() => {
     const opts: EdgeGeometryOptions = {
       srcDist: STANDOFF,
@@ -109,35 +116,77 @@ function EdgeView({
     const loop = source.x === target.x && source.y === target.y;
     const defaultGeometry = property
       ? propertyGeometry(source, target, dir, sourceY, targetY, turn, {
-        ...opts,
-        srcDist: 18,
-        tgtDist: 18,
-      })
-      : loop ? loopGeometry(source, loopIndex, {
-        ...opts,
-        srcDist: 0,
-        tgtDist: 0,
-      }) : taxiGeometry(source, target, dir, turn, opts);
+          ...opts,
+          srcDist: 18,
+          tgtDist: 18,
+        })
+      : loop
+        ? loopGeometry(source, loopIndex, {
+            ...opts,
+            srcDist: 0,
+            tgtDist: 0,
+          })
+        : taxiGeometry(source, target, dir, turn, opts);
     if (!defaultGeometry) return null;
-    const endpoints = connectorEndpoints(source, target, dir, sourceY, targetY, property ? 18 : STANDOFF);
-    const factory = Object.prototype.hasOwnProperty.call(customEdgeTypes ?? {}, edgeType) ? customEdgeTypes?.[edgeType] : undefined;
+    const endpoints = connectorEndpoints(
+      source,
+      target,
+      dir,
+      sourceY,
+      targetY,
+      property ? 18 : STANDOFF,
+    );
+    const factory = Object.prototype.hasOwnProperty.call(
+      customEdgeTypes ?? {},
+      edgeType,
+    )
+      ? customEdgeTypes?.[edgeType]
+      : undefined;
     if (factory) {
-      const directions: Record<TaxiDir, FlowDirection> = { rightward: "LR", leftward: "RL", downward: "TB", upward: "BT" };
-      return factory({
-        edge: edgeData ?? { id, source: "", target: "" },
-        source: { ...source }, target: { ...target }, ...endpoints,
-        direction: directions[dir], sourceY, targetY,
-        inverted: !!inverted, defaultGeometry,
-      }) ?? defaultGeometry;
+      const directions: Record<TaxiDir, FlowDirection> = {
+        rightward: "LR",
+        leftward: "RL",
+        downward: "TB",
+        upward: "BT",
+      };
+      return (
+        factory({
+          edge: edgeData ?? { id, source: "", target: "" },
+          source: { ...source },
+          target: { ...target },
+          ...endpoints,
+          direction: directions[dir],
+          sourceY,
+          targetY,
+          inverted: !!inverted,
+          defaultGeometry,
+        }) ?? defaultGeometry
+      );
     }
     if (loop) return defaultGeometry;
     if (edgeType === "straight")
-      return property ? straightPortGeometry(endpoints.sourcePoint, endpoints.targetPoint, opts)
+      return property
+        ? straightPortGeometry(
+            endpoints.sourcePoint,
+            endpoints.targetPoint,
+            opts,
+          )
         : polylineGeometry([source, target], source, target, opts);
     if (edgeType === "bezier")
-      return bezierGeometry(endpoints.sourcePoint, endpoints.targetPoint, property ? (dir === "leftward" ? "leftward" : "rightward") : dir, opts);
+      return bezierGeometry(
+        endpoints.sourcePoint,
+        endpoints.targetPoint,
+        property ? (dir === "leftward" ? "leftward" : "rightward") : dir,
+        opts,
+      );
     if (edgeType === "orthogonal")
-      return property ? propertyGeometry(source, target, dir, sourceY, targetY, turn, { ...opts, srcDist: 18, tgtDist: 18, radius: 0 })
+      return property
+        ? propertyGeometry(source, target, dir, sourceY, targetY, turn, {
+            ...opts,
+            srcDist: 18,
+            tgtDist: 18,
+            radius: 0,
+          })
         : taxiGeometry(source, target, dir, turn, { ...opts, radius: 0 });
     return defaultGeometry;
   }, [

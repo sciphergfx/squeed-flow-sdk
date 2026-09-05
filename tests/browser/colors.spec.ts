@@ -122,14 +122,12 @@ test("transparent mapped edges hide their line, arrow and label mask and can be 
     "fill",
     "transparent",
   );
-  await expect(page.locator('.flow-sdk-edge-label[data-source-property="runtime"] rect')).toHaveAttribute(
-    "fill",
-    "transparent",
-  );
-  await expect(page.locator('.flow-sdk-edge-label[data-source-property="runtime"] text')).toHaveAttribute(
-    "fill",
-    "transparent",
-  );
+  await expect(
+    page.locator('.flow-sdk-edge-label[data-source-property="runtime"] rect'),
+  ).toHaveAttribute("fill", "transparent");
+  await expect(
+    page.locator('.flow-sdk-edge-label[data-source-property="runtime"] text'),
+  ).toHaveAttribute("fill", "transparent");
   expect(
     await page.evaluate(
       () => window.__flowTest.document.alpha.$connections[1].color,

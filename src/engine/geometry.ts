@@ -379,15 +379,24 @@ export function connectorEndpoints(
   targetY: number | undefined,
   distance: number,
 ): { sourcePoint: Point; targetPoint: Point } {
-  const vertical = sourceY === undefined && targetY === undefined && (dir === "downward" || dir === "upward");
+  const vertical =
+    sourceY === undefined &&
+    targetY === undefined &&
+    (dir === "downward" || dir === "upward");
   const forward = dir === "leftward" || (vertical && dir === "upward") ? -1 : 1;
   return {
     sourcePoint: vertical
       ? { x: source.x, y: source.y + forward * (source.h / 2 + distance) }
-      : { x: source.x + forward * (source.w / 2 + distance), y: sourceY ?? source.y },
+      : {
+          x: source.x + forward * (source.w / 2 + distance),
+          y: sourceY ?? source.y,
+        },
     targetPoint: vertical
       ? { x: target.x, y: target.y - forward * (target.h / 2 + distance) }
-      : { x: target.x - forward * (target.w / 2 + distance), y: targetY ?? target.y },
+      : {
+          x: target.x - forward * (target.w / 2 + distance),
+          y: targetY ?? target.y,
+        },
   };
 }
 
@@ -399,28 +408,64 @@ export function bezierGeometry(
 ): EdgeGeometry {
   const vertical = dir === "downward" || dir === "upward";
   const forward = dir === "leftward" || dir === "upward" ? -1 : 1;
-  const reach = Math.max(100, Math.abs(vertical ? target.y - source.y : target.x - source.x) / 2);
-  const controlSource = { x: source.x + (vertical ? 0 : forward * reach), y: source.y + (vertical ? forward * reach : 0) };
-  const controlTarget = { x: target.x - (vertical ? 0 : forward * reach), y: target.y - (vertical ? forward * reach : 0) };
-  const start = options.arrowAt === "source" ? shorten(source, controlSource, options.arrowGap) : source;
-  const end = options.arrowAt === "target" ? shorten(target, controlTarget, options.arrowGap) : target;
+  const reach = Math.max(
+    100,
+    Math.abs(vertical ? target.y - source.y : target.x - source.x) / 2,
+  );
+  const controlSource = {
+    x: source.x + (vertical ? 0 : forward * reach),
+    y: source.y + (vertical ? forward * reach : 0),
+  };
+  const controlTarget = {
+    x: target.x - (vertical ? 0 : forward * reach),
+    y: target.y - (vertical ? forward * reach : 0),
+  };
+  const start =
+    options.arrowAt === "source"
+      ? shorten(source, controlSource, options.arrowGap)
+      : source;
+  const end =
+    options.arrowAt === "target"
+      ? shorten(target, controlTarget, options.arrowGap)
+      : target;
   return {
     d: `M${pt(start)} C${pt(controlSource)} ${pt(controlTarget)} ${pt(end)}`,
-    arrow: options.arrowAt === "source" ? arrowPath(source, controlSource, options.arrowSize)
-      : options.arrowAt === "target" ? arrowPath(target, controlTarget, options.arrowSize) : undefined,
+    arrow:
+      options.arrowAt === "source"
+        ? arrowPath(source, controlSource, options.arrowSize)
+        : options.arrowAt === "target"
+          ? arrowPath(target, controlTarget, options.arrowSize)
+          : undefined,
     label: {
       x: (start.x + 3 * controlSource.x + 3 * controlTarget.x + end.x) / 8,
       y: (start.y + 3 * controlSource.y + 3 * controlTarget.y + end.y) / 8,
-      angle: autoAngle(end.x + controlTarget.x - controlSource.x - start.x, end.y + controlTarget.y - controlSource.y - start.y),
+      angle: autoAngle(
+        end.x + controlTarget.x - controlSource.x - start.x,
+        end.y + controlTarget.y - controlSource.y - start.y,
+      ),
     },
   };
 }
 
-export function straightPortGeometry(source: Point, target: Point, options: EdgeGeometryOptions): EdgeGeometry {
-  const start = options.arrowAt === "source" ? shorten(source, target, options.arrowGap) : source;
-  const end = options.arrowAt === "target" ? shorten(target, source, options.arrowGap) : target;
-  const arrow = options.arrowAt === "source" ? arrowPath(source, target, options.arrowSize)
-    : options.arrowAt === "target" ? arrowPath(target, source, options.arrowSize) : undefined;
+export function straightPortGeometry(
+  source: Point,
+  target: Point,
+  options: EdgeGeometryOptions,
+): EdgeGeometry {
+  const start =
+    options.arrowAt === "source"
+      ? shorten(source, target, options.arrowGap)
+      : source;
+  const end =
+    options.arrowAt === "target"
+      ? shorten(target, source, options.arrowGap)
+      : target;
+  const arrow =
+    options.arrowAt === "source"
+      ? arrowPath(source, target, options.arrowSize)
+      : options.arrowAt === "target"
+        ? arrowPath(target, source, options.arrowSize)
+        : undefined;
   return roundedGeometry(start, [], end, arrow, 0);
 }
 

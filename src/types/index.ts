@@ -1,6 +1,11 @@
 import type { FlowEngine } from "../engine/types";
 import type { BuiltInEdgeType, CustomEdgeFactory } from "./edgeTypes";
-export type { BuiltInEdgeType, CustomEdgeContext, CustomEdgeFactory, CustomEdgeGeometry } from "./edgeTypes";
+export type {
+  BuiltInEdgeType,
+  CustomEdgeContext,
+  CustomEdgeFactory,
+  CustomEdgeGeometry,
+} from "./edgeTypes";
 
 export type { FlowEngine } from "../engine/types";
 
