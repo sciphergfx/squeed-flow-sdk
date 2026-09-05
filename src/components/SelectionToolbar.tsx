@@ -18,9 +18,10 @@ import {
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
 import { getNodeBorderWidth } from "../nodes/nodeBorder";
+import { NodeIconPicker } from "./NodeIconPicker";
 import type { SelectionToolbarConfig } from "../types";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
-import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
+import { ToolbarIconButton, ToolbarSelect, ToolbarTooltip } from "./toolbarControls";
 
 export const DEFAULT_PALETTE = [
   "blue.500",
@@ -136,23 +137,25 @@ function CommitInput({
   );
 }
 
-function Swatches({
+export function Swatches({
   colors,
   value,
   label,
   onPick,
   onReset,
+  includeTransparent = true,
 }: {
   colors: string[];
   value?: string;
   label: string;
   onPick: (c: string) => void;
   onReset?: () => void;
+  includeTransparent?: boolean;
 }) {
   const { colorInactive, colorText } = useCustomColors();
   return (
     <HStack gap={1} aria-label={label} role="group">
-      {[...new Set([...colors, "transparent"])].map((c) => {
+      {[...new Set([...colors, ...(includeTransparent ? ["transparent"] : [])])].map((c) => {
         const active = value === c;
         return (
           <ToolbarTooltip key={c} label={`${label}: ${c}`}>
@@ -269,7 +272,7 @@ export function EdgeTools({
               />
             </ToolbarTooltip>
           ))}
-          <select
+          <ToolbarSelect
             aria-label="Edge shape"
             title="Edge shape"
             value={data?.type ?? ""}
@@ -280,16 +283,6 @@ export function EdgeTools({
                 event.target.value || undefined,
               )
             }
-            style={{
-              width: 160,
-              height: 30,
-              fontSize: 12,
-              padding: "0 6px",
-              border: "1px solid #718096",
-              borderRadius: 4,
-              background: config.colorMode === "dark" ? "#1A202C" : "#ffffff",
-              color: config.colorMode === "dark" ? "#EDF2F7" : "#1A202C",
-            }}
           >
             <option value="">Default</option>
             {edgeTypes.map((type) => (
@@ -297,7 +290,7 @@ export function EdgeTools({
                 {type}
               </option>
             ))}
-          </select>
+          </ToolbarSelect>
         </>
       )}
       {show("color") && (
@@ -329,6 +322,50 @@ export function EdgeTools({
             />
           </ToolbarTooltip>
         </>
+      )}
+    </>
+  );
+}
+
+function BorderRadiusControl({ ids }: { ids: string[] }) {
+  const { callbacks, config } = useFlowDiagramContext();
+  const { nodeById } = useFlowData();
+  const [custom, setCustom] = useState(false);
+  const radii = ids.map(id => nodeById.get(id)?.data.viewProps?.borderRadius);
+  const mixed = !radii.every(radius => radius === radii[0]);
+  const value = mixed ? "mixed" : String(radii[0] ?? "");
+  const presets = ["0", "8", "16", "30", "53", "100"];
+  const customMode = custom || (!mixed && value !== "" && !presets.includes(value));
+  const update = (radius: number | undefined) => ids.forEach(id => callbacks.onNodeBorderRadiusChange?.(id, radius));
+  return (
+    <>
+      <Divider />
+      <ToolbarSelect
+        aria-label="Node border radius"
+        title="Node border radius"
+        value={customMode ? "custom" : value}
+        disabled={config.readOnly}
+        onChange={event => {
+          const next = event.target.value;
+          setCustom(next === "custom");
+          if (next !== "custom") update(next === "" ? undefined : Number(next));
+        }}
+      >
+        <option value="">Default radius</option>
+        {mixed && <option value="mixed" disabled>Mixed radii</option>}
+        {presets.map(radius => <option key={radius} value={radius}>{radius}px radius</option>)}
+        <option value="custom">Custom radius</option>
+      </ToolbarSelect>
+      {customMode && (
+        <CommitInput
+          ariaLabel="Custom border radius"
+          placeholder={mixed ? "Mixed" : "Auto"}
+          type="number"
+          min={0}
+          width="72px"
+          value={mixed ? "" : value}
+          onCommit={next => update(next === "" ? undefined : Number(next))}
+        />
       )}
     </>
   );
@@ -401,6 +438,7 @@ export function NodeTools({
           {ids.length} selected
         </Text>
       )}
+      {show("style") && <BorderRadiusControl key={ids.join("\u0000")} ids={ids} />}
       {show("outline") && (
         <>
           <Divider />
@@ -547,6 +585,7 @@ export function NodeTools({
       {single && show("icon") && (
         <>
           <Divider />
+          <NodeIconPicker key={ids[0]} nodeId={ids[0]} value={data?.config?.icon} />
           <CommitInput
             ariaLabel="Node icon"
             placeholder="Icon (e.g. PiGear)"

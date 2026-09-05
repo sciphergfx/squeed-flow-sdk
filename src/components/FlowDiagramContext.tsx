@@ -12,6 +12,9 @@ import type {
 
 export interface FlowDiagramContextValue {
   themeColor: string;
+  setThemeColor: (color: string) => void;
+  backgroundSelected: boolean;
+  setBackgroundSelected: (selected: boolean) => void;
   edgeColor: string;
   colorMode: "light" | "dark";
   direction: string;
@@ -99,6 +102,8 @@ export function FlowDiagramProvider({
   const [isArrayNodeMode, setIsArrayNodeMode] = useState(false);
   const [isPinned, setIsPinned] = useState(true);
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
+  const [localThemeColor, setThemeColor] = useState("blue.500");
+  const [backgroundSelected, setBackgroundSelected] = useState(false);
 
   const callbacksRef = useRef(callbacks);
   callbacksRef.current = callbacks;
@@ -121,6 +126,7 @@ export function FlowDiagramProvider({
       onNodeBorderColorChange: wrap("onNodeBorderColorChange"),
       onNodeBorderStyleChange: wrap("onNodeBorderStyleChange"),
       onNodeBorderWidthChange: wrap("onNodeBorderWidthChange"),
+      onNodeBorderRadiusChange: wrap("onNodeBorderRadiusChange"),
       onNodeIconChange: wrap("onNodeIconChange"),
       onNodeOutlineChange: wrap("onNodeOutlineChange"),
       onNodeAnimationChange: wrap("onNodeAnimationChange"),
@@ -138,13 +144,14 @@ export function FlowDiagramProvider({
       // Diagram events
       onViewportChange: wrap("onViewportChange"),
       onDirectionChange: wrap("onDirectionChange"),
+      onThemeColorChange: wrap("onThemeColorChange"),
       onArrayModeChange: wrap("onArrayModeChange"),
       onInit: wrap("onInit"),
       onJsonChange: wrap("onJsonChange"),
     } as FlowDiagramCallbacks;
   }, []);
 
-  const themeColor = config.themeColor || "blue.500";
+  const themeColor = config.themeColor || localThemeColor;
   const edgeColor = config.edgeColor || "";
   const colorMode = config.colorMode || "light";
   const direction = config.direction || "LR";
@@ -273,6 +280,9 @@ export function FlowDiagramProvider({
   const value: FlowDiagramContextValue = useMemo(
     () => ({
       themeColor,
+      setThemeColor,
+      backgroundSelected,
+      setBackgroundSelected,
       edgeColor,
       colorMode,
       direction,
@@ -304,6 +314,7 @@ export function FlowDiagramProvider({
     }),
     [
       themeColor,
+      backgroundSelected,
       edgeColor,
       colorMode,
       direction,

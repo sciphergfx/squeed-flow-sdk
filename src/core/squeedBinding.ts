@@ -136,6 +136,16 @@ export function bindSqueedCallbacks(
         value: width,
       });
     },
+    onNodeBorderRadiusChange: (id, radius) => {
+      if (radius !== undefined && (!Number.isFinite(radius) || radius < 0)) return;
+      callbacks.onNodeBorderRadiusChange?.(id, radius);
+      emit(setNodeProp(json, id, "$borderRadius", radius), {
+        type: "nodeStyle",
+        address: id,
+        key: "$borderRadius",
+        value: radius,
+      });
+    },
     onNodeIconChange: (id, icon) => {
       callbacks.onNodeIconChange?.(id, icon);
       emit(setNodeProp(json, id, "$icon", icon), {

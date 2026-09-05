@@ -29,7 +29,7 @@ import { useCustomColors } from "../theme/useCustomColors";
 import type { FlowDirection } from "../types";
 import { FlowType } from "../types";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
-import { EdgeTools, NodeTools } from "./SelectionToolbar";
+import { DEFAULT_PALETTE, EdgeTools, NodeTools, Swatches } from "./SelectionToolbar";
 import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
 
 const DIRECTIONS: {
@@ -68,6 +68,9 @@ const BottomBar = () => {
   const {
     engineRef,
     themeColor,
+    setThemeColor,
+    backgroundSelected,
+    setBackgroundSelected,
     direction,
     selectedNodeIds,
     setSelectedNodeIds,
@@ -178,6 +181,15 @@ const BottomBar = () => {
   }, [selectionActive, setIsPinned]);
 
   const visible = isPinned || showDirectionMenu || selectionActive;
+
+  useEffect(() => {
+    if (selectedNodeIds.length || selectedEdgeId) {
+      setBackgroundSelected(false);
+    } else if (backgroundSelected && !readOnly) {
+      setIsPinned(true);
+      setIsCollapsed(false);
+    }
+  }, [backgroundSelected, selectedNodeIds.length, selectedEdgeId, readOnly, setBackgroundSelected, setIsPinned]);
 
   const customRenderBottomBar = config.renderBottomBar;
 
@@ -358,9 +370,10 @@ const BottomBar = () => {
               scrollbarWidth: "none",
               "&::-webkit-scrollbar": { display: "none" },
             }}
-            borderColor={border}
+            borderColor={isDark ? border : "gray.300"}
             borderWidth={1}
-            borderRadius="15px"
+            borderRadius="30px"
+            boxShadow={`0 0 0 8px color-mix(in srgb, var(--chakra-colors-${background.replace(".", "-")}) 60%, transparent)`}
           >
             <HStack
               px={2}
@@ -593,6 +606,18 @@ const BottomBar = () => {
                           }}
                         />
                       </ToolbarTooltip>
+                      {backgroundSelected && !readOnly && (
+                        <Swatches
+                          label="Graph theme"
+                          colors={DEFAULT_PALETTE}
+                          value={themeColor}
+                          includeTransparent={false}
+                          onPick={(color) => {
+                            setThemeColor(color);
+                            callbacks.onThemeColorChange?.(color);
+                          }}
+                        />
+                      )}
                     </>
                   )}
 
@@ -631,9 +656,10 @@ const BottomBar = () => {
               <Box
                 bg={background}
                 borderWidth={1}
-                borderColor={border}
-                borderRadius="15px"
+                borderColor={isDark ? border : "gray.300"}
+                borderRadius="30px"
                 h={50}
+                boxShadow={`0 0 0 8px color-mix(in srgb, var(--chakra-colors-${background.replace(".", "-")}) 60%, transparent)`}
                 px={3}
                 cursor="pointer"
                 onClick={() => setShowDirectionMenu(!showDirectionMenu)}
@@ -663,17 +689,17 @@ const BottomBar = () => {
                   position="absolute"
                   bottom="100%"
                   right={0}
-                  pb="10px"
+                  pb="24px"
                   zIndex={200}
                 >
                   <Box
                     bg={background}
                     borderWidth={1}
-                    borderColor={border}
-                    borderRadius="15px"
+                    borderColor={isDark ? border : "gray.300"}
+                    borderRadius="30px"
                     p={2}
                     minW="180px"
-                    shadow="lg"
+                    boxShadow={`0 0 0 8px color-mix(in srgb, var(--chakra-colors-${background.replace(".", "-")}) 40%, transparent), var(--chakra-shadows-lg)`}
                   >
                     {DIRECTIONS.map((d) => (
                       <Flex
@@ -682,7 +708,7 @@ const BottomBar = () => {
                         gap={3}
                         px={3}
                         py={2}
-                        borderRadius="10px"
+                        borderRadius="30px"
                         cursor="pointer"
                         _hover={{
                           bg: isDark ? "whiteAlpha.100" : "blackAlpha.50",

@@ -283,6 +283,7 @@ export interface FlowDiagramCallbacks {
   onNodeBorderColorChange?: (nodeId: string, color: string) => void;
   onNodeBorderStyleChange?: (nodeId: string, style: "solid" | "dashed") => void;
   onNodeBorderWidthChange?: (nodeId: string, width: number | undefined) => void;
+  onNodeBorderRadiusChange?: (nodeId: string, radius: number | undefined) => void;
   onNodeAnimationChange?: (nodeId: string, animated: boolean) => void;
   /** Fires when a hover overlay action is clicked */
   onNodeHoverAction?: (actionId: string, nodeId: string, nodeData: any) => void;
@@ -321,6 +322,7 @@ export interface FlowDiagramCallbacks {
   }) => void;
   /** Fires when the flow direction changes via bottom bar */
   onDirectionChange?: (direction: FlowDirection) => void;
+  onThemeColorChange?: (color: string) => void;
   /** Fires when array/set mode toggles in bottom bar */
   onArrayModeChange?: (isArrayMode: boolean) => void;
   /** Fires once the renderer is ready with the engine handle (zoom/pan/fit/coordinate helpers) */

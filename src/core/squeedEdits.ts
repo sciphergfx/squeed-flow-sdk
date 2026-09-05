@@ -425,6 +425,9 @@ export function compileSqueed(
     if (Number.isFinite(src.$borderWidth) && src.$borderWidth >= 0) {
       data.viewProps = { ...data.viewProps, borderWidth: src.$borderWidth };
     }
+    if (Number.isFinite(src.$borderRadius) && src.$borderRadius >= 0) {
+      data.viewProps = { ...data.viewProps, borderRadius: src.$borderRadius };
+    }
     if (typeof src.$isNodeAnimated === "boolean") {
       data.isNodeAnimated = src.$isNodeAnimated;
     }

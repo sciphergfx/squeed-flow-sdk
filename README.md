@@ -89,6 +89,13 @@ You can provide either `json` (auto-generates nodes/edges) or `nodes` + `edges` 
 
 ## Config
 
+Clicking the empty graph background opens the **Graph theme** swatches after the
+set/array control. They change the default node theme without replacing explicit
+node colors or modifying graph JSON, and hide while a node or edge is selected
+or the diagram is read-only. Without `config.themeColor`, the selection is stored
+locally. For a controlled or persisted theme, pass `config.themeColor` and update
+it from `callbacks.onThemeColorChange(color)`.
+
 ### `FlowDiagramConfig`
 
 | Option                                                                  | Type                                             | Default      | Description                                                                                       |
@@ -200,6 +207,7 @@ default route. The SDK retains selection, colors, dash animation, and labels.
 | `onNodeBorderColorChange` | `(nodeId, color: string) => void`              | Border color picked; raw consumers update `data.viewProps.borderColor` (empty string resets)     |
 | `onNodeBorderStyleChange` | `(nodeId, "solid" \| "dashed") => void`        | Border style changed; raw consumers update `data.viewProps.borderStyle`                          |
 | `onNodeBorderWidthChange` | `(nodeId, width: number \| undefined) => void` | Border thickness changed; raw consumers update `data.viewProps.borderWidth` (`undefined` resets) |
+| `onNodeBorderRadiusChange` | `(nodeId, radius: number \| undefined) => void` | Corner radius changed; raw consumers update `data.viewProps.borderRadius` (`undefined` resets) |
 | `onNodeIconChange`        | `(nodeId, iconName) => void`                   | Node icon changed via toolbar                                                                    |
 | `onNodeOutlineChange`     | `(nodeId, outline: boolean) => void`           | Outline toggled; raw-graph consumers store `data.viewProps.outline`                              |
 | `onNodeHoverAction`       | `(actionId, nodeId, nodeData) => void`         | Hover overlay action clicked                                                                     |
@@ -239,6 +247,7 @@ Special `$`-prefixed keys control node rendering:
 | `$borderColor`                      | Border color; accepts Chakra tokens, hex, or `"transparent"`                                                |
 | `$borderStyle`                      | Border style; the toolbar toggles `"solid"` / `"dashed"`                                                    |
 | `$borderWidth`                      | Nonnegative border thickness in diagram pixels; `0` hides the border, removing the key restores the default |
+| `$borderRadius`                     | Nonnegative corner radius; `0` makes square corners, removing the key restores the default |
 | `$outline`                          | `true` for an unfilled node with a border; `false` restores its saved fill                                  |
 | `$content`                          | Markdown source, including an empty string; editable when `config.editable` is enabled                      |
 | `$isNodeAnimated`                   | `true` for a clockwise circulating border stroke; independent of edge animation and off by default          |

@@ -1,4 +1,5 @@
-import { IconButton, Tooltip } from "@chakra-ui/react";
+import { IconButton, Tooltip, chakra } from "@chakra-ui/react";
+import { useFlowDiagramContext } from "./FlowDiagramContext";
 
 export function ToolbarTooltip({
   label,
@@ -31,9 +32,37 @@ export function ToolbarTooltip({
   );
 }
 
+export function ToolbarSelect(props: React.ComponentProps<"select">) {
+  const { colorMode } = useFlowDiagramContext();
+  const dark = colorMode === "dark";
+  return (
+    <chakra.select
+      h="30px"
+      w="160px"
+      px="6px"
+      fontSize="12px"
+      border="none"
+      borderRadius="4px"
+      bg="transparent"
+      color={dark ? "gray.200" : "gray.800"}
+      _hover={{ bg: "transparent" }}
+      css={{ "& option": { background: dark ? "var(--chakra-colors-gray-800)" : "var(--chakra-colors-white)" } }}
+      {...props}
+    />
+  );
+}
+
 export function ToolbarIconButton({
   icon,
   ...props
 }: React.ComponentProps<typeof IconButton> & { icon: React.ReactElement }) {
-  return <IconButton {...props}>{icon}</IconButton>;
+  const { colorMode } = useFlowDiagramContext();
+  return (
+    <IconButton
+      _hover={{ bg: colorMode === "dark" ? "whiteAlpha.100" : "blackAlpha.50" }}
+      {...props}
+    >
+      {icon}
+    </IconButton>
+  );
 }

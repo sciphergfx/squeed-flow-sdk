@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
+import { isIconImage } from "./iconSources";
 
 const DynamicIcon = ({ name, ...props }) => {
   const [IconComponent, setIconComponent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const image = typeof name === "string" && isIconImage(name);
 
   useEffect(() => {
-    if (!name || name.length < 2) {
+    if (image || !name || name.length < 2) {
       setIconComponent(null);
       setLoading(false);
       return;
@@ -91,8 +93,12 @@ const DynamicIcon = ({ name, ...props }) => {
     };
 
     loadIcon();
-  }, [name]);
+  }, [name, image]);
 
+  if (image) {
+    const { size = 80, style, ...imageProps } = props;
+    return <img {...imageProps} src={name} alt="" width={size} height={size} referrerPolicy="no-referrer" style={{ objectFit: "contain", ...style }} />;
+  }
   if (loading) return null;
   if (!IconComponent) return null;
   return <IconComponent {...props} />;

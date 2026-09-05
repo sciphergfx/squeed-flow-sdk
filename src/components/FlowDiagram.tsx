@@ -79,6 +79,12 @@ export function FlowDiagram({
         height="100%"
         position="relative"
         overflow="hidden"
+        css={{
+          "& input, & textarea, & select": {
+            outline: "none !important",
+            boxShadow: "none !important",
+          },
+        }}
       >
         <FlowView nodes={resolvedNodes} edges={resolvedEdges} />
         {showBottomBar && <BottomBar />}

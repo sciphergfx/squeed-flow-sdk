@@ -44,6 +44,7 @@ interface FlowViewProps {
 const FlowView = ({ nodes, edges }: FlowViewProps) => {
   const {
     themeColor,
+    setBackgroundSelected,
     edgeColor,
     direction,
     nodeAlignment,
@@ -520,6 +521,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
   // Tap on empty canvas clears node and edge selection
   const handleBackgroundTap = useCallback(() => {
+    setBackgroundSelected(true);
     if (selectedNodeIdsRef.current.length) {
       setSelectedNodeIds([]);
       callbacks.onNodeDeselect?.();
@@ -528,7 +530,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       setSelectedEdgeId(null);
       callbacks.onEdgeDeselect?.();
     }
-  }, [callbacks, setSelectedNodeIds, setSelectedEdgeId]);
+  }, [callbacks, setSelectedNodeIds, setSelectedEdgeId, setBackgroundSelected]);
 
   const handleBoxSelect = useCallback(
     (ids: string[]) => {

@@ -19,6 +19,7 @@ export interface EdgeGeometryOptions {
   arrowGap: number;
   /** cytoscape arrow "size" (`getArrowWidth`); triangle is 0.3×size long and wide */
   arrowSize: number;
+  headShape?: "triangle" | "square";
   radius: number;
   arrowAt: "target" | "source" | "none";
   labelTargetLength?: number;
@@ -106,7 +107,7 @@ function shorten(p: Point, toward: Point, amount: number): Point {
   return { x: toward.x + ratio * dx, y: toward.y + ratio * dy };
 }
 
-function arrowPath(tip: Point, from: Point, size: number): string {
+function arrowPath(tip: Point, from: Point, size: number, shape: "triangle" | "square" = "triangle"): string {
   const dx = tip.x - from.x;
   const dy = tip.y - from.y;
   const len = Math.hypot(dx, dy) || 1;
@@ -116,6 +117,9 @@ function arrowPath(tip: Point, from: Point, size: number): string {
   const W = 0.15 * size;
   const bx = tip.x - ux * L;
   const by = tip.y - uy * L;
+  if (shape === "square") {
+    return `M${pt(tip)} L${f(tip.x - uy * W)} ${f(tip.y + ux * W)} L${f(bx - uy * W)} ${f(by + ux * W)} L${f(bx + uy * W)} ${f(by - ux * W)} L${f(tip.x + uy * W)} ${f(tip.y - ux * W)} Z`;
+  }
   return `M${pt(tip)} L${f(bx - uy * W)} ${f(by + ux * W)} L${f(bx + uy * W)} ${f(by - ux * W)} Z`;
 }
 
@@ -195,12 +199,12 @@ export function polylineGeometry(
   if (o.arrowAt === "source") {
     const tip = shorten(sExit, afterStart, o.srcDist);
     lineStart = shorten(sExit, afterStart, o.srcDist + o.arrowGap);
-    arrow = arrowPath(tip, afterStart, o.arrowSize);
+    arrow = arrowPath(tip, afterStart, o.arrowSize, o.headShape);
   } else lineStart = shorten(sExit, afterStart, o.srcDist);
   if (o.arrowAt === "target") {
     const tip = shorten(tExit, beforeEnd, o.tgtDist);
     lineEnd = shorten(tExit, beforeEnd, o.tgtDist + o.arrowGap);
-    arrow = arrowPath(tip, beforeEnd, o.arrowSize);
+    arrow = arrowPath(tip, beforeEnd, o.arrowSize, o.headShape);
   } else lineEnd = shorten(tExit, beforeEnd, o.tgtDist);
 
   return roundedGeometry(
@@ -348,9 +352,9 @@ export function propertyGeometry(
       : end;
   const arrow =
     options.arrowAt === "source"
-      ? arrowPath(start, interior[0], options.arrowSize)
+      ? arrowPath(start, interior[0], options.arrowSize, options.headShape)
       : options.arrowAt === "target"
-        ? arrowPath(end, interior[interior.length - 1], options.arrowSize)
+        ? arrowPath(end, interior[interior.length - 1], options.arrowSize, options.headShape)
         : undefined;
   return roundedGeometry(
     lineStart,
@@ -432,9 +436,9 @@ export function bezierGeometry(
     d: `M${pt(start)} C${pt(controlSource)} ${pt(controlTarget)} ${pt(end)}`,
     arrow:
       options.arrowAt === "source"
-        ? arrowPath(source, controlSource, options.arrowSize)
+        ? arrowPath(source, controlSource, options.arrowSize, options.headShape)
         : options.arrowAt === "target"
-          ? arrowPath(target, controlTarget, options.arrowSize)
+          ? arrowPath(target, controlTarget, options.arrowSize, options.headShape)
           : undefined,
     label: {
       x: (start.x + 3 * controlSource.x + 3 * controlTarget.x + end.x) / 8,
@@ -462,9 +466,9 @@ export function straightPortGeometry(
       : target;
   const arrow =
     options.arrowAt === "source"
-      ? arrowPath(source, target, options.arrowSize)
+      ? arrowPath(source, target, options.arrowSize, options.headShape)
       : options.arrowAt === "target"
-        ? arrowPath(target, source, options.arrowSize)
+        ? arrowPath(target, source, options.arrowSize, options.headShape)
         : undefined;
   return roundedGeometry(start, [], end, arrow, 0);
 }
@@ -502,11 +506,11 @@ export function loopGeometry(
   if (o.arrowAt === "target") {
     const tip = lineEnd;
     lineEnd = shorten(tExit, c2, o.tgtDist + o.arrowGap);
-    arrow = arrowPath(tip, c2, o.arrowSize);
+    arrow = arrowPath(tip, c2, o.arrowSize, o.headShape);
   } else if (o.arrowAt === "source") {
     const tip = lineStart;
     lineStart = shorten(sExit, c1, o.srcDist + o.arrowGap);
-    arrow = arrowPath(tip, c1, o.arrowSize);
+    arrow = arrowPath(tip, c1, o.arrowSize, o.headShape);
   }
   const d = `M${pt(lineStart)} Q${pt(c1)} ${pt(mid)} Q${pt(c2)} ${pt(lineEnd)}`;
   return {

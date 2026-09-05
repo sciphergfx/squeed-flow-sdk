@@ -47,6 +47,7 @@ export interface EdgeViewProps {
   targetProperty?: string;
   sourceY?: number;
   targetY?: number;
+  propertyMode?: boolean;
   dir: TaxiDir;
   /** taxi-turn as a fraction of the gap between the nodes */
   turn: number;
@@ -77,6 +78,7 @@ function EdgeView({
   targetProperty,
   sourceY,
   targetY,
+  propertyMode = false,
   dir,
   turn,
   labelAtTarget,
@@ -105,6 +107,9 @@ function EdgeView({
       tgtDist: STANDOFF,
       arrowGap: ARROW_GAP,
       arrowSize: ARROW_SIZE,
+      headShape: propertyMode && (inverted ? sourceY !== undefined : targetY !== undefined)
+        ? "square"
+        : "triangle",
       radius: labelAtTarget ? 40 : TAXI_RADIUS,
       arrowAt: inverted ? "source" : "target",
       labelTargetLength: labelAtTarget
@@ -196,6 +201,7 @@ function EdgeView({
     edgeType,
     customEdgeTypes,
     target,
+    propertyMode,
     sourceY,
     targetY,
     dir,

@@ -1001,6 +1001,7 @@ function Canvas(props: CanvasProps) {
                   id={e.id}
                   edgeData={e.data}
                   edgeType={e.type}
+                  propertyMode={edgeMode === "properties"}
                   customEdgeTypes={props.customEdgeTypes}
                   source={s}
                   target={t}
@@ -1037,6 +1038,7 @@ function Canvas(props: CanvasProps) {
                   targetProperty: ghost.targetProperty,
                 }}
                 edgeType={props.edgeType}
+                propertyMode={edgeMode === "properties"}
                 customEdgeTypes={props.customEdgeTypes}
                 source={ghostSource}
                 target={ghostTarget}

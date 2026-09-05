@@ -149,6 +149,7 @@ function Fixture() {
       record("init");
     },
     onViewportChange: (viewport) => record("viewport", viewport),
+    onThemeColorChange: (color) => record("theme-color", color),
     onNodeSelect: (id) => record("select-node", id),
     onNodeDeselect: () => record("deselect-node"),
     onNodeDoubleClick: (id) => record("double-click", id),
