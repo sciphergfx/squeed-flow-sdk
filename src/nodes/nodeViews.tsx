@@ -201,7 +201,9 @@ const NodeJsonObjectView = (props) => {
                   )}
                 </Flex>
               )}
-              {data.config?.form ? <NodeForm nodeAddress={id} /> : hasContent && !objVisible ? (
+              {data.config?.form ? (
+                <NodeForm nodeAddress={id} />
+              ) : hasContent && !objVisible ? (
                 <Flex
                   w="100%"
                   overflow="auto"

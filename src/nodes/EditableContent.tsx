@@ -77,7 +77,11 @@ export function EditableContent({
           "& ul, & ol": { margin: "0.65em 0", paddingInlineStart: "1.6em" },
           "& ul": { listStyleType: "disc" },
           "& ol": { listStyleType: "decimal" },
-          "& li": { display: "list-item", margin: "0.3em 0", paddingInlineStart: "0.15em" },
+          "& li": {
+            display: "list-item",
+            margin: "0.3em 0",
+            paddingInlineStart: "0.15em",
+          },
           "& li > ul, & li > ol": { margin: "0.25em 0" },
           "& li > p": { margin: 0 },
           "& a": { color: "inherit", textDecoration: "underline" },
@@ -99,7 +103,11 @@ export function EditableContent({
             overflowWrap: "normal",
             lineHeight: 1.5,
           },
-          "& pre code": { background: "transparent", padding: 0, whiteSpace: "inherit" },
+          "& pre code": {
+            background: "transparent",
+            padding: 0,
+            whiteSpace: "inherit",
+          },
           "& strong": { fontWeight: 700 },
           "& em": { fontStyle: "italic" },
           "& blockquote": {

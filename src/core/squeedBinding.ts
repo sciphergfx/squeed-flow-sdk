@@ -84,8 +84,13 @@ export function bindSqueedCallbacks(
     ...callbacks,
     onFormChange: (event) => {
       const owner = getNode(json, event.nodeAddress);
-      if (!owner || (event.nodeId !== undefined && owner.id !== event.nodeId)) throw new Error("This form node has moved. Retry the edit.");
-      emit(applyFormChange(json, event, callbacks.onFormChange), { type: "form", address: event.address, value: event.value });
+      if (!owner || (event.nodeId !== undefined && owner.id !== event.nodeId))
+        throw new Error("This form node has moved. Retry the edit.");
+      emit(applyFormChange(json, event, callbacks.onFormChange), {
+        type: "form",
+        address: event.address,
+        value: event.value,
+      });
     },
     onNodeLabelChange: (id, label) => {
       callbacks.onNodeLabelChange?.(id, label);

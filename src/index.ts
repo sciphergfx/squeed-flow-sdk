@@ -4,7 +4,18 @@
 export { FlowDiagram } from "./components/FlowDiagram";
 export { readFormSchema, applyFormChange, formValueError } from "./core/forms";
 export { parseTypeScriptForm } from "./core/workflowContract";
-export type { FormSchema, FormBinding, FormFieldConfig, FormOption, FormValue, FormRequest, FormOptionsRequest, FormChange, FormEdit, FormCondition } from "./core/forms";
+export type {
+  FormSchema,
+  FormBinding,
+  FormFieldConfig,
+  FormOption,
+  FormValue,
+  FormRequest,
+  FormOptionsRequest,
+  FormChange,
+  FormEdit,
+  FormCondition,
+} from "./core/forms";
 
 // Core diagram generation
 export { createFlowDiagram } from "./core/createFlowDiagram";

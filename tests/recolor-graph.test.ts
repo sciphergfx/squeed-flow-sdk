@@ -10,9 +10,15 @@ test("color-only updates preserve untouched nodes and edges and match compilatio
   const result = recolorGraph(data, next, graph)!;
   assert.ok(result);
   assert.equal(result.edges, graph.edges);
-  assert.equal(result.nodes.find(node => node.data.id === "root.beta"), graph.nodes.find(node => node.data.id === "root.beta"));
+  assert.equal(
+    result.nodes.find((node) => node.data.id === "root.beta"),
+    graph.nodes.find((node) => node.data.id === "root.beta"),
+  );
   const expected = compileSqueed(next);
   assert.deepEqual(result.nodes, expected.nodes);
-  assert.equal(recolorGraph(data, { ...data, alpha: { name: "Changed" } }, graph), undefined);
+  assert.equal(
+    recolorGraph(data, { ...data, alpha: { name: "Changed" } }, graph),
+    undefined,
+  );
   assert.equal(recolorGraph(next, data, result), undefined);
 });

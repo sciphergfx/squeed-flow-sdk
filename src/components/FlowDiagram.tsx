@@ -50,7 +50,11 @@ export function FlowDiagram({
     let previous: typeof json;
     let graph: ReturnType<typeof compileSqueed> | undefined;
     return (document: NonNullable<typeof json>) => {
-      graph = previous && graph ? recolorGraph(previous, document, graph) ?? compileSqueed(document, { title, isCenter }) : compileSqueed(document, { title, isCenter });
+      graph =
+        previous && graph
+          ? (recolorGraph(previous, document, graph) ??
+            compileSqueed(document, { title, isCenter }))
+          : compileSqueed(document, { title, isCenter });
       previous = document;
       return graph;
     };
@@ -63,9 +67,18 @@ export function FlowDiagram({
   const resolvedNodes: FlowDiagramNode[] = useMemo(() => {
     const source = compiled?.nodes ?? nodes ?? [];
     if (!json || !config.formSchema) return source;
-    return source.map(node => resolveFormNode(json, node.data.id, config.formSchema!)
-      ? { ...node, data: { ...node.data, type: "objectView", config: { ...node.data.config, form: true } } }
-      : node);
+    return source.map((node) =>
+      resolveFormNode(json, node.data.id, config.formSchema!)
+        ? {
+            ...node,
+            data: {
+              ...node.data,
+              type: "objectView",
+              config: { ...node.data.config, form: true },
+            },
+          }
+        : node,
+    );
   }, [compiled, nodes, json, config.formSchema]);
   const resolvedEdges: FlowDiagramEdge[] = compiled?.edges ?? edges ?? [];
 
@@ -84,31 +97,37 @@ export function FlowDiagram({
   );
 
   return (
-    <FormDocumentContext.Provider value={{ data: json, schema: config.formSchema, callbacks: boundCallbacks }}>
-    <FlowDiagramProvider
-      config={config}
-      callbacks={boundCallbacks}
-      nodes={resolvedNodes}
-      edges={resolvedEdges}
+    <FormDocumentContext.Provider
+      value={{
+        data: json,
+        schema: config.formSchema,
+        callbacks: boundCallbacks,
+      }}
     >
-      <Box
-        className={className}
-        style={style}
-        width="100%"
-        height="100%"
-        position="relative"
-        overflow="hidden"
-        css={{
-          "& input, & textarea, & select": {
-            outline: "none !important",
-            boxShadow: "none !important",
-          },
-        }}
+      <FlowDiagramProvider
+        config={config}
+        callbacks={boundCallbacks}
+        nodes={resolvedNodes}
+        edges={resolvedEdges}
       >
-        <FlowView nodes={resolvedNodes} edges={resolvedEdges} />
-        {showBottomBar && <BottomBar />}
-      </Box>
-    </FlowDiagramProvider>
+        <Box
+          className={className}
+          style={style}
+          width="100%"
+          height="100%"
+          position="relative"
+          overflow="hidden"
+          css={{
+            "& input, & textarea, & select": {
+              outline: "none !important",
+              boxShadow: "none !important",
+            },
+          }}
+        >
+          <FlowView nodes={resolvedNodes} edges={resolvedEdges} />
+          {showBottomBar && <BottomBar />}
+        </Box>
+      </FlowDiagramProvider>
     </FormDocumentContext.Provider>
   );
 }

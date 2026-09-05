@@ -259,8 +259,14 @@ export interface FlowDiagramConfig {
 
 /** Event callbacks for the flow diagram */
 export interface FlowDiagramCallbacks {
-  onFormChange?: (event: import("../core/forms").FormChange) => import("../core/forms").FormEdit[] | void;
-  resolveFormOptions?: (request: import("../core/forms").FormOptionsRequest) => Promise<import("../core/forms").FormOption[]> | import("../core/forms").FormOption[];
+  onFormChange?: (
+    event: import("../core/forms").FormChange,
+  ) => import("../core/forms").FormEdit[] | void;
+  resolveFormOptions?: (
+    request: import("../core/forms").FormOptionsRequest,
+  ) =>
+    | Promise<import("../core/forms").FormOption[]>
+    | import("../core/forms").FormOption[];
   onSpacingChange?: (spacing: NodeSpacing) => void;
   onEdgeRadiusChange?: (radius: number) => void;
   onBackgroundVariantChange?: (variant: BackgroundVariant) => void;

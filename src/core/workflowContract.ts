@@ -336,11 +336,13 @@ export async function parseTypeScriptForm(
     }
     throw new Error(`Unsupported TypeScript type: ${node.getText(file)}`);
   };
-  const root = typeName ?? (declarations.has("Graph")
-    ? "Graph"
-    : declarations.size === 1
-      ? [...declarations.keys()][0]
-      : undefined);
+  const root =
+    typeName ??
+    (declarations.has("Graph")
+      ? "Graph"
+      : declarations.size === 1
+        ? [...declarations.keys()][0]
+        : undefined);
   if (!root) throw new Error("Declare an interface Graph keyed by node ID.");
   const contract = resolve(root, []);
   if (contract.kind !== "object")
