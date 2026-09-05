@@ -7,7 +7,9 @@ for (const width of [1440, 390]) {
   }, testInfo) => {
     await page.setViewportSize({ width, height: 950 });
     await ready(page, "?graph=connections");
-    await page.evaluate(() => window.__flowTest.configure({ edgeMode: "properties" }));
+    await page.evaluate(() =>
+      window.__flowTest.configure({ edgeMode: "properties" }),
+    );
     await page.mouse.click(10, 10);
     const original = await page.evaluate(() =>
       structuredClone(window.__flowTest.document),

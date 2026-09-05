@@ -22,10 +22,12 @@ for (const width of [684, 390, 320]) {
     const row = panel.locator(":scope > div");
     await expect(row).toHaveCSS("flex-wrap", "nowrap");
     const centers = await row.locator(":scope > *").evaluateAll((elements) =>
-      elements.filter(element => element.getBoundingClientRect().height > 0).map((element) => {
-        const rect = element.getBoundingClientRect();
-        return rect.y + rect.height / 2;
-      }),
+      elements
+        .filter((element) => element.getBoundingClientRect().height > 0)
+        .map((element) => {
+          const rect = element.getBoundingClientRect();
+          return rect.y + rect.height / 2;
+        }),
     );
     expect(Math.max(...centers) - Math.min(...centers)).toBeLessThan(2);
     const icon = panel.getByRole("textbox", { name: "Node icon", exact: true });
@@ -74,9 +76,11 @@ test("normal and selected toolbars resize within the diagram container", async (
       .boundingBox();
     expect(bounds!.x).toBeGreaterThanOrEqual(20);
     expect(bounds!.x + bounds!.width).toBeLessThan(direction!.x);
-    const surfaceGap = await panel.evaluate(element => {
+    const surfaceGap = await panel.evaluate((element) => {
       const main = element.parentElement!.getBoundingClientRect();
-      const direction = document.querySelector("[data-flow-direction-control]")!.getBoundingClientRect();
+      const direction = document
+        .querySelector("[data-flow-direction-control]")!
+        .getBoundingClientRect();
       return direction.left - main.right;
     });
     expect(surfaceGap - 16).toBeGreaterThanOrEqual(7.5);

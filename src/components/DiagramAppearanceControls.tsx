@@ -63,7 +63,15 @@ const RangeInput = styled.input`
   }
 `;
 
-function SliderContent({ label, inputLabel, value, displayValue, min, max, onChange }: {
+function SliderContent({
+  label,
+  inputLabel,
+  value,
+  displayValue,
+  min,
+  max,
+  onChange,
+}: {
   label: string;
   inputLabel: string;
   value: number;
@@ -81,7 +89,15 @@ function SliderContent({ label, inputLabel, value, displayValue, min, max, onCha
     : themeColor;
   return (
     <div style={{ width: 224, maxWidth: "calc(100vw - 64px)", padding: 12 }}>
-      <label htmlFor={id} style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 12 }}>
+      <label
+        htmlFor={id}
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: 14,
+          marginBottom: 12,
+        }}
+      >
         {label} <span>{displayValue}</span>
       </label>
       <RangeInput
@@ -93,8 +109,12 @@ function SliderContent({ label, inputLabel, value, displayValue, min, max, onCha
         step={5}
         value={value}
         disabled={readOnly}
-        style={{ color: accent, accentColor: accent, backgroundImage: `linear-gradient(to right, currentColor ${progress}%, var(--chakra-colors-${colorInactive.replace(".", "-")}) ${progress}%)` }}
-        onChange={event => onChange(Number(event.target.value))}
+        style={{
+          color: accent,
+          accentColor: accent,
+          backgroundImage: `linear-gradient(to right, currentColor ${progress}%, var(--chakra-colors-${colorInactive.replace(".", "-")}) ${progress}%)`,
+        }}
+        onChange={(event) => onChange(Number(event.target.value))}
       />
     </div>
   );
@@ -132,12 +152,18 @@ export function DiagramAppearanceControls() {
         disabled={readOnly}
         onValueChange={() => {}}
         popupContent={
-          <SliderContent label="Spacing" inputLabel="Node spacing percentage"
-            min={50} max={200} value={Math.round(spacing * 100)} displayValue={`${Math.round(spacing * 100)}%`}
-            onChange={value => {
+          <SliderContent
+            label="Spacing"
+            inputLabel="Node spacing percentage"
+            min={50}
+            max={200}
+            value={Math.round(spacing * 100)}
+            displayValue={`${Math.round(spacing * 100)}%`}
+            onChange={(value) => {
               setSpacing(value / 100);
               callbacks.onSpacingChange?.(value / 100);
-            }} />
+            }}
+          />
         }
       >
         <option value="spacing">Spacing</option>
@@ -152,12 +178,18 @@ export function DiagramAppearanceControls() {
         disabled={readOnly}
         onValueChange={() => {}}
         popupContent={
-          <SliderContent label="Edge radius" inputLabel="Edge corner radius"
-            min={0} max={500} value={edgeRadius ?? 500} displayValue={edgeRadius ?? "Default"}
-            onChange={value => {
+          <SliderContent
+            label="Edge radius"
+            inputLabel="Edge corner radius"
+            min={0}
+            max={500}
+            value={edgeRadius ?? 500}
+            displayValue={edgeRadius ?? "Default"}
+            onChange={(value) => {
               setEdgeRadius(value);
               callbacks.onEdgeRadiusChange?.(value);
-            }} />
+            }}
+          />
         }
       >
         <option value="radius">Edge radius</option>
