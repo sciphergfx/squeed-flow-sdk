@@ -31,9 +31,13 @@ for (const width of [1440, 390]) {
     const choices = dialog.locator('button[aria-label^="Choose Pi"]');
     await expect(choices).toHaveCount(36);
     const first = await choices.first().getAttribute("aria-label");
-    await dialog.getByRole("button", { name: "Next icons", exact: true }).click();
+    await dialog
+      .getByRole("button", { name: "Next icons", exact: true })
+      .click();
     await expect(choices.first()).not.toHaveAttribute("aria-label", first!);
-    await dialog.getByRole("button", { name: "Previous icons", exact: true }).click();
+    await dialog
+      .getByRole("button", { name: "Previous icons", exact: true })
+      .click();
     await expect(choices.first()).toHaveAttribute("aria-label", first!);
     await page
       .getByRole("textbox", { name: "Search icons", exact: true })

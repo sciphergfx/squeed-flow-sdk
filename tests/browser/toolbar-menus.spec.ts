@@ -84,9 +84,15 @@ for (const width of [1440, 390]) {
     await expect(
       dialog.getByRole("tab", { name: "React icons", exact: true }),
     ).toHaveAttribute("aria-selected", "true");
-    await dialog.getByRole("tab", { name: "React icons", exact: true }).press("ArrowRight");
-    await expect(dialog.getByRole("tab", { name: "Custom SVG", exact: true })).toBeFocused();
-    await expect(dialog.getByRole("tabpanel", { name: "Custom SVG", exact: true })).toBeVisible();
+    await dialog
+      .getByRole("tab", { name: "React icons", exact: true })
+      .press("ArrowRight");
+    await expect(
+      dialog.getByRole("tab", { name: "Custom SVG", exact: true }),
+    ).toBeFocused();
+    await expect(
+      dialog.getByRole("tabpanel", { name: "Custom SVG", exact: true }),
+    ).toBeVisible();
     await expect(
       dialog.getByRole("textbox", { name: "SVG URL", exact: true }),
     ).toBeVisible();

@@ -2,21 +2,21 @@
 
 // Main component
 export { FlowDiagram } from "./components/FlowDiagram";
-export { exportSvg, downloadSvg } from "./utils/exportSvg";
-export { readFormSchema, applyFormChange, formValueError } from "./core/forms";
-export { parseTypeScriptForm } from "./core/workflowContract";
+export { applyFormChange, formValueError, readFormSchema } from "./core/forms";
 export type {
-  FormSchema,
   FormBinding,
+  FormChange,
+  FormCondition,
+  FormEdit,
   FormFieldConfig,
   FormOption,
-  FormValue,
-  FormRequest,
   FormOptionsRequest,
-  FormChange,
-  FormEdit,
-  FormCondition,
+  FormRequest,
+  FormSchema,
+  FormValue,
 } from "./core/forms";
+export { parseTypeScriptForm } from "./core/workflowContract";
+export { downloadSvg, exportSvg } from "./utils/exportSvg";
 
 // Core diagram generation
 export { createFlowDiagram } from "./core/createFlowDiagram";
@@ -63,11 +63,10 @@ export {
 
 // Hooks (for consumers building custom editable node content)
 export { useStopPropagation } from "./hooks/useStopPropagation";
-export { default as NodeView } from "./nodes/NodeView";
 export { EditableLabel } from "./nodes/EditableLabel";
+export { default as NodeView } from "./nodes/NodeView";
 
 // Utilities
-export { default as DynamicIcon } from "./utils/DynamicIcon";
 export {
   connectionIssue,
   parseJsonContract,
@@ -75,21 +74,21 @@ export {
   readWorkflowContract,
 } from "./core/workflowContract";
 export type {
-  ContractType,
   ContractProperty,
+  ContractType,
   WorkflowContract,
 } from "./core/workflowContract";
+export { default as DynamicIcon } from "./utils/DynamicIcon";
 
 // Types
 export type {
   BackgroundPattern,
   BackgroundVariant,
-  NodeSpacing,
+  BottomBarRenderProps,
   BuiltInEdgeType,
   CustomEdgeContext,
   CustomEdgeFactory,
   CustomEdgeGeometry,
-  BottomBarRenderProps,
   EdgeMode,
   FlowDiagramCallbacks,
   FlowDiagramConfig,
@@ -103,6 +102,7 @@ export type {
   NodeAlignment,
   NodeOverlayAction,
   NodeOverlayProps,
+  NodeSpacing,
   ParentNodeStyle,
   SelectedEdgeToolbarProps,
   SelectedNodeToolbarProps,

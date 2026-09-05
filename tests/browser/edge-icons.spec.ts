@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ready, chooseToolbarOption } from "./helpers";
+import { ready } from "./helpers";
 
 const svg =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#16a34a"/></svg>';
@@ -51,22 +51,18 @@ for (const width of [1440, 390]) {
     ]);
     await trigger.click();
     await dialog.getByRole("tab", { name: "Custom SVG", exact: true }).click();
-    await dialog
-      .getByLabel("Upload SVG icon", { exact: true })
-      .setInputFiles({
-        name: "bad.svg",
-        mimeType: "image/svg+xml",
-        buffer: Buffer.from("<html/>"),
-      });
+    await dialog.getByLabel("Upload SVG icon", { exact: true }).setInputFiles({
+      name: "bad.svg",
+      mimeType: "image/svg+xml",
+      buffer: Buffer.from("<html/>"),
+    });
     await expect(dialog.getByRole("alert")).toBeVisible();
     await expect(field).toHaveValue("PiGear");
-    await dialog
-      .getByLabel("Upload SVG icon", { exact: true })
-      .setInputFiles({
-        name: "edge.svg",
-        mimeType: "image/svg+xml",
-        buffer: Buffer.from(svg),
-      });
+    await dialog.getByLabel("Upload SVG icon", { exact: true }).setInputFiles({
+      name: "edge.svg",
+      mimeType: "image/svg+xml",
+      buffer: Buffer.from(svg),
+    });
     const encoded =
       "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64");
     await expect(field).toHaveValue(encoded);

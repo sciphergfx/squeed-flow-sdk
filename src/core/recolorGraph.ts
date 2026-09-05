@@ -1,4 +1,4 @@
-import type { FlowDiagramNode, FlowDiagramEdge } from "../types";
+import type { FlowDiagramEdge, FlowDiagramNode } from "../types";
 import { getNode, type SqueedJson } from "./squeedEdits";
 
 type Graph = { nodes: FlowDiagramNode[]; edges: FlowDiagramEdge[] };
@@ -65,7 +65,12 @@ export function recolorGraph(
           ...(typeof node.data.code === "string"
             ? { code: JSON.stringify(after, null, 2) }
             : {}),
-          ...(style ? { viewProps: { ...node.data.viewProps, ...style }, config: { ...node.data.config, ...style } } : {}),
+          ...(style
+            ? {
+                viewProps: { ...node.data.viewProps, ...style },
+                config: { ...node.data.config, ...style },
+              }
+            : {}),
         },
       };
     }),

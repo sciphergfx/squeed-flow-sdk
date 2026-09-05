@@ -1,18 +1,23 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { PiImage, PiUploadSimple, PiX, PiTrash, PiCaretLeft, PiCaretRight, PiArrowRight } from "react-icons/pi";
+import {
+  PiArrowRight,
+  PiCaretLeft,
+  PiCaretRight,
+  PiImage,
+  PiTrash,
+  PiUploadSimple,
+  PiX,
+} from "react-icons/pi";
+import { getChakraColorHex } from "../theme/colorUtils";
+import { useCustomColors } from "../theme/useCustomColors";
 import DynamicIcon from "../utils/DynamicIcon";
 import {
   isIconImage,
   SVG_DATA_PREFIX,
   svgIconDataUrl,
 } from "../utils/iconSources";
-import { getChakraColorHex } from "../theme/colorUtils";
-import { useCustomColors } from "../theme/useCustomColors";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
-import {
-  ToolbarIconButton,
-  ToolbarTooltip,
-} from "./toolbarControls";
+import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
 
 export function NodeIconPicker({
   nodeId,
@@ -74,17 +79,19 @@ export function NodeIconPicker({
     else if (nodeId) callbacks.onNodeIconChange?.(nodeId, icon);
     dialog.current?.close();
   };
-  const matches = icons
-    .filter((name) =>
-      name
-        .replace(/([a-z])([A-Z])/g, "$1 $2")
-        .toLowerCase()
-        .includes(search.trim().toLowerCase()),
-    );
+  const matches = icons.filter((name) =>
+    name
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .toLowerCase()
+      .includes(search.trim().toLowerCase()),
+  );
   const pageSize = 36;
   const pageCount = Math.max(1, Math.ceil(matches.length / pageSize));
   const currentPage = Math.min(page, pageCount - 1);
-  const filtered = matches.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+  const filtered = matches.slice(
+    currentPage * pageSize,
+    (currentPage + 1) * pageSize,
+  );
   const inputStyle = {
     width: "100%",
     padding: "8px 14px",
@@ -153,39 +160,92 @@ export function NodeIconPicker({
               }}
             >
               <strong>{edgeId ? "Edge icon" : "Node icon"}</strong>
-              <div style={{ display: "flex", alignItems: "center", marginLeft: "auto", gap: 4 }}>
-                {value && <ToolbarTooltip label="Remove icon">
-                  <ToolbarIconButton
-                    aria-label={edgeId ? "Remove edge icon" : "Remove node icon"}
-                    icon={<PiTrash size={18} />}
-                    size="sm"
-                    variant="ghost"
-                    disabled={readOnly || busy}
-                    onClick={() => pick("")}
-                  />
-                </ToolbarTooltip>}
-              <ToolbarIconButton
-                aria-label="Close icon picker"
-                icon={<PiX size={20} />}
-                size="sm"
-                variant="ghost"
-                onClick={() => dialog.current?.close()}
-              />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginLeft: "auto",
+                  gap: 4,
+                }}
+              >
+                {value && (
+                  <ToolbarTooltip label="Remove icon">
+                    <ToolbarIconButton
+                      aria-label={
+                        edgeId ? "Remove edge icon" : "Remove node icon"
+                      }
+                      icon={<PiTrash size={18} />}
+                      size="sm"
+                      variant="ghost"
+                      disabled={readOnly || busy}
+                      onClick={() => pick("")}
+                    />
+                  </ToolbarTooltip>
+                )}
+                <ToolbarIconButton
+                  aria-label="Close icon picker"
+                  icon={<PiX size={20} />}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => dialog.current?.close()}
+                />
               </div>
             </div>
-            <div role="tablist" aria-label="Icon source" style={{ display: "flex", borderBottom: `1px solid ${getChakraColorHex(border)}` }}>
-              {(["icons", "custom"] as const).map(source => (
-                <button key={source} id={`${tabId}-${source}`} type="button" role="tab"
-                  aria-selected={mode === source} aria-controls={`${tabId}-panel`} tabIndex={mode === source ? 0 : -1}
-                  onClick={() => { setMode(source); setError(""); }}
-                  onKeyDown={event => {
-                    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            <div
+              role="tablist"
+              aria-label="Icon source"
+              style={{
+                display: "flex",
+                borderBottom: `1px solid ${getChakraColorHex(border)}`,
+              }}
+            >
+              {(["icons", "custom"] as const).map((source) => (
+                <button
+                  key={source}
+                  id={`${tabId}-${source}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === source}
+                  aria-controls={`${tabId}-panel`}
+                  tabIndex={mode === source ? 0 : -1}
+                  onClick={() => {
+                    setMode(source);
+                    setError("");
+                  }}
+                  onKeyDown={(event) => {
+                    if (
+                      !["ArrowLeft", "ArrowRight", "Home", "End"].includes(
+                        event.key,
+                      )
+                    )
+                      return;
                     event.preventDefault();
-                    const next = event.key === "Home" ? "icons" : event.key === "End" ? "custom" : source === "icons" ? "custom" : "icons";
-                    setMode(next); setError("");
+                    const next =
+                      event.key === "Home"
+                        ? "icons"
+                        : event.key === "End"
+                          ? "custom"
+                          : source === "icons"
+                            ? "custom"
+                            : "icons";
+                    setMode(next);
+                    setError("");
                     document.getElementById(`${tabId}-${next}`)?.focus();
                   }}
-                  style={{ flex: 1, padding: "8px 12px", background: "transparent", border: 0, borderBottom: `2px solid ${mode === source ? getChakraColorHex(themeColor) : "transparent"}`, color: mode === source ? getChakraColorHex(themeColor) : "inherit", cursor: "pointer", fontSize: 13 }}>
+                  style={{
+                    flex: 1,
+                    padding: "8px 12px",
+                    background: "transparent",
+                    border: 0,
+                    borderBottom: `2px solid ${mode === source ? getChakraColorHex(themeColor) : "transparent"}`,
+                    color:
+                      mode === source
+                        ? getChakraColorHex(themeColor)
+                        : "inherit",
+                    cursor: "pointer",
+                    fontSize: 13,
+                  }}
+                >
                   {source === "icons" ? "React icons" : "Custom SVG"}
                 </button>
               ))}
@@ -219,118 +279,164 @@ export function NodeIconPicker({
                 }
               }}
             />
-            <div id={`${tabId}-panel`} role="tabpanel" aria-labelledby={`${tabId}-${mode}`} style={{ display: "grid", gap: 8 }}>
-            {mode === "icons" ? (
-              <>
-                <input
-                  aria-label="Search icons"
-                  placeholder="Search icons..."
-                  value={search}
-                  onChange={(event) => { setSearch(event.target.value); setPage(0); }}
-                  style={inputStyle}
-                />
-                <div
-                  style={{
-                    height: 244,
-                    overflowY: "auto",
-                    display: "grid",
-                    gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
-                    gridAutoRows: 36,
-                    gap: 4,
-                  }}
-                >
-                  {filtered.map((name) => (
-                    <button
-                      key={name}
-                      type="button"
-                      aria-label={`Choose ${name}`}
-                      aria-pressed={value === name}
-                      title={name}
-                      onClick={() => pick(name)}
-                      style={{
-                        display: "grid",
-                        placeItems: "center",
-                        borderRadius: 5,
-                        border: `${value === name ? 2 : 1}px solid ${getChakraColorHex(value === name ? themeColor : border)}`,
-                        background: getChakraColorHex(
-                          value === name ? background : backgroundSecondary,
-                        ),
-                        color: "inherit",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <DynamicIcon name={name} size={24} />
-                    </button>
-                  ))}
-                  {filtered.length === 0 && (
-                    <span role="status" style={{ gridColumn: "1 / -1" }}>
-                      {catalogState === "loading"
-                        ? "Loading icons..."
-                        : catalogState === "unavailable"
-                          ? "React icons unavailable"
-                          : "No icons found"}
-                    </span>
-                  )}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                  <span role="status" style={{ fontSize: 12 }}>{matches.length} icons · {currentPage + 1} / {pageCount}</span>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    <ToolbarTooltip label="Previous icons">
-                      <ToolbarIconButton aria-label="Previous icons" icon={<PiCaretLeft size={18} />} size="sm" variant="ghost" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)} />
-                    </ToolbarTooltip>
-                    <ToolbarTooltip label="Next icons">
-                      <ToolbarIconButton aria-label="Next icons" icon={<PiCaretRight size={18} />} size="sm" variant="ghost" disabled={currentPage + 1 >= pageCount} onClick={() => setPage(currentPage + 1)} />
-                    </ToolbarTooltip>
+            <div
+              id={`${tabId}-panel`}
+              role="tabpanel"
+              aria-labelledby={`${tabId}-${mode}`}
+              style={{ display: "grid", gap: 8 }}
+            >
+              {mode === "icons" ? (
+                <>
+                  <input
+                    aria-label="Search icons"
+                    placeholder="Search icons..."
+                    value={search}
+                    onChange={(event) => {
+                      setSearch(event.target.value);
+                      setPage(0);
+                    }}
+                    style={inputStyle}
+                  />
+                  <div
+                    style={{
+                      height: 244,
+                      overflowY: "auto",
+                      display: "grid",
+                      gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
+                      gridAutoRows: 36,
+                      gap: 4,
+                    }}
+                  >
+                    {filtered.map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        aria-label={`Choose ${name}`}
+                        aria-pressed={value === name}
+                        title={name}
+                        onClick={() => pick(name)}
+                        style={{
+                          display: "grid",
+                          placeItems: "center",
+                          borderRadius: 5,
+                          border: `${value === name ? 2 : 1}px solid ${getChakraColorHex(value === name ? themeColor : border)}`,
+                          background: getChakraColorHex(
+                            value === name ? background : backgroundSecondary,
+                          ),
+                          color: "inherit",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <DynamicIcon name={name} size={24} />
+                      </button>
+                    ))}
+                    {filtered.length === 0 && (
+                      <span role="status" style={{ gridColumn: "1 / -1" }}>
+                        {catalogState === "loading"
+                          ? "Loading icons..."
+                          : catalogState === "unavailable"
+                            ? "React icons unavailable"
+                            : "No icons found"}
+                      </span>
+                    )}
                   </div>
-                </div>
-              </>
-            ) : (
-              <>
-                {value && isIconImage(value) && (
-                  <DynamicIcon name={value} size={64} />
-                )}
-                <button
-                  type="button"
-                  disabled={busy || readOnly}
-                  onClick={() => upload.current?.click()}
-                  style={{
-                    ...inputStyle,
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: 8,
-                    alignItems: "center",
-                    cursor: "pointer",
-                  }}
-                >
-                  <PiUploadSimple />
-                  {busy ? "Uploading..." : "Upload SVG"}
-                </button>
-                <form
-                  style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    if (busy || readOnly) return;
-                    if (!isIconImage(url.trim()) || url.trim().startsWith(SVG_DATA_PREFIX))
-                      setError("Enter an HTTP or HTTPS image URL.");
-                    else pick(url.trim());
-                  }}
-                >
-                <input
-                  type="url"
-                  aria-label="SVG URL"
-                  placeholder="https://example.com/icon.svg"
-                  value={url}
-                  disabled={busy || readOnly}
-                  onChange={(event) => setUrl(event.target.value)}
-                  style={{ ...inputStyle, flex: 1, minWidth: 0 }}
-                />
-                <ToolbarTooltip label="Apply URL">
-                  <ToolbarIconButton type="submit" aria-label="Apply URL" icon={<PiArrowRight size={20} />}
-                    size="sm" variant="ghost" disabled={busy || readOnly || !url.trim()} style={{ flexShrink: 0 }} />
-                </ToolbarTooltip>
-                </form>
-              </>
-            )}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 8,
+                    }}
+                  >
+                    <span role="status" style={{ fontSize: 12 }}>
+                      {matches.length} icons · {currentPage + 1} / {pageCount}
+                    </span>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <ToolbarTooltip label="Previous icons">
+                        <ToolbarIconButton
+                          aria-label="Previous icons"
+                          icon={<PiCaretLeft size={18} />}
+                          size="sm"
+                          variant="ghost"
+                          disabled={currentPage === 0}
+                          onClick={() => setPage(currentPage - 1)}
+                        />
+                      </ToolbarTooltip>
+                      <ToolbarTooltip label="Next icons">
+                        <ToolbarIconButton
+                          aria-label="Next icons"
+                          icon={<PiCaretRight size={18} />}
+                          size="sm"
+                          variant="ghost"
+                          disabled={currentPage + 1 >= pageCount}
+                          onClick={() => setPage(currentPage + 1)}
+                        />
+                      </ToolbarTooltip>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {value && isIconImage(value) && (
+                    <DynamicIcon name={value} size={64} />
+                  )}
+                  <button
+                    type="button"
+                    disabled={busy || readOnly}
+                    onClick={() => upload.current?.click()}
+                    style={{
+                      ...inputStyle,
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: 8,
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <PiUploadSimple />
+                    {busy ? "Uploading..." : "Upload SVG"}
+                  </button>
+                  <form
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      minWidth: 0,
+                    }}
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      if (busy || readOnly) return;
+                      if (
+                        !isIconImage(url.trim()) ||
+                        url.trim().startsWith(SVG_DATA_PREFIX)
+                      )
+                        setError("Enter an HTTP or HTTPS image URL.");
+                      else pick(url.trim());
+                    }}
+                  >
+                    <input
+                      type="url"
+                      aria-label="SVG URL"
+                      placeholder="https://example.com/icon.svg"
+                      value={url}
+                      disabled={busy || readOnly}
+                      onChange={(event) => setUrl(event.target.value)}
+                      style={{ ...inputStyle, flex: 1, minWidth: 0 }}
+                    />
+                    <ToolbarTooltip label="Apply URL">
+                      <ToolbarIconButton
+                        type="submit"
+                        aria-label="Apply URL"
+                        icon={<PiArrowRight size={20} />}
+                        size="sm"
+                        variant="ghost"
+                        disabled={busy || readOnly || !url.trim()}
+                        style={{ flexShrink: 0 }}
+                      />
+                    </ToolbarTooltip>
+                  </form>
+                </>
+              )}
             </div>
             {error && (
               <div role="alert" style={{ fontSize: 13 }}>

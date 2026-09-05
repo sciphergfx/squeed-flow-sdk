@@ -1,18 +1,18 @@
 import { memo, useMemo } from "react";
 import { createPortal } from "react-dom";
-import DynamicIcon from "../utils/DynamicIcon";
 import type {
   FlowDiagramConfig,
   FlowDiagramEdge,
   FlowDirection,
 } from "../types";
+import DynamicIcon from "../utils/DynamicIcon";
 import {
-  loopGeometry,
   bezierGeometry,
   connectorEndpoints,
+  loopGeometry,
   polylineGeometry,
-  straightPortGeometry,
   propertyGeometry,
+  straightPortGeometry,
   taxiGeometry,
   type EdgeGeometryOptions,
   type TaxiDir,
@@ -350,7 +350,12 @@ function EdgeView({
       {labelLayer && validationEl
         ? createPortal(validationEl, labelLayer)
         : validationEl}
-      <path className="flow-sdk-edge-hit" d={geo.d} fill="none" stroke="transparent" />
+      <path
+        className="flow-sdk-edge-hit"
+        d={geo.d}
+        fill="none"
+        stroke="transparent"
+      />
     </g>
   );
 }

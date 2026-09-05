@@ -1,11 +1,11 @@
 import { Box } from "@chakra-ui/react";
 import { useMemo, useState } from "react";
+import { resolveFormNode } from "../core/forms";
 import { recolorGraph } from "../core/recolorGraph";
 import { bindSqueedCallbacks } from "../core/squeedBinding";
 import { compileSqueed } from "../core/squeedEdits";
-import { resolveFormNode } from "../core/forms";
-import { FormDocumentContext } from "../nodes/NodeForm";
 import { NODE_BORDER_ANIMATION_STYLES } from "../engine/NodeBorderAnimation";
+import { FormDocumentContext } from "../nodes/NodeForm";
 import type {
   FlowDiagramEdge,
   FlowDiagramNode,
@@ -44,7 +44,8 @@ export function FlowDiagram({
   showBottomBar = true,
 }: FlowDiagramProps) {
   injectStyles();
-  const [localFormSchema, setLocalFormSchema] = useState<import("../core/forms").FormSchema>();
+  const [localFormSchema, setLocalFormSchema] =
+    useState<import("../core/forms").FormSchema>();
   const formSchema = config.formSchema ?? localFormSchema;
 
   const isCenter = config.direction === "C";
@@ -103,7 +104,10 @@ export function FlowDiagram({
       value={{
         data: json,
         schema: formSchema,
-        setSchema: schema => { setLocalFormSchema(schema); callbacks.onFormSchemaChange?.(schema); },
+        setSchema: (schema) => {
+          setLocalFormSchema(schema);
+          callbacks.onFormSchemaChange?.(schema);
+        },
         callbacks: boundCallbacks,
       }}
     >

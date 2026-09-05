@@ -28,19 +28,19 @@ import {
 import { useCustomColors } from "../theme/useCustomColors";
 import type { FlowDirection } from "../types";
 import { FlowType } from "../types";
+import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
+import { FormSchemaUpload } from "./FormSchemaUpload";
 import {
   DEFAULT_PALETTE,
   EdgeTools,
   NodeTools,
   Swatches,
 } from "./SelectionToolbar";
-import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
-import { WorkflowControls } from "./WorkflowControls";
-import { FormSchemaUpload } from "./FormSchemaUpload";
-import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
-import { ToolbarScrollContainer } from "./ToolbarScrollContainer";
 import { SvgExportButton } from "./SvgExportButton";
+import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
+import { ToolbarScrollContainer } from "./ToolbarScrollContainer";
+import { WorkflowControls } from "./WorkflowControls";
 
 const DIRECTIONS: {
   value: FlowDirection;

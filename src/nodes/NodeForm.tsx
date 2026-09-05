@@ -1,19 +1,20 @@
+import styled from "@emotion/styled";
 import {
   createContext,
   useContext,
   useEffect,
   useId,
-  useState,
   useRef,
+  useState,
 } from "react";
-import styled from "@emotion/styled";
 import { PiX } from "react-icons/pi";
+import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import {
   conditionMatches,
   formOptions,
   formValueError,
-  resolveFormNode,
   readOnlyFormData,
+  resolveFormNode,
   type FormFieldConfig,
   type FormOption,
   type FormRequest,
@@ -21,11 +22,10 @@ import {
 } from "../core/forms";
 import { getNode, type SqueedJson } from "../core/squeedEdits";
 import type { ContractProperty } from "../core/workflowContract";
-import type { FlowDiagramCallbacks } from "../types";
-import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import { useStopPropagation } from "../hooks/useStopPropagation";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
+import type { FlowDiagramCallbacks } from "../types";
 
 export const FormDocumentContext = createContext<{
   setSchema?: (schema: FormSchema) => void;
