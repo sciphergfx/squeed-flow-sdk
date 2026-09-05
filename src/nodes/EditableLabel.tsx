@@ -27,7 +27,10 @@ export const EditableLabel = ({
   const { callbacks, config, readOnly } = useFlowDiagramContext();
   const editable = config.editable && !readOnly;
   const [editValue, setEditValue] = useState(label);
-  const [editorSize, setEditorSize] = useState<{ width: number; height: number }>();
+  const [editorSize, setEditorSize] = useState<{
+    width: number;
+    height: number;
+  }>();
   const inputRef = useRef<HTMLInputElement>(null);
   const committedRef = useRef(false);
   const wrapperRef = useStopPropagation<HTMLDivElement>(isEditing);
@@ -68,7 +71,10 @@ export const EditableLabel = ({
           editable
             ? (e) => {
                 e.stopPropagation();
-              setEditorSize({ width: e.currentTarget.offsetWidth, height: e.currentTarget.offsetHeight });
+                setEditorSize({
+                  width: e.currentTarget.offsetWidth,
+                  height: e.currentTarget.offsetHeight,
+                });
                 setEditValue(label);
                 onEditStart();
               }

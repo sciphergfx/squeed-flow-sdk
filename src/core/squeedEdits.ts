@@ -115,7 +115,10 @@ export function setNodeProp(
   value: any,
 ): SqueedJson {
   return updateNode(json, address, (node) =>
-    key === "$label" && typeof node === "string" && typeof value === "string" && value !== ""
+    key === "$label" &&
+    typeof node === "string" &&
+    typeof value === "string" &&
+    value !== ""
       ? value
       : withKey(node, key, value),
   );
@@ -243,7 +246,12 @@ export function removeNode(json: SqueedJson, address: string): SqueedJson {
   const parentAddress = [ROOT, ...path.slice(0, -1)].join(".");
   return updateNode(json, parentAddress, (n) => {
     const container = childContainer(n);
-    if (container == null || typeof container !== "object" || !Object.prototype.hasOwnProperty.call(container, last)) return n;
+    if (
+      container == null ||
+      typeof container !== "object" ||
+      !Object.prototype.hasOwnProperty.call(container, last)
+    )
+      return n;
     if (Array.isArray(container)) {
       const children = container.filter((_, index) => String(index) !== last);
       return container === n ? children : { ...n, $: children };
@@ -363,9 +371,14 @@ export function compileSqueed(
     if (!id.endsWith(".0") || getNode(json, id) !== undefined) continue;
     const address = id.slice(0, -2);
     const source = getNode(json, address);
-    if (!renderedIds.has(address) && source && typeof source === "object" &&
-      !Array.isArray(source) && typeof source.$label === "string" &&
-      Object.keys(source).every((key) => key.startsWith("$") && key !== "$")) {
+    if (
+      !renderedIds.has(address) &&
+      source &&
+      typeof source === "object" &&
+      !Array.isArray(source) &&
+      typeof source.$label === "string" &&
+      Object.keys(source).every((key) => key.startsWith("$") && key !== "$")
+    ) {
       leafAddresses.set(id, address);
     }
   }
