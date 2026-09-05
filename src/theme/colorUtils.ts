@@ -40,6 +40,17 @@ export function blendHexColors(
 }
 
 export const contentObjTheme = (color) => {
+  if (color === "transparent") {
+    return {
+      background: "transparent",
+      highlight: "transparent",
+      border: "transparent",
+      property: "gray.900",
+      boolean: "green.800",
+      string: "gray.900",
+      number: "orange.800",
+    };
+  }
   if (color?.startsWith("#")) {
     return {
       background: color,
@@ -87,6 +98,7 @@ export const contentObjTheme = (color) => {
 };
 
 export const getColorVariant = (color: string) => {
+  if (color === "transparent") return { primary: color, secondary: color, light: color };
   let primary = color;
 
   if (primary?.startsWith("#")) {
@@ -227,6 +239,7 @@ const CHAKRA_COLOR_MAP: Record<string, Record<number, string>> = {
 };
 
 export const getChakraColorHex = (color?, opacity?) => {
+  if (color === "transparent") return color;
   if (color?.startsWith("#")) return color;
   if (!color) return "whitesmoke";
 

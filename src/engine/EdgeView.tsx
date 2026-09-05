@@ -119,7 +119,7 @@ function EdgeView({
           y={-h / 2 - LABEL_PADDING}
           width={w + 2 * LABEL_PADDING}
           height={h + 2 * LABEL_PADDING}
-          fill={labelBg}
+          fill={color === "transparent" ? "transparent" : labelBg}
         />
         <text
           fill={color}

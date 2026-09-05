@@ -1,6 +1,6 @@
 import { Box, Flex } from "@chakra-ui/react";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
-import { useThemeContentColors } from "../theme/useCustomColors";
+import { useCustomColors, useThemeContentColors } from "../theme/useCustomColors";
 import { getChakraColorHex } from "../theme/colorUtils";
 import DynamicIcon from "../utils/DynamicIcon";
 import { EditableLabel } from "./EditableLabel";
@@ -14,18 +14,24 @@ export const NodeText = ({
   onEditEnd,
 }: any) => {
   const { themeColor } = useFlowDiagramContext();
+  const { colorText } = useCustomColors();
+  const isTransparent = data?.viewProps?.bgColor === "transparent";
+  const outline = data?.viewProps?.outline === true;
   const { bgColor, borderColor, textColor } = useThemeContentColors(
     data?.viewProps?.bgColor || themeColor,
   );
   const hextextColor = getChakraColorHex(
-    data?.viewProps?.textColor || textColor,
+    data?.viewProps?.textColor || (isTransparent || outline ? colorText : textColor),
   );
+  const nodeBorderColor = data?.viewProps?.borderColor || (outline
+    ? (!isTransparent && data?.viewProps?.bgColor) || themeColor
+    : borderColor);
 
   return (
     <Box
       borderRadius={data?.viewProps?.borderRadius}
-      bgColor={bgColor}
-      borderColor={!isActive ? borderColor : "white"}
+      bgColor={outline ? "transparent" : bgColor}
+      borderColor={!isActive ? nodeBorderColor : "white"}
       _hover={{ borderColor: "white" }}
       borderWidth={2}
       py={14}

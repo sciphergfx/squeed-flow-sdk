@@ -33,6 +33,7 @@ export type SqueedNodeKey =
   | "$media"
   | "$collapsed"
   | "$parent"
+  | "$outline"
   | "$connections";
 
 /** Schema keys that describe the edge *into* a node (parent → child) */
@@ -392,6 +393,9 @@ export function compileSqueed(
     if (typeof src.$label === "string") {
       data.label = src.$label;
       data.headerTitle = src.$label;
+    }
+    if (typeof src.$outline === "boolean") {
+      data.viewProps = { ...data.viewProps, outline: src.$outline };
     }
     if (
       data.config?.collapsed !== undefined ||

@@ -78,7 +78,7 @@ export interface SelectionToolbarConfig {
   palette?: string[];
   /** Hide individual controls */
   hide?: Array<
-    "label" | "color" | "textColor" | "style" | "icon" | "collapse" | "delete"
+    "label" | "color" | "textColor" | "style" | "outline" | "icon" | "collapse" | "delete"
   >;
 }
 
@@ -88,6 +88,7 @@ export interface SelectionToolbarConfig {
  * Colors accept Chakra tokens ("purple.500") or hex.
  */
 export interface ParentNodeStyle {
+  outline?: boolean;
   /** Fill color; also the default border/label color (default: themeColor) */
   bgColor?: string;
   /** Fill opacity 0–1 (default 0.4) */
@@ -256,6 +257,7 @@ export interface FlowDiagramCallbacks {
   ) => void;
   /** Fires when a node's icon is changed via the toolbar */
   onNodeIconChange?: (nodeId: string, iconName: string) => void;
+  onNodeOutlineChange?: (nodeId: string, outline: boolean) => void;
   /** Fires when a hover overlay action is clicked */
   onNodeHoverAction?: (actionId: string, nodeId: string, nodeData: any) => void;
 
@@ -314,6 +316,7 @@ export interface SqueedChangeInfo {
     | "nodeLabel"
     | "nodeColor"
     | "nodeIcon"
+    | "nodeOutline"
     | "nodeCollapse"
     | "nodeCreate"
     | "nodeDelete"

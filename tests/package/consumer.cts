@@ -1,6 +1,7 @@
 import sdk = require("@squeed/flow-sdk");
 
 const callbacks: sdk.FlowDiagramCallbacks = {
+  onNodeOutlineChange: (_nodeId, outline) => { void outline.valueOf(); },
   onInit: (engine) => engine.fit(50),
   onEdgeCreate: (_source, _target, mapping) => {
     void mapping?.sourceProperty;
@@ -18,7 +19,7 @@ const connection: sdk.SqueedConnection = {
 const props: sdk.FlowDiagramProps = {
   callbacks,
   showBottomBar: true,
-  config: { edgeMode },
+  config: { edgeMode, parentNodeStyle: { outline: true }, selectionToolbar: { hide: ["outline"] } },
 };
 const result = sdk.compileSqueed(
   sdk.addConnection(
@@ -34,4 +35,9 @@ if (
   !result.edges.some((edge) => edge.data.sourceProperty === "output")
 )
   throw new Error("CommonJS consumer failed");
+const outlined = sdk.compileSqueed(sdk.setNodeProp({ node: {} }, "root.node", "$outline", true));
+const added = sdk.addChild({ list: { $: [] } }, "root.list", "added");
+if (!outlined.nodes.find((node) => node.data.id === "root.node")?.data.viewProps.outline ||
+  sdk.getChakraColorHex("transparent") !== "transparent" || sdk.getNode(added.json, added.address) !== "added")
+  throw new Error("CommonJS styling and address helpers failed");
 console.log("CommonJS runtime and public types passed");

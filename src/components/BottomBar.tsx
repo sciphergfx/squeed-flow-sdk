@@ -345,12 +345,14 @@ const BottomBar = () => {
           <Box
             bg={background}
             alignContent="center"
-            h={50}
+            h={selectionActive ? "auto" : 50}
+            minH={50}
+            maxW={selectionActive ? "calc(100vw - 40px)" : undefined}
             borderColor={border}
             borderWidth={1}
             borderRadius="15px"
           >
-            <HStack px={2} gap={1}>
+            <HStack px={2} gap={1} flexWrap={selectionActive ? "wrap" : "nowrap"} py={selectionActive ? 1 : 0}>
               {edgeToolsActive ? (
                 <EdgeTools
                   edgeId={selectedEdgeId!}

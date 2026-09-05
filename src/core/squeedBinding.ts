@@ -20,6 +20,7 @@ export interface SqueedChange {
     | "nodeLabel"
     | "nodeColor"
     | "nodeIcon"
+    | "nodeOutline"
     | "nodeCollapse"
     | "nodeCreate"
     | "nodeDelete"
@@ -102,6 +103,15 @@ export function bindSqueedCallbacks(
         address: id,
         key: "$icon",
         value: icon,
+      });
+    },
+    onNodeOutlineChange: (id, outline) => {
+      callbacks.onNodeOutlineChange?.(id, outline);
+      emit(setNodeProp(json, id, "$outline", outline), {
+        type: "nodeOutline",
+        address: id,
+        key: "$outline",
+        value: outline,
       });
     },
     onNodeCollapse: (id, collapsed) => {

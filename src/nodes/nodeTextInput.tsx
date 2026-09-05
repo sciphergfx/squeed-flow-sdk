@@ -19,18 +19,19 @@ export const NodeTextInput = ({
   const { themeColor } = useFlowDiagramContext();
   const { colorText } = useCustomColors();
   const isTransparent = data?.viewProps?.bgColor === "transparent";
+  const outline = data?.viewProps?.outline === true;
   const color = (!isTransparent && data?.viewProps?.bgColor) || themeColor;
   const { borderColor, highlightColor, textColor } =
     useThemeContentColors(color);
   // a transparent pill sits on the canvas, so its default text follows the color mode
   const hextextColor = getChakraColorHex(
-    data?.viewProps?.textColor || (isTransparent ? colorText : textColor),
+    data?.viewProps?.textColor || (isTransparent || outline ? colorText : textColor),
   );
   const hexborderColor =
-    isTransparent && !data?.viewProps?.borderColor
+    isTransparent && !outline && !data?.viewProps?.borderColor
       ? "transparent"
-      : getChakraColorHex(data?.viewProps?.borderColor || borderColor);
-  const hexbgColor = isTransparent
+      : getChakraColorHex(data?.viewProps?.borderColor || (outline ? color : borderColor));
+  const hexbgColor = isTransparent || outline
     ? "transparent"
     : color?.startsWith("#")
       ? color

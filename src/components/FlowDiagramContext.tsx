@@ -120,6 +120,7 @@ export function FlowDiagramProvider({
       onNodeCollapse: wrap("onNodeCollapse"),
       onNodeColorChange: wrap("onNodeColorChange"),
       onNodeIconChange: wrap("onNodeIconChange"),
+      onNodeOutlineChange: wrap("onNodeOutlineChange"),
       onNodeHoverAction: wrap("onNodeHoverAction"),
       // Edge events
       onEdgeCreate: wrap("onEdgeCreate"),

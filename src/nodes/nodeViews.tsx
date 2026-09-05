@@ -10,23 +10,30 @@ import NodeView from "./NodeView";
 import { NodeText } from "./nodeText";
 import { NodeTextInput } from "./nodeTextInput";
 
-const getColorVars = (data, themeColor) => {
+const getColorVars = (data, themeColor, colorMode) => {
   const bg = data?.viewProps?.bgColor || themeColor;
   const [wordBeforeDot] = bg.split(".");
   const colors = useThemeContentColors(bg);
+  const outline = data?.viewProps?.outline === true;
+  const isTransparent = bg === "transparent" || outline;
+  const canvasText = colorMode === "dark" ? "gray.200" : "gray.900";
 
-  const hexbgColor = bg?.startsWith("#")
+  const hexbgColor = isTransparent ? "transparent" : bg?.startsWith("#")
     ? getChakraColorHex(bg)
     : getChakraColorHex(colors.bgColor);
   const hextextColor = getChakraColorHex(
-    data?.viewProps?.textColor || colors.textColor,
+    data?.viewProps?.textColor || (isTransparent ? canvasText : colors.textColor),
   );
   const hexborderColor = getChakraColorHex(
-    data?.viewProps?.borderColor || colors.borderColor,
+    data?.viewProps?.borderColor || (outline ? (bg === "transparent" ? themeColor : bg) : colors.borderColor),
   );
 
   return {
     ...colors,
+    bgColor: isTransparent ? "transparent" : colors.bgColor,
+    highlightColor: isTransparent ? "transparent" : colors.highlightColor,
+    isTransparent,
+    propertyColor: isTransparent ? canvasText : colors.propertyColor,
     bg,
     wordBeforeDot,
     hexbgColor,
@@ -59,13 +66,13 @@ const arrayView = (props) => (
 );
 
 const NodeJsonObjectView = (props) => {
-  const { themeColor } = useFlowDiagramContext();
+  const { themeColor, colorMode } = useFlowDiagramContext();
   const [objVisible, setObjVisible] = useState(false);
 
   return (
     <NodeView {...props}>
       {({ id, data, isActive, isEditing, onEditStart, onEditEnd }) => {
-        const colors = getColorVars(data, themeColor);
+        const colors = getColorVars(data, themeColor, colorMode);
         const headerTitle = data.label ?? data.headerTitle;
         const hasConfig = Object.entries(data.description || {}).length > 0;
         const uniformKeyWidth = calculateUniformKeyWidth(data.description);
@@ -163,7 +170,7 @@ const NodeJsonObjectView = (props) => {
                     whiteSpace="pre-wrap"
                     overflow="hidden"
                     textOverflow="ellipsis"
-                    color={data?.viewProps?.textColor}
+                    color={data?.viewProps?.textColor || colors.hextextColor}
                   >
                     {content}
                   </Text>
@@ -198,7 +205,7 @@ const NodeJsonObjectView = (props) => {
                                 whiteSpace="nowrap"
                                 fontWeight="bold"
                                 fontSize="4xl"
-                                color={data?.viewProps?.textColor || keyColor}
+                                color={data?.viewProps?.textColor || (colors.isTransparent ? colors.hextextColor : keyColor)}
                               >
                                 {key}
                               </Text>
@@ -219,7 +226,7 @@ const NodeJsonObjectView = (props) => {
                                 whiteSpace="normal"
                                 textOverflow="ellipsis"
                                 fontSize="4xl"
-                                color={data?.viewProps?.textColor || typeColor}
+                                color={data?.viewProps?.textColor || (colors.isTransparent ? colors.hextextColor : typeColor)}
                                 fontWeight={400}
                               >
                                 {truncateText(value)}
@@ -250,12 +257,12 @@ const NodeJsonObjectView = (props) => {
 };
 
 const ParentContainerView = (props) => {
-  const { themeColor } = useFlowDiagramContext();
+  const { themeColor, colorMode } = useFlowDiagramContext();
 
   return (
     <NodeView {...props}>
       {({ data, isActive }) => {
-        const colors = getColorVars(data, themeColor);
+        const colors = getColorVars(data, themeColor, colorMode);
         const icon = props.data?.config?.icon;
 
         return (

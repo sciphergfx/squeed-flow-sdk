@@ -8,6 +8,8 @@ import {
   PiLineSegment,
   PiLineSegments,
   PiLineVerticalThin,
+  PiSquare,
+  PiSquareFill,
   PiTrash,
   PiX,
 } from "react-icons/pi";
@@ -130,10 +132,10 @@ function Swatches({
   onPick: (c: string) => void;
   onReset?: () => void;
 }) {
-  const { colorInactive } = useCustomColors();
+  const { colorInactive, colorText } = useCustomColors();
   return (
     <HStack gap={1} aria-label={label} role="group">
-      {colors.map((c) => {
+      {[...new Set([...colors, "transparent"])].map((c) => {
         const active = value === c;
         return (
           <ToolbarTooltip key={c} label={`${label}: ${c}`}>
@@ -145,8 +147,14 @@ function Swatches({
               h={4}
               borderRadius="full"
               cursor="pointer"
-              style={{ backgroundColor: getChakraColorHex(c) }}
-              outline={active ? "2px solid white" : "none"}
+              style={{
+                backgroundColor: getChakraColorHex(c),
+                ...(c === "transparent" ? {
+                  backgroundImage: "conic-gradient(#fff 25%, #a0aec0 0 50%, #fff 0 75%, #a0aec0 0)",
+                  backgroundSize: "8px 8px",
+                } : {}),
+              }}
+              outline={active ? `2px solid ${getChakraColorHex(colorText)}` : "none"}
               outlineOffset="1px"
               _hover={{ transform: "scale(1.15)" }}
               onClick={() => onPick(c)}
@@ -273,13 +281,17 @@ export function NodeTools({
   ids: string[];
   onClose: () => void;
 }) {
-  const { callbacks, colorMode } = useFlowDiagramContext();
+  const { callbacks, colorMode, themeColor, config } = useFlowDiagramContext();
   const { colorText, colorInactive } = useCustomColors();
-  const { nodeById } = useFlowData();
+  const { nodeById, parentIds } = useFlowData();
   const { palette, show } = useToolbarConfig();
   const single = ids.length === 1;
   const data = single ? nodeById.get(ids[0])?.data : undefined;
   const collapsed = data?.config?.collapsed;
+  const isOutlined = (id: string) => (nodeById.get(id)?.data.viewProps?.outline ??
+    (parentIds.has(id) ? config.parentNodeStyle?.outline : false)) === true;
+  const outlined = ids.every(isOutlined);
+  const mixedOutline = !outlined && ids.some(isOutlined);
   const each = (fn: (id: string) => void) => ids.forEach(fn);
 
   return (
@@ -297,6 +309,22 @@ export function NodeTools({
         <Text fontSize="xs" color={colorText} whiteSpace="nowrap" px={1}>
           {ids.length} selected
         </Text>
+      )}
+      {show("outline") && (
+        <>
+          <Divider />
+          <ToolbarTooltip label={outlined ? "Restore node fill" : "Outline nodes"}>
+            <ToolbarIconButton
+              aria-label="Toggle node outline"
+              aria-pressed={mixedOutline ? "mixed" : outlined}
+              icon={<Icon as={outlined ? PiSquare : PiSquareFill} boxSize={5} />}
+              size="sm"
+              variant="ghost"
+              color={outlined ? themeColor : colorInactive}
+              onClick={() => each((id) => callbacks.onNodeOutlineChange?.(id, !outlined))}
+            />
+          </ToolbarTooltip>
+        </>
       )}
       {show("color") && (
         <>
