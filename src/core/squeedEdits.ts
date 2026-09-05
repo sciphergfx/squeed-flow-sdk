@@ -410,10 +410,15 @@ export function compileSqueed(
     const id = canonicalAddress(n.data.id);
     const src = getNode(json, id);
     const data = { ...n.data, id };
-    const childSource = src && typeof src === "object" && !Array.isArray(src) && "$" in src ? src.$ : src;
+    const childSource =
+      src && typeof src === "object" && !Array.isArray(src) && "$" in src
+        ? src.$
+        : src;
     const hasChildren = Array.isArray(childSource)
       ? childSource.length > 0
-      : childSource && typeof childSource === "object" && Object.keys(childSource).some((key) => !key.startsWith("$"));
+      : childSource &&
+        typeof childSource === "object" &&
+        Object.keys(childSource).some((key) => !key.startsWith("$"));
     if (hasChildren) {
       data.config = { ...data.config, collapsed: !!src.$collapsed };
     }

@@ -119,9 +119,10 @@ export function FlowDiagramProvider({
   const [localSpacing, setSpacing] = useState<NodeSpacing>("normal");
   const [localEdgeRadius, setEdgeRadius] = useState<number>();
   const requestedEdgeRadius = config.edgeRadius ?? localEdgeRadius;
-  const edgeRadius = requestedEdgeRadius !== undefined && Number.isFinite(requestedEdgeRadius)
-    ? Math.min(500, Math.max(0, requestedEdgeRadius))
-    : undefined;
+  const edgeRadius =
+    requestedEdgeRadius !== undefined && Number.isFinite(requestedEdgeRadius)
+      ? Math.min(500, Math.max(0, requestedEdgeRadius))
+      : undefined;
   const [localBackgroundVariant, setBackgroundVariant] =
     useState<BackgroundVariant>();
   const requestedSpacing = config.spacing ?? localSpacing;

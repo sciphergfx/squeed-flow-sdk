@@ -364,7 +364,7 @@ const BottomBar = () => {
           flexDirection="row"
           justifyContent="space-between"
           alignItems="center"
-          gap={2}
+          gap="24px"
         >
           <ToolbarScrollContainer
             background={background}
@@ -659,6 +659,7 @@ const BottomBar = () => {
           {!selectionActive && (
             <Box position="relative" ml="auto" flexShrink={0}>
               <Box
+                data-flow-direction-control=""
                 bg={background}
                 borderWidth={1}
                 borderColor={isDark ? border : "gray.300"}

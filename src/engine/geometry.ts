@@ -366,13 +366,7 @@ export function propertyGeometry(
             options.headShape,
           )
         : undefined;
-  return roundedGeometry(
-    lineStart,
-    interior,
-    lineEnd,
-    arrow,
-    options.radius,
-  );
+  return roundedGeometry(lineStart, interior, lineEnd, arrow, options.radius);
 }
 
 export function taxiGeometry(

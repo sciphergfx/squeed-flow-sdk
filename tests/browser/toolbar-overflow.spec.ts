@@ -74,6 +74,12 @@ test("normal and selected toolbars resize within the diagram container", async (
       .boundingBox();
     expect(bounds!.x).toBeGreaterThanOrEqual(20);
     expect(bounds!.x + bounds!.width).toBeLessThan(direction!.x);
+    const surfaceGap = await panel.evaluate(element => {
+      const main = element.parentElement!.getBoundingClientRect();
+      const direction = document.querySelector("[data-flow-direction-control]")!.getBoundingClientRect();
+      return direction.left - main.right;
+    });
+    expect(surfaceGap - 16).toBeGreaterThanOrEqual(7.5);
     expect(direction!.x + direction!.width).toBeLessThanOrEqual(width - 20);
     await expect(panel).toHaveCSS("height", "50px");
     await expect(panel).toHaveCSS("scrollbar-width", "none");
