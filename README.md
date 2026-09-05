@@ -95,7 +95,7 @@ You can provide either `json` (auto-generates nodes/edges) or `nodes` + `edges` 
 | ----------------------------------------------------------------------- | ------------------------------------------------ | ------------ | -------------------------------------------------------------------------------------- |
 | `direction`                                                             | `"LR" \| "RL" \| "TB" \| "BT" \| "C"`            | `"LR"`       | Layout direction; `C` splits the JSON root's branches                                  |
 | `nodeAlignment`                                                         | `"leading" \| "center" \| "trailing"`            | `"center"`   | Align unequal node sizes within each layout rank                                       |
-| `edgeMode`                                                              | `"workflow" \| "properties"`                     | `"workflow"` | Attach edges to node boxes or named object-property rows; saved mappings are unchanged |
+| `edgeMode`                                                              | `"nodes" \| "properties" \| "workflow"`          | `"nodes"`    | Attach edges to nodes or named property rows; `"workflow"` is a compatibility alias for `"nodes"` |
 | `layout`                                                                | `LayoutAlgorithm`                                | `"dagre"`    | Only Dagre is implemented; other legacy values do not select a different layout        |
 | `themeColor`                                                            | `string`                                         | `"blue.500"` | Accent color (Chakra token)                                                            |
 | `colorMode`                                                             | `"light" \| "dark"`                              | `"light"`    | Color mode                                                                             |
@@ -105,7 +105,7 @@ You can provide either `json` (auto-generates nodes/edges) or `nodes` + `edges` 
 | `minZoom`                                                               | `number`                                         | `0.01`       | Minimum zoom level                                                                     |
 | `maxZoom`                                                               | `number`                                         | `1.5`        | Maximum zoom level                                                                     |
 | `initialViewport`                                                       | `{ pan: { x, y }, zoom }`                        | —            | Initial viewport; omitted means fit on first layout                                    |
-| `edgeHandles`                                                           | `boolean`                                        | —            | `false` disables edge drawing; `true` also starts in draw mode                         |
+| `edgeHandles`                                                           | `boolean`                                        | —            | `false` disables edge drawing; enabling handles does not activate Draw mode             |
 | `readOnly`                                                              | `boolean`                                        | `false`      | Disable graph gestures and edits; toolbar navigation remains available                 |
 | `editable`                                                              | `boolean`                                        | `false`      | Enable inline node label editing                                                       |
 | `parentNodeStyle`                                                       | `ParentNodeStyle`                                | —            | Compound-node fill, border, padding, and label defaults                                |
@@ -281,13 +281,15 @@ Store mappings on the source node. Property references are exact row keys, while
 />
 ```
 
-`"workflow"` attaches the same edges to node boxes; `"properties"` attaches to rows. Switching modes does not change the document or graph connections. Edges without property references keep their ordinary node attachment. Row ports stay left/right, reversed in `RL`, even for vertical layouts.
+Use **Nodes / Properties** for edge-mode controls: `"nodes"` (the default) attaches edges to node boxes; `"properties"` attaches to rows. The previous `"workflow"` value remains accepted as an alias for `"nodes"`. Switching modes does not change the document or graph connections. Edges without property references keep their ordinary node attachment. Row ports stay left/right, reversed in `RL`, even for vertical layouts.
 
 Drag an output port to an input port or destination row to append a mapping. Property drags into empty space cancel. Existing node-level drawing still writes `$target`. The edge toolbar edits/deletes only the selected mapping. In document mode, store the full `onJsonChange` document; in raw `nodes`/`edges` mode, store the optional third `onEdgeCreate` argument in the edge's `data`.
 
 Each entry accepts `target`, optional `sourceProperty`/`targetProperty`, `id`, `label`, `color` (Chakra token or hex), and `style: "solid" | "dashed" | "animated"`. Drag-created mappings receive IDs and duplicate endpoint mappings are not appended. Supply explicit unique IDs when declaring otherwise identical mappings that need distinct identities.
 
 Missing or unrendered rows fall back to the corresponding node endpoint. Missing/collapsed nodes hide their edges without deleting the saved mappings. Custom views can expose rows with `data-flow-property={key}`; their positions are measured automatically. `readOnly` and `edgeHandles: false` disable port dragging.
+
+Draw mode starts off by default, including when `edgeHandles: true`. Enable it with the toolbar, or explicitly control it with `config.isEdgeHandlesEnabled`. Hover handles remain available for individual connections when Draw mode is off.
 
 Mappings are metadata. The SDK does not execute workflows or transfer data.
 

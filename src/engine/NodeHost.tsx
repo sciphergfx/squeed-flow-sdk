@@ -1,5 +1,6 @@
 import { memo, useLayoutEffect, useRef, useState } from "react";
 import { PiPlusBold } from "react-icons/pi";
+import type { FlowDirection } from "../types";
 import { NodeBorderAnimation } from "./NodeBorderAnimation";
 import { measurePropertyRows, type PropertyRow } from "./propertyRows";
 
@@ -20,6 +21,7 @@ export interface NodeHostProps {
   height?: number;
   propertyMode?: boolean;
   reversePorts?: boolean;
+  direction?: FlowDirection;
   onPropertyRows?: (id: string, rows: PropertyRow[]) => void;
   children?: React.ReactNode;
 }
@@ -39,6 +41,7 @@ function NodeHost({
   height = 0,
   propertyMode,
   reversePorts,
+  direction = "LR",
   onPropertyRows,
   children,
 }: NodeHostProps) {
@@ -156,7 +159,12 @@ function NodeHost({
           className="flow-sdk-handle"
           aria-label="Draw edge"
           title="Draw edge"
-          style={{ color: handleColor }}
+          style={{
+            color: handleColor,
+            left: direction === "RL" ? -36 : direction === "LR" ? "100%" : "50%",
+            top: direction === "BT" ? -36 : direction === "TB" ? "100%" : "50%",
+            transform: direction === "BT" || direction === "TB" ? "translateX(-50%)" : "translateY(-50%)",
+          }}
           onClick={(event) => event.stopPropagation()}
         >
           <PiPlusBold size={24} />

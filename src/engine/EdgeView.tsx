@@ -37,6 +37,7 @@ export interface EdgeViewProps {
   dir: TaxiDir;
   /** taxi-turn as a fraction of the gap between the nodes */
   turn: number;
+  labelAtTarget?: boolean;
   color: string;
   labelBg: string;
   label?: string;
@@ -60,6 +61,7 @@ function EdgeView({
   targetY,
   dir,
   turn,
+  labelAtTarget,
   color,
   labelBg,
   label,
@@ -77,6 +79,7 @@ function EdgeView({
       arrowSize: ARROW_SIZE,
       radius: TAXI_RADIUS,
       arrowAt: inverted ? "source" : "target",
+      labelTargetLength: labelAtTarget ? LABEL_MAX_WIDTH + 2 * LABEL_PADDING : undefined,
     };
     if (sourceY !== undefined || targetY !== undefined)
       return propertyGeometry(source, target, dir, sourceY, targetY, turn, {
@@ -91,7 +94,7 @@ function EdgeView({
         tgtDist: 0,
       });
     return taxiGeometry(source, target, dir, turn, opts);
-  }, [source, target, sourceY, targetY, dir, turn, inverted, loopIndex]);
+  }, [source, target, sourceY, targetY, dir, turn, inverted, loopIndex, labelAtTarget]);
 
   const lines = useMemo(
     () => (label ? wrapText(label, LABEL_FONT, LABEL_MAX_WIDTH) : []),
@@ -112,7 +115,7 @@ function EdgeView({
     labelEl = (
       <g
         className="flow-sdk-edge-label"
-        transform={`translate(${geo.label.x} ${geo.label.y}) rotate(${geo.label.angle}) translate(${LABEL_MARGIN_X} 0)`}
+        transform={`translate(${geo.label.x} ${geo.label.y}) rotate(${geo.label.angle}) translate(${labelAtTarget ? 0 : LABEL_MARGIN_X} 0)`}
       >
         <rect
           x={-w / 2 - LABEL_PADDING}

@@ -1,6 +1,6 @@
 import { Box, Flex, Icon, Text } from "@chakra-ui/react";
 import { useState } from "react";
-import { PiArticle, PiTable } from "react-icons/pi";
+import { PiCircleFill } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import {
   ToolbarIconButton,
@@ -186,8 +186,8 @@ const NodeJsonObjectView = (props) => {
                           }
                           icon={
                             <Icon
-                              as={objVisible ? PiArticle : PiTable}
-                              boxSize={8}
+                              as={PiCircleFill}
+                              boxSize={4}
                             />
                           }
                           variant="ghost"

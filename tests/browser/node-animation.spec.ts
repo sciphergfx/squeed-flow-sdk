@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { clearEvents, ready } from "./helpers";
+import { clearEvents, expectScrollableToolbar, ready } from "./helpers";
 
 test("animation toggles mixed selections and respects read-only and reduced motion", async ({
   page,
@@ -175,22 +175,7 @@ test.describe("mobile content animation", () => {
     await expect(node.locator("[data-flow-content]")).toHaveText(
       "Mobile\nContent",
     );
-    const clipped = await page
-      .getByRole("toolbar", { name: "Diagram controls" })
-      .getByRole("button")
-      .evaluateAll((buttons) =>
-        buttons
-          .filter((button) => {
-            const rect = button.getBoundingClientRect();
-            return (
-              rect.left < 0 ||
-              rect.right > innerWidth ||
-              rect.bottom > innerHeight
-            );
-          })
-          .map((button) => button.getAttribute("aria-label")),
-      );
-    expect(clipped).toEqual([]);
+    await expectScrollableToolbar(page);
     await page.screenshot({
       path: testInfo.outputPath("runbook-animation-mobile.png"),
     });

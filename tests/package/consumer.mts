@@ -20,7 +20,7 @@ type LegacyCallbackRemoved = AssertFalse<
 >;
 const removed: LegacyCallbackRemoved = false;
 const nodeAlignment: NodeAlignment = "leading";
-const edgeMode: EdgeMode = "properties";
+const edgeMode: EdgeMode = "nodes";
 const properties: FlowEdgeProperties = {
   sourceProperty: "output",
   targetProperty: "input",

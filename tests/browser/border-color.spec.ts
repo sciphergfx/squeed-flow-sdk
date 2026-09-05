@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { clearEvents, ready } from "./helpers";
+import { clearEvents, expectScrollableToolbar, ready } from "./helpers";
 
 test("one palette edits borders without removing fill and hides only text colors", async ({
   page,
@@ -403,23 +403,7 @@ test.describe("mobile border colors", () => {
     });
     await thickness.fill("8");
     await thickness.press("Enter");
-    const clipped = await page
-      .getByRole("toolbar", { name: "Diagram controls" })
-      .getByRole("button")
-      .evaluateAll((buttons) =>
-        buttons
-          .filter((button) => {
-            const rect = button.getBoundingClientRect();
-            return (
-              rect.left < 0 ||
-              rect.right > innerWidth ||
-              rect.top < 0 ||
-              rect.bottom > innerHeight
-            );
-          })
-          .map((button) => button.getAttribute("aria-label")),
-      );
-    expect(clipped).toEqual([]);
+    await expectScrollableToolbar(page);
     expect(
       await page.evaluate(() => window.__flowTest.document.alpha.$borderColor),
     ).toBe("teal.500");

@@ -21,6 +21,7 @@ export interface EdgeGeometryOptions {
   arrowSize: number;
   radius: number;
   arrowAt: "target" | "source" | "none";
+  labelTargetLength?: number;
 }
 
 const f = (n: number) => (Math.round(n * 10) / 10).toString();
@@ -201,7 +202,7 @@ export function polylineGeometry(
     arrow = arrowPath(tip, beforeEnd, o.arrowSize);
   } else lineEnd = shorten(tExit, beforeEnd, o.tgtDist);
 
-  return roundedGeometry(lineStart, interior, lineEnd, arrow, o.radius);
+  return roundedGeometry(lineStart, interior, lineEnd, arrow, o.radius, o.labelTargetLength);
 }
 
 function roundedGeometry(
@@ -210,6 +211,7 @@ function roundedGeometry(
   lineEnd: Point,
   arrow: string | undefined,
   radius: number,
+  labelTargetLength?: number,
 ): EdgeGeometry {
   const all = [lineStart, ...interior, lineEnd];
   const corners: Corner[] = [];
@@ -253,6 +255,18 @@ function roundedGeometry(
         x: 0.25 * c.p1.x + 0.5 * c.b.x + 0.25 * c.p2.x,
         y: 0.25 * c.p1.y + 0.5 * c.b.y + 0.25 * c.p2.y,
         angle: autoAngle(c.p2.x - c.p1.x, c.p2.y - c.p1.y),
+      };
+    }
+  }
+  if (labelTargetLength !== undefined) {
+    const branchStart = corners[corners.length - 1]?.p2 ?? lineStart;
+    const deltaX = lineEnd.x - branchStart.x;
+    const deltaY = lineEnd.y - branchStart.y;
+    if (Math.hypot(deltaX, deltaY) >= labelTargetLength) {
+      label = {
+        x: (branchStart.x + lineEnd.x) / 2,
+        y: (branchStart.y + lineEnd.y) / 2,
+        angle: autoAngle(deltaX, deltaY),
       };
     }
   }

@@ -13,7 +13,7 @@ export enum FlowType {
 /** "C" = center: root in the middle, children fan out both ways (generate with `isCntr: true`); laid out as LR */
 export type FlowDirection = "LR" | "RL" | "TB" | "BT" | "C";
 export type NodeAlignment = "leading" | "center" | "trailing";
-export type EdgeMode = "workflow" | "properties";
+export type EdgeMode = "nodes" | "properties" | "workflow";
 export interface FlowEdgeProperties {
   sourceProperty?: string;
   targetProperty?: string;

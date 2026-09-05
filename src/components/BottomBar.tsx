@@ -341,13 +341,23 @@ const BottomBar = () => {
           flexDirection="row"
           justifyContent="space-between"
           alignItems="center"
+          gap={2}
         >
           <Box
             bg={background}
             alignContent="center"
-            h={selectionActive ? "auto" : 50}
+            data-flow-toolbar-scroll=""
+            h={50}
             minH={50}
-            maxW={selectionActive ? "calc(100vw - 40px)" : undefined}
+            minW={0}
+            maxW="100%"
+            flex="0 1 auto"
+            overflowX="auto"
+            overflowY="hidden"
+            css={{
+              scrollbarWidth: "none",
+              "&::-webkit-scrollbar": { display: "none" },
+            }}
             borderColor={border}
             borderWidth={1}
             borderRadius="15px"
@@ -355,8 +365,11 @@ const BottomBar = () => {
             <HStack
               px={2}
               gap={1}
-              flexWrap={selectionActive ? "wrap" : "nowrap"}
-              py={selectionActive ? 1 : 0}
+              flexWrap="nowrap"
+              w="max-content"
+              minW="100%"
+              h="100%"
+              css={{ "& > *": { flexShrink: 0 } }}
             >
               {edgeToolsActive ? (
                 <EdgeTools
@@ -614,7 +627,7 @@ const BottomBar = () => {
 
           {/* Direction picker */}
           {!selectionActive && (
-            <Box position="relative" ml="auto">
+            <Box position="relative" ml="auto" flexShrink={0}>
               <Box
                 bg={background}
                 borderWidth={1}

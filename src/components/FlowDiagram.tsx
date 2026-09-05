@@ -24,6 +24,7 @@ function injectStyles() {
     NODE_BORDER_ANIMATION_STYLES +
     `.flow-sdk-handle{position:absolute;left:-36px;top:50%;transform:translateY(-50%);width:36px;height:36px;display:grid;place-items:center;border:2px solid currentColor;border-radius:50%;background:white;cursor:crosshair;opacity:0;pointer-events:none}.flow-sdk-node:hover>.flow-sdk-handle,.flow-sdk-handle:focus-visible{opacity:1;pointer-events:auto}.flow-sdk-draw .flow-sdk-node *,.flow-sdk-draw .flow-sdk-edge *,.flow-sdk-draw .flow-sdk-container *,.flow-sdk-ghost *{pointer-events:none}`;
   document.head.appendChild(style);
+  style.textContent += `.flow-sdk-draw .flow-sdk-node{pointer-events:auto}.flow-sdk-draw .flow-sdk-node>.flow-sdk-handle{opacity:0;pointer-events:none}.flow-sdk-draw .flow-sdk-node:hover>.flow-sdk-handle,.flow-sdk-draw .flow-sdk-node>.flow-sdk-handle:focus-visible{opacity:1;pointer-events:auto}`;
   style.textContent += `.flow-sdk-property-port{position:absolute;transform:translateY(-50%);width:32px;height:32px;margin:0;padding:0;border:3px solid currentColor;border-radius:50%;background:white;cursor:crosshair;pointer-events:auto;z-index:20}.flow-sdk-property-port[data-port-role="source"]{background:currentColor}.flow-sdk-property-port:hover{outline:3px solid currentColor;outline-offset:3px}.flow-sdk-draw .flow-sdk-node .flow-sdk-property-port{pointer-events:auto}`;
   stylesInjected = true;
 }

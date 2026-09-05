@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ready } from "./helpers";
+import { expectScrollableToolbar, ready } from "./helpers";
 
 async function nodePaint(page: Page, id: string) {
   return page
@@ -250,23 +250,7 @@ test.describe("mobile styling controls", () => {
     await expect(
       page.getByRole("button", { name: "Toggle node outline", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
-    const clipped = await page
-      .getByRole("toolbar", { name: "Diagram controls" })
-      .getByRole("button")
-      .evaluateAll((buttons) =>
-        buttons
-          .filter((button) => {
-            const rect = button.getBoundingClientRect();
-            return (
-              rect.left < 0 ||
-              rect.right > innerWidth ||
-              rect.top < 0 ||
-              rect.bottom > innerHeight
-            );
-          })
-          .map((button) => button.getAttribute("aria-label")),
-      );
-    expect(clipped).toEqual([]);
+    await expectScrollableToolbar(page);
     await page.screenshot({ path: testInfo.outputPath("outline-mobile.png") });
   });
 });

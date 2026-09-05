@@ -95,9 +95,7 @@ export function FlowDiagramProvider({
   const [isZoomMode, setIsZoomMode] = useState(true);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [isDragMode, setIsDragMode] = useState(true);
-  const [isEdgeHandlesEnabled, setIsEdgeHandlesEnabled] = useState(
-    config.edgeHandles === true,
-  );
+  const [isEdgeHandlesEnabled, setIsEdgeHandlesEnabled] = useState(false);
   const [isArrayNodeMode, setIsArrayNodeMode] = useState(false);
   const [isPinned, setIsPinned] = useState(true);
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
@@ -150,7 +148,7 @@ export function FlowDiagramProvider({
   const colorMode = config.colorMode || "light";
   const direction = config.direction || "LR";
   const nodeAlignment = config.nodeAlignment ?? "center";
-  const edgeMode = config.edgeMode ?? "workflow";
+  const edgeMode = config.edgeMode === "workflow" ? "nodes" : (config.edgeMode ?? "nodes");
   const readOnly = config.readOnly ?? false;
   // Value-stable so inline literals don't re-render every consumer
   const parentNodeStyleKey = JSON.stringify(config.parentNodeStyle ?? null);

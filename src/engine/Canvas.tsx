@@ -10,6 +10,7 @@ import {
 import type { EdgeMode, FlowEdgeProperties, NodeAlignment } from "../types";
 import ContainerView, { type ContainerStyle } from "./ContainerView";
 import EdgeView from "./EdgeView";
+import { branchRoutes } from "./branchRouting";
 import type { TaxiDir } from "./geometry";
 import { computeContainers, runDagreLayout } from "./layout";
 import NodeHost from "./NodeHost";
@@ -142,7 +143,7 @@ function Canvas(props: CanvasProps) {
     edges,
     direction,
     nodeAlignment = "center",
-    edgeMode = "workflow",
+    edgeMode = "nodes",
     rankSep,
     edgeSep,
     minZoom,
@@ -902,6 +903,7 @@ function Canvas(props: CanvasProps) {
   }, [edges]);
 
   const taxiDir = TAXI_DIR[direction];
+  const branches = branchRoutes(edges, boxFor, taxiDir);
   const onEdgeSelect = props.onEdgeSelect;
   const onContainerSelect = props.onContainerSelect;
 
@@ -976,7 +978,8 @@ function Canvas(props: CanvasProps) {
                   sourceY={propertyY(e.source, e.sourceProperty)}
                   targetY={propertyY(e.target, e.targetProperty)}
                   dir={taxiDir}
-                  turn={e.turn}
+                  turn={branches.get(e.id)?.turn ?? e.turn}
+                  labelAtTarget={branches.get(e.id)?.labelAtTarget}
                   color={e.color}
                   labelBg={e.labelBg}
                   label={e.label}
@@ -1035,6 +1038,7 @@ function Canvas(props: CanvasProps) {
               height={sizesRef.current.get(n.id)?.h}
               propertyMode={edgeMode === "properties"}
               reversePorts={direction === "RL"}
+              direction={direction}
               onPropertyRows={onPropertyRows}
             >
               {n.element}

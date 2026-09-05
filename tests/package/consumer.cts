@@ -24,7 +24,7 @@ const callbacks: sdk.FlowDiagramCallbacks = {
     void mapping?.sourceProperty;
   },
 };
-const edgeMode: sdk.EdgeMode = "properties";
+const edgeMode: sdk.EdgeMode = "nodes";
 const properties: sdk.FlowEdgeProperties = {
   sourceProperty: "output",
   targetProperty: "input",
