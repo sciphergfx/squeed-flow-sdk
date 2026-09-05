@@ -78,7 +78,14 @@ export interface SelectionToolbarConfig {
   palette?: string[];
   /** Hide individual controls */
   hide?: Array<
-    "label" | "color" | "textColor" | "style" | "outline" | "icon" | "collapse" | "delete"
+    | "label"
+    | "color"
+    | "textColor"
+    | "style"
+    | "outline"
+    | "icon"
+    | "collapse"
+    | "delete"
   >;
 }
 

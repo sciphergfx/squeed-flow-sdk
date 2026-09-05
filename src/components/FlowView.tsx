@@ -79,7 +79,11 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   );
 
   const { bgColor: highlightColor } = useThemeContentColors(themeColor);
-  const { canvas: bgColor, borderSecondary: borderColor, colorText } = useCustomColors();
+  const {
+    canvas: bgColor,
+    borderSecondary: borderColor,
+    colorText,
+  } = useCustomColors();
 
   const effectiveBgColor = config.backgroundColor || bgColor;
 
@@ -129,7 +133,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       return {
         ...s,
         bgColor: s.bgColor || themeColor,
-        bgOpacity: s.outline ? 0 : s.bgOpacity ?? PARENT_BG_OPACITY,
+        bgOpacity: s.outline ? 0 : (s.bgOpacity ?? PARENT_BG_OPACITY),
       };
     },
     [parentDefaults, themeColor],
@@ -154,11 +158,19 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       return {
         bgColor: s.outline ? "transparent" : fill,
         bgOpacity: s.bgOpacity,
-        borderColor: s.borderColor ? getChakraColorHex(s.borderColor) : s.outline && s.bgColor === "transparent" ? getChakraColorHex(themeColor) : fill,
+        borderColor: s.borderColor
+          ? getChakraColorHex(s.borderColor)
+          : s.outline && s.bgColor === "transparent"
+            ? getChakraColorHex(themeColor)
+            : fill,
         borderWidth: s.borderWidth ?? PARENT_DEFAULTS.borderWidth,
         borderStyle: s.borderStyle ?? PARENT_DEFAULTS.borderStyle,
         borderRadius: s.borderRadius ?? PARENT_DEFAULTS.borderRadius,
-        textColor: s.textColor ? getChakraColorHex(s.textColor) : s.outline || s.bgColor === "transparent" ? getChakraColorHex(colorText) : fill,
+        textColor: s.textColor
+          ? getChakraColorHex(s.textColor)
+          : s.outline || s.bgColor === "transparent"
+            ? getChakraColorHex(colorText)
+            : fill,
         fontSize: s.fontSize ?? PARENT_DEFAULTS.fontSize,
         labelPosition: s.labelPosition ?? PARENT_DEFAULTS.labelPosition,
         labelMargin: PARENT_DEFAULTS.labelMargin,

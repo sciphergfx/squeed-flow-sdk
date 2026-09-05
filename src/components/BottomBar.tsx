@@ -352,7 +352,12 @@ const BottomBar = () => {
             borderWidth={1}
             borderRadius="15px"
           >
-            <HStack px={2} gap={1} flexWrap={selectionActive ? "wrap" : "nowrap"} py={selectionActive ? 1 : 0}>
+            <HStack
+              px={2}
+              gap={1}
+              flexWrap={selectionActive ? "wrap" : "nowrap"}
+              py={selectionActive ? 1 : 0}
+            >
               {edgeToolsActive ? (
                 <EdgeTools
                   edgeId={selectedEdgeId!}

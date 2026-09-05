@@ -1,11 +1,19 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { contentObjTheme, getChakraColorHex, getColorVariant } from "../src/theme/colorUtils";
+import {
+  contentObjTheme,
+  getChakraColorHex,
+  getColorVariant,
+} from "../src/theme/colorUtils";
 import { useThemeContentColors } from "../src/theme/useCustomColors";
 
 test("transparent resolves as a CSS color without requiring a browser or Chakra token", () => {
   assert.equal(getChakraColorHex("transparent"), "transparent");
-  assert.deepEqual(getColorVariant("transparent"), { primary: "transparent", secondary: "transparent", light: "transparent" });
+  assert.deepEqual(getColorVariant("transparent"), {
+    primary: "transparent",
+    secondary: "transparent",
+    light: "transparent",
+  });
 });
 
 test("transparent surfaces never produce invalid derived color tokens", () => {

@@ -1,6 +1,9 @@
 import { Box, Flex } from "@chakra-ui/react";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
-import { useCustomColors, useThemeContentColors } from "../theme/useCustomColors";
+import {
+  useCustomColors,
+  useThemeContentColors,
+} from "../theme/useCustomColors";
 import { getChakraColorHex } from "../theme/colorUtils";
 import DynamicIcon from "../utils/DynamicIcon";
 import { EditableLabel } from "./EditableLabel";
@@ -21,11 +24,14 @@ export const NodeText = ({
     data?.viewProps?.bgColor || themeColor,
   );
   const hextextColor = getChakraColorHex(
-    data?.viewProps?.textColor || (isTransparent || outline ? colorText : textColor),
+    data?.viewProps?.textColor ||
+      (isTransparent || outline ? colorText : textColor),
   );
-  const nodeBorderColor = data?.viewProps?.borderColor || (outline
-    ? (!isTransparent && data?.viewProps?.bgColor) || themeColor
-    : borderColor);
+  const nodeBorderColor =
+    data?.viewProps?.borderColor ||
+    (outline
+      ? (!isTransparent && data?.viewProps?.bgColor) || themeColor
+      : borderColor);
 
   return (
     <Box

@@ -22,8 +22,12 @@ export function useThemeContentColors(color: any) {
   let bgColorFaint = contentObjTheme(wordBeforeDot)["background"];
   let highlightColorFaint = contentObjTheme(wordBeforeDot)["highlight"];
 
-  bgColorFaint = color === "transparent" ? color : getChakraColorHex(bgColorFaint) + 50;
-  highlightColorFaint = color === "transparent" ? color : getChakraColorHex(highlightColorFaint) + 20;
+  bgColorFaint =
+    color === "transparent" ? color : getChakraColorHex(bgColorFaint) + 50;
+  highlightColorFaint =
+    color === "transparent"
+      ? color
+      : getChakraColorHex(highlightColorFaint) + 20;
 
   return {
     bgColor,

@@ -161,8 +161,19 @@ function Fixture() {
     },
     onNodeOutlineChange: (id, outline) => {
       record("outline", { id, outline });
-      if (raw) setNodes((current) => current.map((node) => node.data.id === id
-        ? { data: { ...node.data, viewProps: { ...node.data.viewProps, outline } } } : node));
+      if (raw)
+        setNodes((current) =>
+          current.map((node) =>
+            node.data.id === id
+              ? {
+                  data: {
+                    ...node.data,
+                    viewProps: { ...node.data.viewProps, outline },
+                  },
+                }
+              : node,
+          ),
+        );
     },
     onNodeCollapse: (id, collapsed) => {
       record("collapse", { id, collapsed });

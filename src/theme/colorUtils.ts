@@ -98,7 +98,8 @@ export const contentObjTheme = (color) => {
 };
 
 export const getColorVariant = (color: string) => {
-  if (color === "transparent") return { primary: color, secondary: color, light: color };
+  if (color === "transparent")
+    return { primary: color, secondary: color, light: color };
   let primary = color;
 
   if (primary?.startsWith("#")) {

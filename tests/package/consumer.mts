@@ -32,10 +32,17 @@ const props: FlowDiagramProps = {
     "root.service",
     connection,
   ),
-  config: { nodeAlignment, edgeMode, parentNodeStyle: { outline: true }, selectionToolbar: { hide: ["outline"] } },
+  config: {
+    nodeAlignment,
+    edgeMode,
+    parentNodeStyle: { outline: true },
+    selectionToolbar: { hide: ["outline"] },
+  },
   showBottomBar: false,
   callbacks: {
-    onNodeOutlineChange: (_nodeId, outline) => { void outline.valueOf(); },
+    onNodeOutlineChange: (_nodeId, outline) => {
+      void outline.valueOf();
+    },
     onEdgeCreate: (_source, _target, mapping) => {
       void mapping?.targetProperty;
     },
@@ -59,9 +66,15 @@ if (
   )
 )
   throw new Error("ESM consumer failed");
-const outlined = compileSqueed(setNodeProp(props.json!, "root.service", "$outline", true));
+const outlined = compileSqueed(
+  setNodeProp(props.json!, "root.service", "$outline", true),
+);
 const added = addChild({ list: { $: [] } }, "root.list", "added");
-if (!outlined.nodes.find((node) => node.data.id === "root.service")?.data.viewProps.outline ||
-  getChakraColorHex("transparent") !== "transparent" || getNode(added.json, added.address) !== "added")
+if (
+  !outlined.nodes.find((node) => node.data.id === "root.service")?.data
+    .viewProps.outline ||
+  getChakraColorHex("transparent") !== "transparent" ||
+  getNode(added.json, added.address) !== "added"
+)
   throw new Error("ESM styling and address helpers failed");
 console.log("ESM runtime and public types passed");

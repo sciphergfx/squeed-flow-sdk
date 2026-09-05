@@ -25,17 +25,21 @@ export const NodeTextInput = ({
     useThemeContentColors(color);
   // a transparent pill sits on the canvas, so its default text follows the color mode
   const hextextColor = getChakraColorHex(
-    data?.viewProps?.textColor || (isTransparent || outline ? colorText : textColor),
+    data?.viewProps?.textColor ||
+      (isTransparent || outline ? colorText : textColor),
   );
   const hexborderColor =
     isTransparent && !outline && !data?.viewProps?.borderColor
       ? "transparent"
-      : getChakraColorHex(data?.viewProps?.borderColor || (outline ? color : borderColor));
-  const hexbgColor = isTransparent || outline
-    ? "transparent"
-    : color?.startsWith("#")
-      ? color
-      : getChakraColorHex(highlightColor);
+      : getChakraColorHex(
+          data?.viewProps?.borderColor || (outline ? color : borderColor),
+        );
+  const hexbgColor =
+    isTransparent || outline
+      ? "transparent"
+      : color?.startsWith("#")
+        ? color
+        : getChakraColorHex(highlightColor);
   const icon = data?.config?.icon;
   // `$label: ""` is a deliberate icon-only node; only fall back to `text` when no label was given
   const label: string = data?.label ?? data?.text ?? "";

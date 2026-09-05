@@ -18,14 +18,18 @@ const getColorVars = (data, themeColor, colorMode) => {
   const isTransparent = bg === "transparent" || outline;
   const canvasText = colorMode === "dark" ? "gray.200" : "gray.900";
 
-  const hexbgColor = isTransparent ? "transparent" : bg?.startsWith("#")
-    ? getChakraColorHex(bg)
-    : getChakraColorHex(colors.bgColor);
+  const hexbgColor = isTransparent
+    ? "transparent"
+    : bg?.startsWith("#")
+      ? getChakraColorHex(bg)
+      : getChakraColorHex(colors.bgColor);
   const hextextColor = getChakraColorHex(
-    data?.viewProps?.textColor || (isTransparent ? canvasText : colors.textColor),
+    data?.viewProps?.textColor ||
+      (isTransparent ? canvasText : colors.textColor),
   );
   const hexborderColor = getChakraColorHex(
-    data?.viewProps?.borderColor || (outline ? (bg === "transparent" ? themeColor : bg) : colors.borderColor),
+    data?.viewProps?.borderColor ||
+      (outline ? (bg === "transparent" ? themeColor : bg) : colors.borderColor),
   );
 
   return {
@@ -205,7 +209,12 @@ const NodeJsonObjectView = (props) => {
                                 whiteSpace="nowrap"
                                 fontWeight="bold"
                                 fontSize="4xl"
-                                color={data?.viewProps?.textColor || (colors.isTransparent ? colors.hextextColor : keyColor)}
+                                color={
+                                  data?.viewProps?.textColor ||
+                                  (colors.isTransparent
+                                    ? colors.hextextColor
+                                    : keyColor)
+                                }
                               >
                                 {key}
                               </Text>
@@ -226,7 +235,12 @@ const NodeJsonObjectView = (props) => {
                                 whiteSpace="normal"
                                 textOverflow="ellipsis"
                                 fontSize="4xl"
-                                color={data?.viewProps?.textColor || (colors.isTransparent ? colors.hextextColor : typeColor)}
+                                color={
+                                  data?.viewProps?.textColor ||
+                                  (colors.isTransparent
+                                    ? colors.hextextColor
+                                    : typeColor)
+                                }
                                 fontWeight={400}
                               >
                                 {truncateText(value)}
