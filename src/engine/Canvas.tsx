@@ -39,6 +39,7 @@ import { Viewport } from "./viewport";
 
 export interface CanvasNode {
   id: string;
+  collapsed?: boolean;
   hasCollapseControl?: boolean;
   parent?: string;
   /** Compound label drawn on the container (cytoscape `data(label)`) */
@@ -225,6 +226,13 @@ function Canvas(props: CanvasProps) {
   const animFallbackRef = useRef<ReturnType<typeof setTimeout>>();
   const pendingFitRef = useRef(false);
   const previousSpacingFactor = useRef(spacingFactor);
+  const [isolatedIds, setIsolatedIds] = useState<Set<string> | null>(null);
+  const [edgesVisible, setEdgesVisible] = useState(true);
+  const isolatedIdsRef = useRef<Set<string> | null>(null);
+  const savedViewport = useRef<ViewportState | null>(null);
+  const previousNodes = useRef(nodes);
+  const revealedNodes = useRef<string[]>([]);
+  const centerRevealed = useRef(false);
 
   const cancelAnim = () => {
     if (animRef.current !== null) cancelAnimationFrame(animRef.current);
@@ -233,6 +241,7 @@ function Canvas(props: CanvasProps) {
   };
 
   const onLayoutStop = () => {
+    if (revealedNodes.current.length) centerRevealed.current = true;
     if (!hasLayoutRunRef.current && propsRef.current.fitOnInit !== false)
       pendingFitRef.current = true;
     clearTimeout(settleTimerRef.current);
@@ -308,6 +317,11 @@ function Canvas(props: CanvasProps) {
   }, []);
 
   useEffect(() => {
+    const previous = new Map(previousNodes.current.map(node => [node.id, node]));
+    if (nodes.some(node => previous.get(node.id)?.collapsed === true && !node.collapsed)) {
+      revealedNodes.current = nodes.filter(node => !previous.has(node.id)).map(node => node.id);
+    }
+    previousNodes.current = nodes;
     if (
       previousSpacingFactor.current !== spacingFactor &&
       positionsRef.current.size > 0
@@ -527,6 +541,20 @@ function Canvas(props: CanvasProps) {
   }, [viewport]);
 
   useEffect(() => {
+    if (centerRevealed.current) {
+      centerRevealed.current = false;
+      const boxes = revealedNodes.current.flatMap(id => {
+        const box = boxFor(id);
+        return box ? [boxToRect(box)] : [];
+      });
+      revealedNodes.current = [];
+      const bounds = unionRects(boxes);
+      if (bounds) {
+        pendingFitRef.current = false;
+        viewport.center(bounds);
+        return;
+      }
+    }
     if (!pendingFitRef.current) return;
     pendingFitRef.current = false;
     const bb = elementsBBox();
@@ -536,6 +564,32 @@ function Canvas(props: CanvasProps) {
 
   // ── engine handle ──
   const engine = useMemo<FlowEngine>(() => {
+    const branchIds = (id: string) => {
+      const current = propsRef.current;
+      const ids = new Set([id]);
+      const pending = [id];
+      while (pending.length) {
+        const parent = pending.pop()!;
+        for (const node of current.nodes) {
+          const child = node.parent === parent || node.id.startsWith(`${parent}.`) ||
+            (!id.startsWith("root") && current.edges.some(edge =>
+              (edge.inverted ? edge.target : edge.source) === parent &&
+              (edge.inverted ? edge.source : edge.target) === node.id));
+          if (child && !ids.has(node.id)) { ids.add(node.id); pending.push(node.id); }
+        }
+      }
+      return ids;
+    };
+    const focus = (ids: Set<string>, padding = 50) => {
+      const bounds = unionRects([...ids].flatMap(id => {
+        const box = boxFor(id);
+        return box ? [boxToRect(box)] : [];
+      }));
+      if (bounds) {
+        pendingFitRef.current = false;
+        viewport.fit(bounds, Number.isFinite(padding) ? Math.max(0, padding) : 50);
+      }
+    };
     const zoom = ((level?: number) => {
       if (level === undefined) return viewport.zoom;
       viewport.set(undefined, level);
@@ -551,6 +605,24 @@ function Canvas(props: CanvasProps) {
     return {
       zoom,
       pan,
+      setEdgesVisible,
+      focusNode: (id, padding) => focus(new Set([id]), padding),
+      focusBranch: (id, padding) => focus(branchIds(id), padding),
+      isolateBranch: (id, padding) => {
+        if (!boxFor(id)) return;
+        if (!savedViewport.current) savedViewport.current = { pan: { ...viewport.pan }, zoom: viewport.zoom };
+        const ids = branchIds(id);
+        isolatedIdsRef.current = ids;
+        setIsolatedIds(ids);
+        focus(ids, padding);
+      },
+      restoreView: () => {
+        isolatedIdsRef.current = null;
+        setIsolatedIds(null);
+        const previous = savedViewport.current;
+        savedViewport.current = null;
+        if (previous) viewport.set(previous.pan, previous.zoom);
+      },
       zoomAt: (level, pt) => viewport.zoomAt(level, pt),
       fit: (padding = 0) => {
         const bb = elementsBBox();
@@ -598,11 +670,13 @@ function Canvas(props: CanvasProps) {
     const list = propsRef.current.nodes;
     for (let i = list.length - 1; i >= 0; i--) {
       const id = list[i].id;
+      if (isolatedIdsRef.current && !isolatedIdsRef.current.has(id)) continue;
       if (id === exclude || containersRef.current.has(id)) continue;
       const b = boxFor(id);
       if (b && pointInRect(model, boxToRect(b))) return id;
     }
     for (const [id, r] of containersRef.current) {
+      if (isolatedIdsRef.current && !isolatedIdsRef.current.has(id)) continue;
       if (id !== exclude && pointInRect(model, r)) return id;
     }
     return null;
@@ -615,12 +689,14 @@ function Canvas(props: CanvasProps) {
     let closest: { nodeId: string; property: string; distance: number } | null =
       null;
     for (const node of [...propsRef.current.nodes].reverse()) {
+      if (isolatedIdsRef.current && !isolatedIdsRef.current.has(node.id)) continue;
       const box = boxFor(node.id);
       const rows = propertyRowsRef.current.get(node.id);
       if (!box || !rows || containersRef.current.has(node.id)) continue;
       const portX =
         box.x + (((role === "source") !== reverse ? 1 : -1) * box.w) / 2;
       for (const row of rows) {
+        if (row.role && row.role !== role) continue;
         const top = box.y - box.h / 2 + row.top;
         const distance = Math.hypot(
           model.x - portX,
@@ -640,6 +716,7 @@ function Canvas(props: CanvasProps) {
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
+    if (!e.currentTarget.contains(e.target as Node)) return;
     if (e.button !== 0 || propsRef.current.readOnly) return;
     const target = e.target as Element;
     if (target.closest('input, textarea, select, [contenteditable="true"]'))
@@ -984,6 +1061,7 @@ function Canvas(props: CanvasProps) {
           cancelGesture();
       }}
       onClickCapture={(event) => {
+        if (!event.currentTarget.contains(event.target as Node)) return;
         if (suppressClickRef.current || props.readOnly) {
           event.preventDefault();
           event.stopPropagation();
@@ -993,7 +1071,7 @@ function Canvas(props: CanvasProps) {
       <svg className="flow-sdk-svg">
         <g ref={svgGroupRef}>
           <g className="flow-sdk-containers">
-            {[...containers].map(([id, rect]) => (
+            {[...containers].filter(([id]) => !isolatedIds || isolatedIds.has(id)).map(([id, rect]) => (
               <ContainerView
                 key={id}
                 id={id}
@@ -1006,7 +1084,8 @@ function Canvas(props: CanvasProps) {
             ))}
           </g>
           <g className="flow-sdk-edges">
-            {edges.map((e) => {
+            {edgesVisible && edges.map((e) => {
+              if (isolatedIds && (!isolatedIds.has(e.source) || !isolatedIds.has(e.target))) return null;
               const s = boxFor(e.source);
               const t = boxFor(e.target);
               if (!s || !t) return null;
@@ -1043,7 +1122,7 @@ function Canvas(props: CanvasProps) {
               );
             })}
           </g>
-          {ghost && ghostSource && ghostTarget && (
+          {edgesVisible && ghost && ghostSource && ghostTarget && (
             <g className="flow-sdk-ghost" pointerEvents="none">
               <EdgeView
                 id="__flow-sdk-ghost"
@@ -1090,6 +1169,7 @@ function Canvas(props: CanvasProps) {
               x={x}
               y={y}
               placed={!!p || !!c}
+              hidden={!!isolatedIds && !isolatedIds.has(n.id)}
               onMount={onHostMount}
               drawHandles={props.drawHandles && !props.readOnly}
               hasCollapseControl={n.hasCollapseControl}

@@ -1,9 +1,10 @@
 import { Box } from "@chakra-ui/react";
 import { useMemo, useState } from "react";
 import { resolveFormNode } from "../core/forms";
+import { changeFormState, resolveStateForm, resolveStateView } from "../utils/formState";
 import { recolorGraph } from "../core/recolorGraph";
 import { bindSqueedCallbacks } from "../core/squeedBinding";
-import { compileSqueed } from "../core/squeedEdits";
+import { compileSqueed, getNode } from "../core/squeedEdits";
 import { NODE_BORDER_ANIMATION_STYLES } from "../engine/NodeBorderAnimation";
 import { FormDocumentContext } from "../nodes/NodeForm";
 import type {
@@ -35,6 +36,7 @@ function injectStyles() {
 export function FlowDiagram({
   title = "untitled",
   json,
+  forms,
   nodes,
   edges,
   config = {},
@@ -42,11 +44,13 @@ export function FlowDiagram({
   className,
   style,
   showBottomBar = true,
+  children,
 }: FlowDiagramProps) {
   injectStyles();
   const [localFormSchema, setLocalFormSchema] =
     useState<import("../core/forms").FormSchema>();
   const formSchema = config.formSchema ?? localFormSchema;
+  const displayJson = useMemo(() => json && forms ? resolveStateView(json, forms.state) : json, [json, forms?.state]);
 
   const isCenter = config.direction === "C";
   const compileDocument = useMemo(() => {
@@ -63,30 +67,32 @@ export function FlowDiagram({
     };
   }, [title, isCenter]);
   const compiled = useMemo(
-    () => (json ? compileDocument(json) : null),
-    [json, compileDocument],
+    () => (displayJson ? compileDocument(displayJson) : null),
+    [displayJson, compileDocument],
   );
 
   const resolvedNodes: FlowDiagramNode[] = useMemo(() => {
     const source = compiled?.nodes ?? nodes ?? [];
-    if (!json || !formSchema) return source;
-    return source.map((node) =>
-      resolveFormNode(json, node.data.id, formSchema)
+    return source.map((node) => {
+      const labelBelow = (json && getNode(json, node.data.id)?.$view === "icon-label") || node.data.config?.labelBelow;
+      const form = formSchema && (forms ? resolveStateForm(forms.bindings, node.data.id, formSchema) : json && resolveFormNode(json, node.data.id, formSchema));
+      return (form || labelBelow)
         ? {
             ...node,
             data: {
               ...node.data,
-              type: "objectView",
-              config: { ...node.data.config, form: true },
+              type: labelBelow ? "arrayView" : "objectView",
+              ...(forms ? { description: Object.fromEntries(Object.entries(node.data.description ?? {}).filter(([key]) => !key.startsWith("$"))) } : {}),
+              config: { ...node.data.config, ...(form ? { form: true } : {}), ...(labelBelow ? { labelBelow: true } : {}) },
             },
           }
-        : node,
-    );
-  }, [compiled, nodes, json, formSchema]);
+        : node;
+      });
+  }, [compiled, nodes, json, formSchema, forms?.bindings]);
   const resolvedEdges: FlowDiagramEdge[] = compiled?.edges ?? edges ?? [];
 
   // Document mode: edits are applied to the JSON and surfaced via onJsonChange
-  const boundCallbacks = useMemo(
+  const viewCallbacks = useMemo(
     () =>
       json && compiled
         ? bindSqueedCallbacks(
@@ -94,15 +100,33 @@ export function FlowDiagram({
             compiled.edges,
             callbacks,
             callbacks.onJsonChange,
+            formSchema,
           )
         : callbacks,
-    [json, compiled, callbacks],
+    [json, compiled, callbacks, formSchema],
   );
+  const boundCallbacks = useMemo(() => {
+    if (!forms) return viewCallbacks;
+    let state = forms.state;
+    return {
+      ...viewCallbacks,
+      onFormChange: (change: import("../core/forms").FormChange) => {
+        if (!forms.onChange) return;
+        const next = changeFormState(state, change, callbacks.onFormChange);
+        if (next === state) return;
+        state = next;
+        forms.onChange(next, { ...change, data: next });
+      },
+    };
+  }, [viewCallbacks, forms, callbacks.onFormChange]);
 
   return (
     <FormDocumentContext.Provider
       value={{
-        data: json,
+        data: forms?.state ?? json,
+        viewData: json,
+        bindings: forms?.bindings,
+        editable: forms ? !!forms.onChange : !!callbacks.onJsonChange,
         schema: formSchema,
         setSchema: (schema) => {
           setLocalFormSchema(schema);
@@ -134,6 +158,7 @@ export function FlowDiagram({
         >
           <FlowView nodes={resolvedNodes} edges={resolvedEdges} />
           {showBottomBar && <BottomBar />}
+          {children}
         </Box>
       </FlowDiagramProvider>
     </FormDocumentContext.Provider>

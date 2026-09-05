@@ -305,7 +305,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   }, [edges]);
 
   const canvasNodes = useMemo<CanvasNode[]>(() => {
-    const Views = config.customViews || DefaultViews;
+    const Views = { ...DefaultViews, ...config.customViews };
     return nodes
       .filter((n) => n.data?.id)
       .map((node) => {
@@ -320,6 +320,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         const edgeData = edgeBySource.get(node.data.id);
         return {
           id: node.data.id,
+          collapsed: node.data.config?.collapsed,
           parent: node.data.parent,
           label: nodeLabel,
           animated: !!node.data.isNodeAnimated,
@@ -480,6 +481,14 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         setIsMultiSelectMode(!isMultiSelectMode);
       if (e.key === "d" || e.key === "D") setIsDragMode(!isDragMode);
 
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedEdgeIdRef.current) {
+        e.preventDefault();
+        const edgeId = selectedEdgeIdRef.current;
+        callbacks.onEdgeDelete?.(edgeId, edgeByIdRef.current.get(edgeId)?.data ?? { id: edgeId });
+        setSelectedEdgeId(null);
+        return;
+      }
+
       if (
         (e.key === "Delete" || e.key === "Backspace") &&
         selectedNodeIdsRef.current.length > 0
@@ -505,6 +514,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     config.disableKeyboardShortcuts,
     callbacks,
     setSelectedNodeIds,
+    setSelectedEdgeId,
   ]);
 
   // ── canvas callbacks ──

@@ -30,7 +30,6 @@ import type { FlowDirection } from "../types";
 import { FlowType } from "../types";
 import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
-import { FormSchemaUpload } from "./FormSchemaUpload";
 import {
   DEFAULT_PALETTE,
   EdgeTools,
@@ -388,8 +387,8 @@ const BottomBar = () => {
                 />
               ) : nodeToolsActive ? (
                 <NodeTools ids={selectedNodeIds} onClose={handleNodeDeselect} />
-              ) : (
-                <>
+              ) : null}
+                <div style={{ display: edgeToolsActive || nodeToolsActive ? "none" : "contents" }}>
                   {/* Pin/Unpin */}
                   <ToolbarTooltip label={isPinned ? "Unpin" : "Pin"}>
                     <ToolbarIconButton
@@ -624,7 +623,6 @@ const BottomBar = () => {
                         </>
                       )}
                       <WorkflowControls />
-                      <FormSchemaUpload />
                       <DiagramAppearanceControls />
                     </>
                   )}
@@ -654,8 +652,7 @@ const BottomBar = () => {
                     />
                   </ToolbarTooltip>
                   {!isCollapsed && <SvgExportButton />}
-                </>
-              )}
+                </div>
             </HStack>
           </ToolbarScrollContainer>
 

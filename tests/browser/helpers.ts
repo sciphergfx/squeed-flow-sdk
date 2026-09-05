@@ -12,7 +12,9 @@ export async function chooseToolbarOption(trigger: Locator, option: string) {
 }
 
 export async function ready(page: Page, query = "") {
-  await page.goto(`/${query}`);
+  const parameters = new URLSearchParams(query);
+  if (parameters.get("graph") === "json") parameters.set("graph", "basic-json");
+  await page.goto(`/?${parameters}`);
   await page.waitForFunction(
     () =>
       window.__flowTest?.engine?.getNodeBox("alpha") ||

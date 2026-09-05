@@ -1,4 +1,6 @@
 import type { FlowDiagramCallbacks, FlowDiagramEdge } from "../types";
+import { createFormNode } from "./createFormNode";
+import type { FormSchema } from "./forms";
 import { applyFormChange } from "./forms";
 import {
   addChild,
@@ -60,6 +62,7 @@ export function bindSqueedCallbacks(
   compiledEdges: FlowDiagramEdge[],
   callbacks: FlowDiagramCallbacks,
   onJsonChange?: (json: SqueedJson, change: SqueedChange) => void,
+  formSchema?: FormSchema,
 ): FlowDiagramCallbacks {
   const emit = (next: SqueedJson, change: SqueedChange) => {
     if (next === json) return;
@@ -196,6 +199,12 @@ export function bindSqueedCallbacks(
       });
     },
     onNodeCreate: (params) => {
+      const created = params.sourceNodeId && createFormNode(json, params.sourceNodeId, formSchema);
+      if (created) {
+        callbacks.onNodeCreate?.(params);
+        emit(created.json, { type: "nodeCreate", address: created.address, value: "form" });
+        return;
+      }
       callbacks.onNodeCreate?.(params);
       const parent = params.sourceNodeId || "root";
       const parentNode = getNode(json, parent);

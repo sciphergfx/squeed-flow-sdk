@@ -3,6 +3,14 @@ import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { EditableCustomNode } from "./EditableCustomNode";
 import { SvgIconNode } from "./SvgIconNode";
+import { PortNode } from "./PortNode";
+import { ConsumerControls } from "./ConsumerControls";
+import workflowDocument from "../../../examples/workflow-form/ui.json";
+import stateView from "../../../examples/workflow-state/view.json";
+import initialState from "../../../examples/workflow-state/state.json";
+import stateBindings from "../../../examples/workflow-state/bindings.json";
+import { onExampleFormChange, resolveExampleOptions } from "../../../examples/workflow-state/callbacks";
+import type { StateForms } from "@squeed/flow-sdk";
 import {
   applyCollapsed,
   FlowDiagram,
@@ -63,6 +71,7 @@ const control = {
   engine: null as FlowEngine | null,
   events: [] as Event[],
   document: initialDocument as SqueedJson,
+  formState: initialState as SqueedJson,
   replaceDocument: (_document: SqueedJson) => {},
   configure: (_config: FlowDiagramConfig) => {},
   mount: (_mounted: boolean) => {},
@@ -94,12 +103,16 @@ function CustomNode({ data }: { data: FlowDiagramNode["data"] }) {
 
 function Fixture() {
   const query = new URLSearchParams(location.search);
-  const raw = !["json", "connections"].includes(query.get("graph") ?? "");
+  const independent = query.get("graph") === "state";
+  const raw = !["json", "basic-json", "connections", "state"].includes(query.get("graph") ?? "");
+  const [formState, setFormState] = useState<SqueedJson>(() => structuredClone(initialState));
   const [document, setDocument] = useState<SqueedJson>(() =>
     structuredClone(
-      query.get("graph") === "connections"
+      independent ? stateView : query.get("graph") === "connections"
         ? connectionDocument
-        : initialDocument,
+        : query.get("graph") === "json"
+          ? workflowDocument
+          : initialDocument,
     ),
   );
   const [nodes, setNodes] = useState(() => structuredClone(initialNodes));
@@ -108,11 +121,14 @@ function Fixture() {
   const [config, setConfig] = useState<FlowDiagramConfig>({
     colorMode: "light",
     edgeHandles: true,
-    isEdgeHandlesEnabled: false,
+    ...(query.has("consumerControls") ? {} : { isEdgeHandlesEnabled: false }),
     editable: true,
     ...(query.has("custom") ? { customViews: { text: CustomNode } } : {}),
     ...(query.get("custom") === "svg-icons"
       ? { customViews: { text: SvgIconNode } }
+      : {}),
+    ...(query.get("custom") === "ports"
+      ? { customViews: { text: PortNode }, edgeMode: "properties" as const }
       : {}),
     ...(query.get("custom") === "editable"
       ? {
@@ -128,6 +144,7 @@ function Fixture() {
       : {}),
   });
   control.document = document;
+  control.formState = formState;
   control.replaceDocument = setDocument;
   control.configure = (next) =>
     setConfig((current) => ({ ...current, ...next }));
@@ -148,6 +165,7 @@ function Fixture() {
   const record = (name: string, value?: unknown) =>
     control.events.push({ name, value });
   const callbacks: FlowDiagramCallbacks = {
+    ...(independent ? { onFormChange: onExampleFormChange, resolveFormOptions: resolveExampleOptions } : {}),
     onInit: (engine) => {
       control.engine = engine;
       record("init");
@@ -165,8 +183,11 @@ function Fixture() {
     onNodeDeselect: () => record("deselect-node"),
     onNodeDoubleClick: (id) => record("double-click", id),
     onNodeCreate: (params) => record("create-node", params),
-    onEdgeCreate: (source, target, properties) =>
-      record("create-edge", { source, target, ...properties }),
+    onEdgeCreate: (source, target, properties) => {
+      record("create-edge", { source, target, ...properties });
+      if (query.get("custom") === "ports")
+        setEdges(current => [...current, { data: { id: `port-${current.length}`, source, target, ...properties } }]);
+    },
     onEdgeSelect: (id) => record("select-edge", id),
     onEdgeIconChange: (id, icon) => {
       record("edge-icon", { id, icon });
@@ -321,9 +342,13 @@ function Fixture() {
         {mounted && (
           <FlowDiagram
             {...(raw ? graph : { json: document })}
+            forms={independent ? { state: formState, bindings: stateBindings as StateForms["bindings"], onChange: (next, change) => { setFormState(next); record("form-state", change); } } : undefined}
             config={config}
             callbacks={callbacks}
-          />
+            showBottomBar={!query.has("consumerControls")}
+          >
+            {query.has("consumerControls") && <ConsumerControls />}
+          </FlowDiagram>
         )}
       </div>
     </ChakraProvider>

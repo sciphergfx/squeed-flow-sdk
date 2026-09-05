@@ -23,7 +23,7 @@ interface WorkflowForm {
   "name": string;
   "id"?: string;
   "description"?: string;
-  "trigger"?: string;
+  "trigger"?: "manual" | "schedule" | "webhook" | "event";
   "steps": WorkflowStep[];
   "isPublic"?: boolean;
   "tags"?: string[];

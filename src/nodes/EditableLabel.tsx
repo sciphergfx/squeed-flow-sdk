@@ -9,6 +9,7 @@ interface EditableLabelProps {
   color: string;
   fontWeight?: string;
   fontSize?: string;
+  wrap?: boolean;
   isEditing: boolean;
   onEditStart: () => void;
   onEditEnd: () => void;
@@ -20,6 +21,7 @@ export const EditableLabel = ({
   color,
   fontWeight = "bold",
   fontSize = "5xl",
+  wrap = false,
   isEditing,
   onEditStart,
   onEditEnd,
@@ -63,7 +65,8 @@ export const EditableLabel = ({
         fontSize={fontSize}
         minW={0}
         maxW="100%"
-        whiteSpace="nowrap"
+        whiteSpace={wrap ? "normal" : "nowrap"}
+        overflowWrap={wrap ? "anywhere" : undefined}
         overflow="hidden"
         textOverflow="ellipsis"
         title={label}

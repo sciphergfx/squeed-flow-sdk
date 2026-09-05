@@ -1,0 +1,21 @@
+{
+  "trigger": {
+    "$view": "icon-label",
+    "$label": "On Create User", "$icon": "PiUserPlus", "$bgColor": "teal.600",
+    "$content": { "$state": "root.trigger.type" }, "$target": "root.assistant"
+  },
+  "assistant": {
+    "$label": { "$state": "root.steps.0.name" }, "$icon": "PiRobot", "$bgColor": "gray.700",
+    "$content": { "$state": "root.steps.0.config.prompt" }, "$target": "root.decision"
+  },
+  "decision": {
+    "$view": "icon-label",
+    "$label": { "$state": "root.steps.1.name" }, "$icon": "PiSignpost", "$bgColor": "green.600",
+    "$connections": [
+      { "target": "root.addChannel", "label": "True" },
+      { "target": "root.updateProfile", "label": "False" }
+    ]
+  },
+  "addChannel": { "$view": "icon-label", "$label": { "$state": "root.steps.2.name" }, "$icon": "PiSlackLogo", "$bgColor": "gray.700" },
+  "updateProfile": { "$view": "icon-label", "$label": { "$state": "root.steps.3.name" }, "$icon": "PiSlackLogo", "$bgColor": "gray.700" }
+}

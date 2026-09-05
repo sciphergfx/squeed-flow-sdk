@@ -36,6 +36,16 @@ export interface FlowEngine {
   fit(padding?: number): void;
   /** Centre all elements at the current zoom */
   center(): void;
+  /** Fit one currently laid-out node; padding is in screen pixels (default 50). */
+  focusNode(id: string, padding?: number): void;
+  /** Fit a node and its currently laid-out descendants; does not expand collapsed nodes. */
+  focusBranch(id: string, padding?: number): void;
+  /** Temporarily show only this branch and fit it, preserving graph data. */
+  isolateBranch(id: string, padding?: number): void;
+  /** End isolation and restore the viewport saved when isolation began. */
+  restoreView(): void;
+  /** Hide/show edge paths, labels and hit targets without changing graph data. */
+  setEdgesVisible(visible: boolean): void;
   clientToModel(clientX: number, clientY: number): Point;
   modelToClient(p: Point): Point;
   getNodeBox(id: string): Box | undefined;

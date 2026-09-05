@@ -259,7 +259,7 @@ export interface FlowDiagramConfig {
 
 /** Event callbacks for the flow diagram */
 export interface FlowDiagramCallbacks {
-  onFormSchemaChange?: (schema: import("../core/forms").FormSchema) => void;
+  onFormSchemaChange?: (schema: import("../core/forms").FormSchema | undefined) => void;
   onFormChange?: (
     event: import("../core/forms").FormChange,
   ) => import("../core/forms").FormEdit[] | void;
@@ -406,6 +406,7 @@ export interface FlowDiagramProps {
    * edit is reported through `callbacks.onJsonChange`. Takes precedence over nodes/edges.
    */
   json?: Record<string, any> | any[];
+  forms?: import("../utils/formState").StateForms;
   /** Pre-computed nodes */
   nodes?: FlowDiagramNode[];
   /** Pre-computed edges */
@@ -415,6 +416,8 @@ export interface FlowDiagramProps {
   /** Event callbacks */
   callbacks?: FlowDiagramCallbacks;
   showBottomBar?: boolean;
+  /** Custom controls rendered inside the diagram and form providers, even when showBottomBar is false. */
+  children?: React.ReactNode;
   /** CSS class name */
   className?: string;
   /** Inline styles */

@@ -5,6 +5,7 @@ import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import TooltipIconButton from "../components/TooltipIconButton";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
+import { useNodeHasChildren } from "../hooks/useNodeHasChildren";
 
 interface NodeViewProps {
   data: any;
@@ -49,6 +50,7 @@ const NodeView = ({
   const [isEditing, setIsEditing] = useState(false);
 
   const id = nodeData?.id;
+  const hasChildren = useNodeHasChildren(id);
   const isActive = selectedNodeIds.includes(id);
   const overlayActions = config.nodeOverlayActions;
   const renderNodeOverlay = config.renderNodeOverlay;
@@ -221,7 +223,7 @@ const NodeView = ({
           onEditStart: () => setIsEditing(true),
           onEditEnd: () => setIsEditing(false),
         })}
-        {nodeData?.config?.collapsed !== undefined &&
+        {hasChildren && nodeData?.config?.collapsed !== undefined &&
           (() => {
             const pillVertical = direction === "TB" || direction === "BT";
             const pillOnLeft = isInverted || direction === "RL";
@@ -371,7 +373,7 @@ const NodeView = ({
           </>
         )}
       <Box position="relative" display="flex" h="100%" w="100%">
-        {nodeData?.config?.collapsed !== undefined &&
+        {hasChildren && nodeData?.config?.collapsed !== undefined &&
           !isParent &&
           (() => {
             const pillVertical = direction === "TB" || direction === "BT";

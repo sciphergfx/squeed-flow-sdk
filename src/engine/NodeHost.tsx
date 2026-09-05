@@ -10,6 +10,7 @@ export interface NodeHostProps {
   y: number;
   /** Positioned by a layout run; hidden (but measurable) before that */
   placed: boolean;
+  hidden?: boolean;
   /** Register/unregister the host element for size observation */
   onMount: (id: string, el: HTMLDivElement | null) => void;
   drawHandles?: boolean;
@@ -32,6 +33,7 @@ function NodeHost({
   x,
   y,
   placed,
+  hidden,
   onMount,
   drawHandles,
   hasCollapseControl,
@@ -95,7 +97,7 @@ function NodeHost({
       subtree: true,
       characterData: true,
       attributes: true,
-      attributeFilter: ["data-flow-property"],
+      attributeFilter: ["data-flow-property", "data-flow-port-role"],
     });
     host.addEventListener("scroll", measure, true);
     return () => {
@@ -112,7 +114,7 @@ function NodeHost({
       data-node-id={id}
       style={{
         transform: `translate(-50%, -50%) translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`,
-        visibility: placed ? undefined : "hidden",
+        visibility: placed && !hidden ? undefined : "hidden",
       }}
     >
       {children}
@@ -136,7 +138,7 @@ function NodeHost({
       {drawHandles &&
         propertyMode &&
         rows.map((row) =>
-          (["source", "target"] as const).map((role) => (
+          (["source", "target"] as const).filter(role => !row.role || row.role === role).map((role) => (
             <button
               key={`${row.property}:${role}`}
               type="button"

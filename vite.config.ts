@@ -35,6 +35,7 @@ export default defineConfig({
         );
       },
       output: {
+        interop: "auto",
         globals: {
           react: "React",
           "react-dom": "ReactDOM",

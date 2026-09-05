@@ -11,7 +11,8 @@ import { useThemeContentColors } from "../theme/useCustomColors";
 import DynamicIcon from "../utils/DynamicIcon";
 import { EditableLabel } from "./EditableLabel";
 import { EditableContent } from "./EditableContent";
-import { NodeForm } from "./NodeForm";
+import { NodeFormPopover } from "../components/NodeFormPopover";
+import { NodeConfigSummary } from "./NodeConfigSummary";
 import NodeView from "./NodeView";
 import { NodeText } from "./nodeText";
 import { NodeTextInput } from "./nodeTextInput";
@@ -132,7 +133,7 @@ const NodeJsonObjectView = (props) => {
               borderWidth={0}
               overflow="hidden"
             >
-              {(headerTitle || hasContent) && (
+              {(headerTitle || hasContent || data.config?.form) && (
                 <Flex
                   justify="flex-start"
                   direction="row"
@@ -199,11 +200,10 @@ const NodeJsonObjectView = (props) => {
                       </ToolbarTooltip>
                     </Box>
                   )}
+                  {data.config?.form && <NodeFormPopover nodeAddress={id} active={isActive} label={formatHeaderTitle(headerTitle) || "Node"} />}
                 </Flex>
               )}
-              {data.config?.form ? (
-                <NodeForm nodeAddress={id} />
-              ) : hasContent && !objVisible ? (
+              {hasContent && !objVisible ? (
                 <Flex
                   w="100%"
                   overflow="auto"
@@ -302,6 +302,7 @@ const NodeJsonObjectView = (props) => {
                   )}
                 </Box>
               )}
+              <NodeConfigSummary nodeAddress={id} />
             </Flex>
           </Flex>
         );

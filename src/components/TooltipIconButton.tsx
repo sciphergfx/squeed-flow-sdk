@@ -1,5 +1,6 @@
 import { Flex, Icon, Tooltip } from "@chakra-ui/react";
 import { useCustomColors } from "../theme/useCustomColors";
+import { ToolbarTooltip } from "./toolbarControls";
 
 const TooltipIconButton = ({
   icon,
@@ -11,8 +12,7 @@ const TooltipIconButton = ({
 }) => {
   const { background, border, colorText } = useCustomColors();
   return (
-    <Tooltip.Root positioning={{ placement: props.placement || "top" }}>
-      <Tooltip.Trigger asChild>
+    <ToolbarTooltip label={label}>
         <Flex>
           <Icon
             as={icon}
@@ -22,24 +22,7 @@ const TooltipIconButton = ({
             onClick={onClick}
           />
         </Flex>
-      </Tooltip.Trigger>
-      <Tooltip.Positioner>
-        <Tooltip.Content
-          bgColor={props.bgColor || background}
-          borderColor={props.borderColor || border}
-          borderWidth={1}
-          color={props.textColor || colorText}
-          borderRadius={15}
-          fontWeight={300}
-          fontSize="sm"
-          p={2}
-          px={4}
-          shadow="none"
-        >
-          {label}
-        </Tooltip.Content>
-      </Tooltip.Positioner>
-    </Tooltip.Root>
+    </ToolbarTooltip>
   );
 };
 

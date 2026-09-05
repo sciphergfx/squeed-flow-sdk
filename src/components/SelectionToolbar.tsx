@@ -19,6 +19,7 @@ import {
 import { TbBorderRadius } from "react-icons/tb";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
+import { useNodeHasChildren } from "../hooks/useNodeHasChildren";
 import { getNodeBorderWidth } from "../nodes/nodeBorder";
 import { NodeIconPicker } from "./NodeIconPicker";
 import type { SelectionToolbarConfig } from "../types";
@@ -40,7 +41,7 @@ export const DEFAULT_PALETTE = [
   "pink.500",
   "gray.500",
 ];
-const TEXT_PALETTE = ["gray.900", "gray.600", "gray.200", "white"];
+export const TEXT_PALETTE = ["gray.900", "gray.600", "gray.200", "white"];
 
 type Hide = NonNullable<SelectionToolbarConfig["hide"]>[number];
 
@@ -59,7 +60,7 @@ function Divider() {
   return <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />;
 }
 
-function CloseButton({ onClick }: { onClick: () => void }) {
+export function CloseButton({ onClick }: { onClick: () => void }) {
   const { colorText } = useCustomColors();
   return (
     <ToolbarTooltip label="Close">
@@ -75,7 +76,7 @@ function CloseButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function CommitInput({
+export function CommitInput({
   value,
   placeholder,
   ariaLabel,
@@ -346,7 +347,7 @@ export function EdgeTools({
   );
 }
 
-function BorderRadiusControl({ ids }: { ids: string[] }) {
+export function BorderRadiusControl({ ids }: { ids: string[] }) {
   const { callbacks, config } = useFlowDiagramContext();
   const { colorInactive } = useCustomColors();
   const { nodeById } = useFlowData();
@@ -439,6 +440,7 @@ export function NodeTools({
   const single = ids.length === 1;
   const data = single ? nodeById.get(ids[0])?.data : undefined;
   const collapsed = data?.config?.collapsed;
+  const hasChildren = useNodeHasChildren(ids[0]);
   const isOutlined = (id: string) =>
     (nodeById.get(id)?.data.viewProps?.outline ??
       (parentIds.has(id) ? config.parentNodeStyle?.outline : false)) === true;
@@ -654,7 +656,7 @@ export function NodeTools({
           />
         </>
       )}
-      {single && show("collapse") && collapsed !== undefined && (
+      {single && hasChildren && show("collapse") && collapsed !== undefined && (
         <>
           <Divider />
           <ToolbarTooltip label={collapsed ? "Expand" : "Collapse"}>

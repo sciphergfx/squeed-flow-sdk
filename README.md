@@ -183,6 +183,120 @@ the source tree. Edit this single JSON source to keep the guide current.
 
 ## Callbacks
 
+### Compose Your Own Controls
+
+All reusable control components are exported from `@squeed/flow-sdk` through
+[src/index.ts](src/index.ts). Hide the default toolbar with `showBottomBar={false}`
+and mount your controls as children to share the diagram and form providers:
+
+```tsx
+import { FlowDiagram, WorkflowControls, DiagramAppearanceControls,
+  SvgExportButton, ToolbarDivider } from "@squeed/flow-sdk";
+
+<FlowDiagram json={view} forms={forms} callbacks={callbacks} showBottomBar={false}>
+  <div style={{ position: "absolute", bottom: 20, left: 20, right: 20,
+    display: "flex", alignItems: "center", overflowX: "auto", zIndex: 100 }}>
+    <WorkflowControls />
+    <ToolbarDivider />
+    <DiagramAppearanceControls />
+    <SvgExportButton />
+  </div>
+</FlowDiagram>
+```
+
+| Category | Public exports |
+| --- | --- |
+| Toolbar primitives | `ToolbarIconButton`, `ToolbarTooltip`, `ToolbarDivider`, `ToolbarSelect`, `ToolbarScrollContainer`, `TooltipIconButton`, `ToolbarCommitInput`, `ToolbarCloseButton` |
+| Selection controls | `NodeTools`, `EdgeTools`, `Swatches`, `NodeBorderRadiusControl`, `NodeIconPicker`, `DEFAULT_PALETTE`, `TEXT_PALETTE` |
+| Control groups | `BottomBar`, `WorkflowControls`, `DiagramAppearanceControls`, `SvgExportButton` |
+| Forms | `NodeForm`, `NodeFormPopover`, `NodeConfigSummary`, `FormDocumentContext` |
+| Composition | `FlowDiagramProvider`, `FlowView`, `useFlowDiagramContext`, `useFlowData`, `FlowDiagramContextValue` |
+| Feedback | `ErrorToast` |
+
+Use `useFlowDiagramContext()` inside a child component for mode setters,
+selection, bound edit callbacks and `engineRef`; `useFlowData()` supplies node
+and edge lookups. Its maps are read-only by convention: do not mutate them.
+Standalone controls outside these providers cannot access a diagram. For an
+external DOM toolbar, render a React portal from a child component so context
+is preserved. `SvgExportButton` needs a DOM ancestor with `data-flow-diagram`,
+so use the public `exportSvg` helper when your export button is portaled outside it.
+
+`FlowDiagramProvider` plus `FlowView` supports advanced raw-graph composition;
+it does not compile JSON or create form state. Prefer `FlowDiagram` children
+for document mode. Context mode setters do not override explicitly controlled
+config props; the host must update those props. Selection setters change state
+only; invoke selection callbacks explicitly if your custom UI requires them.
+`NodeTools`/`EdgeTools` receive selected IDs and an `onClose` handler. Their
+edit actions use bound callbacks, preserving document-mode updates.
+
+The main toolbar's individual mode buttons remain part of `BottomBar`; compose
+equivalent buttons with `ToolbarIconButton` and the context setters. Appearance
+sliders are exposed together through `DiagramAppearanceControls`.
+
+### Named Ports In Custom Views
+
+Use `FlowPort` inside a custom node component with `config.edgeMode: "properties"`
+and `config.edgeHandles: true`. Port IDs must be unique within a node.
+
+```tsx
+<FlowPort id="true" role="source">True</FlowPort>
+<FlowPort id="false" role="source">False</FlowPort>
+<FlowPort id="input" role="target">Input</FlowPort>
+```
+
+The engine measures each port row and supplies connection handles at the node
+boundary. Outputs are on the right and inputs on the left, reversed in RL mode.
+Top/bottom anchors are not supported yet. These ports do not require object
+property rows or form state fields. Existing `sourceProperty`/`targetProperty`
+edge fields carry the port IDs, including in `onEdgeCreate`. The host owns edge
+persistence and any resulting workflow-state changes. Enable Draw mode to connect.
+
+### Schema-Bound Node Creation
+
+For independent workflow state, use the `forms` prop and external node bindings;
+see [Independent Workflow State](examples/workflow-state/README.md). This keeps
+form values outside the Squeed document and supports state-backed `$content`.
+The `$form` document binding described here remains a legacy-compatible mode.
+
+In legacy JSON mode, a selected form-bound node has a gear that opens its
+configuration in a screen-sized dialog. The form resolves `$form.$type` using
+`config.formSchema` or the **Upload workflow interface** control, which also
+supplies connection validation. Nested objects and
+non-enum arrays are edited as validated JSON; simple fields use inferred controls.
+
+To create a typed item when drawing from a node into empty space, declare:
+
+```json
+{
+  "workflow": {
+    "$label": "Trigger",
+    "$form": {
+      "$type": "Workflow",
+      "$create": {
+        "$address": "root.workflow.steps",
+        "$type": "Step",
+        "$label": "Step",
+        "$edgeLabel": "Next",
+        "$defaults": { "name": "New step", "type": "conditional" }
+      }
+    },
+    "name": "Orders",
+    "trigger": "manual",
+    "steps": []
+  }
+}
+```
+
+The schema must define `Workflow.steps` as an object array and expose `Step`.
+Upload discovers both binding types. Creation appends to that array, gives a
+string `id` field a UUID, copies the form/creation binding, and adds a labeled
+`$connections` link from the source. One `onJsonChange` reports the new node.
+Required fields receive initial values; strings may remain empty and require
+configuration. `$defaults` supplies explicit initial values. Further draws from
+the new step append siblings to the same destination. Untyped drawing is unchanged.
+The link label does not execute sequence or if/else logic; those semantics remain
+the host application's responsibility.
+
 ### SVG Download
 
 The expanded toolbar's **Download SVG** icon exports the current graph view,

@@ -8,6 +8,8 @@ import { getChakraColorHex } from "../theme/colorUtils";
 import DynamicIcon from "../utils/DynamicIcon";
 import { EditableLabel } from "./EditableLabel";
 import { getNodeBorderProps } from "./nodeBorder";
+import { NodeFormPopover } from "../components/NodeFormPopover";
+import { NodeConfigSummary } from "./NodeConfigSummary";
 
 export const NodeTextInput = ({
   id,
@@ -44,6 +46,28 @@ export const NodeTextInput = ({
   const icon = data?.config?.icon;
   // `$label: ""` is a deliberate icon-only node; only fall back to `text` when no label was given
   const label: string = data?.label ?? data?.text ?? "";
+
+  if (data?.config?.labelBelow) {
+    const iconSize = (data?.viewProps?.fontSize || 1) * 100;
+    return (
+      <Flex data-flow-icon-label="" direction="column" align="center" gap="24px" width={`${Math.max(iconSize + 200, 360)}px`} position="relative">
+        <Flex data-flow-node-surface="" align="center" justify="center"
+          width={`${iconSize + 100}px`} height={`${iconSize + 100}px`} flexShrink={0}
+          borderRadius={data?.viewProps?.borderRadius} backgroundColor={hexbgColor}
+          {...getNodeBorderProps(data?.viewProps, hexborderColor, isActive, 2)}>
+          {!!icon && <DynamicIcon name={icon} size={iconSize} color={hextextColor} />}
+        </Flex>
+        <Flex data-flow-icon-caption="" justify="center" width="100%" minW={0} textAlign="center">
+          <EditableLabel nodeId={id} label={label} color={getChakraColorHex(data?.viewProps?.textColor || colorText)}
+            isEditing={isEditing} onEditStart={onEditStart} onEditEnd={onEditEnd} wrap />
+        </Flex>
+        <NodeConfigSummary nodeAddress={id} />
+        {data.config.form && <Flex position="absolute" top={0} right={0}>
+          <NodeFormPopover nodeAddress={id} active={isActive} label={label || "Node"} />
+        </Flex>}
+      </Flex>
+    );
+  }
 
   return (
     <Flex

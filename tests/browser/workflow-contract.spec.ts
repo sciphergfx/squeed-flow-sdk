@@ -35,7 +35,7 @@ for (const width of [1440, 390]) {
       exact: true,
     });
     const file = page.getByLabel("Workflow interface file", { exact: true });
-    await expect(upload).toHaveCount(0);
+    await expect(upload).toBeVisible();
     await chooseToolbarOption(mode, "Properties");
     await expect(upload).toBeVisible();
     const palette = page.getByRole("group", {
@@ -108,7 +108,7 @@ for (const width of [1440, 390]) {
       "#b45309",
     );
     await chooseToolbarOption(mode, "Nodes");
-    await expect(upload).toHaveCount(0);
+    await expect(upload).toBeVisible();
     await expect(page.locator(".flow-sdk-edge-validation")).toHaveCount(0);
     await chooseToolbarOption(mode, "Properties");
     await expect(edge).toHaveAttribute("data-validation", "unverified");

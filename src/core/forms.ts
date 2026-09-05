@@ -25,6 +25,7 @@ export interface FormCondition {
 }
 export interface FormFieldConfig {
   $label?: string;
+  $section?: string;
   $control?: "input" | "textarea" | "select" | "pills" | "checkbox";
   $visibleWhen?: FormCondition;
   $requiredWhen?: FormCondition;
@@ -33,6 +34,15 @@ export interface FormFieldConfig {
 export interface FormBinding {
   $type: string;
   $fields?: Record<string, FormFieldConfig>;
+  $create?: FormCreation;
+}
+export interface FormCreation {
+  $address: string;
+  $type: string;
+  $label?: string;
+  $icon?: string;
+  $edgeLabel?: string;
+  $defaults?: Record<string, unknown>;
 }
 export interface FormRequest {
   address: string;
