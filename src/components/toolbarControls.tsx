@@ -123,7 +123,10 @@ export function ToolbarSelect({
       };
       return {
         value: String(props.value),
-        label: typeof props.children === "string" ? startCase(props.children) : props.children,
+        label:
+          typeof props.children === "string"
+            ? startCase(props.children)
+            : props.children,
         disabled: props.disabled,
       };
     });
@@ -236,7 +239,10 @@ export function ToolbarSelect({
         minW="180px"
         maxW="calc(100vw - 24px)"
         overflowY="auto"
-        css={{ scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" } }}
+        css={{
+          scrollbarWidth: "none",
+          "&::-webkit-scrollbar": { display: "none" },
+        }}
         bg={background}
         color={colorText}
         borderWidth={1}

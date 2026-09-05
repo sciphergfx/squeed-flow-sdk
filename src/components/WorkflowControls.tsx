@@ -15,7 +15,7 @@ import {
   ToolbarTooltip,
 } from "./toolbarControls";
 
-export function WorkflowControls() {
+export function WorkflowControls({ showDivider = true, compact = false }: { showDivider?: boolean; compact?: boolean } = {}) {
   const {
     edgeMode,
     setEdgeMode,
@@ -52,7 +52,7 @@ export function WorkflowControls() {
   return (
     <>
       <ErrorToast message={error} onDismiss={() => setError("")} />
-      <ToolbarDivider />
+      {showDivider && <ToolbarDivider />}
       <ToolbarSelect
         aria-label="Edge mode"
         title={
@@ -79,8 +79,7 @@ export function WorkflowControls() {
         <option value="nodes">Nodes</option>
         <option value="properties">Properties</option>
       </ToolbarSelect>
-      {
-        <>
+      <span style={{ display: edgeMode === "properties" ? "contents" : "none" }}>
           <ToolbarTooltip
             label={
               workflowContract
@@ -164,7 +163,7 @@ export function WorkflowControls() {
               }
             }}
           />
-          {(status || busy) && (
+          {!compact && (status || busy) && (
             <span
               role="status"
               title={status}
@@ -180,7 +179,7 @@ export function WorkflowControls() {
               {busy ? "Loading interface..." : status}
             </span>
           )}
-          {workflowContract && (
+          {!compact && workflowContract && (
             <ToolbarTooltip label="Remove workflow interface">
               <ToolbarIconButton
                 aria-label="Remove workflow interface"
@@ -197,8 +196,7 @@ export function WorkflowControls() {
               />
             </ToolbarTooltip>
           )}
-        </>
-      }
+      </span>
     </>
   );
 }

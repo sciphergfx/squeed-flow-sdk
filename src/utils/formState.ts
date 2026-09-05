@@ -23,16 +23,32 @@ export interface StateForms {
   onChange?: (state: SqueedJson, change: FormChange) => void;
 }
 
-export function applyStateEdits(state: SqueedJson, edits: readonly FormEdit[]): SqueedJson {
+export function applyStateEdits(
+  state: SqueedJson,
+  edits: readonly FormEdit[],
+): SqueedJson {
   let next = state;
   for (const edit of edits) {
-    if (edit.op !== "set" && edit.op !== "remove") throw new Error("Unsupported state edit.");
+    if (edit.op !== "set" && edit.op !== "remove")
+      throw new Error("Unsupported state edit.");
     const parts = edit.address.split(".");
-    if (parts.some(part => part.startsWith("$") || ["__proto__", "prototype", "constructor"].includes(part)))
-      throw new Error("State edits cannot target view metadata or unsafe keys.");
+    if (
+      parts.some(
+        (part) =>
+          part.startsWith("$") ||
+          ["__proto__", "prototype", "constructor"].includes(part),
+      )
+    )
+      throw new Error(
+        "State edits cannot target view metadata or unsafe keys.",
+      );
     const value = edit.op === "remove" ? undefined : edit.value;
     assertPlainState(value);
-    next = applyFormChange(next, { address: edit.address, nodeAddress: parts.slice(0, -1).join("."), value });
+    next = applyFormChange(next, {
+      address: edit.address,
+      nodeAddress: parts.slice(0, -1).join("."),
+      value,
+    });
   }
   assertPlainState(next);
   return next;

@@ -37,8 +37,14 @@ function injectStyles() {
   stylesInjected = true;
 }
 
-export function FlowDiagram({ loading = false, loader, ...props }: FlowDiagramProps) {
-  const [prepared, setPrepared] = useState<{ json: FlowDiagramProps["json"] } | null>(null);
+export function FlowDiagram({
+  loading = false,
+  loader,
+  ...props
+}: FlowDiagramProps) {
+  const [prepared, setPrepared] = useState<{
+    json: FlowDiagramProps["json"];
+  } | null>(null);
   const pending = prepared === null || prepared.json !== props.json;
   const busy = loading || pending;
 
@@ -46,7 +52,9 @@ export function FlowDiagram({ loading = false, loader, ...props }: FlowDiagramPr
     if (loading || !pending) return;
     let nextFrame: number | undefined;
     const firstFrame = requestAnimationFrame(() => {
-      nextFrame = requestAnimationFrame(() => setPrepared({ json: props.json }));
+      nextFrame = requestAnimationFrame(() =>
+        setPrepared({ json: props.json }),
+      );
     });
     return () => {
       cancelAnimationFrame(firstFrame);
@@ -55,16 +63,52 @@ export function FlowDiagram({ loading = false, loader, ...props }: FlowDiagramPr
   }, [loading, pending, props.json]);
 
   return (
-    <Box className={props.className} style={props.style} width="100%" height="100%" position="relative" aria-busy={busy}>
-      <div style={{ width: "100%", height: "100%" }} ref={element => {
-        if (busy) element?.setAttribute("inert", "");
-        else element?.removeAttribute("inert");
-      }}>
-        {prepared && <FlowDiagramContent {...props} className={undefined} style={undefined} json={prepared.json} />}
+    <Box
+      className={props.className}
+      style={props.style}
+      width="100%"
+      height="100%"
+      position="relative"
+      aria-busy={busy}
+    >
+      <div
+        style={{ width: "100%", height: "100%" }}
+        ref={(element) => {
+          if (busy) element?.setAttribute("inert", "");
+          else element?.removeAttribute("inert");
+        }}
+      >
+        {prepared && (
+          <FlowDiagramContent
+            {...props}
+            className={undefined}
+            style={undefined}
+            json={prepared.json}
+          />
+        )}
       </div>
-      {busy && <Box data-flow-loader="" role="status" aria-label="Loading diagram" position="absolute" inset={0} zIndex={1000} display="grid" placeItems="center" background={props.config?.colorMode === "dark" ? "gray.800" : "gray.100"} color={props.config?.colorMode === "dark" ? "whiteAlpha.800" : "blackAlpha.800"}>
-        {loader === undefined ? <span>Loading diagram...</span> : loader}
-      </Box>}
+      {busy && (
+        <Box
+          data-flow-loader=""
+          role="status"
+          aria-label="Loading diagram"
+          position="absolute"
+          inset={0}
+          zIndex={1000}
+          display="grid"
+          placeItems="center"
+          background={
+            props.config?.colorMode === "dark" ? "gray.800" : "gray.100"
+          }
+          color={
+            props.config?.colorMode === "dark"
+              ? "whiteAlpha.800"
+              : "blackAlpha.800"
+          }
+        >
+          {loader === undefined ? <span>Loading diagram...</span> : loader}
+        </Box>
+      )}
     </Box>
   );
 }
@@ -184,7 +228,9 @@ function FlowDiagramContent({
         data: forms?.state ?? json,
         viewData: json,
         bindings: forms?.bindings,
-        editable: forms ? !!(forms.onStateChange ?? forms.onChange) : !!callbacks.onJsonChange,
+        editable: forms
+          ? !!(forms.onStateChange ?? forms.onChange)
+          : !!callbacks.onJsonChange,
         schema: formSchema,
         setSchema: (schema) => {
           setLocalFormSchema(schema);

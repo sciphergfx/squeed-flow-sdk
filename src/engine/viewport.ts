@@ -15,7 +15,8 @@ export class Viewport {
   private animationTimer?: ReturnType<typeof setTimeout>;
 
   cancelAnimation() {
-    if (this.animationFrame !== undefined) cancelAnimationFrame(this.animationFrame);
+    if (this.animationFrame !== undefined)
+      cancelAnimationFrame(this.animationFrame);
     clearTimeout(this.animationTimer);
     this.animationFrame = undefined;
     this.animationTimer = undefined;
@@ -23,20 +24,36 @@ export class Viewport {
 
   transition(state: ViewportState, animate = false) {
     this.cancelAnimation();
-    if (!animate || typeof requestAnimationFrame === "undefined" ||
-      (typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+    if (
+      !animate ||
+      typeof requestAnimationFrame === "undefined" ||
+      (typeof matchMedia !== "undefined" &&
+        matchMedia("(prefers-reduced-motion: reduce)").matches)
+    ) {
       this.set(state.pan, state.zoom);
       return;
     }
     const from = this.state;
     const target = { pan: { ...state.pan }, zoom: this.clamp(state.zoom) };
     const start = performance.now();
-    const finish = () => { this.cancelAnimation(); this.set(target.pan, target.zoom); };
+    const finish = () => {
+      this.cancelAnimation();
+      this.set(target.pan, target.zoom);
+    };
     const frame = (now: number) => {
       const progress = Math.min(1, (now - start) / 300);
-      if (progress >= 1) { finish(); return; }
+      if (progress >= 1) {
+        finish();
+        return;
+      }
       const eased = progress * progress * (3 - 2 * progress);
-      this.apply({ x: from.pan.x + (target.pan.x - from.pan.x) * eased, y: from.pan.y + (target.pan.y - from.pan.y) * eased }, from.zoom + (target.zoom - from.zoom) * eased);
+      this.apply(
+        {
+          x: from.pan.x + (target.pan.x - from.pan.x) * eased,
+          y: from.pan.y + (target.pan.y - from.pan.y) * eased,
+        },
+        from.zoom + (target.zoom - from.zoom) * eased,
+      );
       this.animationFrame = requestAnimationFrame(frame);
     };
     this.animationFrame = requestAnimationFrame(frame);
@@ -111,21 +128,32 @@ export class Viewport {
         (this.size.h - 2 * padding) / h,
       ),
     );
-    this.transition({ pan: {
-        x: (this.size.w - zoom * (bb.x1 + bb.x2)) / 2,
-        y: (this.size.h - zoom * (bb.y1 + bb.y2)) / 2,
+    this.transition(
+      {
+        pan: {
+          x: (this.size.w - zoom * (bb.x1 + bb.x2)) / 2,
+          y: (this.size.h - zoom * (bb.y1 + bb.y2)) / 2,
+        },
+        zoom,
       },
-      zoom }, animate);
+      animate,
+    );
   }
 
   /** cytoscape `cy.center(eles)` */
   center(bb: Rect, animate = false) {
     if (!this.size.w || !this.size.h) return;
     const z = this._zoom;
-    this.transition({ pan: {
-      x: (this.size.w - z * (bb.x1 + bb.x2)) / 2,
-      y: (this.size.h - z * (bb.y1 + bb.y2)) / 2,
-    }, zoom: z }, animate);
+    this.transition(
+      {
+        pan: {
+          x: (this.size.w - z * (bb.x1 + bb.x2)) / 2,
+          y: (this.size.h - z * (bb.y1 + bb.y2)) / 2,
+        },
+        zoom: z,
+      },
+      animate,
+    );
   }
 
   renderedToModel(p: Point): Point {

@@ -250,7 +250,7 @@ function Canvas(props: CanvasProps) {
     clearTimeout(settleTimerRef.current);
     settleTimerRef.current = setTimeout(() => {
       hasLayoutRunRef.current = true;
-      setLayoutRevision(revision => revision + 1);
+      setLayoutRevision((revision) => revision + 1);
     }, LAYOUT_SETTLE_MS);
   };
 
@@ -588,10 +588,10 @@ function Canvas(props: CanvasProps) {
             node.parent === parent ||
             node.id.startsWith(`${parent}.`) ||
             current.edges.some(
-                (edge) =>
-                  (edge.inverted ? edge.target : edge.source) === parent &&
-                  (edge.inverted ? edge.source : edge.target) === node.id,
-              );
+              (edge) =>
+                (edge.inverted ? edge.target : edge.source) === parent &&
+                (edge.inverted ? edge.source : edge.target) === node.id,
+            );
           if (child && !ids.has(node.id)) {
             ids.add(node.id);
             pending.push(node.id);
@@ -600,7 +600,11 @@ function Canvas(props: CanvasProps) {
       }
       return ids;
     };
-    const focus = (ids: Set<string>, padding = 50, animate = propsRef.current.animateViewport) => {
+    const focus = (
+      ids: Set<string>,
+      padding = 50,
+      animate = propsRef.current.animateViewport,
+    ) => {
       const bounds = unionRects(
         [...ids].flatMap((id) => {
           const box = boxFor(id);
@@ -632,8 +636,10 @@ function Canvas(props: CanvasProps) {
       zoom,
       pan,
       setEdgesVisible,
-      focusNode: (id, padding, animate) => focus(new Set([id]), padding, animate),
-      focusBranch: (id, padding, animate) => focus(branchIds(id), padding, animate),
+      focusNode: (id, padding, animate) =>
+        focus(new Set([id]), padding, animate),
+      focusBranch: (id, padding, animate) =>
+        focus(branchIds(id), padding, animate),
       isolateBranch: (id, padding, animate) => {
         if (!boxFor(id)) return;
         if (!savedViewport.current)
@@ -658,7 +664,10 @@ function Canvas(props: CanvasProps) {
         const bb = elementsBBox();
         if (bb) viewport.fit(bb, padding, animate);
       },
-      centerAndFit: (padding = 0, animate = propsRef.current.animateViewport) => {
+      centerAndFit: (
+        padding = 0,
+        animate = propsRef.current.animateViewport,
+      ) => {
         const bb = elementsBBox();
         if (bb) viewport.fit(bb, padding, animate);
       },

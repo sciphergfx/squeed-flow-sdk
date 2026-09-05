@@ -35,7 +35,9 @@ for (const width of [1440, 390]) {
     ).toBeVisible();
     expect(
       await dataset.evaluate((element) =>
-        element.previousElementSibling?.previousElementSibling?.getAttribute("aria-label"),
+        element.previousElementSibling?.previousElementSibling?.getAttribute(
+          "aria-label",
+        ),
       ),
     ).toBe("MCP: not connected");
     const topBar = page.getByRole("toolbar", {

@@ -206,8 +206,10 @@ dispatched, not when animation finishes; `onViewportChange` reports intermediate
 and final positions. Use `onLayoutComplete(engine)` to fit newly laid-out data:
 
 ```tsx
-<FlowDiagram config={{ animateViewport: true }}
-  callbacks={{ onLayoutComplete: engine => engine.centerAndFit(60) }} />
+<FlowDiagram
+  config={{ animateViewport: true }}
+  callbacks={{ onLayoutComplete: (engine) => engine.centerAndFit(60) }}
+/>
 ```
 
 This callback runs after each settled layout, not viewport-only changes. Hosts
