@@ -184,12 +184,7 @@ const NodeJsonObjectView = (props) => {
                           aria-label={
                             objVisible ? "Show content" : "Show properties"
                           }
-                          icon={
-                            <Icon
-                              as={PiCircleFill}
-                              boxSize={4}
-                            />
-                          }
+                          icon={<Icon as={PiCircleFill} boxSize={4} />}
                           variant="ghost"
                           w={12}
                           h={12}
@@ -313,86 +308,7 @@ const NodeJsonObjectView = (props) => {
 };
 
 const ParentContainerView = (props) => {
-  const { themeColor, colorMode } = useFlowDiagramContext();
-
-  return (
-    <NodeView {...props}>
-      {({ data, isActive }) => {
-        const colors = getColorVars(data, themeColor, colorMode);
-        const icon = props.data?.config?.icon;
-
-        return (
-          <Flex
-            justifyContent="space-between"
-            {...data?.viewProps}
-            direction="column"
-            p={0}
-            borderRadius={data?.viewProps?.borderRadius || 15}
-            overflow="hidden"
-            bgColor={colors.bgColor}
-            position="absolute"
-            top={0}
-            left={0}
-            right={0}
-            bottom={0}
-            alignItems="center"
-            style={{
-              backgroundColor: colors.hexbgColor,
-              transition: "border-color 0.2s ease-in-out",
-            }}
-            borderColor={!isActive ? colors.hexborderColor : "white"}
-            _hover={{ borderColor: "white" }}
-            borderWidth={3}
-          >
-            {data.headerTitle && (
-              <Flex
-                justify="flex-start"
-                direction="row"
-                p={20}
-                borderBottomWidth={1}
-                minWidth="max-content !important"
-                width="100%"
-                textTransform="capitalize"
-                align="center"
-                alignItems="center"
-                fontWeight="bold"
-                color={colors.propertyColor}
-                bgColor={colors.highlightColor}
-                borderBottomColor={colors.hexborderColor}
-              >
-                {!!icon && (
-                  <Box
-                    mr={8}
-                    justifyContent="flex-start"
-                    height="100%"
-                    w={50}
-                    alignItems="center"
-                    rounded="full"
-                  >
-                    <DynamicIcon
-                      key={colors.hextextColor}
-                      name={icon}
-                      size={80}
-                      color={colors.hextextColor}
-                    />
-                  </Box>
-                )}
-                <Text
-                  fontSize="5xl"
-                  lineClamp={2}
-                  textOverflow="ellipsis"
-                  whiteSpace="nowrap"
-                  color={data?.viewProps?.textColor}
-                >
-                  {formatHeaderTitle(data.headerTitle)}
-                </Text>
-              </Flex>
-            )}
-          </Flex>
-        );
-      }}
-    </NodeView>
-  );
+  return <NodeView {...props}>{() => null}</NodeView>;
 };
 
 text.displayName = "text";

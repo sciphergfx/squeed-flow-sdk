@@ -18,21 +18,29 @@ export async function clearEvents(page: Page) {
 }
 
 export async function expectScrollableToolbar(page: Page) {
-  const panel = page.locator('[data-flow-toolbar-scroll]');
+  const panel = page.locator("[data-flow-toolbar-scroll]");
   await expect(panel).toHaveCSS("height", "50px");
   await expect(panel).toHaveCSS("overflow-x", "auto");
   const bounds = await panel.boundingBox();
   expect(bounds!.x).toBeGreaterThanOrEqual(0);
-  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(
+    page.viewportSize()!.width,
+  );
   for (const button of await panel.getByRole("button").all()) {
     await button.scrollIntoViewIfNeeded();
     const rect = await button.boundingBox();
     expect(rect!.x).toBeGreaterThanOrEqual(bounds!.x);
-    expect(rect!.x + rect!.width).toBeLessThanOrEqual(bounds!.x + bounds!.width);
+    expect(rect!.x + rect!.width).toBeLessThanOrEqual(
+      bounds!.x + bounds!.width,
+    );
     expect(rect!.y).toBeGreaterThanOrEqual(bounds!.y);
-    expect(rect!.y + rect!.height).toBeLessThanOrEqual(bounds!.y + bounds!.height);
+    expect(rect!.y + rect!.height).toBeLessThanOrEqual(
+      bounds!.y + bounds!.height,
+    );
   }
-  await panel.evaluate(element => { element.scrollLeft = 0; });
+  await panel.evaluate((element) => {
+    element.scrollLeft = 0;
+  });
 }
 
 export async function centerOfNode(page: Page, id: string) {

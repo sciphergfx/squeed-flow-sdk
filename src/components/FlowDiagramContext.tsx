@@ -132,6 +132,7 @@ export function FlowDiagramProvider({
       onEdgeRemove: wrap("onEdgeRemove"),
       onEdgeDelete: wrap("onEdgeDelete"),
       onEdgeColorChange: wrap("onEdgeColorChange"),
+      onEdgeTypeChange: wrap("onEdgeTypeChange"),
       onEdgeLabelChange: wrap("onEdgeLabelChange"),
       onEdgeStyleChange: wrap("onEdgeStyleChange"),
       // Diagram events
@@ -148,7 +149,8 @@ export function FlowDiagramProvider({
   const colorMode = config.colorMode || "light";
   const direction = config.direction || "LR";
   const nodeAlignment = config.nodeAlignment ?? "center";
-  const edgeMode = config.edgeMode === "workflow" ? "nodes" : (config.edgeMode ?? "nodes");
+  const edgeMode =
+    config.edgeMode === "workflow" ? "nodes" : (config.edgeMode ?? "nodes");
   const readOnly = config.readOnly ?? false;
   // Value-stable so inline literals don't re-render every consumer
   const parentNodeStyleKey = JSON.stringify(config.parentNodeStyle ?? null);
@@ -184,6 +186,12 @@ export function FlowDiagramProvider({
         },
         get edgeMode() {
           return configRef.current.edgeMode;
+        },
+        get edgeType() {
+          return configRef.current.edgeType;
+        },
+        get customEdgeTypes() {
+          return configRef.current.customEdgeTypes;
         },
         get themeColor() {
           return configRef.current.themeColor;
@@ -313,6 +321,9 @@ export function FlowDiagramProvider({
       isPerformanceMode,
       readOnly,
       config.edgeHandles,
+      config.edgeType,
+      config.customEdgeTypes,
+      config.selectionToolbar,
       stableCallbacks,
       stableConfig,
     ],

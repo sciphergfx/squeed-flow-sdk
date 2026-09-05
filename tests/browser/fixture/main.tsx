@@ -1,6 +1,7 @@
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { EditableCustomNode } from "./EditableCustomNode";
 import {
   applyCollapsed,
   FlowDiagram,
@@ -109,6 +110,7 @@ function Fixture() {
     isEdgeHandlesEnabled: false,
     editable: true,
     ...(query.has("custom") ? { customViews: { text: CustomNode } } : {}),
+    ...(query.get("custom") === "editable" ? { customViews: { text: EditableCustomNode, arrayView: EditableCustomNode, objectView: EditableCustomNode } } : {}),
     ...(query.has("viewport")
       ? { initialViewport: { pan: { x: 25, y: 35 }, zoom: 0.25 } }
       : {}),

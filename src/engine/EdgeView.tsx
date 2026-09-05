@@ -1,6 +1,12 @@
 import { memo, useMemo } from "react";
+import { createPortal } from "react-dom";
+import type { FlowDiagramConfig, FlowDiagramEdge, FlowDirection } from "../types";
 import {
   loopGeometry,
+  bezierGeometry,
+  connectorEndpoints,
+  polylineGeometry,
+  straightPortGeometry,
   propertyGeometry,
   taxiGeometry,
   type EdgeGeometryOptions,
@@ -28,6 +34,9 @@ export const DASH_PATTERN = "32 18";
 
 export interface EdgeViewProps {
   id: string;
+  edgeData?: FlowDiagramEdge["data"];
+  edgeType?: string;
+  customEdgeTypes?: FlowDiagramConfig["customEdgeTypes"];
   source: Box;
   target: Box;
   sourceProperty?: string;
@@ -38,8 +47,10 @@ export interface EdgeViewProps {
   /** taxi-turn as a fraction of the gap between the nodes */
   turn: number;
   labelAtTarget?: boolean;
+  labelFraction?: number;
   color: string;
   labelBg: string;
+  labelLayer?: SVGGElement | null;
   label?: string;
   dashed?: boolean;
   animated?: boolean;
@@ -53,6 +64,9 @@ const stop = (e: { stopPropagation(): void }) => e.stopPropagation();
 
 function EdgeView({
   id,
+  edgeData,
+  edgeType = "rounded-orthogonal",
+  customEdgeTypes,
   source,
   target,
   sourceProperty,
@@ -62,8 +76,10 @@ function EdgeView({
   dir,
   turn,
   labelAtTarget,
+  labelFraction,
   color,
   labelBg,
+  labelLayer,
   label,
   dashed,
   animated,
@@ -71,35 +87,76 @@ function EdgeView({
   loopIndex = 0,
   onSelect,
 }: EdgeViewProps) {
+  const lines = useMemo(
+    () => (label ? wrapText(label, LABEL_FONT, LABEL_MAX_WIDTH) : []),
+    [label],
+  );
+  const labelWidth = Math.max(0, ...lines.map((line) => measureText(line, LABEL_FONT)));
   const geo = useMemo(() => {
     const opts: EdgeGeometryOptions = {
       srcDist: STANDOFF,
       tgtDist: STANDOFF,
       arrowGap: ARROW_GAP,
       arrowSize: ARROW_SIZE,
-      radius: TAXI_RADIUS,
+      radius: labelAtTarget ? 40 : TAXI_RADIUS,
       arrowAt: inverted ? "source" : "target",
-      labelTargetLength: labelAtTarget ? LABEL_MAX_WIDTH + 2 * LABEL_PADDING : undefined,
+      labelTargetLength: labelAtTarget
+        ? labelWidth + 2 * LABEL_PADDING
+        : undefined,
+      labelFraction: labelAtTarget ? labelFraction : undefined,
     };
-    if (sourceY !== undefined || targetY !== undefined)
-      return propertyGeometry(source, target, dir, sourceY, targetY, turn, {
+    const property = sourceY !== undefined || targetY !== undefined;
+    const loop = source.x === target.x && source.y === target.y;
+    const defaultGeometry = property
+      ? propertyGeometry(source, target, dir, sourceY, targetY, turn, {
         ...opts,
         srcDist: 18,
         tgtDist: 18,
-      });
-    if (source.x === target.x && source.y === target.y)
-      return loopGeometry(source, loopIndex, {
+      })
+      : loop ? loopGeometry(source, loopIndex, {
         ...opts,
         srcDist: 0,
         tgtDist: 0,
-      });
-    return taxiGeometry(source, target, dir, turn, opts);
-  }, [source, target, sourceY, targetY, dir, turn, inverted, loopIndex, labelAtTarget]);
-
-  const lines = useMemo(
-    () => (label ? wrapText(label, LABEL_FONT, LABEL_MAX_WIDTH) : []),
-    [label],
-  );
+      }) : taxiGeometry(source, target, dir, turn, opts);
+    if (!defaultGeometry) return null;
+    const endpoints = connectorEndpoints(source, target, dir, sourceY, targetY, property ? 18 : STANDOFF);
+    const factory = Object.prototype.hasOwnProperty.call(customEdgeTypes ?? {}, edgeType) ? customEdgeTypes?.[edgeType] : undefined;
+    if (factory) {
+      const directions: Record<TaxiDir, FlowDirection> = { rightward: "LR", leftward: "RL", downward: "TB", upward: "BT" };
+      return factory({
+        edge: edgeData ?? { id, source: "", target: "" },
+        source: { ...source }, target: { ...target }, ...endpoints,
+        direction: directions[dir], sourceY, targetY,
+        inverted: !!inverted, defaultGeometry,
+      }) ?? defaultGeometry;
+    }
+    if (loop) return defaultGeometry;
+    if (edgeType === "straight")
+      return property ? straightPortGeometry(endpoints.sourcePoint, endpoints.targetPoint, opts)
+        : polylineGeometry([source, target], source, target, opts);
+    if (edgeType === "bezier")
+      return bezierGeometry(endpoints.sourcePoint, endpoints.targetPoint, property ? (dir === "leftward" ? "leftward" : "rightward") : dir, opts);
+    if (edgeType === "orthogonal")
+      return property ? propertyGeometry(source, target, dir, sourceY, targetY, turn, { ...opts, srcDist: 18, tgtDist: 18, radius: 0 })
+        : taxiGeometry(source, target, dir, turn, { ...opts, radius: 0 });
+    return defaultGeometry;
+  }, [
+    source,
+    id,
+    edgeData,
+    edgeType,
+    customEdgeTypes,
+    target,
+    sourceY,
+    targetY,
+    dir,
+    turn,
+    inverted,
+    loopIndex,
+    labelAtTarget,
+    labelFraction,
+    labelWidth,
+  ]);
 
   if (!geo) return null;
 
@@ -115,7 +172,11 @@ function EdgeView({
     labelEl = (
       <g
         className="flow-sdk-edge-label"
-        transform={`translate(${geo.label.x} ${geo.label.y}) rotate(${geo.label.angle}) translate(${labelAtTarget ? 0 : LABEL_MARGIN_X} 0)`}
+        data-label-transform={`translate(${geo.label.x} ${geo.label.y}) rotate(${geo.label.angle}) translate(${labelAtTarget || Object.prototype.hasOwnProperty.call(customEdgeTypes ?? {}, edgeType) ? 0 : LABEL_MARGIN_X} 0)`}
+        data-edge-id={id}
+        data-source-property={sourceProperty}
+        data-target-property={targetProperty}
+        transform={`translate(${geo.label.x} ${geo.label.y}) rotate(${geo.label.angle}) translate(${labelAtTarget || Object.prototype.hasOwnProperty.call(customEdgeTypes ?? {}, edgeType) ? 0 : LABEL_MARGIN_X} 0)`}
       >
         <rect
           x={-w / 2 - LABEL_PADDING}
@@ -166,7 +227,7 @@ function EdgeView({
         className={animClass}
       />
       {geo.arrow && <path d={geo.arrow} fill={color} />}
-      {labelEl}
+      {labelLayer && labelEl ? createPortal(labelEl, labelLayer) : labelEl}
       <path className="flow-sdk-edge-hit" d={geo.d} />
     </g>
   );

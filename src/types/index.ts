@@ -1,4 +1,6 @@
 import type { FlowEngine } from "../engine/types";
+import type { BuiltInEdgeType, CustomEdgeFactory } from "./edgeTypes";
+export type { BuiltInEdgeType, CustomEdgeContext, CustomEdgeFactory, CustomEdgeGeometry } from "./edgeTypes";
 
 export type { FlowEngine } from "../engine/types";
 
@@ -21,6 +23,7 @@ export interface FlowEdgeProperties {
 
 export interface SqueedConnection extends FlowEdgeProperties {
   target: string;
+  type?: string;
   id?: string;
   label?: string;
   color?: string;
@@ -59,6 +62,7 @@ export interface FlowDiagramNode {
 export interface FlowDiagramEdge {
   data: {
     id: string;
+    type?: BuiltInEdgeType | (string & {});
     source: string;
     target: string;
     sourceProperty?: string;
@@ -177,6 +181,8 @@ export interface BottomBarRenderProps {
 
 /** Configuration for the flow diagram appearance and behavior */
 export interface FlowDiagramConfig {
+  edgeType?: BuiltInEdgeType | (string & {});
+  customEdgeTypes?: Record<string, CustomEdgeFactory>;
   /** Layout direction: "LR", "RL", "TB", "BT" */
   direction?: FlowDirection;
   nodeAlignment?: NodeAlignment;
@@ -293,6 +299,7 @@ export interface FlowDiagramCallbacks {
   onEdgeDelete?: (edgeId: string, edgeData: any) => void;
   /** Fires when an edge's color is changed */
   onEdgeColorChange?: (edgeId: string, color: string) => void;
+  onEdgeTypeChange?: (edgeId: string, type: string | undefined) => void;
   /** Fires when an edge's label is changed */
   onEdgeLabelChange?: (edgeId: string, newLabel: string) => void;
   /** Fires when an edge's style is changed (solid, dashed, animated) */

@@ -230,6 +230,17 @@ export function bindSqueedCallbacks(
           value: style,
         });
     },
+    onEdgeTypeChange: (edgeId, type) => {
+      callbacks.onEdgeTypeChange?.(edgeId, type);
+      const ref = edgeRef(edgeId);
+      if (ref)
+        emit(setEdgeProp(json, ref, "$edgeType", type), {
+          type: "edgeStyle",
+          edge: ref,
+          key: ref.connection ? "$connections" : "$edgeType",
+          value: type,
+        });
+    },
     onEdgeColorChange: (edgeId, color) => {
       callbacks.onEdgeColorChange?.(edgeId, color);
       const ref = edgeRef(edgeId);

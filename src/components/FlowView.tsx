@@ -181,10 +181,11 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         fontSize: s.fontSize ?? PARENT_DEFAULTS.fontSize,
         labelPosition: s.labelPosition ?? PARENT_DEFAULTS.labelPosition,
         labelMargin: PARENT_DEFAULTS.labelMargin,
+        labelBg: blendHexColors(getColorHex("dark"), fill, s.bgOpacity) ?? getColorHex("dark"),
         padding: s.padding ?? PARENT_DEFAULTS.padding,
       };
     },
-    [resolveParentStyle, nodeById, colorText, themeColor, isPerformanceMode],
+    [resolveParentStyle, nodeById, colorText, themeColor, isPerformanceMode, getColorHex],
   );
 
   // Spread parallel/opposite edges so taxi segments and labels don't stack
@@ -232,6 +233,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         }
         return {
           id: data.id,
+          data,
+          type: data.type ?? config.edgeType ?? "rounded-orthogonal",
           source: data.source,
           target: data.target,
           sourceProperty: data.sourceProperty,
@@ -249,6 +252,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     edges,
     lineColor,
     parallelTurns,
+    config.edgeType,
     nodeById,
     resolveParentStyle,
     getColorHex,
@@ -290,6 +294,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           parent: node.data.parent,
           label: nodeLabel,
           animated: !!node.data.isNodeAnimated,
+          hasCollapseControl: node.data.config?.collapsed !== undefined,
           animationColor: getChakraColorHex(
             node.data.viewProps?.borderColor || themeColor,
           ),
@@ -580,6 +585,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           direction={layoutDirection}
           nodeAlignment={nodeAlignment}
           edgeMode={edgeMode}
+          edgeType={config.edgeType}
+          customEdgeTypes={config.customEdgeTypes}
           rankSep={rankSep}
           edgeSep={edgeSep}
           layoutDebounce={layoutDebounce}

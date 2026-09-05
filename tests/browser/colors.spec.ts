@@ -122,11 +122,11 @@ test("transparent mapped edges hide their line, arrow and label mask and can be 
     "fill",
     "transparent",
   );
-  await expect(edge.locator(".flow-sdk-edge-label rect")).toHaveAttribute(
+  await expect(page.locator('.flow-sdk-edge-label[data-source-property="runtime"] rect')).toHaveAttribute(
     "fill",
     "transparent",
   );
-  await expect(edge.locator(".flow-sdk-edge-label text")).toHaveAttribute(
+  await expect(page.locator('.flow-sdk-edge-label[data-source-property="runtime"] text')).toHaveAttribute(
     "fill",
     "transparent",
   );
@@ -180,7 +180,7 @@ test("transparent compound-node colors and canvas backgrounds reach SVG and DOM"
     "stroke",
     "transparent",
   );
-  await expect(container.locator("text")).toHaveAttribute(
+  await expect(page.locator(".flow-sdk-container-label text")).toHaveAttribute(
     "fill",
     "transparent",
   );

@@ -22,6 +22,7 @@ export interface EdgeGeometryOptions {
   radius: number;
   arrowAt: "target" | "source" | "none";
   labelTargetLength?: number;
+  labelFraction?: number;
 }
 
 const f = (n: number) => (Math.round(n * 10) / 10).toString();
@@ -202,7 +203,15 @@ export function polylineGeometry(
     arrow = arrowPath(tip, beforeEnd, o.arrowSize);
   } else lineEnd = shorten(tExit, beforeEnd, o.tgtDist);
 
-  return roundedGeometry(lineStart, interior, lineEnd, arrow, o.radius, o.labelTargetLength);
+  return roundedGeometry(
+    lineStart,
+    interior,
+    lineEnd,
+    arrow,
+    o.radius,
+    o.labelTargetLength,
+    o.labelFraction,
+  );
 }
 
 function roundedGeometry(
@@ -212,6 +221,7 @@ function roundedGeometry(
   arrow: string | undefined,
   radius: number,
   labelTargetLength?: number,
+  labelFraction?: number,
 ): EdgeGeometry {
   const all = [lineStart, ...interior, lineEnd];
   const corners: Corner[] = [];
@@ -259,6 +269,18 @@ function roundedGeometry(
     }
   }
   if (labelTargetLength !== undefined) {
+    if (labelFraction !== undefined && corners.length === 2) {
+      const start = corners[0].p2;
+      const end = corners[1].p1;
+      const length = Math.hypot(end.x - start.x, end.y - start.y);
+      const margin = Math.min(0.5, labelTargetLength / (2 * length));
+      const fraction = Math.max(margin, Math.min(1 - margin, labelFraction));
+      label = {
+        x: start.x + (end.x - start.x) * fraction,
+        y: start.y + (end.y - start.y) * fraction,
+        angle: autoAngle(end.x - start.x, end.y - start.y),
+      };
+    }
     const branchStart = corners[corners.length - 1]?.p2 ?? lineStart;
     const deltaX = lineEnd.x - branchStart.x;
     const deltaY = lineEnd.y - branchStart.y;
@@ -347,6 +369,59 @@ export function taxiGeometry(
   o: EdgeGeometryOptions,
 ): EdgeGeometry | null {
   return polylineGeometry(taxiPoints(s, t, dir, turn), s, t, o);
+}
+
+export function connectorEndpoints(
+  source: Box,
+  target: Box,
+  dir: TaxiDir,
+  sourceY: number | undefined,
+  targetY: number | undefined,
+  distance: number,
+): { sourcePoint: Point; targetPoint: Point } {
+  const vertical = sourceY === undefined && targetY === undefined && (dir === "downward" || dir === "upward");
+  const forward = dir === "leftward" || (vertical && dir === "upward") ? -1 : 1;
+  return {
+    sourcePoint: vertical
+      ? { x: source.x, y: source.y + forward * (source.h / 2 + distance) }
+      : { x: source.x + forward * (source.w / 2 + distance), y: sourceY ?? source.y },
+    targetPoint: vertical
+      ? { x: target.x, y: target.y - forward * (target.h / 2 + distance) }
+      : { x: target.x - forward * (target.w / 2 + distance), y: targetY ?? target.y },
+  };
+}
+
+export function bezierGeometry(
+  source: Point,
+  target: Point,
+  dir: TaxiDir,
+  options: EdgeGeometryOptions,
+): EdgeGeometry {
+  const vertical = dir === "downward" || dir === "upward";
+  const forward = dir === "leftward" || dir === "upward" ? -1 : 1;
+  const reach = Math.max(100, Math.abs(vertical ? target.y - source.y : target.x - source.x) / 2);
+  const controlSource = { x: source.x + (vertical ? 0 : forward * reach), y: source.y + (vertical ? forward * reach : 0) };
+  const controlTarget = { x: target.x - (vertical ? 0 : forward * reach), y: target.y - (vertical ? forward * reach : 0) };
+  const start = options.arrowAt === "source" ? shorten(source, controlSource, options.arrowGap) : source;
+  const end = options.arrowAt === "target" ? shorten(target, controlTarget, options.arrowGap) : target;
+  return {
+    d: `M${pt(start)} C${pt(controlSource)} ${pt(controlTarget)} ${pt(end)}`,
+    arrow: options.arrowAt === "source" ? arrowPath(source, controlSource, options.arrowSize)
+      : options.arrowAt === "target" ? arrowPath(target, controlTarget, options.arrowSize) : undefined,
+    label: {
+      x: (start.x + 3 * controlSource.x + 3 * controlTarget.x + end.x) / 8,
+      y: (start.y + 3 * controlSource.y + 3 * controlTarget.y + end.y) / 8,
+      angle: autoAngle(end.x + controlTarget.x - controlSource.x - start.x, end.y + controlTarget.y - controlSource.y - start.y),
+    },
+  };
+}
+
+export function straightPortGeometry(source: Point, target: Point, options: EdgeGeometryOptions): EdgeGeometry {
+  const start = options.arrowAt === "source" ? shorten(source, target, options.arrowGap) : source;
+  const end = options.arrowAt === "target" ? shorten(target, source, options.arrowGap) : target;
+  const arrow = options.arrowAt === "source" ? arrowPath(source, target, options.arrowSize)
+    : options.arrowAt === "target" ? arrowPath(target, source, options.arrowSize) : undefined;
+  return roundedGeometry(start, [], end, arrow, 0);
 }
 
 /** Port of cytoscape `findLoopPoints` + the two-quadratic self-edge drawing */

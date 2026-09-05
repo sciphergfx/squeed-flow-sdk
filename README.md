@@ -91,39 +91,96 @@ You can provide either `json` (auto-generates nodes/edges) or `nodes` + `edges` 
 
 ### `FlowDiagramConfig`
 
-| Option                                                                  | Type                                             | Default      | Description                                                                            |
-| ----------------------------------------------------------------------- | ------------------------------------------------ | ------------ | -------------------------------------------------------------------------------------- |
-| `direction`                                                             | `"LR" \| "RL" \| "TB" \| "BT" \| "C"`            | `"LR"`       | Layout direction; `C` splits the JSON root's branches                                  |
-| `nodeAlignment`                                                         | `"leading" \| "center" \| "trailing"`            | `"center"`   | Align unequal node sizes within each layout rank                                       |
+| Option                                                                  | Type                                             | Default      | Description                                                                                       |
+| ----------------------------------------------------------------------- | ------------------------------------------------ | ------------ | ------------------------------------------------------------------------------------------------- |
+| `direction`                                                             | `"LR" \| "RL" \| "TB" \| "BT" \| "C"`            | `"LR"`       | Layout direction; `C` splits the JSON root's branches                                             |
+| `nodeAlignment`                                                         | `"leading" \| "center" \| "trailing"`            | `"center"`   | Align unequal node sizes within each layout rank                                                  |
 | `edgeMode`                                                              | `"nodes" \| "properties" \| "workflow"`          | `"nodes"`    | Attach edges to nodes or named property rows; `"workflow"` is a compatibility alias for `"nodes"` |
-| `layout`                                                                | `LayoutAlgorithm`                                | `"dagre"`    | Only Dagre is implemented; other legacy values do not select a different layout        |
-| `themeColor`                                                            | `string`                                         | `"blue.500"` | Accent color (Chakra token)                                                            |
-| `colorMode`                                                             | `"light" \| "dark"`                              | `"light"`    | Color mode                                                                             |
-| `backgroundPattern`                                                     | `"dot" \| "grid" \| "steel" \| "none"`           | `"dot"`      | Background pattern                                                                     |
-| `backgroundColor`                                                       | `string`                                         | —            | Background color override                                                              |
-| `edgeColor`                                                             | `string`                                         | —            | Edge/line color override                                                               |
-| `minZoom`                                                               | `number`                                         | `0.01`       | Minimum zoom level                                                                     |
-| `maxZoom`                                                               | `number`                                         | `1.5`        | Maximum zoom level                                                                     |
-| `initialViewport`                                                       | `{ pan: { x, y }, zoom }`                        | —            | Initial viewport; omitted means fit on first layout                                    |
-| `edgeHandles`                                                           | `boolean`                                        | —            | `false` disables edge drawing; enabling handles does not activate Draw mode             |
-| `readOnly`                                                              | `boolean`                                        | `false`      | Disable graph gestures and edits; toolbar navigation remains available                 |
-| `editable`                                                              | `boolean`                                        | `false`      | Enable inline node label editing                                                       |
-| `parentNodeStyle`                                                       | `ParentNodeStyle`                                | —            | Compound-node fill, border, padding, and label defaults                                |
-| `selectionToolbar`                                                      | `SelectionToolbarConfig \| false`                | —            | Customize palette and hidden controls, or disable selection tools                      |
-| `nodeOverlayActions`                                                    | `NodeOverlayAction[]`                            | —            | Actions in node hover overlay                                                          |
-| `renderNodeOverlay`                                                     | `(props: NodeOverlayProps) => ReactNode`         | —            | Custom node hover overlay                                                              |
-| `renderSelectedNodeToolbar`                                             | `(props: SelectedNodeToolbarProps) => ReactNode` | —            | Custom multi-select toolbar                                                            |
-| `renderSelectedEdgeToolbar`                                             | `(props: SelectedEdgeToolbarProps) => ReactNode` | —            | Custom edge selection toolbar                                                          |
-| `renderBottomBar`                                                       | `(props: BottomBarRenderProps) => ReactNode`     | —            | Replace the bottom bar                                                                 |
-| `customViews`                                                           | `Record<string, ComponentType>`                  | —            | Override node views                                                                    |
-| `disableKeyboardShortcuts`                                              | `boolean`                                        | `false`      | Disable built-in keyboard shortcuts                                                    |
-| `isZoomMode`, `isMultiSelectMode`, `isDragMode`, `isEdgeHandlesEnabled` | `boolean`                                        | —            | Externally controlled interaction modes                                                |
+| `layout`                                                                | `LayoutAlgorithm`                                | `"dagre"`    | Only Dagre is implemented; other legacy values do not select a different layout                   |
+| `themeColor`                                                            | `string`                                         | `"blue.500"` | Accent color (Chakra token)                                                                       |
+| `colorMode`                                                             | `"light" \| "dark"`                              | `"light"`    | Color mode                                                                                        |
+| `backgroundPattern`                                                     | `"dot" \| "grid" \| "steel" \| "none"`           | `"dot"`      | Background pattern                                                                                |
+| `backgroundColor`                                                       | `string`                                         | —            | Background color override                                                                         |
+| `edgeColor`                                                             | `string`                                         | —            | Edge/line color override                                                                          |
+| `minZoom`                                                               | `number`                                         | `0.01`       | Minimum zoom level                                                                                |
+| `maxZoom`                                                               | `number`                                         | `1.5`        | Maximum zoom level                                                                                |
+| `initialViewport`                                                       | `{ pan: { x, y }, zoom }`                        | —            | Initial viewport; omitted means fit on first layout                                               |
+| `edgeHandles`                                                           | `boolean`                                        | —            | `false` disables edge drawing; enabling handles does not activate Draw mode                       |
+| `readOnly`                                                              | `boolean`                                        | `false`      | Disable graph gestures and edits; toolbar navigation remains available                            |
+| `editable`                                                              | `boolean`                                        | `false`      | Enable inline node label editing                                                                  |
+| `parentNodeStyle`                                                       | `ParentNodeStyle`                                | —            | Compound-node fill, border, padding, and label defaults                                           |
+| `selectionToolbar`                                                      | `SelectionToolbarConfig \| false`                | —            | Customize palette and hidden controls, or disable selection tools                                 |
+| `nodeOverlayActions`                                                    | `NodeOverlayAction[]`                            | —            | Actions in node hover overlay                                                                     |
+| `renderNodeOverlay`                                                     | `(props: NodeOverlayProps) => ReactNode`         | —            | Custom node hover overlay                                                                         |
+| `renderSelectedNodeToolbar`                                             | `(props: SelectedNodeToolbarProps) => ReactNode` | —            | Custom multi-select toolbar                                                                       |
+| `renderSelectedEdgeToolbar`                                             | `(props: SelectedEdgeToolbarProps) => ReactNode` | —            | Custom edge selection toolbar                                                                     |
+| `renderBottomBar`                                                       | `(props: BottomBarRenderProps) => ReactNode`     | —            | Replace the bottom bar                                                                            |
+| `customViews`                                                           | `Record<string, ComponentType>`                  | —            | Override node views                                                                               |
+| `disableKeyboardShortcuts`                                              | `boolean`                                        | `false`      | Disable built-in keyboard shortcuts                                                               |
+| `isZoomMode`, `isMultiSelectMode`, `isDragMode`, `isEdgeHandlesEnabled` | `boolean`                                        | —            | Externally controlled interaction modes                                                           |
 
 Use `$collapsed: true` to collapse a JSON branch, and `false` to keep the expansion control. Automatic depth-based collapse is not part of the current API.
 
 `nodeAlignment: "leading"` aligns left edges in `LR`/`C`, right edges in `RL`, top edges in `TB`, and bottom edges in `BT`. `"trailing"` aligns the opposite edge. Node dimensions and graph connections are unchanged; containers and edge paths follow the aligned positions.
 
+## Custom Node Editing
+
+Custom views replace the node renderer. Wrap custom visuals in the exported
+`NodeView` to reuse SDK selection, multi-selection, overlays, and collapse
+controls. Use `EditableLabel` for the standard inline editor, including
+read-only handling and `onNodeLabelChange` notifications.
+
+```tsx
+import { NodeView, EditableLabel } from "@squeed/flow-sdk";
+import type { FlowDiagramNode } from "@squeed/flow-sdk";
+
+function CustomNode({ data }: FlowDiagramNode) {
+  return (
+    <NodeView data={data}>
+      {({ isActive, isEditing, onEditStart, onEditEnd }) => (
+        <div data-selected={isActive} style={{ width: 240, height: 160 }}>
+          <EditableLabel
+            nodeId={data.id}
+            label={data.label ?? "Custom"}
+            color={data.viewProps?.textColor ?? "gray.900"}
+            isEditing={isEditing}
+            onEditStart={onEditStart}
+            onEditEnd={onEditEnd}
+          />
+        </div>
+      )}
+    </NodeView>
+  );
+}
+```
+
+Register the component under its node type in `config.customViews`. Do not stop
+click propagation on the visual surface or maintain a separate selection state.
+The custom renderer must apply the styling fields it supports, such as
+`data.viewProps.bgColor`, `borderColor`, `borderWidth`, and `outline`, to its
+HTML or SVG. Raw-graph callbacks must update node data; JSON mode persists edits
+through `onJsonChange`. The wrapper does not change custom SVG geometry.
+
 ## Callbacks
+### Edge Shapes
+
+Set `config.edgeType` to `straight`, `bezier`, `orthogonal`, or
+`rounded-orthogonal` (default). `edge.data.type` overrides it for one raw edge.
+Register custom SVG geometry factories in `config.customEdgeTypes`; their keys
+also appear in the selected-edge toolbar's **Edge shape** menu.
+
+Selecting a shape calls `callbacks.onEdgeTypeChange(edgeId, type)`.
+Raw-graph consumers must update that edge's `data.type`; choosing **Default**
+passes `undefined` to remove the override. JSON mode persists it automatically
+through `onJsonChange`: `$edgeType` for hierarchy edges, `$targetEdgeType` for
+`$target` links, and `type` on the selected `$connections` entry.
+The selector follows `selectionToolbar.hide: ["style"]` and read-only mode.
+
+Custom factories receive `edge`, node bounds (`source`, `target`),
+`sourcePoint`, `targetPoint`, `direction`, property row positions, `inverted`,
+and `defaultGeometry`. Return `{ d, label: { x, y, angle }, arrow? }` in model
+coordinates; `arrow` is an optional filled SVG path. Return `null` to use the
+default route. The SDK retains selection, colors, dash animation, and labels.
 
 ### Node Events
 

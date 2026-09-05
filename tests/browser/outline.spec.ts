@@ -150,10 +150,10 @@ test("container outline defaults can be overridden and edge-label masks use the 
   );
   await expect(
     page.locator(
-      '.flow-sdk-edge[data-edge-id="inside"] .flow-sdk-edge-label rect',
+      '.flow-sdk-edge-label[data-edge-id="inside"] rect',
     ),
   ).toHaveAttribute("fill", /^#ffffff$/i);
-  await group.locator("text").click();
+  await page.locator('.flow-sdk-container-label[data-node-id="group"] text').click();
   const toggle = page.getByRole("button", {
     name: "Toggle node outline",
     exact: true,

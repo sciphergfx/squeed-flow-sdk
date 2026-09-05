@@ -48,6 +48,8 @@ export {
 
 // Hooks (for consumers building custom editable node content)
 export { useStopPropagation } from "./hooks/useStopPropagation";
+export { default as NodeView } from "./nodes/NodeView";
+export { EditableLabel } from "./nodes/EditableLabel";
 
 // Utilities
 export { default as DynamicIcon } from "./utils/DynamicIcon";
@@ -55,6 +57,10 @@ export { default as DynamicIcon } from "./utils/DynamicIcon";
 // Types
 export type {
   BackgroundPattern,
+  BuiltInEdgeType,
+  CustomEdgeContext,
+  CustomEdgeFactory,
+  CustomEdgeGeometry,
   BottomBarRenderProps,
   EdgeMode,
   FlowDiagramCallbacks,

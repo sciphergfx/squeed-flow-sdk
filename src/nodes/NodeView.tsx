@@ -257,9 +257,9 @@ const NodeView = ({
                 py={4}
               >
                 {nodeData.config.collapsed ? (
-                  <PiPlusBold size={30} color="gray.800" />
+                  <PiPlusBold size={30} color={getChakraColorHex("gray.800")} />
                 ) : (
-                  <PiMinusBold size={30} color="gray.800" />
+                  <PiMinusBold size={30} color={getChakraColorHex("gray.800")} />
                 )}
               </IconButton>
             );
@@ -404,9 +404,9 @@ const NodeView = ({
                 py={4}
               >
                 {nodeData.config.collapsed ? (
-                  <PiPlusBold size={30} color="gray.800" />
+                  <PiPlusBold size={30} color={getChakraColorHex("gray.800")} />
                 ) : (
-                  <PiMinusBold size={30} color="gray.800" />
+                  <PiMinusBold size={30} color={getChakraColorHex("gray.800")} />
                 )}
               </IconButton>
             );

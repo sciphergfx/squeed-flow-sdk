@@ -13,6 +13,7 @@ export interface NodeHostProps {
   /** Register/unregister the host element for size observation */
   onMount: (id: string, el: HTMLDivElement | null) => void;
   drawHandles?: boolean;
+  hasCollapseControl?: boolean;
   handleColor?: string;
   animated?: boolean;
   animationColor?: string;
@@ -33,6 +34,7 @@ function NodeHost({
   placed,
   onMount,
   drawHandles,
+  hasCollapseControl,
   handleColor,
   animated,
   animationColor,
@@ -153,7 +155,7 @@ function NodeHost({
             />
           )),
         )}
-      {drawHandles && (!propertyMode || !rows.length) && (
+      {drawHandles && !hasCollapseControl && (!propertyMode || !rows.length) && (
         <button
           type="button"
           className="flow-sdk-handle"
@@ -161,9 +163,13 @@ function NodeHost({
           title="Draw edge"
           style={{
             color: handleColor,
-            left: direction === "RL" ? -36 : direction === "LR" ? "100%" : "50%",
+            left:
+              direction === "RL" ? -36 : direction === "LR" ? "100%" : "50%",
             top: direction === "BT" ? -36 : direction === "TB" ? "100%" : "50%",
-            transform: direction === "BT" || direction === "TB" ? "translateX(-50%)" : "translateY(-50%)",
+            transform:
+              direction === "BT" || direction === "TB"
+                ? "translateX(-50%)"
+                : "translateY(-50%)",
           }}
           onClick={(event) => event.stopPropagation()}
         >

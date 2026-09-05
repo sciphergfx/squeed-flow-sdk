@@ -1,6 +1,7 @@
 import { memo } from "react";
+import { createPortal } from "react-dom";
 import { NodeBorderAnimation } from "./NodeBorderAnimation";
-import { EDGE_LABEL_FONT_FAMILY } from "./text";
+import { EDGE_LABEL_FONT_FAMILY, measureText } from "./text";
 import type { Rect } from "./types";
 
 export interface ContainerStyle {
@@ -18,6 +19,7 @@ export interface ContainerStyle {
   labelPosition: "top" | "center" | "bottom";
   /** cytoscape `text-margin-y` magnitude for top/bottom placement */
   labelMargin: number;
+  labelBg: string;
   animated?: boolean;
   animationColor?: string;
 }
@@ -26,6 +28,7 @@ export interface ContainerViewProps {
   id: string;
   rect: Rect;
   label?: string;
+  labelLayer?: SVGGElement | null;
   style: ContainerStyle;
   onSelect?: (id: string) => void;
 }
@@ -36,6 +39,7 @@ function ContainerView({
   id,
   rect,
   label,
+  labelLayer,
   style,
   onSelect,
 }: ContainerViewProps) {
@@ -55,6 +59,32 @@ function ContainerView({
       : style.labelPosition === "bottom"
         ? rect.y2 - style.labelMargin + style.fontSize / 2
         : rect.y1 + h / 2;
+
+  const labelWidth = label ? measureText(label, `bold ${style.fontSize}px ${EDGE_LABEL_FONT_FAMILY}`) : 0;
+  const padding = style.fontSize / 5;
+  const labelElement = label ? (
+    <g className="flow-sdk-container-label" data-node-id={id}>
+      <rect
+        x={cx - labelWidth / 2 - padding}
+        y={labelY - style.fontSize / 2 - padding}
+        width={labelWidth + 2 * padding}
+        height={style.fontSize + 2 * padding}
+        fill={style.textColor === "transparent" ? "transparent" : style.labelBg}
+      />
+      <text
+        x={cx}
+        y={labelY}
+        fill={style.textColor}
+        fontSize={style.fontSize}
+        fontWeight="bold"
+        fontFamily={EDGE_LABEL_FONT_FAMILY}
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        {label}
+      </text>
+    </g>
+  ) : null;
 
   return (
     <g
@@ -103,20 +133,7 @@ function ContainerView({
           strokeWidth={Math.max(8, bw * 1.6)}
         />
       )}
-      {label && (
-        <text
-          x={cx}
-          y={labelY}
-          fill={style.textColor}
-          fontSize={style.fontSize}
-          fontWeight="bold"
-          fontFamily={EDGE_LABEL_FONT_FAMILY}
-          textAnchor="middle"
-          dominantBaseline="central"
-        >
-          {label}
-        </text>
-      )}
+      {labelLayer && labelElement ? createPortal(labelElement, labelLayer) : labelElement}
     </g>
   );
 }

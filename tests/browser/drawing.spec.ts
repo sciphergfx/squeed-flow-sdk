@@ -67,7 +67,7 @@ test("node handles can draw while selection mode is active", async ({
   page,
 }) => {
   await ready(page);
-  const node = page.locator('.flow-sdk-node[data-node-id="alpha"]');
+  const node = page.locator('.flow-sdk-node[data-node-id="beta"]');
   await node.hover();
   const handle = node.getByRole("button", { name: "Draw edge", exact: true });
   await expect(handle).toBeVisible();
@@ -76,7 +76,7 @@ test("node handles can draw while selection mode is active", async ({
   await dragBetween(
     page,
     { x: bounds!.x + bounds!.width / 2, y: bounds!.y + bounds!.height / 2 },
-    await centerOfNode(page, "beta"),
+    await centerOfNode(page, "gamma"),
   );
   expect(
     await page.evaluate(() =>

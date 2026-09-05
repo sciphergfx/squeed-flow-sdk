@@ -72,6 +72,7 @@ export function prepareConnections(document: SqueedJson): {
           id: `connection:${JSON.stringify([address, entry.key])}`,
           source: address,
           target: connection.target,
+          type: typeof connection.type === "string" ? connection.type : undefined,
           sourceProperty: connection.sourceProperty,
           targetProperty: connection.targetProperty,
           label:

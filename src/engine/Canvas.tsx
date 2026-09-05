@@ -7,9 +7,10 @@ import {
   useRef,
   useState,
 } from "react";
-import type { EdgeMode, FlowEdgeProperties, NodeAlignment } from "../types";
+import type { EdgeMode, FlowEdgeProperties, NodeAlignment, FlowDiagramConfig, FlowDiagramEdge } from "../types";
 import ContainerView, { type ContainerStyle } from "./ContainerView";
 import EdgeView from "./EdgeView";
+import { placeEdgeLabels } from "./labelPlacement";
 import { branchRoutes } from "./branchRouting";
 import type { TaxiDir } from "./geometry";
 import { computeContainers, runDagreLayout } from "./layout";
@@ -32,6 +33,7 @@ import { Viewport } from "./viewport";
 
 export interface CanvasNode {
   id: string;
+  hasCollapseControl?: boolean;
   parent?: string;
   /** Compound label drawn on the container (cytoscape `data(label)`) */
   label?: string;
@@ -43,6 +45,8 @@ export interface CanvasNode {
 
 export interface CanvasEdge extends FlowEdgeProperties {
   id: string;
+  data: FlowDiagramEdge["data"];
+  type: string;
   source: string;
   target: string;
   label?: string;
@@ -63,6 +67,8 @@ export interface CanvasProps {
   direction: "LR" | "RL" | "TB" | "BT";
   nodeAlignment?: NodeAlignment;
   edgeMode?: EdgeMode;
+  edgeType?: FlowDiagramConfig["edgeType"];
+  customEdgeTypes?: FlowDiagramConfig["customEdgeTypes"];
   rankSep: number;
   edgeSep: number;
   layoutDebounce: number;
@@ -162,6 +168,7 @@ function Canvas(props: CanvasProps) {
 
   const rootRef = useRef<HTMLDivElement>(null);
   const svgGroupRef = useRef<SVGGElement>(null);
+  const labelGroupRef = useRef<SVGGElement>(null);
   const nodesLayerRef = useRef<HTMLDivElement>(null);
 
   const viewport = useMemo(
@@ -411,14 +418,16 @@ function Canvas(props: CanvasProps) {
     });
     containersRef.current.forEach((r) => rects.push(r));
     try {
-      const bb = svgGroupRef.current?.getBBox();
-      if (bb && bb.width > 0 && bb.height > 0)
-        rects.push({
-          x1: bb.x,
-          y1: bb.y,
-          x2: bb.x + bb.width,
-          y2: bb.y + bb.height,
-        });
+      for (const group of [svgGroupRef.current, labelGroupRef.current]) {
+        const bb = group?.getBBox();
+        if (bb && bb.width > 0 && bb.height > 0)
+          rects.push({
+            x1: bb.x,
+            y1: bb.y,
+            x2: bb.x + bb.width,
+            y2: bb.y + bb.height,
+          });
+      }
     } catch {
       /* detached svg */
     }
@@ -431,6 +440,10 @@ function Canvas(props: CanvasProps) {
     if (nodesLayerRef.current)
       nodesLayerRef.current.style.transform = `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`;
     svgGroupRef.current?.setAttribute(
+      "transform",
+      `translate(${pan.x} ${pan.y}) scale(${zoom})`,
+    );
+    labelGroupRef.current?.setAttribute(
       "transform",
       `translate(${pan.x} ${pan.y}) scale(${zoom})`,
     );
@@ -660,7 +673,7 @@ function Canvas(props: CanvasProps) {
         return;
       }
     }
-    if (target.closest(".flow-sdk-node, .flow-sdk-container, .flow-sdk-edge"))
+    if (target.closest(".flow-sdk-node, .flow-sdk-container, .flow-sdk-edge, .flow-sdk-edge-label, .flow-sdk-container-label"))
       return;
     if (p.multiSelect) {
       gestureRef.current = {
@@ -903,6 +916,10 @@ function Canvas(props: CanvasProps) {
   }, [edges]);
 
   const taxiDir = TAXI_DIR[direction];
+  const [labelLayer, setLabelLayer] = useState<SVGGElement | null>(null);
+  useLayoutEffect(() => {
+    if (rootRef.current && labelLayer) placeEdgeLabels(rootRef.current);
+  });
   const branches = branchRoutes(edges, boxFor, taxiDir);
   const onEdgeSelect = props.onEdgeSelect;
   const onContainerSelect = props.onContainerSelect;
@@ -957,6 +974,7 @@ function Canvas(props: CanvasProps) {
                 id={id}
                 rect={rect}
                 label={labelById.get(id)}
+                labelLayer={labelLayer}
                 style={containerStyle(id)}
                 onSelect={onContainerSelect}
               />
@@ -971,6 +989,9 @@ function Canvas(props: CanvasProps) {
                 <EdgeView
                   key={e.id}
                   id={e.id}
+                  edgeData={e.data}
+                  edgeType={e.type}
+                  customEdgeTypes={props.customEdgeTypes}
                   source={s}
                   target={t}
                   sourceProperty={e.sourceProperty}
@@ -980,9 +1001,11 @@ function Canvas(props: CanvasProps) {
                   dir={taxiDir}
                   turn={branches.get(e.id)?.turn ?? e.turn}
                   labelAtTarget={branches.get(e.id)?.labelAtTarget}
+                  labelFraction={branches.get(e.id)?.labelFraction}
                   color={e.color}
                   labelBg={e.labelBg}
                   label={e.label}
+                  labelLayer={labelLayer}
                   dashed={e.dashed}
                   animated={e.animated && !isPerformanceMode}
                   inverted={e.inverted}
@@ -996,6 +1019,9 @@ function Canvas(props: CanvasProps) {
             <g className="flow-sdk-ghost" pointerEvents="none">
               <EdgeView
                 id="__flow-sdk-ghost"
+                edgeData={{ id: "__flow-sdk-ghost", source: ghost.source, target: ghost.target ?? "", sourceProperty: ghost.sourceProperty, targetProperty: ghost.targetProperty }}
+                edgeType={props.edgeType}
+                customEdgeTypes={props.customEdgeTypes}
                 source={ghostSource}
                 target={ghostTarget}
                 sourceProperty={ghost.sourceProperty}
@@ -1030,6 +1056,7 @@ function Canvas(props: CanvasProps) {
               placed={!!p || !!c}
               onMount={onHostMount}
               drawHandles={props.drawHandles && !props.readOnly}
+              hasCollapseControl={n.hasCollapseControl}
               handleColor={lineColor}
               animated={n.animated && !c && !isPerformanceMode}
               animationColor={n.animationColor}
@@ -1057,6 +1084,11 @@ function Canvas(props: CanvasProps) {
           }}
         />
       )}
+      <svg className="flow-sdk-svg flow-sdk-label-overlay" style={{ zIndex: 11, pointerEvents: "none" }}>
+        <g ref={labelGroupRef} transform={`translate(${viewport.pan.x} ${viewport.pan.y}) scale(${viewport.zoom})`}>
+          <g ref={setLabelLayer} className="flow-sdk-labels" style={{ pointerEvents: drawMode ? "none" : "visiblePainted" }} />
+        </g>
+      </svg>
     </div>
   );
 }
