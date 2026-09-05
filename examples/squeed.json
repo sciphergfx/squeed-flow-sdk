@@ -1,0 +1,914 @@
+{
+          "title": "Squeed",
+          "start": {
+                    "$label": "Start Here",
+                    "$icon": "PiCompass",
+                    "$bgColor": "teal.600",
+                    "$collapsed": true,
+                    "$content": "# Squeed Maintainer Guide\nSqueed turns JSON into an editable React diagram. Expand the chapters to learn how it works and where to make changes. Paths refer to the flow-sdk repository unless marked Consumer. This guide explains behavior; it does not certify that every release check passes.",
+                    "setup": {
+                              "$label": "Run the Project",
+                              "$content": "Use Node.js 22 LTS and npm. From the SDK folder:\n```sh\nnpm ci\nnpx playwright install chromium\nnpm run build\n```\nFor a standalone preview, run `npm run dev` and `npm run test:serve` in separate terminals, then open http://127.0.0.1:4196. No Backflow account is needed. Browser tests manage their own server on that port: stop your own preview before running them. Never restart another person's server without asking."
+                    },
+                    "terms": {
+                              "$label": "Vocabulary",
+                              "$content": "- **Node:** a box, label, or custom shape.\n- **Edge:** a connection.\n- **Props:** values passed into a React component.\n- **State:** values that change during use.\n- **Callback:** a function called when an event occurs.\n- **Context:** shared React state.\n- **Model coordinates:** positions before zoom and pan.\n- **DOM / SVG:** browser elements that draw the diagram.\n- **Immutable edit:** returning new data without mutating the old data."
+                    },
+                    "firstChange": {
+                              "$label": "Make One Small Change",
+                              "$content": "1. Reproduce the issue in a small graph.\n2. Find the function that decides the behavior.\n3. Read its nearest test.\n4. Change one thing.\n5. Run the relevant check.\n6. Add a regression test that fails before the fix and passes afterward.\n\nRead CONTRIBUTING.md and applicable repository instructions first. Avoid unrelated formatting and dependency changes."
+                    }
+          },
+          "architecture": {
+                    "$label": "Architecture",
+                    "$icon": "PiTreeStructure",
+                    "$collapsed": true,
+                    "$content": "Follow the pipeline: input -> compilation -> shared state -> layout -> rendering. An edit travels back through callbacks to the data owner. If JSON looks correct but the screen does not, inspect each step in order.",
+                    "api": {
+                              "$label": "Public API",
+                              "$content": "`src/index.ts` exports the package API. `src/types/index.ts` defines TypeScript contracts. `src/components/FlowDiagram.tsx` accepts JSON or raw nodes and edges.\n\nTypes catch development mistakes; they do not validate unknown data at runtime. Add runtime checks at input boundaries. Document public API changes in README.md."
+                    },
+                    "compile": {
+                              "$label": "Compile JSON",
+                              "$content": "`compileSqueed` in `src/core/squeedEdits.ts` adapts JSON into nodes and edges, normalizes addresses, and reapplies supported metadata. `src/core/squeedConnections.ts` prepares property mappings.\n\nThe older `src/core/createFlowDiagram*.ts` files are protected from AI edits. Prefer the adapter and focused tests; do not rewrite the compiler to fix a display issue."
+                    },
+                    "state": {
+                              "$label": "State and Rendering",
+                              "$content": "`src/components/FlowDiagramContext.tsx` owns shared state and callback wrappers. `FlowView.tsx` turns state into renderer inputs. `src/engine/Canvas.tsx` coordinates measurement, layout, gestures, and rendering.\n\n`layout.ts` uses Dagre. `viewport.ts` manages zoom and pan. `NodeHost.tsx` wraps node content. `ContainerView.tsx` draws groups. `EdgeView.tsx` draws SVG edges."
+                    }
+          },
+          "data": {
+                    "$label": "Data and Editing",
+                    "$icon": "PiBracketsCurly",
+                    "$collapsed": true,
+                    "$content": "Choose one ownership model per graph: JSON document mode or raw nodes/edges. Mixing their update paths can overwrite edits.",
+                    "documentMode": {
+                              "$label": "JSON Document Mode",
+                              "$content": "Pass `json` and store the next document from `onJsonChange`.\n```tsx\nconst [document, setDocument] = useState(initial);\n<FlowDiagram json={document}\n  callbacks={{ onJsonChange: setDocument }} />\n```\n`src/core/squeedBinding.ts` translates UI callbacks into immutable edits from `squeedEdits.ts`. The application must retain the returned document for changes to persist."
+                    },
+                    "rawMode": {
+                              "$label": "Raw Graph Mode",
+                              "$content": "Pass `nodes` and `edges` when your application already has a graph model. Nodes have `data.id`; edges have IDs, sources, and targets. The host handles callbacks and stores updates.\n\nFor example, `onEdgeTypeChange` updates the selected edge's `data.type`. A callback firing does not mean its result was saved. Raw hosts also manage collapse state and use `applyCollapsed` where appropriate."
+                    },
+                    "addresses": {
+                              "$label": "Dollar Keys and Addresses",
+                              "$content": "Ordinary keys hold data. Dollar-prefixed keys configure appearance: `$label`, `$content`, `$icon`, `$bgColor`, `$borderRadius`, `$collapsed`. Wrapped arrays put their items in `$`.\n\nAddresses begin with `root`, for example `root.orders.items.0`. Use SDK address helpers instead of manually splitting strings; compiler decorations and wrapped arrays require special handling. Collapsing hides children, not deletes them."
+                    },
+                    "links": {
+                              "$label": "Who Owns an Edge Edit?",
+                              "$content": "Hierarchy links follow document structure. `$target` links to another address. `$connections` maps source properties to target properties.\n\nHierarchy edge settings belong to the child. Target-link settings belong to the source. Property-link settings belong to one connection entry. Read `resolveEdgeOwner` in `src/core/squeedEdits.ts`. Test parallel edges so changing one never overwrites its neighbor."
+                    }
+          },
+          "visuals": {
+                    "$label": "Visual Controls",
+                    "$icon": "PiPaintBrush",
+                    "$collapsed": true,
+                    "$content": "Reuse existing controls, theme helpers, and node wrappers. Verify light mode, dark mode, keyboard behavior, and narrow screens when changing the interface.",
+                    "toolbar": {
+                              "$label": "Toolbar and Theme",
+                              "$content": "`src/components/BottomBar.tsx` decides toolbar visibility. `SelectionToolbar.tsx` edits selections. `DiagramAppearanceControls.tsx` owns spacing, radius, and background controls. `toolbarControls.tsx` supplies reusable menus, tooltips, buttons, and dividers.\n\n`src/theme/useCustomColors.ts` provides shared colors. Keep icon triggers accessible and preserve the user's pin preference when selecting nodes. Outer toolbar rings need space too."
+                    },
+                    "nodes": {
+                              "$label": "Node Content",
+                              "$content": "`src/nodes/NodeView.tsx` supplies shared node interaction. `EditableLabel.tsx` and `EditableContent.tsx` handle inline edits. `$content` renders Markdown. `src/utils/DynamicIcon.tsx` supports named icons and images, including SVG contexts.\n\nCustom renderers should reuse the exported wrappers and callbacks. Their own renderer remains responsible for applying shape geometry and supported style fields."
+                    },
+                    "edges": {
+                              "$label": "Edge Paths",
+                              "$content": "`src/engine/geometry.ts` computes SVG paths, `branchRouting.ts` separates branches, and `labelPlacement.ts` positions labels. `EdgeView.tsx` renders them. Shapes include straight, bezier, orthogonal, and rounded-orthogonal.\n\n`edgeRadius` is passed through FlowView and Canvas into edges, avoiding a shared-context subscription on each edge. Keep radius in geometry memo dependencies so moving the slider updates paths."
+                    },
+                    "appearance": {
+                              "$label": "Graph Settings",
+                              "$content": "`config.spacing` ranges from 0.5 to 2, default 1. Aliases: compact, normal, spacious. `config.edgeRadius` ranges from 0 to 500 model units; segment length limits visible rounding. Straight and explicit orthogonal shapes remain unchanged.\n\nBackground variants: dot, grid, steel, none, transparent. Callbacks: `onSpacingChange`, `onEdgeRadiusChange`, `onBackgroundVariantChange`. Controlled hosts must update config in response. These appearance settings do not rewrite graph JSON."
+                    }
+          },
+          "recipes": {
+                    "$label": "Maintenance Recipes",
+                    "$icon": "PiWrench",
+                    "$collapsed": true,
+                    "$content": "A feature is more than a working button. Follow its value through storage, rendering, disabled states, and tests.",
+                    "setting": {
+                              "$label": "Add a Global Setting",
+                              "$content": "1. Define config and callback types in `src/types/index.ts`.\n2. Add local/controlled state in `FlowDiagramContext.tsx`.\n3. Update context memo dependencies.\n4. Pass the effective value to its renderer.\n5. Reuse a toolbar control.\n6. Test defaults, controlled updates, bounds, and read-only behavior.\n7. Update README.md."
+                    },
+                    "savedEdit": {
+                              "$label": "Add a Saved Edit",
+                              "$content": "1. Define the raw field and callback.\n2. Add an immutable edit in `squeedEdits.ts`.\n3. Bind it in `squeedBinding.ts`.\n4. Preserve the value through compilation.\n5. Render it.\n6. Test edit, reset, reload, and unchanged siblings.\n\nInclude arrays, nested addresses, and parallel edges when relevant. Never mutate a prop object in place."
+                    },
+                    "debug": {
+                              "$label": "Debug and Optimize",
+                              "$content": "Trace input -> callback -> stored value -> compiled graph -> render props -> DOM/SVG. Use callback logs, small fixtures, and computed styles as evidence. Fix the earliest incorrect step.\n\nMeasure before optimizing. Avoid broad context subscriptions in repeated renderers. Preserve existing layout debouncing and performance mode. Adding memoization everywhere is not automatically an improvement."
+                    }
+          },
+          "tests": {
+                    "$label": "Testing and Releases",
+                    "$icon": "PiCheckCircle",
+                    "$collapsed": true,
+                    "$content": "Run the smallest relevant check first, then the required release gates. A successful build alone does not prove that clicking, dragging, or saving works.",
+                    "checks": {
+                              "$label": "Useful Commands",
+                              "$content": "```sh\nnpm run typecheck\nnpm run test:unit\nnpm run build\nnpx playwright test tests/browser/appearance-controls.spec.ts\n```\nUnit tests cover pure functions. Browser tests cover real interactions and live rendering. Fixtures live in `tests/browser/fixture`; browser tests load `dist`, so rebuild after source changes."
+                    },
+                    "release": {
+                              "$label": "Before Shipping",
+                              "$content": "Run `npm run check:release` and `npm pack --dry-run` before submitting release-ready changes. Checks cover unit/browser behavior, clean ESM/CommonJS consumers, declarations, and dependency advisories.\n\n`scripts/finalize-build.mjs` prepares package output. Never hand-edit `dist`, publish, or bump versions as part of an unrelated fix. See CONTRIBUTING.md, SECURITY.md, and LICENSE."
+                    },
+                    "failures": {
+                              "$label": "Read Failures Carefully",
+                              "$content": "Playwright writes screenshots and traces to `test-results`. Start with the first relevant error. Missing generated files can indicate concurrent builds deleting `dist`. Avoid competing builds during validation.\n\nAn interrupted command or empty output is not a passing test. Record unrelated failures separately and never hide them by weakening assertions."
+                    }
+          },
+          "contracts": {
+                    "$label": "Workflow Contracts",
+                    "$icon": "PiFileTs",
+                    "$collapsed": true,
+                    "$content": "Properties mode can validate mappings against uploaded TypeScript or JSON Schema. This is a limited structural checker, not a workflow executor or full TypeScript compiler.",
+                    "implementation": {
+                              "$label": "Validation Pipeline",
+                              "$content": "`src/core/workflowContract.ts` parses supported shapes and checks source-to-target compatibility. `WorkflowControls.tsx` handles uploads. `FlowView.tsx` computes issues; `EdgeView.tsx` displays them.\n\nSupported shapes include primitives, arrays, objects, unions, and literals. Unsupported declarations are rejected; missing declarations are unverified. Uploaded TypeScript is parsed, never executed."
+                    },
+                    "example": {
+                              "$label": "Workflow-Form Example",
+                              "$content": "`examples/workflow-form` contains a full interface snapshot, a supported projection, graph data, and results. `extract.mjs` extracts metadata; `validate.mjs` checks example mappings. Read the folder README before regenerating.\n\nThe projection records omitted unsupported members. Do not describe partial validation as complete coverage."
+                    }
+          },
+          "fileMap": {
+                    "$label": "File Map: Imports and Responsibilities",
+                    "$icon": "PiGraph",
+                    "$collapsed": true,
+                    "$content": "Expand this chapter for a file-level dependency graph. IMPORT arrows mean direct runtime imports; dashed TYPE arrows mean compile-time contracts; EXPORT arrows follow barrel re-exports. BUILD and TEST arrows describe tooling relationships, not imports. Arrows point from a module to its dependency, not necessarily in the direction data travels. Callback flow can run backward. This is a curated map of important internal links, not every import or external package. Each file node names its responsibility and maintenance risks. Use zoom and pan to inspect this detailed map.",
+                    "entry": {
+                              "$label": "src/index.ts",
+                              "path": "src/index.ts",
+                              "$content": "Public package export surface. A file existing in src does not make it a supported package import. Export intended APIs here and test both ESM and CommonJS consumers. Keep internal implementation changes compatible with documented exports.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.diagram",
+                                                  "label": "EXPORT: FlowDiagram"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.edits",
+                                                  "label": "EXPORT: document helpers"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.binding",
+                                                  "label": "EXPORT: callback binding"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.contract",
+                                                  "label": "EXPORT: contract helpers"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.nodeView",
+                                                  "label": "EXPORT: custom node wrapper"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.types",
+                                                  "label": "EXPORT: public types",
+                                                  "style": "dashed"
+                                        }
+                              ]
+                    },
+                    "diagram": {
+                              "$label": "FlowDiagram.tsx",
+                              "path": "src/components/FlowDiagram.tsx",
+                              "$content": "## Public composition boundary\nAccepts JSON or raw graph props. JSON input is compiled and its callbacks are bound to immutable document edits. Raw input keeps application ownership. Composes the provider, canvas-facing view, and toolbar.\n\n**Change here:** input wiring or public composition. **Do not:** put path geometry or individual control styling here.\n\n**Subtlety:** a callback is a notification; the host still has to retain the next JSON. A type-only import does not execute runtime validation.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.edits",
+                                                  "label": "IMPORT: compileSqueed"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.binding",
+                                                  "label": "IMPORT: bindSqueedCallbacks"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.context",
+                                                  "label": "IMPORT: provider"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.view",
+                                                  "label": "IMPORT: render view"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.toolbar",
+                                                  "label": "IMPORT: toolbar"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.types",
+                                                  "label": "TYPE: public props",
+                                                  "style": "dashed"
+                                        }
+                              ]
+                    },
+                    "edits": {
+                              "$label": "squeedEdits.ts",
+                              "path": "src/core/squeedEdits.ts",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.compiler",
+                                                  "label": "IMPORT: legacy compiler"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.connections",
+                                                  "label": "IMPORT: mapping preparation and edits"
+                                        }
+                              ],
+                              "$content": "Owns immutable document operations and the compileSqueed adapter. Normalizes compiler IDs, preserves metadata, resolves edit ownership, and combines property links. Preserve string leaves, array wrappers, parallel connections, and sibling data. Tests: tests/address-edits.test.ts and tests/document.test.ts."
+                    },
+                    "binding": {
+                              "$label": "squeedBinding.ts",
+                              "path": "src/core/squeedBinding.ts",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.edits",
+                                                  "label": "IMPORT: immutable edit functions"
+                                        }
+                              ],
+                              "$content": "Converts node/edge callbacks into immutable JSON updates. Calls the granular event handler and emits the next document. Multiple synchronous edits must compose instead of rebuilding each edit from stale input. Tests: tests/document.test.ts and tests/edge-icon-edits.test.ts."
+                    },
+                    "context": {
+                              "$label": "FlowDiagramContext.tsx",
+                              "path": "src/components/FlowDiagramContext.tsx",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.types",
+                                                  "label": "TYPE: state and callback contracts",
+                                                  "style": "dashed"
+                                        }
+                              ],
+                              "$content": "Owns shared interaction state, controlled/local settings, stable callback wrappers, and graph lookup context. Update memo dependencies with reactive fields. Config is authoritative for controlled values; local setters alone cannot override it. Do not subscribe every repeated edge to unrelated UI state."
+                    },
+                    "view": {
+                              "$label": "FlowView.tsx",
+                              "path": "src/components/FlowView.tsx",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.engineExports",
+                                                  "label": "IMPORT: Canvas through barrel"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.context",
+                                                  "label": "IMPORT: diagram state"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.nodeViews",
+                                                  "label": "IMPORT: default view registry"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.contract",
+                                                  "label": "IMPORT: connectionIssue"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.spacing",
+                                                  "label": "IMPORT: layout spacing defaults"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.background",
+                                                  "label": "IMPORT: backdrop"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.colors",
+                                                  "label": "IMPORT: color resolution"
+                                        }
+                              ],
+                              "$content": "Adapts nodes, edges, theme, layout settings, and validation into Canvas inputs. Resolves parent styling and chooses node views. Global appearance changes should update derived rendering without rewriting graph JSON. It is the bridge between public state and the engine."
+                    },
+                    "toolbar": {
+                              "$label": "BottomBar.tsx",
+                              "path": "src/components/BottomBar.tsx",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.selection",
+                                                  "label": "IMPORT: selected node and edge tools"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.appearance",
+                                                  "label": "IMPORT: appearance sliders"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.workflow",
+                                                  "label": "IMPORT: mode and contract upload"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.scroll",
+                                                  "label": "IMPORT: scroll surface and fades"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.controls",
+                                                  "label": "IMPORT: shared buttons and tooltips"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.theme",
+                                                  "label": "IMPORT: shared colors"
+                                        }
+                              ],
+                              "$content": "Composes normal, node-selection, and edge-selection controls. Owns expanded/collapsed presentation and Direction popup. Selection visibility is not the user's pin preference. Account for both scroll overflow and decorative rings when resizing. Tests: tests/browser/toolbar.spec.ts and tests/browser/toolbar-overflow.spec.ts."
+                    },
+                    "engineExports": {
+                              "$label": "engine/index.ts",
+                              "path": "src/engine/index.ts",
+                              "$content": "A barrel file re-exports a module; it does not own the implementation. FlowView imports Canvas from this barrel. Follow the re-export to Canvas.tsx when debugging behavior. Keep type exports distinct from runtime exports.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.canvas",
+                                                  "label": "EXPORT: Canvas implementation"
+                                        }
+                              ]
+                    },
+                    "canvas": {
+                              "$label": "Canvas.tsx",
+                              "path": "src/engine/Canvas.tsx",
+                              "$bgColor": "teal.500",
+                              "$content": "## Engine coordinator\nReceives prepared graph inputs. Measures nodes, schedules layout, computes containers and routes, and handles selection, drawing, pan, and zoom.\n\n**Output:** NodeHost, ContainerView, EdgeView, and a FlowEngine handle. **Risk:** measurements, delayed layout, and viewport updates can race. Initial fit must not reset zoom whenever appearance changes. Property-row measurements are relative to node bounds; do not treat them as screen coordinates.\n\n**Tests:** tests/browser/appearance-controls.spec.ts, tests/browser/edge-radius.spec.ts, tests/viewport.test.ts.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.layout",
+                                                  "label": "IMPORT: runDagreLayout and computeContainers"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.viewport",
+                                                  "label": "IMPORT: camera state"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.host",
+                                                  "label": "IMPORT: node hosts"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.container",
+                                                  "label": "IMPORT: group surfaces"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.edgeView",
+                                                  "label": "IMPORT: edge and drawing-preview renderer"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.routing",
+                                                  "label": "IMPORT: branch routes"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.labels",
+                                                  "label": "IMPORT: placeEdgeLabels"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.text",
+                                                  "label": "IMPORT: label measurements"
+                                        }
+                              ]
+                    },
+                    "layout": {
+                              "$label": "layout.ts",
+                              "path": "src/engine/layout.ts",
+                              "$content": "Runs Dagre and computes nested container bounds. Translates direction and alignment into positions; it does not persist JSON or decide toolbar state. Preserve variable node sizes, cycles, parallel edges, and all four directions. Dagre is an external dependency, not a local file. Tests: tests/layout.test.ts."
+                    },
+                    "spacing": {
+                              "$label": "layoutCalculations.ts",
+                              "path": "src/core/layoutCalculations.ts",
+                              "$content": "Supplies spacing/layout heuristics consumed by FlowView. This is different from Dagre execution in engine/layout.ts. A spacing change should change layout gaps, not node dimensions or document values. Verify small and large graphs, not just one branch."
+                    },
+                    "viewport": {
+                              "$label": "viewport.ts",
+                              "path": "src/engine/viewport.ts",
+                              "$content": "Owns zoom, pan, fitting and subscriber notification. Maintains coordinate transforms between the model and screen. Zooming around a pointer must preserve the model point under it. Graph coordinates and camera coordinates are separate concerns. Tests: tests/viewport.test.ts."
+                    },
+                    "host": {
+                              "$label": "NodeHost.tsx",
+                              "path": "src/engine/NodeHost.tsx",
+                              "$content": "Positions rendered node content and measures its dimensions. Places property ports and edge-drawing handles, and adds border animation. NodeView owns content interaction; NodeHost owns engine placement. Do not render drawing and collapse controls on top of each other. Row measurements must refresh when switching content/property views.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.rows",
+                                                  "label": "IMPORT: measurePropertyRows"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.animation",
+                                                  "label": "IMPORT: border animation"
+                                        }
+                              ]
+                    },
+                    "rows": {
+                              "$label": "propertyRows.ts",
+                              "path": "src/engine/propertyRows.ts",
+                              "$content": "Measures DOM elements marked with data-flow-property. Connects rendered property rows to their model-space ports. A renamed or missing data attribute can silently make a property link fall back to a node endpoint. Tests: tests/property-geometry.test.ts and property-mode browser fixtures."
+                    },
+                    "container": {
+                              "$label": "ContainerView.tsx",
+                              "path": "src/engine/ContainerView.tsx",
+                              "$content": "Draws group backgrounds, borders, labels, and animations using container bounds. It is not the same as a normal object node. Keep containment padding separate from label spacing, and avoid rendering duplicate surfaces. Test nested groups, zoom, transparent fills, and parent overrides.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.animation",
+                                                  "label": "IMPORT: animated border"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.text",
+                                                  "label": "IMPORT: label measurement"
+                                        }
+                              ]
+                    },
+                    "edgeView": {
+                              "$label": "EdgeView.tsx",
+                              "path": "src/engine/EdgeView.tsx",
+                              "$bgColor": "teal.500",
+                              "$content": "Converts geometry into SVG strokes, arrowheads, hit areas, labels, icons, and validation badges. Uses a label portal to keep labels above crossing paths. Receives radius via props rather than subscribing every edge to all diagram context.\n\nDo not confuse line stroke with the invisible hit path. Named icons inherit color; uploaded images retain their artwork. Geometry memo dependencies must include every input that changes a route. Tests: tests/browser/edge-radius.spec.ts and tests/browser/edge-icons.spec.ts.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.geometry",
+                                                  "label": "IMPORT: path and arrow factories"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.text",
+                                                  "label": "IMPORT: wrap and measure labels"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.icons",
+                                                  "label": "IMPORT: edge icons and validation badge"
+                                        }
+                              ]
+                    },
+                    "geometry": {
+                              "$label": "geometry.ts",
+                              "path": "src/engine/geometry.ts",
+                              "$content": "Pure calculations for node/property connectors, corner rounding, loops, endpoints, arrowheads, and label positions. Radius is limited by segment length: increasing it may not visibly change a short bend. Explicit orthogonal edges remain sharp. Keep paths finite for overlapping nodes and zero-length segments. Tests: tests/edge-types.test.ts and tests/property-geometry.test.ts."
+                    },
+                    "routing": {
+                              "$label": "branchRouting.ts",
+                              "path": "src/engine/branchRouting.ts",
+                              "$content": "Calculates branch lanes to separate fan-out paths. It receives already laid-out node bounds; it is not a replacement for Dagre. Preserve reversed directions, parallel links, loops, and property mappings. Tests: tests/branch-routing.test.ts."
+                    },
+                    "labels": {
+                              "$label": "labelPlacement.ts",
+                              "path": "src/engine/labelPlacement.ts",
+                              "$content": "Places edge labels along routes while accounting for competing labels and geometry. Canvas invokes it; EdgeView renders the resulting placement. A label collision may be a placement issue, whereas clipping may be a mask/portal issue. Test labels independently from edge stroke visibility."
+                    },
+                    "text": {
+                              "$label": "text.ts",
+                              "path": "src/engine/text.ts",
+                              "$content": "Shared text measurement and wrapping for SVG labels. Rendering and measurement must use consistent fonts or bounding boxes become wrong. Used by Canvas, EdgeView and ContainerView. Test long words and multiline labels; do not substitute character counts for measured width."
+                    },
+                    "animation": {
+                              "$label": "NodeBorderAnimation.tsx",
+                              "path": "src/engine/NodeBorderAnimation.tsx",
+                              "$content": "Shared SVG border animation and style definitions for nodes/groups. Keep dimensions and radius aligned with the painted border. Respect reduced motion and performance mode. The animation must not intercept pointer events. Tests: tests/node-animation.test.ts."
+                    },
+                    "nodeViews": {
+                              "$label": "nodeViews.tsx",
+                              "path": "src/nodes/nodeViews.tsx",
+                              "$bgColor": "green.500",
+                              "$content": "Registers default renderers and composes object/property and Markdown content views. Selects the content/property presentation without overwriting stored data. Custom view registries may replace these renderers; preserve the shared interaction contract.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.nodeView",
+                                                  "label": "IMPORT: shared interaction wrapper"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.content",
+                                                  "label": "IMPORT: Markdown content editor"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.label",
+                                                  "label": "IMPORT: editable titles"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.nodeText",
+                                                  "label": "IMPORT: text renderer"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.nodeInput",
+                                                  "label": "IMPORT: array renderer"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.nodeBorder",
+                                                  "label": "IMPORT: border styling"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.icons",
+                                                  "label": "IMPORT: icon renderer"
+                                        }
+                              ]
+                    },
+                    "nodeView": {
+                              "$label": "NodeView.tsx",
+                              "path": "src/nodes/NodeView.tsx",
+                              "$content": "Shared node selection, hover actions, editing coordination and collapse controls. Calls callbacks from context; it does not directly save a JSON file. Stop edit events from becoming drag/selection events, and respect readOnly. Custom views should reuse this boundary instead of inventing separate selection state.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.context",
+                                                  "label": "IMPORT: selection and callbacks"
+                                        }
+                              ]
+                    },
+                    "content": {
+                              "$label": "EditableContent.tsx",
+                              "path": "src/nodes/EditableContent.tsx",
+                              "$content": "Renders Markdown with markdown-to-jsx and switches to a raw-source textarea for editing. Raw HTML parsing is disabled. Save on blur or Ctrl/Cmd+Enter; Escape cancels. The editor and preview share base typography, but raw Markdown syntax is not a WYSIWYG preview. Preserve empty content, minimum dimensions and read-only behavior. Tests: tests/browser/node-content.spec.ts and tests/browser/markdown-formatting.spec.ts.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.context",
+                                                  "label": "IMPORT: content callback and edit flags"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.propagation",
+                                                  "label": "IMPORT: isolate editor events"
+                                        }
+                              ]
+                    },
+                    "label": {
+                              "$label": "EditableLabel.tsx",
+                              "path": "src/nodes/EditableLabel.tsx",
+                              "$content": "Edits node labels with draft state and sizing. Label edits and content edits use different callbacks and stored fields. Preserve addresses when editing string-array items. Test save, cancel, repeated edits, and selection propagation.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.context",
+                                                  "label": "IMPORT: label callback"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.propagation",
+                                                  "label": "IMPORT: isolate edit events"
+                                        }
+                              ]
+                    },
+                    "nodeText": {
+                              "$label": "nodeText.tsx",
+                              "path": "src/nodes/nodeText.tsx",
+                              "$content": "Renders ordinary text leaves with labels, icons, theme and border styling. A string leaf is still a string in JSON; converting it to an object just to save a label can change its address and break links.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.label",
+                                                  "label": "IMPORT: inline label editor"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.nodeBorder",
+                                                  "label": "IMPORT: border props"
+                                        }
+                              ]
+                    },
+                    "nodeInput": {
+                              "$label": "nodeTextInput.tsx",
+                              "path": "src/nodes/nodeTextInput.tsx",
+                              "$content": "Renders the array/pill-style view with icon and editable label. Plain and wrapped arrays must preserve the same logical addresses when styled. Keep transparent appearance and icon-only content usable.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.label",
+                                                  "label": "IMPORT: editable label"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.nodeBorder",
+                                                  "label": "IMPORT: border props"
+                                        }
+                              ]
+                    },
+                    "nodeBorder": {
+                              "$label": "nodeBorder.ts",
+                              "path": "src/nodes/nodeBorder.ts",
+                              "$content": "Normalizes border width/style and computes node border props. Distinguish a saved border from a selection indicator; zero width is valid. Keep node and animation geometry consistent. Tests: tests/border-style.test.ts and tests/border-color.test.ts."
+                    },
+                    "propagation": {
+                              "$label": "useStopPropagation.ts",
+                              "path": "src/hooks/useStopPropagation.ts",
+                              "$content": "Prevents editor interactions from leaking into graph gestures. Use at editing boundaries instead of suppressing every event on the entire node, which would break normal selection and drawing. Verify keyboard and mouse behavior after changes."
+                    },
+                    "selection": {
+                              "$label": "SelectionToolbar.tsx",
+                              "path": "src/components/SelectionToolbar.tsx",
+                              "$content": "Renders node and edge edit controls and emits granular callbacks. Respects hidden-control config and read-only mode. Use graph lookup context to resolve the selected item; never apply one edge's icon or shape to all connections.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.picker",
+                                                  "label": "IMPORT: node and edge icon picker"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.controls",
+                                                  "label": "IMPORT: shared toolbar primitives"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.context",
+                                                  "label": "IMPORT: selected graph data and callbacks"
+                                        }
+                              ]
+                    },
+                    "appearance": {
+                              "$label": "DiagramAppearanceControls.tsx",
+                              "path": "src/components/DiagramAppearanceControls.tsx",
+                              "$content": "Uses one local SliderContent implementation for spacing and edge radius, plus background selection. Controls emit callbacks and update local settings; config can remain authoritative. Sliders use the graph accent, an inactive-color remainder, and no input borders. Tests: tests/browser/appearance-controls.spec.ts and tests/browser/edge-radius.spec.ts.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.context",
+                                                  "label": "IMPORT: appearance state and setters"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.controls",
+                                                  "label": "IMPORT: popup trigger and divider"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.theme",
+                                                  "label": "IMPORT: inactive color"
+                                        }
+                              ]
+                    },
+                    "workflow": {
+                              "$label": "WorkflowControls.tsx",
+                              "path": "src/components/WorkflowControls.tsx",
+                              "$content": "Selects connection mode and uploads/replaces/removes validation contracts. Handles async upload state and retains the previous valid contract when replacement fails. Supported modes are defined by the current EdgeMode type and implementation; documentation of a requested mode does not implement it.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.contract",
+                                                  "label": "IMPORT: parser and compatibility check"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.context",
+                                                  "label": "IMPORT: contract state"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.controls",
+                                                  "label": "IMPORT: menus and tooltips"
+                                        }
+                              ]
+                    },
+                    "controls": {
+                              "$label": "toolbarControls.tsx",
+                              "path": "src/components/toolbarControls.tsx",
+                              "$content": "Reusable icon buttons, accessible dropdowns, tooltips and dividers. Popovers escape scroll clipping; focus returns to the trigger on close. Popup gap is measured from the toolbar surface. Chakra runtime compatibility matters: the consumer and package test may use different API versions.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.theme",
+                                                  "label": "IMPORT: shared control colors"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.context",
+                                                  "label": "IMPORT: color mode"
+                                        }
+                              ]
+                    },
+                    "scroll": {
+                              "$label": "ToolbarScrollContainer.tsx",
+                              "path": "src/components/ToolbarScrollContainer.tsx",
+                              "$content": "Owns the constrained toolbar surface and overflow fades. Uses scroll/resize measurement so fades show only where content is hidden. Keep overlays pointer-transparent and reserve the outer ring when positioning neighboring controls. Tests: tests/browser/toolbar-fades.spec.ts and tests/browser/toolbar-overflow.spec.ts."
+                    },
+                    "background": {
+                              "$label": "DotPattern.tsx",
+                              "path": "src/components/DotPattern.tsx",
+                              "$content": "Paints dot, grid, steel or no pattern behind the graph. Transparent is resolved to no pattern with a transparent surface by FlowView. Background changes must not modify graph JSON or reset selection/viewport unexpectedly.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.context",
+                                                  "label": "IMPORT: backdrop context"
+                                        }
+                              ]
+                    },
+                    "picker": {
+                              "$label": "NodeIconPicker.tsx",
+                              "path": "src/components/NodeIconPicker.tsx",
+                              "$content": "Shared picker for node and edge icons despite its node-oriented filename. Supports named icons and custom sources with validation. Preserve the target ID when emitting callbacks. A picker choice is UI state until its callback is saved.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.icons",
+                                                  "label": "IMPORT: icon preview"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.iconSources",
+                                                  "label": "IMPORT: custom source validation"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.controls",
+                                                  "label": "IMPORT: picker controls"
+                                        }
+                              ]
+                    },
+                    "icons": {
+                              "$label": "DynamicIcon.tsx",
+                              "path": "src/utils/DynamicIcon.tsx",
+                              "$content": "Loads named react-icons and image sources. HTML uses an image element; SVG contexts use SVG image elements. SVG uploads are rendered as image sources, not injected markup. Keep placeholder sizing stable while named icons load. Tests: tests/browser/svg-icons.spec.ts and tests/browser/edge-icons.spec.ts."
+                    },
+                    "iconSources": {
+                              "$label": "iconSources.ts",
+                              "path": "src/utils/iconSources.ts",
+                              "$content": "Validates and prepares custom icon sources for the picker. Preserve upload size limits and unsafe SVG checks. File validation is separate from DynamicIcon rendering. Do not introduce raw SVG injection as a shortcut for previewing uploads."
+                    },
+                    "theme": {
+                              "$label": "useCustomColors.ts",
+                              "path": "src/theme/useCustomColors.ts",
+                              "$content": "Maps diagram color mode into shared semantic colors and content-theme colors. Changing a token affects many controls, not just the current one. Test both themes and transparent nodes. Hooks subscribe to context, so avoid calling them inside every pure geometry renderer.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.context",
+                                                  "label": "IMPORT: color mode"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.colors",
+                                                  "label": "IMPORT: color helpers"
+                                        }
+                              ]
+                    },
+                    "colors": {
+                              "$label": "colorUtils.ts",
+                              "path": "src/theme/colorUtils.ts",
+                              "$content": "Resolves colors, variants, content themes and blended fills. Treat transparent as a literal color, never as a palette family such as transparent.500. SVG often needs a resolved CSS color while Chakra controls accept theme tokens. Tests: tests/colors.test.ts."
+                    },
+                    "connections": {
+                              "$label": "squeedConnections.ts",
+                              "path": "src/core/squeedConnections.ts",
+                              "$content": "Separates $connections from legacy compiler input, assigns stable mapping identities and updates individual entries. Its import of SqueedJson from squeedEdits is type-only; this is not a runtime dependency cycle. Missing endpoints must not accidentally delete source mapping data.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.edits",
+                                                  "label": "TYPE: SqueedJson only",
+                                                  "style": "dashed"
+                                        }
+                              ]
+                    },
+                    "compiler": {
+                              "$label": "createFlowDiagram.ts",
+                              "path": "src/core/createFlowDiagram.ts",
+                              "$bgColor": "yellow.500",
+                              "$content": "Protected legacy compiler entry. Traverses JSON into graph structures using helper factories and ID construction. AI changes must not modify this file. Make compatibility fixes in the adapter where possible and prove output invariants with tests.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.compilerParts",
+                                                  "label": "IMPORT: graph factories"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.compilerIds",
+                                                  "label": "IMPORT: identifier construction"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.nodeConfigs",
+                                                  "label": "IMPORT: default node config"
+                                        }
+                              ]
+                    },
+                    "compilerParts": {
+                              "$label": "createFlowDiagramComponents.ts",
+                              "path": "src/core/createFlowDiagramComponents.ts",
+                              "$content": "Protected helper layer for legacy graph construction and customization. Shared mutable compiler configuration can produce surprising metadata; the adapter reapplies supported values afterward. Do not bypass normalization by importing the legacy compiler into a new consumer.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.nodeConfigs",
+                                                  "label": "IMPORT: default shapes/configs"
+                                        }
+                              ]
+                    },
+                    "compilerIds": {
+                              "$label": "createFlowDiagramIds.ts",
+                              "path": "src/core/createFlowDiagramIds.ts",
+                              "$content": "Protected compiler address/ID construction. Generated IDs can include decorations that differ from document paths. Never assume splitting an ID on dots is sufficient to edit source JSON.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.compilerParts",
+                                                  "label": "IMPORT: traversal/customization helpers"
+                                        }
+                              ]
+                    },
+                    "nodeConfigs": {
+                              "$label": "nodeConfigs.ts",
+                              "path": "src/core/nodeConfigs.ts",
+                              "$content": "Defaults used by the legacy compiler. Default metadata is not necessarily an explicit user override. Adapter normalization distinguishes saved border settings and other explicit values from compiler defaults. Check existing graph output before changing defaults."
+                    },
+                    "contract": {
+                              "$label": "workflowContract.ts",
+                              "path": "src/core/workflowContract.ts",
+                              "$content": "Parses a supported subset of TypeScript/JSON Schema and checks directional assignment. Loads TypeScript lazily, never executes uploads. Distinguish invalid mappings from unverified missing declarations. File-size/type-expansion limits protect resource usage. Full inheritance, arbitrary generics, recursion and any are not supported. Tests: tests/workflow-contract.test.ts and tests/browser/workflow-contract.spec.ts."
+                    },
+                    "package": {
+                              "$label": "package.json",
+                              "path": "package.json",
+                              "$content": "Defines scripts, dependency ownership, published files and package entry points. Peer dependencies are supplied by consumers; externalizing a dependency does not remove the need to declare it correctly. Changing exports can break installed consumers even when a source-aliased demo works.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.vite",
+                                                  "label": "BUILD: Vite library build"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.finalize",
+                                                  "label": "BUILD: declaration finalization"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.unitRunner",
+                                                  "label": "TEST: unit runner"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.playwright",
+                                                  "label": "TEST: browser suite"
+                                        },
+                                        {
+                                                  "target": "root.fileMap.packageCheck",
+                                                  "label": "TEST: clean package install"
+                                        }
+                              ]
+                    },
+                    "vite": {
+                              "$label": "vite.config.ts",
+                              "path": "vite.config.ts",
+                              "$content": "Builds ESM/CommonJS from src/index.ts and generates bundled declarations. Externalizes React, Chakra, Emotion, icons, Markdown and TypeScript. Keep the lodash alias exact: /^lodash$/ -> lodash-es. A broad prefix alias can change subpath resolution. Generated dist is output, not source.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.entry",
+                                                  "label": "BUILD: library entry point"
+                                        }
+                              ]
+                    },
+                    "finalize": {
+                              "$label": "finalize-build.mjs",
+                              "path": "scripts/finalize-build.mjs",
+                              "$content": "Finalizes generated declarations for package consumption after Vite. Check exported entry points and .d.ts/.d.cts behavior together. Do not fix a declaration problem by editing dist manually; correct its source or build process."
+                    },
+                    "unitRunner": {
+                              "$label": "run-unit.mjs",
+                              "path": "tests/run-unit.mjs",
+                              "$content": "Discovers tests/*.test.ts, bundles them into a temporary directory with esbuild, runs Node's test runner, and cleans up. Unit test helpers must not depend on a browser DOM unless explicitly mocked. A new top-level .test.ts file is discovered automatically.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.guideTest",
+                                                  "label": "TEST: discovers guide regression"
+                                        }
+                              ]
+                    },
+                    "guideTest": {
+                              "$label": "squeed-guide.test.ts",
+                              "path": "tests/squeed-guide.test.ts",
+                              "$content": "Checks guide compilation, topic preservation, unique IDs and valid endpoints. Also verifies mapped paths and declared source import/export links. Update this test when changing the guide schema; do not weaken it to hide stale documentation.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.edits",
+                                                  "label": "IMPORT: compileSqueed"
+                                        }
+                              ]
+                    },
+                    "playwright": {
+                              "$label": "playwright.config.ts",
+                              "path": "playwright.config.ts",
+                              "$content": "Configures browser tests, server lifecycle and artifacts. Browser regressions verify behavior that unit tests cannot: layout, pointer events, keyboard navigation, tooltips and rendering. Avoid competing processes on the fixture port.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.testVite",
+                                                  "label": "TEST: fixture server configuration"
+                                        }
+                              ]
+                    },
+                    "testVite": {
+                              "$label": "tests/vite.config.ts",
+                              "path": "tests/vite.config.ts",
+                              "$content": "Serves tests/browser/fixture and aliases @squeed/flow-sdk to dist/index.js. This differs from the Backflow consumer's source alias. Browser tests require a current build. Dependency deduplication prevents multiple React/Chakra instances in the fixture.",
+                              "$connections": [
+                                        {
+                                                  "target": "root.fileMap.fixture",
+                                                  "label": "TEST: browser fixture root"
+                                        }
+                              ]
+                    },
+                    "fixture": {
+                              "$label": "fixture/main.tsx",
+                              "path": "tests/browser/fixture/main.tsx",
+                              "$content": "Standalone browser app with sample graphs and window.__flowTest helpers for replacing documents, configuring settings and recording callbacks. Test hooks are not production SDK APIs. Keep realistic rendering while isolating each test's state."
+                    },
+                    "packageCheck": {
+                              "$label": "check-package.mjs",
+                              "path": "tests/check-package.mjs",
+                              "$content": "Checks a clean packed install, including ESM/CommonJS runtime and types. Catches missing declarations, unpublished files and dependency issues hidden by local source aliases. A passing consumer dev page is not a substitute for this gate."
+                    },
+                    "types": {
+                              "$label": "types/index.ts",
+                              "path": "src/types/index.ts",
+                              "$content": "Public interfaces and unions for config, callbacks, nodes, edges, and extension points. Keep raw graph fields, JSON keys, callback signatures, and runtime support aligned. Adding a property here alone does not implement behavior. Export new public types through src/index.ts and verify package consumers."
+                    }
+          },
+          "walkthroughs": {
+                    "$label": "Trace a Change Across Files",
+                    "$icon": "PiPath",
+                    "$collapsed": true,
+                    "$content": "These are behavioral walkthroughs, not import edges. A callback can travel opposite the dependency arrow. Start at the earliest incorrect value, then follow the named boundaries. Each recipe explains what must stay unchanged.",
+                    "contentSave": {
+                              "$label": "Markdown Save: End to End",
+                              "$content": "1. EditableContent.tsx keeps raw Markdown in a local draft. Preview formatting is not stored HTML.\n2. Commit calls onNodeContentChange through FlowDiagramContext.\n3. In JSON mode, FlowDiagram installed the squeedBinding callback wrapper.\n4. Binding calls an immutable edit in squeedEdits, then onJsonChange.\n5. The host stores next JSON; compileSqueed rebuilds data.config.content.\n6. FlowView selects nodeViews; EditableContent displays it.\n\n**In raw mode:** the host must update data.config.content itself. **Failure clues:** callback but no persistence -> inspect host; persisted content but old preview -> inspect derived data/memo dependencies. **Invariants:** label, icon, sibling data and raw Markdown remain intact."
+                    },
+                    "radiusUpdate": {
+                              "$label": "Radius Slider: No Document Edit",
+                              "$content": "DiagramAppearanceControls -> context setter/callback -> effective edgeRadius -> FlowView -> Canvas -> EdgeView -> geometry. This is rendering configuration, so it does not go through squeedBinding or alter JSON.\n\nIf config.edgeRadius is controlled, the host must update it after the callback. If state changes but paths do not, check props and geometry memo dependencies. A straight path has no corner to round; short segments clamp radius. Test multiple bent edges, zero radius, host control and unchanged zoom."
+                    },
+                    "propertyLink": {
+                              "$label": "Property Link: Data vs Measurement",
+                              "$content": "Document $connections -> squeedConnections -> compileSqueed edge metadata. Separately, nodeViews renders data-flow-property rows -> NodeHost measures them -> Canvas resolves row coordinates -> geometry produces a route -> EdgeView paints it.\n\nContract compatibility is another branch: WorkflowControls parses through workflowContract; FlowView computes validation; EdgeView shows the badge. An invalid mapping can remain visible and editable. Missing measurements and invalid types are different problems. Never delete a saved mapping just because one endpoint is temporarily hidden."
+                    },
+                    "collapseFlow": {
+                              "$label": "Collapse: Keep the Source Children",
+                              "$content": "NodeView emits onNodeCollapse -> JSON binding persists $collapsed -> adapter/compiler derive the visible graph. Children remain in source JSON. Raw hosts manage config.collapsed and applyCollapsed separately.\n\nIf the plus/minus control is absent, inspect collapse metadata and the renderer. If the control works but unrelated nodes vanish, inspect addresses and visibility traversal. Tests should cover plain arrays, wrapped arrays, nested objects and cross-linked siblings."
+                    },
+                    "distribution": {
+                              "$label": "Works Locally, Fails Installed",
+                              "$content": "Check src/index.ts exports -> package.json exports/files -> vite.config.ts externalization -> finalize-build.mjs declarations -> tests/check-package.mjs. The consumer's source alias can bypass all packaged artifacts.\n\nDo not add a second React instance to solve a missing dependency. Do not patch an installed dist file as the permanent fix. Reproduce in a clean package consumer and test ESM and CommonJS when touching exports."
+                    }
+          },
+          "consumer": {
+                    "$label": "SDK Test and This Guide",
+                    "$icon": "PiBrowser",
+                    "$collapsed": true,
+                    "$content": "SDK Test in Backflow admin is a consumer of this library. Keep reusable behavior in the SDK and sample selection in the consumer.",
+                    "registry": {
+                              "$label": "Example Registry",
+                              "$content": "Consumer: `backflow-admin/src/pages/SDKTest.tsx`. Its datasets include Loops, Platform, Advanced, Shapes, and Squeed. JSON examples share document-mode callbacks; raw examples own node/edge updates.\n\nSqueed imports this guide directly from the SDK's `examples/squeed.json`. Switching examples should preserve each document's local edits. Local edits are not saved back to the source file."
+                    },
+                    "maintain": {
+                              "$label": "Keep the Guide Accurate",
+                              "$content": "Edit `examples/squeed.json` as the single source. Update a chapter when changing file locations, APIs, or behavior. Keep paths real and limitations explicit. Validate JSON, compile it, and expand chapters in SDK Test.\n\nConsumer source aliases can hide outdated installed typings. Use clean-package tests too. Respect repository instructions, preserve others' changes, and never read or commit credentials."
+                    }
+          }
+}
