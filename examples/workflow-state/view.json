@@ -4,8 +4,8 @@
                     "$label": "On Create User",
                     "$icon": "PiUserPlus",
                     "$bgColor": "teal.600",
-                    "$content": {
-                              "$state": "root.trigger.type"
+                    "$subtitle": {
+                              "$state": "root.trigger.event"
                     },
                     "$target": "root.assistant"
           },
@@ -15,10 +15,43 @@
                     },
                     "$icon": "PiRobot",
                     "$bgColor": "gray.700",
-                    "$content": {
-                              "$state": "root.steps.0.config.prompt"
-                    },
                     "$target": "root.decision"
+          },
+          "directoryTool": {
+                    "$view": "icon-label",
+                    "$label": {
+                              "$state": "root.tools.directory_lookup.name"
+                    },
+                    "$icon": "PiIdentificationBadge",
+                    "$bgColor": "teal.700",
+                    "$borderRadius": 100
+          },
+          "issueTool": {
+                    "$view": "icon-label",
+                    "$label": {
+                              "$state": "root.tools.issue_lookup.name"
+                    },
+                    "$icon": "PiTicket",
+                    "$bgColor": "blue.700",
+                    "$borderRadius": 100
+          },
+          "prompt": {
+                    "$label": {
+                              "$state": "root.texts.user_review.name"
+                    },
+                    "$content": {
+                              "$state": "root.texts.user_review.content"
+                    },
+                    "$bgColor": "gray.700"
+          },
+          "instructions": {
+                    "$label": {
+                              "$state": "root.texts.directory_guidance.name"
+                    },
+                    "$content": {
+                              "$state": "root.texts.directory_guidance.content"
+                    },
+                    "$bgColor": "gray.700"
           },
           "decision": {
                     "$view": "icon-label",

@@ -145,7 +145,11 @@ function CustomNode({ data }: FlowDiagramNode) {
   return (
     <NodeView data={data}>
       {({ isActive, isEditing, onEditStart, onEditEnd }) => (
-        <div data-selected={isActive} style={{ width: 240, height: 160 }}>
+        <div
+          data-flow-node-surface=""
+          data-selected={isActive}
+          style={{ width: 240, height: 160 }}
+        >
           <EditableLabel
             nodeId={data.id}
             label={data.label ?? "Custom"}
@@ -168,7 +172,33 @@ The custom renderer must apply the styling fields it supports, such as
 HTML or SVG. Raw-graph callbacks must update node data; JSON mode persists edits
 through `onJsonChange`. The wrapper does not change custom SVG geometry.
 
+Mark the visible shape with `data-flow-node-surface`, excluding captions and
+form summaries. For SVG views, put it on the closed geometry element (such as
+`circle`, `polygon`, or `path`), not the surrounding `svg`. Connectors, draw
+handles, and animated borders use that surface; layout still reserves the full
+node bounds. Unmarked custom views retain rectangular host bounds.
+
+For content and custom-shape views, use `<FlowPort id="tools" role="source"
+side="bottom" position={0.5} />` inside the node. `side` accepts `top`, `right`,
+`bottom`, or `left`; `position` ranges from 0 to 1 and defaults to the midpoint.
+Top/bottom positions run left to right; left/right positions run top to bottom.
+The handle and connector attach to the marked outline, including SVG slopes.
+These ports work in normal node mode as well as Properties mode. Omitting
+`side` retains the existing property-row behavior.
+
+Built-in views accept the same declarations in `data.config.ports` or JSON
+`$ports`, for example `[{ "id": "prompt", "role": "target", "side": "top" }]`.
+Connections identify these ports using `sourceProperty` and `targetProperty`.
+Read-only mode and disabled edge handles continue to prevent dragging.
+
 ## Maintainer Guide
+
+The SDK Test **Form Connection** dataset loads
+[examples/form-connection/ui.json](examples/form-connection/ui.json), its
+[bindings](examples/form-connection/bindings.json), and the actual
+[TypeScript interface](examples/form-connection/interface.ts). Double-click
+**Generated Form** to edit the separate state shown by the State JSON node.
+The test page preloads the bundled interface; manual uploads can replace it.
 
 [examples/squeed.json](examples/squeed.json) is an expandable diagram for new
 maintainers: setup, architecture, data ownership, UI code, change recipes,

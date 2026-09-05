@@ -2,6 +2,7 @@ import { memo, useLayoutEffect, useRef, useState } from "react";
 import { PiPlusBold } from "react-icons/pi";
 import type { FlowDirection } from "../types";
 import { NodeBorderAnimation } from "./NodeBorderAnimation";
+import { measureNodeSurface, type NodeSurface } from "./nodeSurface";
 import { measurePropertyRows, type PropertyRow } from "./propertyRows";
 
 export interface NodeHostProps {
@@ -25,6 +26,7 @@ export interface NodeHostProps {
   reversePorts?: boolean;
   direction?: FlowDirection;
   onPropertyRows?: (id: string, rows: PropertyRow[]) => void;
+  onSurface?: (id: string, surface: NodeSurface | undefined) => void;
   children?: React.ReactNode;
 }
 
@@ -47,32 +49,48 @@ function NodeHost({
   reversePorts,
   direction = "LR",
   onPropertyRows,
+  onSurface,
   children,
 }: NodeHostProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [rows, setRows] = useState<PropertyRow[]>([]);
-  const [radius, setRadius] = useState(0);
+  const [surface, setSurface] = useState<NodeSurface>();
 
   useLayoutEffect(() => {
-    if (!animated) return;
-    const surface =
-      ref.current?.querySelector("[data-flow-node-surface]") ??
-      ref.current?.firstElementChild;
-    if (surface)
-      setRadius(parseFloat(getComputedStyle(surface).borderTopLeftRadius) || 0);
-  }, [animated, children]);
+    const host = ref.current;
+    if (!host) return;
+    const measure = () => {
+      const next = measureNodeSurface(host);
+      setSurface((current) =>
+        JSON.stringify(current) === JSON.stringify(next) ? current : next,
+      );
+      onSurface?.(id, next);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(host);
+    const shape = host.querySelector("[data-flow-node-surface]");
+    if (shape) observer.observe(shape);
+    return () => observer.disconnect();
+  }, [id, children, onSurface]);
 
   useLayoutEffect(() => {
     onMount(id, ref.current);
-    return () => onMount(id, null);
-  }, [id, onMount]);
+    return () => {
+      onMount(id, null);
+      onSurface?.(id, undefined);
+    };
+  }, [id, onMount, onSurface]);
 
   useLayoutEffect(() => {
     const host = ref.current;
     if (!host) return;
     let previous = "";
     const measure = () => {
-      const next = propertyMode ? measurePropertyRows(host) : [];
+      const measured = measurePropertyRows(host);
+      const next = propertyMode
+        ? measured
+        : measured.filter((row) => row.anchor);
       const key = JSON.stringify(next);
       if (key === previous) return;
       previous = key;
@@ -80,7 +98,7 @@ function NodeHost({
       onPropertyRows?.(id, next);
     };
     measure();
-    if (!propertyMode) return;
+    if (!propertyMode && !host.querySelector("[data-flow-port-side]")) return;
     const resize = new ResizeObserver(measure);
     const observeRows = () => {
       resize.disconnect();
@@ -97,7 +115,12 @@ function NodeHost({
       subtree: true,
       characterData: true,
       attributes: true,
-      attributeFilter: ["data-flow-property", "data-flow-port-role"],
+      attributeFilter: [
+        "data-flow-property",
+        "data-flow-port-role",
+        "data-flow-port-side",
+        "data-flow-port-position",
+      ],
     });
     host.addEventListener("scroll", measure, true);
     return () => {
@@ -105,7 +128,7 @@ function NodeHost({
       mutations.disconnect();
       host.removeEventListener("scroll", measure, true);
     };
-  }, [id, propertyMode, onPropertyRows]);
+  }, [id, propertyMode, onPropertyRows, children]);
 
   return (
     <div
@@ -125,18 +148,23 @@ function NodeHost({
           pointerEvents="none"
         >
           <NodeBorderAnimation
-            x={animationWidth / 2}
-            y={animationWidth / 2}
-            width={width - animationWidth}
-            height={height - animationWidth}
-            radius={radius - animationWidth / 2}
+            x={(surface?.left ?? 0) + animationWidth / 2}
+            y={(surface?.top ?? 0) + animationWidth / 2}
+            width={(surface?.width ?? width) - animationWidth}
+            height={(surface?.height ?? height) - animationWidth}
+            radius={(surface?.radius ?? 0) - animationWidth / 2}
+            path={
+              surface?.outline
+                ? `M${surface.outline.map((point) => `${point.x} ${point.y}`).join(" L")} Z`
+                : undefined
+            }
             color={animationColor || handleColor || "currentColor"}
             strokeWidth={animationWidth}
           />
         </svg>
       )}
       {drawHandles &&
-        propertyMode &&
+        (propertyMode || rows.some((row) => row.anchor)) &&
         rows.map((row) =>
           (["source", "target"] as const)
             .filter((role) => !row.role || row.role === role)
@@ -147,13 +175,19 @@ function NodeHost({
                 className="flow-sdk-property-port"
                 data-property={row.property}
                 data-port-role={role}
+                data-port-side={row.anchor?.side}
                 aria-label={`${role === "source" ? "Connect" : "Input"} ${row.property}`}
                 title={`${role === "source" ? "Connect" : "Input"} ${row.property}`}
                 style={{
                   color: handleColor,
-                  top: row.top + row.height / 2,
-                  [(role === "source") !== !!reversePorts ? "right" : "left"]:
-                    -16,
+                  ...(row.anchor
+                    ? { top: row.anchor.y, left: row.anchor.x - 16 }
+                    : {
+                        top: row.top + row.height / 2,
+                        [(role === "source") !== !!reversePorts
+                          ? "right"
+                          : "left"]: -16,
+                      }),
                 }}
                 onClick={(event) => event.stopPropagation()}
               />
@@ -161,7 +195,8 @@ function NodeHost({
         )}
       {drawHandles &&
         !hasCollapseControl &&
-        (!propertyMode || !rows.length) && (
+        (!propertyMode || !rows.length) &&
+        !rows.some((row) => row.anchor) && (
           <button
             type="button"
             className="flow-sdk-handle"
@@ -170,9 +205,19 @@ function NodeHost({
             style={{
               color: handleColor,
               left:
-                direction === "RL" ? -36 : direction === "LR" ? "100%" : "50%",
+                (surface?.left ?? 0) +
+                (direction === "RL"
+                  ? -36
+                  : direction === "LR"
+                    ? (surface?.width ?? width)
+                    : (surface?.width ?? width) / 2),
               top:
-                direction === "BT" ? -36 : direction === "TB" ? "100%" : "50%",
+                (surface?.top ?? 0) +
+                (direction === "BT"
+                  ? -36
+                  : direction === "TB"
+                    ? (surface?.height ?? height)
+                    : (surface?.height ?? height) / 2),
               transform:
                 direction === "BT" || direction === "TB"
                   ? "translateX(-50%)"

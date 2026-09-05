@@ -347,7 +347,13 @@ export function EdgeTools({
   );
 }
 
-export function BorderRadiusControl({ ids }: { ids: string[] }) {
+export function BorderRadiusControl({
+  ids,
+  showDivider = true,
+}: {
+  ids: string[];
+  showDivider?: boolean;
+}) {
   const { callbacks, config } = useFlowDiagramContext();
   const { colorInactive } = useCustomColors();
   const { nodeById } = useFlowData();
@@ -362,7 +368,7 @@ export function BorderRadiusControl({ ids }: { ids: string[] }) {
     ids.forEach((id) => callbacks.onNodeBorderRadiusChange?.(id, radius));
   return (
     <>
-      <Divider />
+      {showDivider && <Divider />}
       <Box
         position="relative"
         w="36px"

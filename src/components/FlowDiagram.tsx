@@ -42,9 +42,7 @@ export function FlowDiagram({
   loader,
   ...props
 }: FlowDiagramProps) {
-  const [prepared, setPrepared] = useState<{
-    json: FlowDiagramProps["json"];
-  } | null>(null);
+  const [prepared, setPrepared] = useState<FlowDiagramProps | null>(null);
   const pending = prepared === null || prepared.json !== props.json;
   const busy = loading || pending;
 
@@ -52,9 +50,7 @@ export function FlowDiagram({
     if (loading || !pending) return;
     let nextFrame: number | undefined;
     const firstFrame = requestAnimationFrame(() => {
-      nextFrame = requestAnimationFrame(() =>
-        setPrepared({ json: props.json }),
-      );
+      nextFrame = requestAnimationFrame(() => setPrepared(props));
     });
     return () => {
       cancelAnimationFrame(firstFrame);
@@ -80,10 +76,9 @@ export function FlowDiagram({
       >
         {prepared && (
           <FlowDiagramContent
-            {...props}
+            {...(pending ? prepared : props)}
             className={undefined}
             style={undefined}
-            json={prepared.json}
           />
         )}
       </div>
@@ -170,7 +165,7 @@ function FlowDiagramContent({
             ...node,
             data: {
               ...node.data,
-              type: labelBelow ? "arrayView" : "objectView",
+              type: labelBelow ? "arrayView" : node.data.type,
               ...(forms
                 ? {
                     description: Object.fromEntries(
@@ -209,18 +204,45 @@ function FlowDiagramContent({
   const boundCallbacks = useMemo(() => {
     if (!forms) return viewCallbacks;
     let state = forms.state;
+    const applyChange = (change: import("../core/forms").FormChange) => {
+      const onStateChange = forms.onStateChange ?? forms.onChange;
+      if (!onStateChange) return;
+      const next = changeFormState(state, change, callbacks.onFormChange);
+      if (next === state) return;
+      state = next;
+      onStateChange(next, { ...change, data: next });
+    };
+    const referenceChange = (
+      nodeAddress: string,
+      key: "$content" | "$label",
+      value: string,
+    ) => {
+      const reference = json && getNode(json, nodeAddress)?.[key];
+      if (!reference || typeof reference.$state !== "string") return false;
+      applyChange({
+        address: reference.$state,
+        nodeAddress,
+        previousValue: getNode(state, reference.$state),
+        value,
+        data: state,
+      });
+      return true;
+    };
     return {
       ...viewCallbacks,
-      onFormChange: (change: import("../core/forms").FormChange) => {
-        const onStateChange = forms.onStateChange ?? forms.onChange;
-        if (!onStateChange) return;
-        const next = changeFormState(state, change, callbacks.onFormChange);
-        if (next === state) return;
-        state = next;
-        onStateChange(next, { ...change, data: next });
+      onFormChange: applyChange,
+      onNodeContentChange: (id: string, content: string) => {
+        if (referenceChange(id, "$content", content))
+          callbacks.onNodeContentChange?.(id, content);
+        else viewCallbacks.onNodeContentChange?.(id, content);
+      },
+      onNodeLabelChange: (id: string, label: string) => {
+        if (referenceChange(id, "$label", label))
+          callbacks.onNodeLabelChange?.(id, label);
+        else viewCallbacks.onNodeLabelChange?.(id, label);
       },
     };
-  }, [viewCallbacks, forms, callbacks.onFormChange]);
+  }, [viewCallbacks, forms, json, callbacks]);
 
   return (
     <FormDocumentContext.Provider

@@ -103,28 +103,8 @@ for (const width of [1440, 390]) {
         name: "Configure Workflow",
         exact: true,
       }),
-    ).toBeHidden();
-    await workflowNode.getByText("Workflow", { exact: true }).click();
-    const gear = workflowNode.getByRole("button", {
-      name: "Configure Workflow",
-      exact: true,
-    });
-    await expect(gear).toHaveCSS("width", "80px");
-    await expect(gear.locator("svg")).toHaveAttribute("width", "64");
-    const rightGap = await gear.evaluate((element) => {
-      const header = element.parentElement!;
-      const scale = header.getBoundingClientRect().width / header.offsetWidth;
-      return (
-        (header.getBoundingClientRect().right -
-          element.getBoundingClientRect().right) /
-          scale -
-        parseFloat(getComputedStyle(header).paddingRight)
-      );
-    });
-    expect(Math.abs(rightGap)).toBeLessThan(2);
-    await workflowNode
-      .getByRole("button", { name: "Configure Workflow", exact: true })
-      .click();
+    ).toHaveCount(0);
+    await workflowNode.getByText("Workflow", { exact: true }).dblclick();
     const popup = page.getByRole("dialog", {
       name: "Configure Workflow",
       exact: true,
@@ -260,10 +240,7 @@ for (const width of [1440, 390]) {
       .getByRole("button", { name: "Close node configuration", exact: true })
       .click();
     await expect(workflow).toHaveCount(0);
-    await stepNode.getByText("Check Order", { exact: true }).first().click();
-    await stepNode
-      .getByRole("button", { name: "Configure Check Order", exact: true })
-      .click();
+    await stepNode.getByText("Check Order", { exact: true }).first().dblclick();
     const executionTarget = step.getByRole("combobox", {
       name: "Execution Target",
       exact: true,
@@ -304,10 +281,7 @@ for (const width of [1440, 390]) {
     await page
       .getByRole("button", { name: "Close node configuration", exact: true })
       .click();
-    await workflowNode.getByText("Workflow", { exact: true }).click();
-    await workflowNode
-      .getByRole("button", { name: "Configure Workflow", exact: true })
-      .click();
+    await workflowNode.getByText("Workflow", { exact: true }).dblclick();
     await workflow.getByRole("textbox", { name: "Name", exact: true }).fill("");
     await workflow
       .getByRole("textbox", { name: "Name", exact: true })
@@ -347,22 +321,15 @@ for (const width of [1440, 390]) {
     await expect(page.getByRole("alert")).toContainText(
       "Unsupported TypeScript type: any",
     );
-    await expect(
-      workflowNode.getByRole("button", {
-        name: "Configure Workflow",
-        exact: true,
-        includeHidden: true,
-      }),
-    ).toHaveCount(1);
+    await expect(workflowNode.locator('[aria-haspopup="dialog"]')).toHaveCount(
+      1,
+    );
     await page
       .getByRole("button", { name: "Remove workflow interface", exact: true })
       .click();
-    await expect(
-      workflowNode.getByRole("button", {
-        name: "Configure Workflow",
-        exact: true,
-      }),
-    ).toHaveCount(0);
+    await expect(workflowNode.locator('[aria-haspopup="dialog"]')).toHaveCount(
+      0,
+    );
     await expect(
       page.getByRole("status").filter({ hasText: "form types loaded" }),
     ).toHaveCount(0);

@@ -1,15 +1,19 @@
 import styled from "@emotion/styled";
-import { useContext, useEffect, useId, useRef, useState } from "react";
+import { useContext, useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
-import { PiGearFill, PiX } from "react-icons/pi";
+import { PiX } from "react-icons/pi";
 import { resolveFormNode } from "../core/forms";
 import { FormDocumentContext, NodeForm } from "../nodes/NodeForm";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
 import { resolveStateForm } from "../utils/formState";
-import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
+import { ToolbarIconButton } from "./toolbarControls";
 
 const FormDialog = styled.dialog`
+  &[open] {
+    display: flex;
+    flex-direction: column;
+  }
   &,
   & * {
     scrollbar-width: none;
@@ -20,19 +24,41 @@ const FormDialog = styled.dialog`
   }
 `;
 
+const FormContent = styled.div`
+  min-height: 0;
+  overflow: auto;
+  padding: 32px 0;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black 32px,
+    black calc(100% - 32px),
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black 32px,
+    black calc(100% - 32px),
+    transparent
+  );
+`;
+
 export function NodeFormPopover({
   nodeAddress,
   active,
   label,
+  open = false,
+  onClose,
 }: {
   nodeAddress: string;
   active: boolean;
   label: string;
+  open?: boolean;
+  onClose?: () => void;
 }) {
   const { background, border, colorText } = useCustomColors();
   const dialog = useRef<HTMLDialogElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = useState(false);
   const id = useId();
   const { data, schema, bindings } = useContext(FormDocumentContext);
   const available = !!(
@@ -43,50 +69,23 @@ export function NodeFormPopover({
       : resolveFormNode(data, nodeAddress, schema))
   );
   useEffect(() => {
-    if (!active || !available) {
+    if (!active || !available || !open) {
       dialog.current?.close();
-      setOpen(false);
+    } else if (!dialog.current?.open) {
+      dialog.current?.showModal();
     }
-  }, [active, available]);
+  }, [active, available, open]);
   const surface = getChakraColorHex(background);
   if (!available) return null;
   return (
     <>
-      <ToolbarTooltip label="Configure node">
-        <ToolbarIconButton
-          ref={trigger}
-          aria-label={`Configure ${label}`}
-          aria-haspopup="dialog"
-          aria-expanded={open}
-          aria-controls={id}
-          icon={<PiGearFill size={64} />}
-          variant="ghost"
-          w="80px"
-          h="80px"
-          minW="80px"
-          color="inherit"
-          style={{
-            visibility: active ? "visible" : "hidden",
-            flexShrink: 0,
-            marginLeft: "auto",
-          }}
-          onClick={(event) => {
-            event.stopPropagation();
-            setOpen(true);
-            dialog.current?.showModal();
-          }}
-        />
-      </ToolbarTooltip>
       {typeof document !== "undefined" &&
         createPortal(
           <FormDialog
             ref={dialog}
             id={id}
             aria-label={`Configure ${label}`}
-            onClose={() => {
-              setOpen(false);
-              if (active) trigger.current?.focus({ preventScroll: true });
-            }}
+            onClose={onClose}
             onPointerDown={(event) => event.stopPropagation()}
             onWheel={(event) => event.stopPropagation()}
             onKeyDown={(event) => event.stopPropagation()}
@@ -101,7 +100,7 @@ export function NodeFormPopover({
               boxSizing: "border-box",
               maxWidth: "calc(100vw - 32px)",
               maxHeight: "calc(100dvh - 32px)",
-              overflowY: "auto",
+              overflow: "hidden",
               borderRadius: 30,
               border: `1px solid ${getChakraColorHex(border)}`,
               background: surface,
@@ -119,7 +118,7 @@ export function NodeFormPopover({
                     alignItems: "center",
                     justifyContent: "space-between",
                     gap: 12,
-                    marginBottom: 12,
+                    flexShrink: 0,
                   }}
                 >
                   <strong style={{ overflowWrap: "anywhere", minWidth: 0 }}>
@@ -139,7 +138,9 @@ export function NodeFormPopover({
                     />
                   </form>
                 </div>
-                <NodeForm nodeAddress={nodeAddress} />
+                <FormContent data-form-scroll="">
+                  <NodeForm nodeAddress={nodeAddress} />
+                </FormContent>
               </>
             )}
           </FormDialog>,

@@ -3,12 +3,18 @@ export interface Point {
   y: number;
 }
 
+export type PortSide = "top" | "right" | "bottom" | "left";
+export interface PortAnchor extends Point {
+  side: PortSide;
+}
+
 /** Centre + size, model units (matches cytoscape's node position/width/height) */
 export interface Box {
   x: number;
   y: number;
   w: number;
   h: number;
+  outline?: Point[];
 }
 
 export interface Rect {

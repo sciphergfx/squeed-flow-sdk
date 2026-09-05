@@ -37,10 +37,7 @@ for (const width of [1440, 390]) {
     ).toHaveCount(3);
     const open = async (address: string, label: string) => {
       const node = page.locator(`.flow-sdk-node[data-node-id="${address}"]`);
-      await node.getByText(label, { exact: true }).first().click();
-      await node
-        .getByRole("button", { name: `Configure ${label}`, exact: true })
-        .click();
+      await node.getByText(label, { exact: true }).first().dblclick();
       return page.getByRole("dialog", {
         name: `Configure ${label}`,
         exact: true,

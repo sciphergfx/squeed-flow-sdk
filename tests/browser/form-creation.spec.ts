@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { ready } from "./helpers";
 
 for (const width of [1440, 390]) {
-  test(`draw from Trigger creates a Step with its own gear at ${width}px`, async ({
+  test(`draw from Trigger creates a Step with a double-click form at ${width}px`, async ({
     page,
   }, testInfo) => {
     await page.setViewportSize({ width, height: 950 });
@@ -94,10 +94,7 @@ for (const width of [1440, 390]) {
     const step = page.locator(
       '.flow-sdk-node[data-node-id="root.workflow.steps.0"]',
     );
-    await step.getByText("Step", { exact: true }).click();
-    await step
-      .getByRole("button", { name: "Configure Step", exact: true })
-      .click();
+    await step.getByText("Step", { exact: true }).dblclick();
     const dialog = page.getByRole("dialog", {
       name: "Configure Step",
       exact: true,

@@ -2,6 +2,8 @@ import { Box, HStack, IconButton } from "@chakra-ui/react";
 import { memo, useCallback, useRef, useState } from "react";
 import { PiMinusBold, PiPlusBold } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
+import { NodeFormPopover } from "../components/NodeFormPopover";
+import { FlowPort, type FlowPortProps } from "../components/FlowPort";
 import TooltipIconButton from "../components/TooltipIconButton";
 import { useNodeHasChildren } from "../hooks/useNodeHasChildren";
 import { getChakraColorHex } from "../theme/colorUtils";
@@ -48,6 +50,7 @@ const NodeView = ({
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
 
   const id = nodeData?.id;
   const hasChildren = useNodeHasChildren(id);
@@ -114,10 +117,66 @@ const NodeView = ({
     setIsHovered(false);
   }, []);
 
+  const formAvailable = !!nodeData?.config?.form;
+  const formHandlers = {
+    tabIndex: formAvailable ? 0 : undefined,
+    "aria-haspopup": formAvailable ? ("dialog" as const) : undefined,
+    "aria-expanded": formAvailable ? formOpen : undefined,
+    onDoubleClickCapture: (event: React.MouseEvent<HTMLDivElement>) => {
+      if (
+        !formAvailable ||
+        config.readOnly ||
+        isEditing ||
+        !event.currentTarget.contains(event.target as Node) ||
+        (event.target instanceof Element &&
+          event.target.closest(
+            "button, input, textarea, select, a, [contenteditable=true]",
+          ))
+      )
+        return;
+      event.preventDefault();
+      event.stopPropagation();
+      setSelectedNodeIds([id]);
+      setFormOpen(true);
+      callbacks.onNodeDoubleClick?.(id, nodeData);
+    },
+    onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (
+        !formAvailable ||
+        config.readOnly ||
+        event.target !== event.currentTarget ||
+        event.key !== "Enter"
+      )
+        return;
+      event.preventDefault();
+      event.stopPropagation();
+      setSelectedNodeIds([id]);
+      setFormOpen(true);
+    },
+  };
+  const formPopover = formAvailable && (
+    <NodeFormPopover
+      nodeAddress={id}
+      active={isActive}
+      label={nodeData.label || nodeData.headerTitle || "Node"}
+      open={formOpen}
+      onClose={() => {
+        setFormOpen(false);
+        if (isActive) nodeRef.current?.focus({ preventScroll: true });
+      }}
+    />
+  );
+  const shapePorts = Array.isArray(nodeData?.config?.ports)
+    ? nodeData.config.ports.map((port: FlowPortProps) => (
+        <FlowPort key={`${port.id}:${port.role}`} {...port} />
+      ))
+    : null;
+
   if (isParent) {
     return (
       <Box
         ref={nodeRef}
+        {...formHandlers}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         onMouseEnter={handleMouseEnter}
@@ -125,6 +184,7 @@ const NodeView = ({
         cursor="pointer"
         position="relative"
       >
+        {formPopover}
         {!isPerformanceMode &&
           (renderNodeOverlay ||
             (overlayActions && overlayActions.length > 0)) &&
@@ -277,6 +337,7 @@ const NodeView = ({
   return (
     <Box
       ref={nodeRef}
+      {...formHandlers}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       onMouseEnter={handleMouseEnter}
@@ -285,6 +346,8 @@ const NodeView = ({
       transition="transform 0.1s ease"
       position="relative"
     >
+      {formPopover}
+      {shapePorts}
       {!isPerformanceMode &&
         (renderNodeOverlay || (overlayActions && overlayActions.length > 0)) &&
         isHovered &&

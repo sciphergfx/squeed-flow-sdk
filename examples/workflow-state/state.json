@@ -5,18 +5,48 @@
                     "type": "event",
                     "event": "user.created"
           },
+          "tools": {
+                    "directory_lookup": {
+                              "name": "Directory Lookup",
+                              "description": "Look up a user in the shared directory.",
+                              "method": "GET",
+                              "url": "https://example.com/directory/users"
+                    },
+                    "issue_lookup": {
+                              "name": "Issue Lookup",
+                              "description": "Find support issues for a user.",
+                              "method": "GET",
+                              "url": "https://example.com/issues"
+                    }
+          },
+          "texts": {
+                    "user_review": {
+                              "name": "User Review Prompt",
+                              "content": "Review the new user and determine whether they are a manager."
+                    },
+                    "directory_guidance": {
+                              "name": "Directory Instructions",
+                              "content": "Use the directory tools to verify the user before suggesting profile changes."
+                    }
+          },
           "steps": [
                     {
                               "id": "assistant",
                               "name": "AI Agent",
                               "type": "llm",
                               "config": {
-                                        "prompt": "Review the new user and determine whether they are a manager.",
+                                        "promptId": "user_review",
+                                        "instructionIds": [
+                                                  "directory_guidance"
+                                        ],
                                         "model": "example-model",
                                         "memory": [
                                                   "knowledge_entry"
                                         ],
-                                        "tools": [],
+                                        "tools": [
+                                                  "directory_lookup",
+                                                  "issue_lookup"
+                                        ],
                                         "temperature": 0.3
                               }
                     },

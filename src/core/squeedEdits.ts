@@ -23,6 +23,7 @@ export type SqueedJson = Record<string, any> | any[];
 /** Schema keys that live on a node */
 export type SqueedNodeKey =
   | "$label"
+  | "$subtitle"
   | "$form"
   | "$bgColor"
   | "$textColor"
@@ -38,7 +39,8 @@ export type SqueedNodeKey =
   | "$parent"
   | "$outline"
   | "$isNodeAnimated"
-  | "$connections";
+  | "$connections"
+  | "$ports";
 
 /** Schema keys that describe the edge *into* a node (parent → child) */
 export type SqueedEdgeKey =
@@ -432,10 +434,23 @@ export function compileSqueed(
       data.config = { ...data.config, form: src.$form };
       data.type = "objectView";
     }
+    if (Array.isArray(src.$ports)) {
+      const ports = src.$ports.filter(
+        (port: any) =>
+          port &&
+          typeof port.id === "string" &&
+          ["source", "target"].includes(port.role) &&
+          ["top", "right", "bottom", "left"].includes(port.side),
+      );
+      data.config = { ...data.config, ports };
+    }
     if (data.parent) data.parent = canonicalAddress(data.parent);
     if (typeof src.$label === "string") {
       data.label = src.$label;
       data.headerTitle = src.$label;
+    }
+    if (typeof src.$subtitle === "string") {
+      data.config = { ...data.config, subtitle: src.$subtitle };
     }
     if (typeof src.$outline === "boolean") {
       data.viewProps = { ...data.viewProps, outline: src.$outline };

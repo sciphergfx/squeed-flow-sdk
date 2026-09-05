@@ -2,7 +2,6 @@ import { Box, Flex, Icon, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import { PiCircleFill } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
-import { NodeFormPopover } from "../components/NodeFormPopover";
 import {
   ToolbarIconButton,
   ToolbarTooltip,
@@ -200,13 +199,6 @@ const NodeJsonObjectView = (props) => {
                       </ToolbarTooltip>
                     </Box>
                   )}
-                  {data.config?.form && (
-                    <NodeFormPopover
-                      nodeAddress={id}
-                      active={isActive}
-                      label={formatHeaderTitle(headerTitle) || "Node"}
-                    />
-                  )}
                 </Flex>
               )}
               {hasContent && !objVisible ? (
@@ -308,7 +300,9 @@ const NodeJsonObjectView = (props) => {
                   )}
                 </Box>
               )}
-              <NodeConfigSummary nodeAddress={id} />
+              {(!hasContent || objVisible) && (
+                <NodeConfigSummary nodeAddress={id} />
+              )}
             </Flex>
           </Flex>
         );

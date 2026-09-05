@@ -29,11 +29,23 @@
                     "address": "root.steps.0.config",
                     "type": "LlmConfig",
                     "fields": {
-                              "prompt": {
-                                        "$control": "textarea"
+                              "promptId": {
+                                        "$label": "Prompt",
+                                        "$options": {
+                                                  "$source": "callback",
+                                                  "$dependsOn": [
+                                                            "root.texts"
+                                                  ]
+                                        }
                               },
-                              "instructions": {
-                                        "$control": "textarea"
+                              "instructionIds": {
+                                        "$label": "Instructions",
+                                        "$options": {
+                                                  "$source": "callback",
+                                                  "$dependsOn": [
+                                                            "root.texts"
+                                                  ]
+                                        }
                               },
                               "model": {
                                         "$options": {
@@ -51,7 +63,9 @@
                               "tools": {
                                         "$options": {
                                                   "$source": "callback",
-                                                  "$dependsOn": []
+                                                  "$dependsOn": [
+                                                            "root.tools"
+                                                  ]
                                         }
                               }
                     }
@@ -70,6 +84,24 @@
                     "type": "HttpConfig",
                     "fields": {
                               "body": {
+                                        "$control": "textarea"
+                              }
+                    }
+          },
+          "root.directoryTool": {
+                    "address": "root.tools.directory_lookup",
+                    "type": "ToolConfig",
+                    "fields": {
+                              "description": {
+                                        "$control": "textarea"
+                              }
+                    }
+          },
+          "root.issueTool": {
+                    "address": "root.tools.issue_lookup",
+                    "type": "ToolConfig",
+                    "fields": {
+                              "description": {
                                         "$control": "textarea"
                               }
                     }

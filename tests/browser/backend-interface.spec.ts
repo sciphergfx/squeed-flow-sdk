@@ -15,10 +15,7 @@ for (const width of [1440, 390]) {
       .setInputFiles("examples/workflow-form/backend-interface.ts");
     await expect(page.getByRole("status")).toContainText("2 form types loaded");
     const node = page.locator('.flow-sdk-node[data-node-id="root.workflow"]');
-    await node.getByText("Workflow", { exact: true }).click();
-    await node
-      .getByRole("button", { name: "Configure Workflow", exact: true })
-      .click();
+    await node.getByText("Workflow", { exact: true }).dblclick();
     const form = page.getByRole("dialog", {
       name: "Configure Workflow",
       exact: true,

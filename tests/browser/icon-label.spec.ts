@@ -32,10 +32,7 @@ for (const width of [1440, 390]) {
       .setInputFiles("examples/workflow-state/interface.ts");
     await expect(page.getByRole("status")).toContainText("4 form types loaded");
     await expect(node.locator("[data-flow-icon-label]")).toHaveCount(1);
-    await node.getByText("On Create User", { exact: true }).click();
-    await node
-      .getByRole("button", { name: "Configure On Create User", exact: true })
-      .click();
+    await node.getByText("On Create User", { exact: true }).dblclick();
     await expect(
       page.getByRole("dialog", {
         name: "Configure On Create User",

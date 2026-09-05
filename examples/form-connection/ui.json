@@ -1,0 +1,39 @@
+{
+          "$label": "UI JSON and Forms",
+          "ui": {
+                    "$label": "1. UI JSON",
+                    "$icon": "PiBracketsCurly",
+                    "$content": "```json\n{\n  \"form\": {\n    \"$label\": \"Generated Form\",\n    \"$icon\": \"PiSlidersHorizontal\"\n  }\n}\n```",
+                    "$target": "root.binding",
+                    "$targetLabel": "node address"
+          },
+          "binding": {
+                    "$label": "2. Binding",
+                    "$icon": "PiLink",
+                    "$content": "```json\n{\n  \"root.form\": {\n    \"address\": \"root.step\",\n    \"type\": \"SampleStep\"\n  }\n}\n```",
+                    "$target": "root.form",
+                    "$targetLabel": "binds state and type"
+          },
+          "interface": {
+                    "$label": "3. TypeScript Interface",
+                    "$icon": "PiFileTs",
+                    "$content": "```ts\ninterface SampleStep {\n  name: string;\n  enabled: boolean;\n  retries: number;\n}\n```",
+                    "$target": "root.form",
+                    "$targetLabel": "defines fields"
+          },
+          "form": {
+                    "$view": "object",
+                    "$label": "Generated Form",
+                    "$icon": "PiSlidersHorizontal",
+                    "$bgColor": "teal.600",
+                    "$target": "root.state",
+                    "$targetLabel": "edits shared state"
+          },
+          "state": {
+                    "$label": "State JSON",
+                    "$icon": "PiDatabase",
+                    "$content": {
+                              "$state": "root.step"
+                    }
+          }
+}

@@ -155,10 +155,7 @@ for (const width of [1440, 390]) {
     if (await closeSelection.isVisible()) await closeSelection.click();
     await page.getByRole("button", { name: "Reset zoom", exact: true }).click();
     await page.screenshot({ path: testInfo.outputPath("mixed-views.png") });
-    await chooseToolbarOption(category, "primitives");
-    await expect(page.getByTestId("selected-control-label")).toHaveText(
-      "Primitives",
-    );
+    await chooseToolbarOption(category, "appearance");
     const panel = page.getByRole("region", { name: "SDK control examples" });
     await expect(panel).toHaveCSS("border-radius", "30px");
     await expect(panel).toHaveCSS("box-shadow", /8px/);
@@ -166,15 +163,6 @@ for (const width of [1440, 390]) {
     await page.getByTestId("theme-toggle").click();
     await expect(panel).toHaveCSS("background-color", lightSurface);
     await page.getByTestId("theme-toggle").click();
-    await panel.getByRole("textbox", { name: "Example text" }).fill("Edited");
-    await expect(
-      panel.getByRole("textbox", { name: "Example text" }),
-    ).toHaveCSS("border-width", "1px");
-    await expect(
-      panel.getByRole("textbox", { name: "Example text" }),
-    ).toHaveCSS("border-style", "solid");
-    await panel.getByRole("textbox", { name: "Example text" }).press("Enter");
-    await expect(page.getByTestId("primitive-output")).toContainText("Edited");
     await page
       .getByRole("button", { name: "Hide example controls", exact: true })
       .click();
@@ -187,7 +175,6 @@ for (const width of [1440, 390]) {
     await expect(topBar).toBeVisible();
     await expect(panel).toBeVisible();
     await expect(dataset).toHaveAttribute("title", "View: Mixed Views");
-    await expect(page.getByTestId("primitive-output")).toContainText("Edited");
     await chooseToolbarOption(category, "selection");
     await expect(
       panel.getByRole("textbox", { name: "Node label" }),
@@ -230,5 +217,39 @@ for (const width of [1440, 390]) {
     expect(bounds!.x).toBeGreaterThanOrEqual(0);
     expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
     expect(errors).toEqual([]);
+  });
+
+  test(`controls omit the removed Primitives demo at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 950 });
+    await page.goto(process.env.SDK_TEST_URL!);
+    await expect(page.locator(".flow-sdk-node").first()).toBeVisible();
+    await page
+      .getByRole("combobox", { name: "Control examples", exact: true })
+      .click();
+    const menu = page.getByRole("listbox", {
+      name: "Control examples",
+      exact: true,
+    });
+    await expect(
+      menu.getByRole("option", { name: "Primitives", exact: true }),
+    ).toHaveCount(0);
+    await expect(menu.getByRole("option")).toHaveText([
+      "Controls",
+      "Layout",
+      "Parent",
+      "Visibility",
+      "Appearance",
+      "Selection",
+      "Forms",
+      "Viewport",
+      "Provider",
+    ]);
+    await menu.getByRole("option", { name: "Appearance", exact: true }).click();
+    await expect(
+      page.getByRole("region", { name: "SDK control examples" }),
+    ).toBeVisible();
+    await expect(page.getByTestId("primitive-output")).toHaveCount(0);
   });
 }

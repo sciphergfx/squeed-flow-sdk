@@ -9,6 +9,8 @@ import DynamicIcon from "../utils/DynamicIcon";
 import {
   bezierGeometry,
   connectorEndpoints,
+  perimeterGeometry,
+  portOffset,
   loopGeometry,
   polylineGeometry,
   propertyGeometry,
@@ -18,7 +20,7 @@ import {
   type TaxiDir,
 } from "./geometry";
 import { EDGE_LABEL_FONT_FAMILY, measureText, wrapText } from "./text";
-import type { Box } from "./types";
+import type { Box, PortAnchor } from "./types";
 
 // chartStyles.ts equivalents (model units)
 export const EDGE_WIDTH = 6;
@@ -50,6 +52,8 @@ export interface EdgeViewProps {
   targetProperty?: string;
   sourceY?: number;
   targetY?: number;
+  sourcePort?: PortAnchor;
+  targetPort?: PortAnchor;
   propertyMode?: boolean;
   dir: TaxiDir;
   /** taxi-turn as a fraction of the gap between the nodes */
@@ -83,6 +87,8 @@ function EdgeView({
   targetProperty,
   sourceY,
   targetY,
+  sourcePort,
+  targetPort,
   propertyMode = false,
   dir,
   turn,
@@ -115,7 +121,9 @@ function EdgeView({
       arrowSize: ARROW_SIZE,
       headShape:
         propertyMode &&
-        (inverted ? sourceY !== undefined : targetY !== undefined)
+        (inverted
+          ? sourceY !== undefined || !!sourcePort
+          : targetY !== undefined || !!targetPort)
           ? "square"
           : "triangle",
       radius: edgeRadius ?? (labelAtTarget ? 40 : TAXI_RADIUS),
@@ -125,22 +133,66 @@ function EdgeView({
         : undefined,
       labelFraction: labelAtTarget ? labelFraction : undefined,
     };
-    const property = sourceY !== undefined || targetY !== undefined;
+    const property =
+      sourceY !== undefined ||
+      targetY !== undefined ||
+      !!sourcePort ||
+      !!targetPort;
+    const baseEndpoints = connectorEndpoints(
+      source,
+      target,
+      dir,
+      sourceY,
+      targetY,
+      0,
+    );
+    const vertical =
+      sourceY === undefined &&
+      targetY === undefined &&
+      (dir === "downward" || dir === "upward");
+    const sourceAnchor: PortAnchor = sourcePort ?? {
+      ...baseEndpoints.sourcePoint,
+      side: vertical
+        ? dir === "upward"
+          ? "top"
+          : "bottom"
+        : dir === "leftward"
+          ? "left"
+          : "right",
+    };
+    const targetAnchor: PortAnchor = targetPort ?? {
+      ...baseEndpoints.targetPoint,
+      side: vertical
+        ? dir === "upward"
+          ? "bottom"
+          : "top"
+        : dir === "leftward"
+          ? "right"
+          : "left",
+    };
     const loop = source.x === target.x && source.y === target.y;
-    const defaultGeometry = property
-      ? propertyGeometry(source, target, dir, sourceY, targetY, turn, {
-          ...opts,
-          srcDist: 18,
-          tgtDist: 18,
-          radius: edgeRadius ?? Math.min(opts.radius, 40),
-        })
-      : loop
-        ? loopGeometry(source, loopIndex, {
-            ...opts,
-            srcDist: 0,
-            tgtDist: 0,
-          })
-        : taxiGeometry(source, target, dir, turn, opts);
+    const defaultGeometry =
+      sourcePort || targetPort
+        ? perimeterGeometry(
+            sourceAnchor,
+            targetAnchor,
+            { ...opts, srcDist: 18, tgtDist: 18 },
+            edgeType,
+          )
+        : property
+          ? propertyGeometry(source, target, dir, sourceY, targetY, turn, {
+              ...opts,
+              srcDist: 18,
+              tgtDist: 18,
+              radius: edgeRadius ?? Math.min(opts.radius, 40),
+            })
+          : loop
+            ? loopGeometry(source, loopIndex, {
+                ...opts,
+                srcDist: 0,
+                tgtDist: 0,
+              })
+            : taxiGeometry(source, target, dir, turn, opts);
     if (!defaultGeometry) return null;
     const endpoints = connectorEndpoints(
       source,
@@ -150,6 +202,8 @@ function EdgeView({
       targetY,
       property ? 18 : STANDOFF,
     );
+    if (sourcePort) endpoints.sourcePoint = portOffset(sourcePort, 18);
+    if (targetPort) endpoints.targetPoint = portOffset(targetPort, 18);
     const factory = Object.prototype.hasOwnProperty.call(
       customEdgeTypes ?? {},
       edgeType,
@@ -177,7 +231,7 @@ function EdgeView({
         }) ?? defaultGeometry
       );
     }
-    if (loop) return defaultGeometry;
+    if (loop || sourcePort || targetPort) return defaultGeometry;
     if (edgeType === "straight")
       return property
         ? straightPortGeometry(
@@ -214,6 +268,8 @@ function EdgeView({
     propertyMode,
     sourceY,
     targetY,
+    sourcePort,
+    targetPort,
     dir,
     turn,
     inverted,

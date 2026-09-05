@@ -23,6 +23,7 @@ import { computeContainers, runDagreLayout } from "./layout";
 import NodeHost from "./NodeHost";
 import type { PropertyRow } from "./propertyRows";
 import { EDGE_LABEL_FONT_FAMILY, measureText } from "./text";
+import { surfaceBox, type NodeSurface } from "./nodeSurface";
 import {
   boxToRect,
   pointInRect,
@@ -199,6 +200,22 @@ function Canvas(props: CanvasProps) {
   const elByIdRef = useRef(new Map<string, HTMLDivElement>());
   const idByElRef = useRef(new Map<Element, string>());
   const roRef = useRef<ResizeObserver | null>(null);
+  const [nodeSurfaces, setNodeSurfaces] = useState(
+    new Map<string, NodeSurface>(),
+  );
+  const onSurface = useCallback(
+    (id: string, surface: NodeSurface | undefined) => {
+      setNodeSurfaces((current) => {
+        if (JSON.stringify(current.get(id)) === JSON.stringify(surface))
+          return current;
+        const next = new Map(current);
+        if (surface) next.set(id, surface);
+        else next.delete(id);
+        return next;
+      });
+    },
+    [],
+  );
   const [propertyRows, setPropertyRows] = useState(
     new Map<string, PropertyRow[]>(),
   );
@@ -452,9 +469,35 @@ function Canvas(props: CanvasProps) {
     if (edgeMode !== "properties" || property === undefined) return undefined;
     const row = propertyRows.get(id)?.find((row) => row.property === property);
     const box = boxFor(id);
-    return row && box
+    return row && !row.anchor && box
       ? box.y - box.h / 2 + row.top + row.height / 2
       : undefined;
+  };
+
+  const portFor = (id: string, property?: string) => {
+    if (property === undefined) return;
+    const anchor = propertyRows
+      .get(id)
+      ?.find((row) => row.property === property)?.anchor;
+    const box = boxFor(id);
+    return anchor && box
+      ? {
+          x: box.x - box.w / 2 + anchor.x,
+          y: box.y - box.h / 2 + anchor.y,
+          side: anchor.side,
+        }
+      : undefined;
+  };
+
+  const edgeBoxFor = (id: string, property?: string): Box | undefined => {
+    const box = boxFor(id);
+    const surface = nodeSurfaces.get(id);
+    return box &&
+      surface &&
+      !containers.has(id) &&
+      propertyY(id, property) === undefined
+      ? surfaceBox(box, surface)
+      : box;
   };
 
   const elementsBBox = (): Rect | null => {
@@ -730,7 +773,6 @@ function Canvas(props: CanvasProps) {
   };
 
   const hitTestProperty = (model: Point, role: "source" | "target") => {
-    if (propsRef.current.edgeMode !== "properties") return null;
     const reverse = propsRef.current.direction === "RL";
     const radius = Math.max(16, 6 / viewport.zoom);
     let closest: { nodeId: string; property: string; distance: number } | null =
@@ -744,13 +786,15 @@ function Canvas(props: CanvasProps) {
       const portX =
         box.x + (((role === "source") !== reverse ? 1 : -1) * box.w) / 2;
       for (const row of rows) {
+        if (!row.anchor && propsRef.current.edgeMode !== "properties") continue;
         if (row.role && row.role !== role) continue;
         const top = box.y - box.h / 2 + row.top;
         const distance = Math.hypot(
-          model.x - portX,
+          model.x - (row.anchor ? box.x - box.w / 2 + row.anchor.x : portX),
           model.y - top - row.height / 2,
         );
         const inside =
+          !row.anchor &&
           model.x >= box.x - box.w / 2 &&
           model.x <= box.x + box.w / 2 &&
           model.y >= top &&
@@ -1070,19 +1114,21 @@ function Canvas(props: CanvasProps) {
   useLayoutEffect(() => {
     if (rootRef.current && labelLayer) placeEdgeLabels(rootRef.current);
   });
-  const branches = branchRoutes(edges, boxFor, taxiDir);
+  const branches = branchRoutes(edges, edgeBoxFor, taxiDir);
   const onEdgeSelect = props.onEdgeSelect;
   const onContainerSelect = props.onContainerSelect;
 
   const ghostTarget = ghost
-    ? (ghost.target && boxFor(ghost.target)) || {
+    ? (ghost.target && edgeBoxFor(ghost.target, ghost.targetProperty)) || {
         x: ghost.point.x,
         y: ghost.point.y,
         w: 1,
         h: 1,
       }
     : null;
-  const ghostSource = ghost ? boxFor(ghost.source) : null;
+  const ghostSource = ghost
+    ? edgeBoxFor(ghost.source, ghost.sourceProperty)
+    : null;
 
   const rootClass = [
     "flow-sdk-canvas",
@@ -1141,8 +1187,8 @@ function Canvas(props: CanvasProps) {
                   (!isolatedIds.has(e.source) || !isolatedIds.has(e.target))
                 )
                   return null;
-                const s = boxFor(e.source);
-                const t = boxFor(e.target);
+                const s = edgeBoxFor(e.source, e.sourceProperty);
+                const t = edgeBoxFor(e.target, e.targetProperty);
                 if (!s || !t) return null;
                 return (
                   <EdgeView
@@ -1160,6 +1206,8 @@ function Canvas(props: CanvasProps) {
                     targetProperty={e.targetProperty}
                     sourceY={propertyY(e.source, e.sourceProperty)}
                     targetY={propertyY(e.target, e.targetProperty)}
+                    sourcePort={portFor(e.source, e.sourceProperty)}
+                    targetPort={portFor(e.target, e.targetProperty)}
                     dir={taxiDir}
                     turn={branches.get(e.id)?.turn ?? e.turn}
                     labelAtTarget={branches.get(e.id)?.labelAtTarget}
@@ -1197,6 +1245,12 @@ function Canvas(props: CanvasProps) {
                 sourceProperty={ghost.sourceProperty}
                 targetProperty={ghost.targetProperty}
                 sourceY={propertyY(ghost.source, ghost.sourceProperty)}
+                sourcePort={portFor(ghost.source, ghost.sourceProperty)}
+                targetPort={
+                  ghost.target
+                    ? portFor(ghost.target, ghost.targetProperty)
+                    : undefined
+                }
                 targetY={
                   ghost.target
                     ? propertyY(ghost.target, ghost.targetProperty)
@@ -1238,6 +1292,7 @@ function Canvas(props: CanvasProps) {
               reversePorts={direction === "RL"}
               direction={direction}
               onPropertyRows={onPropertyRows}
+              onSurface={onSurface}
             >
               {n.element}
             </NodeHost>

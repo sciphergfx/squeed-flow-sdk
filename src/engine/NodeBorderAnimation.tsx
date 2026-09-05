@@ -8,6 +8,7 @@ export function NodeBorderAnimation({
   radius,
   color,
   strokeWidth = 8,
+  path,
 }: {
   x?: number;
   y?: number;
@@ -16,7 +17,23 @@ export function NodeBorderAnimation({
   radius: number;
   color: string;
   strokeWidth?: number;
+  path?: string;
 }) {
+  if (path)
+    return (
+      <path
+        className="flow-sdk-node-border-animation"
+        aria-hidden="true"
+        pointerEvents="none"
+        d={path}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        pathLength={100}
+        strokeDasharray="18 82"
+      />
+    );
   return (
     <rect
       className="flow-sdk-node-border-animation"

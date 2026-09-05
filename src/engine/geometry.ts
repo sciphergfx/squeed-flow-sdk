@@ -1,4 +1,11 @@
-import { boxToRect, type Box, type Point, type Rect } from "./types";
+import {
+  boxToRect,
+  type Box,
+  type Point,
+  type Rect,
+  type PortAnchor,
+  type PortSide,
+} from "./types";
 
 export type TaxiDir = "rightward" | "leftward" | "downward" | "upward";
 
@@ -96,6 +103,196 @@ function exitRect(a: Point, b: Point, r: Rect): Point | null {
   return { x: a.x + dx * t, y: a.y + dy * t };
 }
 
+function exitBox(start: Point, end: Point, box: Box): Point | null {
+  if (!box.outline?.length) return exitRect(start, end, boxToRect(box));
+  const deltaX = end.x - start.x;
+  const deltaY = end.y - start.y;
+  let nearest = Infinity;
+  box.outline.forEach((vertex, index, vertices) => {
+    const next = vertices[(index + 1) % vertices.length];
+    const edgeX = next.x - vertex.x;
+    const edgeY = next.y - vertex.y;
+    const denominator = deltaX * edgeY - deltaY * edgeX;
+    if (Math.abs(denominator) < 1e-9) return;
+    const relativeX = vertex.x - start.x;
+    const relativeY = vertex.y - start.y;
+    const distance = (relativeX * edgeY - relativeY * edgeX) / denominator;
+    const alongEdge = (relativeX * deltaY - relativeY * deltaX) / denominator;
+    if (
+      distance >= 0 &&
+      distance < 1 &&
+      alongEdge >= -1e-9 &&
+      alongEdge <= 1 + 1e-9
+    )
+      nearest = Math.min(nearest, distance);
+  });
+  return Number.isFinite(nearest)
+    ? { x: start.x + deltaX * nearest, y: start.y + deltaY * nearest }
+    : null;
+}
+
+export function shapePort(
+  box: Box,
+  side: PortSide,
+  position = 0.5,
+): PortAnchor {
+  const fraction = Number.isFinite(position)
+    ? Math.max(0, Math.min(1, position))
+    : 0.5;
+  const vertical = side === "top" || side === "bottom";
+  const direction = side === "top" || side === "left" ? -1 : 1;
+  const start = {
+    x: vertical ? box.x - box.w / 2 + box.w * fraction : box.x,
+    y: vertical ? box.y : box.y - box.h / 2 + box.h * fraction,
+  };
+  const reach = Math.max(box.w, box.h) * 2 + 1;
+  const point = exitBox(
+    start,
+    {
+      x: start.x + (vertical ? 0 : direction * reach),
+      y: start.y + (vertical ? direction * reach : 0),
+    },
+    box,
+  ) ?? {
+    x: vertical ? start.x : box.x + (direction * box.w) / 2,
+    y: vertical ? box.y + (direction * box.h) / 2 : start.y,
+  };
+  return { ...point, side };
+}
+
+export function portOffset(anchor: PortAnchor, distance: number): Point {
+  return {
+    x:
+      anchor.x +
+      (anchor.side === "right"
+        ? distance
+        : anchor.side === "left"
+          ? -distance
+          : 0),
+    y:
+      anchor.y +
+      (anchor.side === "bottom"
+        ? distance
+        : anchor.side === "top"
+          ? -distance
+          : 0),
+  };
+}
+
+export function perimeterGeometry(
+  source: PortAnchor,
+  target: PortAnchor,
+  options: EdgeGeometryOptions,
+  type: string,
+): EdgeGeometry {
+  const start = portOffset(source, options.srcDist);
+  const end = portOffset(target, options.tgtDist);
+  if (type === "straight") return straightPortGeometry(start, end, options);
+  const preferredReach = Math.max(
+    80,
+    Math.min(300, Math.hypot(end.x - start.x, end.y - start.y) / 3),
+  );
+  const facingGap =
+    source.side === "bottom" && target.side === "top"
+      ? end.y - start.y
+      : source.side === "top" && target.side === "bottom"
+        ? start.y - end.y
+        : source.side === "right" && target.side === "left"
+          ? end.x - start.x
+          : source.side === "left" && target.side === "right"
+            ? start.x - end.x
+            : undefined;
+  const reach =
+    facingGap !== undefined && facingGap > 0
+      ? Math.min(preferredReach, facingGap / 2)
+      : preferredReach;
+  const sourceLead = portOffset({ ...start, side: source.side }, reach);
+  const targetLead = portOffset({ ...end, side: target.side }, reach);
+  const lineStart =
+    options.arrowAt === "source"
+      ? shorten(start, sourceLead, options.arrowGap)
+      : start;
+  const lineEnd =
+    options.arrowAt === "target"
+      ? shorten(end, targetLead, options.arrowGap)
+      : end;
+  const arrow =
+    options.arrowAt === "source"
+      ? arrowPath(start, sourceLead, options.arrowSize, options.headShape)
+      : options.arrowAt === "target"
+        ? arrowPath(end, targetLead, options.arrowSize, options.headShape)
+        : undefined;
+  if (type === "bezier")
+    return {
+      d: `M${pt(lineStart)} C${pt(sourceLead)} ${pt(targetLead)} ${pt(lineEnd)}`,
+      arrow,
+      label: {
+        x: (lineStart.x + 3 * sourceLead.x + 3 * targetLead.x + lineEnd.x) / 8,
+        y: (lineStart.y + 3 * sourceLead.y + 3 * targetLead.y + lineEnd.y) / 8,
+        angle: 0,
+      },
+    };
+  const sourceHorizontal = source.side === "left" || source.side === "right";
+  const targetHorizontal = target.side === "left" || target.side === "right";
+  let bends: Point[];
+  if (sourceHorizontal !== targetHorizontal) {
+    bends = [
+      sourceHorizontal
+        ? { x: targetLead.x, y: sourceLead.y }
+        : { x: sourceLead.x, y: targetLead.y },
+    ];
+  } else if (facingGap !== undefined && facingGap <= 0) {
+    if (sourceHorizontal) {
+      const lane = (sourceLead.y + targetLead.y) / 2;
+      bends = [
+        { x: sourceLead.x, y: lane },
+        { x: targetLead.x, y: lane },
+      ];
+    } else {
+      const lane = (sourceLead.x + targetLead.x) / 2;
+      bends = [
+        { x: lane, y: sourceLead.y },
+        { x: lane, y: targetLead.y },
+      ];
+    }
+  } else if (sourceHorizontal) {
+    const lane =
+      source.side === target.side
+        ? source.side === "right"
+          ? Math.max(sourceLead.x, targetLead.x)
+          : Math.min(sourceLead.x, targetLead.x)
+        : (sourceLead.x + targetLead.x) / 2;
+    bends = [
+      { x: lane, y: sourceLead.y },
+      { x: lane, y: targetLead.y },
+    ];
+  } else {
+    const lane =
+      source.side === target.side
+        ? source.side === "bottom"
+          ? Math.max(sourceLead.y, targetLead.y)
+          : Math.min(sourceLead.y, targetLead.y)
+        : (sourceLead.y + targetLead.y) / 2;
+    bends = [
+      { x: sourceLead.x, y: lane },
+      { x: targetLead.x, y: lane },
+    ];
+  }
+  const interior = [sourceLead, ...bends, targetLead].filter(
+    (point, index, points) =>
+      index === 0 ||
+      point.x !== points[index - 1].x ||
+      point.y !== points[index - 1].y,
+  );
+  return roundedGeometry(
+    lineStart,
+    interior,
+    lineEnd,
+    arrow,
+    type === "orthogonal" ? 0 : options.radius,
+  );
+}
+
 /** cytoscape `shortenIntersection`: move `p` toward `toward` by `amount` (clamped) */
 function shorten(p: Point, toward: Point, amount: number): Point {
   const dx = p.x - toward.x;
@@ -170,12 +367,10 @@ export function polylineGeometry(
   t: Box,
   o: EdgeGeometryOptions,
 ): EdgeGeometry | null {
-  const sr = boxToRect(s);
-  const tr = boxToRect(t);
   let si = -1;
   let sExit: Point | null = null;
   for (let i = 0; i < pts.length - 1; i++) {
-    const e = exitRect(pts[i], pts[i + 1], sr);
+    const e = exitBox(pts[i], pts[i + 1], s);
     if (e) {
       si = i;
       sExit = e;
@@ -185,7 +380,7 @@ export function polylineGeometry(
   let ti = -1;
   let tExit: Point | null = null;
   for (let i = pts.length - 1; i > 0; i--) {
-    const e = exitRect(pts[i], pts[i - 1], tr);
+    const e = exitBox(pts[i], pts[i - 1], t);
     if (e) {
       ti = i;
       tExit = e;
@@ -392,19 +587,29 @@ export function connectorEndpoints(
     targetY === undefined &&
     (dir === "downward" || dir === "upward");
   const forward = dir === "leftward" || (vertical && dir === "upward") ? -1 : 1;
+  const endpoint = (box: Box, row: number | undefined, sign: number): Point => {
+    const start = { x: box.x, y: row ?? box.y };
+    const reach = Math.max(box.w, box.h) * 2 + 1;
+    const boundary = exitBox(
+      start,
+      {
+        x: start.x + (vertical ? 0 : sign * reach),
+        y: start.y + (vertical ? sign * reach : 0),
+      },
+      box,
+    );
+    if (boundary)
+      return {
+        x: boundary.x + (vertical ? 0 : sign * distance),
+        y: boundary.y + (vertical ? sign * distance : 0),
+      };
+    return vertical
+      ? { x: box.x, y: box.y + sign * (box.h / 2 + distance) }
+      : { x: box.x + sign * (box.w / 2 + distance), y: row ?? box.y };
+  };
   return {
-    sourcePoint: vertical
-      ? { x: source.x, y: source.y + forward * (source.h / 2 + distance) }
-      : {
-          x: source.x + forward * (source.w / 2 + distance),
-          y: sourceY ?? source.y,
-        },
-    targetPoint: vertical
-      ? { x: target.x, y: target.y - forward * (target.h / 2 + distance) }
-      : {
-          x: target.x - forward * (target.w / 2 + distance),
-          y: targetY ?? target.y,
-        },
+    sourcePoint: endpoint(source, sourceY, forward),
+    targetPoint: endpoint(target, targetY, -forward),
   };
 }
 
@@ -502,10 +707,9 @@ export function loopGeometry(
     y: b.y + Math.sin(outAngle) * k,
   };
   const c2 = { x: b.x + Math.cos(inAngle) * k, y: b.y + Math.sin(inAngle) * k };
-  const r = boxToRect(b);
   const center = { x: b.x, y: b.y };
-  const sExit = exitRect(center, c1, r);
-  const tExit = exitRect(center, c2, r);
+  const sExit = exitBox(center, c1, b);
+  const tExit = exitBox(center, c2, b);
   if (!sExit || !tExit) return null;
   const mid = { x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 };
 

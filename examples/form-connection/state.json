@@ -1,0 +1,7 @@
+{
+          "step": {
+                    "name": "Email notification",
+                    "enabled": true,
+                    "retries": 3
+          }
+}

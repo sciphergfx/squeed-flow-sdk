@@ -10,13 +10,14 @@ import {
   type FlowEngine,
   type SqueedJson,
 } from "@squeed/flow-sdk";
-import { StrictMode, useState } from "react";
+import { StrictMode, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import workflowDocument from "../../../examples/workflow-form/ui.json";
 import stateBindings from "../../../examples/workflow-state/bindings.json";
 import {
   onExampleFormChange,
   resolveExampleOptions,
+  projectWorkflowStateView,
 } from "../../../examples/workflow-state/callbacks";
 import initialState from "../../../examples/workflow-state/state.json";
 import stateView from "../../../examples/workflow-state/view.json";
@@ -125,6 +126,11 @@ function Fixture() {
     ),
   );
   const [nodes, setNodes] = useState(() => structuredClone(initialNodes));
+  const displayDocument = useMemo(
+    () =>
+      independent ? projectWorkflowStateView(document, formState) : document,
+    [independent, document, formState],
+  );
   const [edges, setEdges] = useState(() => structuredClone(initialEdges));
   const [mounted, setMounted] = useState(true);
   const [config, setConfig] = useState<FlowDiagramConfig>({
@@ -366,7 +372,7 @@ function Fixture() {
       <div data-testid="diagram" style={{ height: "100%", width: "100%" }}>
         {mounted && (
           <FlowDiagram
-            {...(raw ? graph : { json: document })}
+            {...(raw ? graph : { json: displayDocument })}
             forms={
               independent
                 ? {

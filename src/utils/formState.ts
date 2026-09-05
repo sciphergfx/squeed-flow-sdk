@@ -109,6 +109,7 @@ export function resolveStateView(
     if (
       [
         "$label",
+        "$subtitle",
         "$content",
         "$icon",
         "$bgColor",

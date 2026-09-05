@@ -12,14 +12,14 @@ interface TriggerConfig {
 }
 
 interface LlmConfig {
-  prompt: string;
+  promptId: string;
+  instructionIds?: string[];
   model?: string;
   temperature?: number;
   maxTokens?: number;
   streamPreview?: boolean;
   tools?: string[];
   memory?: string[];
-  instructions?: string;
   webSearch?: boolean;
 }
 
@@ -33,4 +33,11 @@ interface HttpConfig {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   url: string;
   body?: string;
+}
+
+interface ToolConfig {
+  name: string;
+  description?: string;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  url: string;
 }

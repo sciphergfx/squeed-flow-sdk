@@ -31,12 +31,8 @@ test("interface upload survives selecting a node while parsing", async ({
   await page.evaluate(() =>
     document.dispatchEvent(new Event("finish-interface-read")),
   );
-  const gear = node.getByRole("button", {
-    name: "Configure Workflow",
-    exact: true,
-  });
-  await expect(gear).toBeVisible();
-  await gear.click();
+  await expect(node.locator('[aria-haspopup="dialog"]')).toHaveCount(1);
+  await node.getByText("Workflow", { exact: true }).dblclick();
   await expect(
     page.getByRole("dialog", { name: "Configure Workflow", exact: true }),
   ).toBeVisible();

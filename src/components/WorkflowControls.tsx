@@ -15,7 +15,10 @@ import {
   ToolbarTooltip,
 } from "./toolbarControls";
 
-export function WorkflowControls({ showDivider = true, compact = false }: { showDivider?: boolean; compact?: boolean } = {}) {
+export function WorkflowControls({
+  showDivider = true,
+  compact = false,
+}: { showDivider?: boolean; compact?: boolean } = {}) {
   const {
     edgeMode,
     setEdgeMode,
@@ -79,123 +82,120 @@ export function WorkflowControls({ showDivider = true, compact = false }: { show
         <option value="nodes">Nodes</option>
         <option value="properties">Properties</option>
       </ToolbarSelect>
-      <span style={{ display: edgeMode === "properties" ? "contents" : "none" }}>
-          <ToolbarTooltip
-            label={
-              workflowContract
-                ? `Replace ${workflowContract.name}`
-                : "Upload workflow interface"
+      <span
+        style={{ display: edgeMode === "properties" ? "contents" : "none" }}
+      >
+        <ToolbarTooltip
+          label={
+            workflowContract
+              ? `Replace ${workflowContract.name}`
+              : "Upload workflow interface"
+          }
+        >
+          <ToolbarIconButton
+            aria-label="Upload workflow interface"
+            icon={<PiUploadSimple size={20} />}
+            size="sm"
+            variant="ghost"
+            disabled={busy || readOnly}
+            onClick={() => input.current?.click()}
+          />
+        </ToolbarTooltip>
+        <input
+          ref={input}
+          type="file"
+          hidden
+          accept=".ts,.json"
+          aria-label="Workflow interface file"
+          disabled={readOnly || busy}
+          onChange={async (event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (!file) return;
+            const request = ++version.current;
+            setBusy(true);
+            setError("");
+            try {
+              const loaded = bindings
+                ? await readFormSchema(file, [
+                    ...new Set(
+                      Object.values(bindings).map((binding) => binding.type),
+                    ),
+                  ])
+                : undefined;
+              if (bindings && loaded) {
+                for (const binding of Object.values(bindings))
+                  if (
+                    !Object.prototype.hasOwnProperty.call(loaded, binding.type)
+                  )
+                    throw new Error(`Missing form type: ${binding.type}`);
+              }
+              const { contract, schema: nextSchema } =
+                bindings && loaded
+                  ? {
+                      schema: loaded,
+                      contract: {
+                        name: file.name,
+                        nodes: Object.fromEntries(
+                          Object.entries(bindings).map(([address, binding]) => [
+                            address,
+                            { type: loaded[binding.type], optional: false },
+                          ]),
+                        ),
+                      },
+                    }
+                  : await readWorkflowInterface(file, data);
+              if (request !== version.current) return;
+              setSchema?.(nextSchema);
+              setWorkflowContract(contract);
+              callbacks.onWorkflowContractChange?.(contract);
+            } catch (failure) {
+              if (request === version.current)
+                setError(
+                  `${file.name}: ${
+                    failure instanceof Error
+                      ? failure.message
+                      : "Unable to load interface."
+                  }`,
+                );
+            } finally {
+              if (request === version.current) setBusy(false);
             }
+          }}
+        />
+        {!compact && (status || busy) && (
+          <span
+            role="status"
+            title={status}
+            style={{
+              color: getChakraColorHex(colorText),
+              fontSize: 12,
+              maxWidth: 180,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
           >
+            {busy ? "Loading interface..." : status}
+          </span>
+        )}
+        {!compact && workflowContract && (
+          <ToolbarTooltip label="Remove workflow interface">
             <ToolbarIconButton
-              aria-label="Upload workflow interface"
-              icon={<PiUploadSimple size={20} />}
+              aria-label="Remove workflow interface"
+              icon={<PiX size={16} />}
               size="sm"
               variant="ghost"
-              disabled={busy || readOnly}
-              onClick={() => input.current?.click()}
+              disabled={readOnly || busy}
+              onClick={() => {
+                setSchema?.(undefined);
+                setWorkflowContract(undefined);
+                callbacks.onWorkflowContractChange?.(undefined);
+                setError("");
+              }}
             />
           </ToolbarTooltip>
-          <input
-            ref={input}
-            type="file"
-            hidden
-            accept=".ts,.json"
-            aria-label="Workflow interface file"
-            disabled={readOnly || busy}
-            onChange={async (event) => {
-              const file = event.target.files?.[0];
-              event.target.value = "";
-              if (!file) return;
-              const request = ++version.current;
-              setBusy(true);
-              setError("");
-              try {
-                const loaded = bindings
-                  ? await readFormSchema(file, [
-                      ...new Set(
-                        Object.values(bindings).map((binding) => binding.type),
-                      ),
-                    ])
-                  : undefined;
-                if (bindings && loaded) {
-                  for (const binding of Object.values(bindings))
-                    if (
-                      !Object.prototype.hasOwnProperty.call(
-                        loaded,
-                        binding.type,
-                      )
-                    )
-                      throw new Error(`Missing form type: ${binding.type}`);
-                }
-                const { contract, schema: nextSchema } =
-                  bindings && loaded
-                    ? {
-                        schema: loaded,
-                        contract: {
-                          name: file.name,
-                          nodes: Object.fromEntries(
-                            Object.entries(bindings).map(
-                              ([address, binding]) => [
-                                address,
-                                { type: loaded[binding.type], optional: false },
-                              ],
-                            ),
-                          ),
-                        },
-                      }
-                    : await readWorkflowInterface(file, data);
-                if (request !== version.current) return;
-                setSchema?.(nextSchema);
-                setWorkflowContract(contract);
-                callbacks.onWorkflowContractChange?.(contract);
-              } catch (failure) {
-                if (request === version.current)
-                  setError(
-                    `${file.name}: ${
-                      failure instanceof Error
-                        ? failure.message
-                        : "Unable to load interface."
-                    }`,
-                  );
-              } finally {
-                if (request === version.current) setBusy(false);
-              }
-            }}
-          />
-          {!compact && (status || busy) && (
-            <span
-              role="status"
-              title={status}
-              style={{
-                color: getChakraColorHex(colorText),
-                fontSize: 12,
-                maxWidth: 180,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {busy ? "Loading interface..." : status}
-            </span>
-          )}
-          {!compact && workflowContract && (
-            <ToolbarTooltip label="Remove workflow interface">
-              <ToolbarIconButton
-                aria-label="Remove workflow interface"
-                icon={<PiX size={16} />}
-                size="sm"
-                variant="ghost"
-                disabled={readOnly || busy}
-                onClick={() => {
-                  setSchema?.(undefined);
-                  setWorkflowContract(undefined);
-                  callbacks.onWorkflowContractChange?.(undefined);
-                  setError("");
-                }}
-              />
-            </ToolbarTooltip>
-          )}
+        )}
       </span>
     </>
   );
