@@ -88,7 +88,29 @@ export const EditableLabel = ({
   }
 
   return (
-    <div ref={wrapperRef} style={editorSize}>
+    <div
+      ref={wrapperRef}
+      style={{
+        position: "relative",
+        width: "max-content",
+        minWidth: editorSize?.width,
+        maxWidth: 900,
+        height: editorSize?.height,
+      }}
+    >
+      <Text
+        as="span"
+        aria-hidden="true"
+        display="block"
+        visibility="hidden"
+        fontWeight={fontWeight}
+        fontSize={fontSize}
+        lineHeight="normal"
+        whiteSpace="pre"
+        overflow="hidden"
+      >
+        {editValue || " "}
+      </Text>
       <Input
         ref={inputRef}
         value={editValue}
@@ -106,8 +128,13 @@ export const EditableLabel = ({
         fontSize={fontSize}
         bg="transparent"
         borderWidth={0}
+        _focus={{ outline: "none", boxShadow: "none" }}
+        _focusVisible={{ outline: "none", boxShadow: "none" }}
         p={0}
         display="block"
+        position="absolute"
+        top={0}
+        left={0}
         w="100%"
         h="100%"
         minW={0}

@@ -7,6 +7,7 @@ import {
 import { getChakraColorHex } from "../theme/colorUtils";
 import DynamicIcon from "../utils/DynamicIcon";
 import { EditableLabel } from "./EditableLabel";
+import { getNodeBorderProps } from "./nodeBorder";
 
 export const NodeText = ({
   id,
@@ -35,11 +36,10 @@ export const NodeText = ({
 
   return (
     <Box
+      data-flow-node-surface=""
       borderRadius={data?.viewProps?.borderRadius}
       bgColor={outline ? "transparent" : bgColor}
-      borderColor={!isActive ? nodeBorderColor : "white"}
-      _hover={{ borderColor: "white" }}
-      borderWidth={2}
+      {...getNodeBorderProps(data?.viewProps, nodeBorderColor, isActive, 2)}
       py={14}
       px={20}
       whiteSpace="nowrap"

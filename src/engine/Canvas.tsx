@@ -34,6 +34,9 @@ export interface CanvasNode {
   parent?: string;
   /** Compound label drawn on the container (cytoscape `data(label)`) */
   label?: string;
+  animated?: boolean;
+  animationColor?: string;
+  animationWidth?: number;
   element: React.ReactNode;
 }
 
@@ -1025,6 +1028,11 @@ function Canvas(props: CanvasProps) {
               onMount={onHostMount}
               drawHandles={props.drawHandles && !props.readOnly}
               handleColor={lineColor}
+              animated={n.animated && !c && !isPerformanceMode}
+              animationColor={n.animationColor}
+              animationWidth={n.animationWidth}
+              width={sizesRef.current.get(n.id)?.w}
+              height={sizesRef.current.get(n.id)?.h}
               propertyMode={edgeMode === "properties"}
               reversePorts={direction === "RL"}
               onPropertyRows={onPropertyRows}

@@ -18,9 +18,12 @@ import {
 export interface SqueedChange {
   type:
     | "nodeLabel"
+    | "nodeContent"
     | "nodeColor"
+    | "nodeStyle"
     | "nodeIcon"
     | "nodeOutline"
+    | "nodeAnimation"
     | "nodeCollapse"
     | "nodeCreate"
     | "nodeDelete"
@@ -86,6 +89,15 @@ export function bindSqueedCallbacks(
         value: label,
       });
     },
+    onNodeContentChange: (id, content) => {
+      callbacks.onNodeContentChange?.(id, content);
+      emit(setNodeProp(json, id, "$content", content), {
+        type: "nodeContent",
+        address: id,
+        key: "$content",
+        value: content,
+      });
+    },
     onNodeColorChange: (id, kind, color) => {
       callbacks.onNodeColorChange?.(id, kind, color);
       const key = kind === "bg" ? "$bgColor" : "$textColor";
@@ -94,6 +106,34 @@ export function bindSqueedCallbacks(
         address: id,
         key,
         value: color,
+      });
+    },
+    onNodeBorderColorChange: (id, color) => {
+      callbacks.onNodeBorderColorChange?.(id, color);
+      emit(setNodeProp(json, id, "$borderColor", color), {
+        type: "nodeColor",
+        address: id,
+        key: "$borderColor",
+        value: color,
+      });
+    },
+    onNodeBorderStyleChange: (id, style) => {
+      callbacks.onNodeBorderStyleChange?.(id, style);
+      emit(setNodeProp(json, id, "$borderStyle", style), {
+        type: "nodeStyle",
+        address: id,
+        key: "$borderStyle",
+        value: style,
+      });
+    },
+    onNodeBorderWidthChange: (id, width) => {
+      if (width !== undefined && (!Number.isFinite(width) || width < 0)) return;
+      callbacks.onNodeBorderWidthChange?.(id, width);
+      emit(setNodeProp(json, id, "$borderWidth", width), {
+        type: "nodeStyle",
+        address: id,
+        key: "$borderWidth",
+        value: width,
       });
     },
     onNodeIconChange: (id, icon) => {
@@ -112,6 +152,15 @@ export function bindSqueedCallbacks(
         address: id,
         key: "$outline",
         value: outline,
+      });
+    },
+    onNodeAnimationChange: (id, animated) => {
+      callbacks.onNodeAnimationChange?.(id, animated);
+      emit(setNodeProp(json, id, "$isNodeAnimated", animated), {
+        type: "nodeAnimation",
+        address: id,
+        key: "$isNodeAnimated",
+        value: animated,
       });
     },
     onNodeCollapse: (id, collapsed) => {

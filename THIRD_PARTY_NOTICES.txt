@@ -2,7 +2,8 @@ Third-party software included in @squeed/flow-sdk
 
 The SDK is licensed under the terms in LICENSE. The following notices apply
 to bundled dependencies and adapted source code. React, Chakra UI, Emotion,
-Framer Motion, and React Icons are external dependencies with their own licenses.
+Framer Motion, React Icons, and markdown-to-jsx are external dependencies with
+their own licenses.
 
 ===========================================================================
 Cytoscape.js - adapted edge geometry in src/engine/geometry.ts and EdgeView.tsx

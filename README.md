@@ -5,10 +5,12 @@ Interactive React flow diagrams from JSON, using DOM nodes, SVG edges, and Dagre
 ## Install
 
 ```bash
-npm install @squeed/flow-sdk@^2 react@^18 react-dom@^18
+npm install @squeed/flow-sdk@^2 react@^18 react-dom@^18 markdown-to-jsx@^9.10.2
 ```
 
-Requires React 18 and Chakra UI 3.36 or later. Peer dependencies: `react`, `react-dom`, `@chakra-ui/react`, `@emotion/react`, `@emotion/styled`, and `framer-motion` (11 or 12). npm installs the remaining peers automatically. React 19 is not currently supported.
+Requires React 18 and Chakra UI 3.36 or later. Peer dependencies: `react`, `react-dom`, `@chakra-ui/react`, `@emotion/react`, `@emotion/styled`, `framer-motion` (11 or 12), and `markdown-to-jsx` (^9.10.2). npm installs the remaining peers automatically. React 19 is not currently supported.
+
+The Markdown renderer is a required peer supplied by the consuming application, not embedded in the SDK bundle. It remains part of the application's dependency footprint.
 
 ## Quick Start
 
@@ -125,19 +127,24 @@ Use `$collapsed: true` to collapse a JSON branch, and `false` to keep the expans
 
 ### Node Events
 
-| Callback              | Signature                              | Description                                                         |
-| --------------------- | -------------------------------------- | ------------------------------------------------------------------- |
-| `onNodeSelect`        | `(nodeId, nodeData) => void`           | Node clicked/selected                                               |
-| `onNodeDeselect`      | `() => void`                           | Selection cleared                                                   |
-| `onNodeDoubleClick`   | `(nodeId, nodeData) => void`           | Node double-clicked                                                 |
-| `onNodeCreate`        | `(params) => void`                     | Node created via edge drawing into empty space                      |
-| `onNodeDelete`        | `(nodeId, nodeData) => void`           | Node deleted                                                        |
-| `onNodeLabelChange`   | `(nodeId, newLabel) => void`           | Node label edited inline                                            |
-| `onNodeCollapse`      | `(nodeId, collapsed) => void`          | Collapse toggle clicked                                             |
-| `onNodeColorChange`   | `(nodeId, colorType, color) => void`   | Node color changed via toolbar                                      |
-| `onNodeIconChange`    | `(nodeId, iconName) => void`           | Node icon changed via toolbar                                       |
-| `onNodeOutlineChange` | `(nodeId, outline: boolean) => void`   | Outline toggled; raw-graph consumers store `data.viewProps.outline` |
-| `onNodeHoverAction`   | `(actionId, nodeId, nodeData) => void` | Hover overlay action clicked                                        |
+| Callback                  | Signature                                      | Description                                                                                      |
+| ------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `onNodeSelect`            | `(nodeId, nodeData) => void`                   | Node clicked/selected                                                                            |
+| `onNodeDeselect`          | `() => void`                                   | Selection cleared                                                                                |
+| `onNodeDoubleClick`       | `(nodeId, nodeData) => void`                   | Node double-clicked                                                                              |
+| `onNodeCreate`            | `(params) => void`                             | Node created via edge drawing into empty space                                                   |
+| `onNodeDelete`            | `(nodeId, nodeData) => void`                   | Node deleted                                                                                     |
+| `onNodeLabelChange`       | `(nodeId, newLabel) => void`                   | Node label edited inline                                                                         |
+| `onNodeContentChange`     | `(nodeId, content: string) => void`            | Multiline content saved; raw-graph consumers store `data.config.content`                         |
+| `onNodeAnimationChange`   | `(nodeId, animated: boolean) => void`          | Border animation toggled; raw-graph consumers store `data.isNodeAnimated`                        |
+| `onNodeCollapse`          | `(nodeId, collapsed) => void`                  | Collapse toggle clicked                                                                          |
+| `onNodeColorChange`       | `(nodeId, colorType, color) => void`           | Node color changed via toolbar                                                                   |
+| `onNodeBorderColorChange` | `(nodeId, color: string) => void`              | Border color picked; raw consumers update `data.viewProps.borderColor` (empty string resets)     |
+| `onNodeBorderStyleChange` | `(nodeId, "solid" \| "dashed") => void`        | Border style changed; raw consumers update `data.viewProps.borderStyle`                          |
+| `onNodeBorderWidthChange` | `(nodeId, width: number \| undefined) => void` | Border thickness changed; raw consumers update `data.viewProps.borderWidth` (`undefined` resets) |
+| `onNodeIconChange`        | `(nodeId, iconName) => void`                   | Node icon changed via toolbar                                                                    |
+| `onNodeOutlineChange`     | `(nodeId, outline: boolean) => void`           | Outline toggled; raw-graph consumers store `data.viewProps.outline`                              |
+| `onNodeHoverAction`       | `(actionId, nodeId, nodeData) => void`         | Hover overlay action clicked                                                                     |
 
 ### Edge Events
 
@@ -166,22 +173,26 @@ Use `$collapsed: true` to collapse a JSON branch, and `false` to keep the expans
 
 Special `$`-prefixed keys control node rendering:
 
-| Key                                 | Description                                                                     |
-| ----------------------------------- | ------------------------------------------------------------------------------- |
-| `$label`                            | Display label for the node                                                      |
-| `$bgColor`                          | Background color (Chakra token, e.g. `"blue.500"`)                              |
-| `$textColor`                        | Text color                                                                      |
-| `$borderColor`                      | Border color; accepts Chakra tokens, hex, or `"transparent"`                    |
-| `$outline`                          | `true` for an unfilled node with a border; `false` restores its saved fill      |
-| `$icon`                             | React Icons name, e.g. `PiGear`                                                 |
-| `$collapsed`                        | `true` to collapse children, `false` to force expanded                          |
-| `$parent`                           | Parent node ID (creates compound/container nodes)                               |
-| `$target`                           | Cross-link to a JSON address, e.g. `root.database`; one per source node         |
-| `$connections`                      | `SqueedConnection[]`; multiple node/property mappings, independent of `$target` |
-| `$sourceLabel` / `$targetLabel`     | Hierarchy-edge / cross-link label                                               |
-| `$edgeColor`                        | Edge color                                                                      |
-| `$isEdgeDashed` / `$isEdgeAnimated` | Dashed or animated edges                                                        |
-| `$`                                 | Array value (creates array child list, e.g. `{ $: ["a", "b"] }`)                |
+| Key                                 | Description                                                                                                 |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `$label`                            | Display label for the node                                                                                  |
+| `$bgColor`                          | Background color (Chakra token, e.g. `"blue.500"`)                                                          |
+| `$textColor`                        | Text color                                                                                                  |
+| `$borderColor`                      | Border color; accepts Chakra tokens, hex, or `"transparent"`                                                |
+| `$borderStyle`                      | Border style; the toolbar toggles `"solid"` / `"dashed"`                                                    |
+| `$borderWidth`                      | Nonnegative border thickness in diagram pixels; `0` hides the border, removing the key restores the default |
+| `$outline`                          | `true` for an unfilled node with a border; `false` restores its saved fill                                  |
+| `$content`                          | Markdown source, including an empty string; editable when `config.editable` is enabled                      |
+| `$isNodeAnimated`                   | `true` for a clockwise circulating border stroke; independent of edge animation and off by default          |
+| `$icon`                             | React Icons name, e.g. `PiGear`                                                                             |
+| `$collapsed`                        | `true` to collapse children, `false` to force expanded                                                      |
+| `$parent`                           | Parent node ID (creates compound/container nodes)                                                           |
+| `$target`                           | Cross-link to a JSON address, e.g. `root.database`; one per source node                                     |
+| `$connections`                      | `SqueedConnection[]`; multiple node/property mappings, independent of `$target`                             |
+| `$sourceLabel` / `$targetLabel`     | Hierarchy-edge / cross-link label                                                                           |
+| `$edgeColor`                        | Edge color                                                                                                  |
+| `$isEdgeDashed` / `$isEdgeAnimated` | Dashed or animated edges                                                                                    |
+| `$`                                 | Array value (creates array child list, e.g. `{ $: ["a", "b"] }`)                                            |
 
 ```json
 {
@@ -199,11 +210,35 @@ Special `$`-prefixed keys control node rendering:
 }
 ```
 
+### Content And Node Animation
+
+```json
+{
+  "runbook": {
+    "$label": "Runbook",
+    "$content": "## Recovery\n\n1. Check queue depth\n2. Restart workers",
+    "$isNodeAnimated": true
+  }
+}
+```
+
+`$content` renders Markdown headings, lists, emphasis, tables, links, and fenced code. Supply Markdown source text, not a filename or URL to load. Raw HTML is disabled and unsafe link schemes are filtered.
+
+With `config.editable: true`, double-click the content body to edit the original Markdown source. Enter inserts a new line; Ctrl/Cmd+Enter or clicking away saves, and Escape cancels. Source whitespace is preserved. The node grows vertically as text is added; label editors grow horizontally within their width limit. Both keep their starting size as a minimum and omit input focus outlines. Clearing the body keeps an empty, editable content view; use `setNodeProp(json, address, "$content", undefined)` to remove the content property. Content nodes use the same minimum width as their object-property rows, and the right-aligned table/article button switches views without changing the document.
+
+The node animation toggle supports single and multiple selections. The SVG stroke follows the measured node border without changing layout or intercepting input. Text, array, object/content, and compound nodes support it, including outlined or transparent nodes. It uses the explicit border color or theme accent. Reduced-motion preferences pause the movement; graphs over 200 nodes suppress the trace in performance mode. `readOnly` prevents editing/toggling but still renders configured animation; `selectionToolbar.hide: ["animation"]` hides the toggle.
+
+In JSON mode content and animation edits emit `onJsonChange` with types `"nodeContent"` and `"nodeAnimation"`. In raw `nodes`/`edges` mode, handle the callbacks listed above and return updated nodes. Existing edges, colors, outlines, and mappings are unchanged.
+
 ### Transparent Colors And Outlines
 
 Every built-in color palette includes a checkerboard `transparent` swatch, including custom palettes. This is distinct from reset, which removes the override. Node fill, text/icon, border, edge, container, and canvas colors accept `"transparent"`. Transparent fills keep default text readable in light and dark modes; explicit transparent text also hides its icon.
 
 The outline toggle applies to one or multiple selected nodes. It clears all node fills (including object headers/rows) without overwriting stored colors. Text, array, object, and compound nodes support it. Selection highlighting remains visible; an explicit transparent border is still respected.
+
+The separate **Edit node border** toggle is a toolbar-only mode: it does not remove the fill or change `$outline`. It reuses the node-color swatches for border color, hides only the text-color controls, and reveals a dashed toggle and thickness input. Switching it off restores background/text-color editing. Color, style, and thickness persist independently; explicit border colors remain visible during selection and hover.
+
+Border colors emit `nodeColor` changes, while style and thickness emit `nodeStyle` with `$borderStyle` / `$borderWidth`. Raw consumers handle the border callbacks above. Thickness accepts nonnegative numbers; clearing the input resets it, and zero hides the border and its animation. `selectionToolbar.hide: ["color"]` hides the shared palette and border mode; `"borderColor"` hides the mode toggle, and `"style"` hides dashed/thickness controls. Hiding `"outline"` affects only the separate fill-removing toggle.
 
 ```tsx
 setDoc((doc) => setNodeProp(doc, "root.service", "$outline", true));
@@ -273,18 +308,18 @@ const visible = applyCollapsed(handBuiltNodes, handBuiltEdges);
 
 ### Address-Based Edits
 
-| Helper                                                                          | Result                                                                            |
-| ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `getNode(json, address)`                                                        | Value at an address, or `undefined`                                               |
-| `updateNode(json, address, updater)`                                            | New document with the updater's replacement at that address                       |
-| `setNodeProp(json, address, key, value)`                                        | New document with a `$` rendering property; empty string/null/undefined resets it |
-| `setCollapsed(json, address, collapsed)`                                        | New document; preserves an explicit `false`                                       |
-| `addChild(json, parentAddress, child, key?)`                                    | `{ json, address }`; appends to plain or `$`-wrapped arrays, otherwise uses a key |
-| `removeNode(json, address)`                                                     | New document without that node; root and absent paths are left unchanged          |
-| `addTargetEdge(json, sourceAddress, targetAddress, label?)`                     | New document; replaces the source's single `$target`                              |
-| `addConnection(json, sourceAddress, connection)`                                | New document; appends a mapping unless its endpoints already exist                |
-| `setEdgeProp(json, edgeRef, key, value)` / `setEdgeStyle(json, edgeRef, style)` | New document updating only the edge's JSON owner                                  |
-| `removeEdge(json, edgeRef)`                                                     | `{ json, removed }`; independently removes cross-links or property mappings       |
+| Helper                                                                          | Result                                                                                                           |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `getNode(json, address)`                                                        | Value at an address, or `undefined`                                                                              |
+| `updateNode(json, address, updater)`                                            | New document with the updater's replacement at that address                                                      |
+| `setNodeProp(json, address, key, value)`                                        | New document with a `$` rendering property; null/undefined resets it, as does empty string except for `$content` |
+| `setCollapsed(json, address, collapsed)`                                        | New document; preserves an explicit `false`                                                                      |
+| `addChild(json, parentAddress, child, key?)`                                    | `{ json, address }`; appends to plain or `$`-wrapped arrays, otherwise uses a key                                |
+| `removeNode(json, address)`                                                     | New document without that node; root and absent paths are left unchanged                                         |
+| `addTargetEdge(json, sourceAddress, targetAddress, label?)`                     | New document; replaces the source's single `$target`                                                             |
+| `addConnection(json, sourceAddress, connection)`                                | New document; appends a mapping unless its endpoints already exist                                               |
+| `setEdgeProp(json, edgeRef, key, value)` / `setEdgeStyle(json, edgeRef, style)` | New document updating only the edge's JSON owner                                                                 |
+| `removeEdge(json, edgeRef)`                                                     | `{ json, removed }`; independently removes cross-links or property mappings                                      |
 
 Addresses use dot-separated paths such as `root.backend.runtime` or `root.tags.1`; `$` array wrappers are traversed automatically. Keys containing literal dots are not escaped by this address format. Array deletion shifts subsequent indices; these addresses are not permanent IDs across structural edits.
 

@@ -3,11 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import {
   PiArrowsInLineVertical,
   PiArrowsOutLineVertical,
+  PiBoundingBox,
   PiEraser,
   PiFastForward,
   PiLineSegment,
   PiLineSegments,
   PiLineVerticalThin,
+  PiSpinnerGap,
   PiSquare,
   PiSquareFill,
   PiTrash,
@@ -15,6 +17,7 @@ import {
 } from "react-icons/pi";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
+import { getNodeBorderWidth } from "../nodes/nodeBorder";
 import type { SelectionToolbarConfig } from "../types";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
 import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
@@ -70,12 +73,16 @@ function CommitInput({
   placeholder,
   ariaLabel,
   width = "140px",
+  type = "text",
+  min,
   onCommit,
 }: {
   value: string;
   placeholder: string;
   ariaLabel: string;
   width?: string;
+  type?: "text" | "number";
+  min?: number;
   onCommit: (v: string) => void;
 }) {
   const { colorText } = useCustomColors();
@@ -86,11 +93,21 @@ function CommitInput({
     if (committedRef.current) return;
     committedRef.current = true;
     const t = v.trim();
+    if (
+      type === "number" &&
+      t !== "" &&
+      (!Number.isFinite(Number(t)) || Number(t) < (min ?? 0))
+    ) {
+      setV(value);
+      return;
+    }
     if (t !== value) onCommit(t);
   };
   return (
     <Input
       aria-label={ariaLabel}
+      type={type}
+      min={min}
       size="xs"
       w={width}
       value={v}
@@ -298,7 +315,36 @@ export function NodeTools({
       (parentIds.has(id) ? config.parentNodeStyle?.outline : false)) === true;
   const outlined = ids.every(isOutlined);
   const mixedOutline = !outlined && ids.some(isOutlined);
+  const isAnimated = (id: string) =>
+    nodeById.get(id)?.data.isNodeAnimated === true;
+  const animated = ids.every(isAnimated);
+  const mixedAnimation = !animated && ids.some(isAnimated);
   const each = (fn: (id: string) => void) => ids.forEach(fn);
+  const [borderMode, setBorderMode] = useState(false);
+  const editingBorder = borderMode && show("color") && show("borderColor");
+  const isDashed = (id: string) =>
+    (nodeById.get(id)?.data.viewProps?.borderStyle ??
+      (parentIds.has(id) ? config.parentNodeStyle?.borderStyle : "solid")) ===
+    "dashed";
+  const dashed = ids.every(isDashed);
+  const mixedDashed = !dashed && ids.some(isDashed);
+  const widths = ids.map((id) => {
+    const node = nodeById.get(id)?.data;
+    const fallback = parentIds.has(id)
+      ? getNodeBorderWidth(config.parentNodeStyle?.borderWidth, 6)
+      : node?.type === "objectView"
+        ? 3
+        : 2;
+    return getNodeBorderWidth(node?.viewProps?.borderWidth, fallback);
+  });
+  const borderWidth = widths.every((width) => width === widths[0])
+    ? String(widths[0] ?? "")
+    : "";
+  const updateColor = (color: string) =>
+    each((id) => {
+      if (editingBorder) callbacks.onNodeBorderColorChange?.(id, color);
+      else callbacks.onNodeColorChange?.(id, "bg", color);
+    });
 
   return (
     <>
@@ -320,7 +366,7 @@ export function NodeTools({
         <>
           <Divider />
           <ToolbarTooltip
-            label={outlined ? "Restore node fill" : "Outline nodes"}
+            label={outlined ? "Restore node fill" : "Remove node fill"}
           >
             <ToolbarIconButton
               aria-label="Toggle node outline"
@@ -341,20 +387,109 @@ export function NodeTools({
       {show("color") && (
         <>
           <Divider />
+          {show("borderColor") && (
+            <ToolbarTooltip
+              label={editingBorder ? "Edit node colors" : "Edit node border"}
+            >
+              <ToolbarIconButton
+                aria-label="Edit node border"
+                aria-pressed={editingBorder}
+                icon={<Icon as={PiBoundingBox} boxSize={5} />}
+                size="sm"
+                variant="ghost"
+                color={editingBorder ? themeColor : colorInactive}
+                bg={
+                  editingBorder
+                    ? colorMode === "dark"
+                      ? "whiteAlpha.200"
+                      : "blackAlpha.100"
+                    : undefined
+                }
+                onClick={() => setBorderMode((current) => !current)}
+              />
+            </ToolbarTooltip>
+          )}
           <Swatches
-            label="Background"
+            label={editingBorder ? "Border color" : "Background"}
             colors={palette}
-            value={data?.viewProps?.bgColor}
-            onPick={(c) =>
-              each((id) => callbacks.onNodeColorChange?.(id, "bg", c))
+            value={
+              editingBorder
+                ? (data?.viewProps?.borderColor ??
+                  (single && parentIds.has(ids[0])
+                    ? config.parentNodeStyle?.borderColor
+                    : undefined))
+                : data?.viewProps?.bgColor
             }
-            onReset={() =>
-              each((id) => callbacks.onNodeColorChange?.(id, "bg", ""))
-            }
+            onPick={updateColor}
+            onReset={() => updateColor("")}
           />
+          {editingBorder && show("style") && (
+            <>
+              <Divider />
+              <ToolbarTooltip label={dashed ? "Solid border" : "Dashed border"}>
+                <ToolbarIconButton
+                  aria-label="Toggle dashed border"
+                  aria-pressed={mixedDashed ? "mixed" : dashed}
+                  icon={
+                    <Icon
+                      as={dashed ? PiLineSegments : PiLineSegment}
+                      boxSize={5}
+                    />
+                  }
+                  size="sm"
+                  variant="ghost"
+                  color={dashed ? themeColor : colorInactive}
+                  onClick={() =>
+                    each((id) =>
+                      callbacks.onNodeBorderStyleChange?.(
+                        id,
+                        dashed ? "solid" : "dashed",
+                      ),
+                    )
+                  }
+                />
+              </ToolbarTooltip>
+              <CommitInput
+                ariaLabel="Border thickness"
+                placeholder={single ? "Auto" : "Mixed"}
+                width="64px"
+                type="number"
+                min={0}
+                value={borderWidth}
+                onCommit={(value) =>
+                  each((id) =>
+                    callbacks.onNodeBorderWidthChange?.(
+                      id,
+                      value === "" ? undefined : Number(value),
+                    ),
+                  )
+                }
+              />
+            </>
+          )}
         </>
       )}
-      {show("textColor") && (
+      {show("animation") && (
+        <>
+          <Divider />
+          <ToolbarTooltip
+            label={animated ? "Stop border animation" : "Animate node border"}
+          >
+            <ToolbarIconButton
+              aria-label="Toggle node animation"
+              aria-pressed={mixedAnimation ? "mixed" : animated}
+              icon={<Icon as={PiSpinnerGap} boxSize={5} />}
+              size="sm"
+              variant="ghost"
+              color={animated ? themeColor : colorInactive}
+              onClick={() =>
+                each((id) => callbacks.onNodeAnimationChange?.(id, !animated))
+              }
+            />
+          </ToolbarTooltip>
+        </>
+      )}
+      {!editingBorder && show("textColor") && (
         <>
           <Divider />
           <Swatches

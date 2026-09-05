@@ -1,5 +1,6 @@
 import { memo, useLayoutEffect, useRef, useState } from "react";
 import { PiPlusBold } from "react-icons/pi";
+import { NodeBorderAnimation } from "./NodeBorderAnimation";
 import { measurePropertyRows, type PropertyRow } from "./propertyRows";
 
 export interface NodeHostProps {
@@ -12,6 +13,11 @@ export interface NodeHostProps {
   onMount: (id: string, el: HTMLDivElement | null) => void;
   drawHandles?: boolean;
   handleColor?: string;
+  animated?: boolean;
+  animationColor?: string;
+  animationWidth?: number;
+  width?: number;
+  height?: number;
   propertyMode?: boolean;
   reversePorts?: boolean;
   onPropertyRows?: (id: string, rows: PropertyRow[]) => void;
@@ -26,6 +32,11 @@ function NodeHost({
   onMount,
   drawHandles,
   handleColor,
+  animated,
+  animationColor,
+  animationWidth = 8,
+  width = 0,
+  height = 0,
   propertyMode,
   reversePorts,
   onPropertyRows,
@@ -33,6 +44,16 @@ function NodeHost({
 }: NodeHostProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [rows, setRows] = useState<PropertyRow[]>([]);
+  const [radius, setRadius] = useState(0);
+
+  useLayoutEffect(() => {
+    if (!animated) return;
+    const surface =
+      ref.current?.querySelector("[data-flow-node-surface]") ??
+      ref.current?.firstElementChild;
+    if (surface)
+      setRadius(parseFloat(getComputedStyle(surface).borderTopLeftRadius) || 0);
+  }, [animated, children]);
 
   useLayoutEffect(() => {
     onMount(id, ref.current);
@@ -90,6 +111,23 @@ function NodeHost({
       }}
     >
       {children}
+      {animated && animationWidth > 0 && width > 0 && height > 0 && (
+        <svg
+          className="flow-sdk-node-animation"
+          aria-hidden="true"
+          pointerEvents="none"
+        >
+          <NodeBorderAnimation
+            x={animationWidth / 2}
+            y={animationWidth / 2}
+            width={width - animationWidth}
+            height={height - animationWidth}
+            radius={radius - animationWidth / 2}
+            color={animationColor || handleColor || "currentColor"}
+            strokeWidth={animationWidth}
+          />
+        </svg>
+      )}
       {drawHandles &&
         propertyMode &&
         rows.map((row) =>

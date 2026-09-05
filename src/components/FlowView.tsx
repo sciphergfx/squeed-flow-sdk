@@ -9,6 +9,7 @@ import {
   type FlowEngine,
 } from "../engine";
 import DefaultViews from "../nodes/nodeViews";
+import { getNodeBorderWidth } from "../nodes/nodeBorder";
 import { blendHexColors, getChakraColorHex } from "../theme/colorUtils";
 import {
   useCustomColors,
@@ -153,9 +154,12 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
   const containerStyle = useCallback(
     (id: string): ContainerStyle & { padding: number } => {
-      const s = resolveParentStyle(nodeById.get(id)?.data?.viewProps);
+      const data = nodeById.get(id)?.data;
+      const s = resolveParentStyle(data?.viewProps);
       const fill = getChakraColorHex(s.bgColor);
       return {
+        animated: !!data?.isNodeAnimated && !isPerformanceMode,
+        animationColor: getChakraColorHex(s.borderColor || themeColor),
         bgColor: s.outline ? "transparent" : fill,
         bgOpacity: s.bgOpacity,
         borderColor: s.borderColor
@@ -163,7 +167,10 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           : s.outline && s.bgColor === "transparent"
             ? getChakraColorHex(themeColor)
             : fill,
-        borderWidth: s.borderWidth ?? PARENT_DEFAULTS.borderWidth,
+        borderWidth: getNodeBorderWidth(
+          s.borderWidth,
+          PARENT_DEFAULTS.borderWidth,
+        ),
         borderStyle: s.borderStyle ?? PARENT_DEFAULTS.borderStyle,
         borderRadius: s.borderRadius ?? PARENT_DEFAULTS.borderRadius,
         textColor: s.textColor
@@ -177,7 +184,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         padding: s.padding ?? PARENT_DEFAULTS.padding,
       };
     },
-    [resolveParentStyle, nodeById, colorText, themeColor],
+    [resolveParentStyle, nodeById, colorText, themeColor, isPerformanceMode],
   );
 
   // Spread parallel/opposite edges so taxi segments and labels don't stack
@@ -282,6 +289,14 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           id: node.data.id,
           parent: node.data.parent,
           label: nodeLabel,
+          animated: !!node.data.isNodeAnimated,
+          animationColor: getChakraColorHex(
+            node.data.viewProps?.borderColor || themeColor,
+          ),
+          animationWidth: getNodeBorderWidth(
+            node.data.viewProps?.borderWidth,
+            8,
+          ),
           element: (
             <ViewComponent
               {...node}

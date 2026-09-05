@@ -26,6 +26,8 @@ export type SqueedNodeKey =
   | "$bgColor"
   | "$textColor"
   | "$borderColor"
+  | "$borderStyle"
+  | "$borderWidth"
   | "$borderRadius"
   | "$fontSize"
   | "$icon"
@@ -34,6 +36,7 @@ export type SqueedNodeKey =
   | "$collapsed"
   | "$parent"
   | "$outline"
+  | "$isNodeAnimated"
   | "$connections";
 
 /** Schema keys that describe the edge *into* a node (parent → child) */
@@ -94,9 +97,12 @@ export function updateNode(
   return walk(json, 0);
 }
 
-/** Leaves become objects when they gain schema keys; "" / null / undefined delete the key */
+/** Leaves gain objects for schema keys; null/undefined reset keys, while empty content is retained. */
 function withKey(node: any, key: string, value: any) {
-  const remove = value === "" || value === undefined || value === null;
+  const remove =
+    (value === "" && key !== "$content") ||
+    value === undefined ||
+    value === null;
   // Arrays can't carry `$` keys through JSON serialization; use the `{ $key, $: [...] }` wrapper form
   if (Array.isArray(node)) {
     if (remove) return node;
@@ -384,11 +390,20 @@ export function compileSqueed(
     }
   }
   const canonicalAddress = (id: string) => leafAddresses.get(id) ?? id;
+  const parentIds = new Set(
+    nodes.flatMap((node) =>
+      node.data.parent ? [canonicalAddress(node.data.parent)] : [],
+    ),
+  );
   const outNodes: FlowDiagramNode[] = nodes.map((n) => {
     const id = canonicalAddress(n.data.id);
     const src = getNode(json, id);
-    if (!src || typeof src !== "object" || Array.isArray(src)) return n;
     const data = { ...n.data, id };
+    if (!parentIds.has(id)) {
+      data.viewProps = { ...data.viewProps };
+      delete data.viewProps.borderWidth;
+    }
+    if (!src || typeof src !== "object" || Array.isArray(src)) return { data };
     if (data.parent) data.parent = canonicalAddress(data.parent);
     if (typeof src.$label === "string") {
       data.label = src.$label;
@@ -396,6 +411,19 @@ export function compileSqueed(
     }
     if (typeof src.$outline === "boolean") {
       data.viewProps = { ...data.viewProps, outline: src.$outline };
+    }
+    if (["solid", "dashed", "dotted", "double"].includes(src.$borderStyle)) {
+      data.viewProps = { ...data.viewProps, borderStyle: src.$borderStyle };
+    }
+    if (Number.isFinite(src.$borderWidth) && src.$borderWidth >= 0) {
+      data.viewProps = { ...data.viewProps, borderWidth: src.$borderWidth };
+    }
+    if (typeof src.$isNodeAnimated === "boolean") {
+      data.isNodeAnimated = src.$isNodeAnimated;
+    }
+    if (typeof src.$content === "string") {
+      data.config = { ...data.config, content: src.$content };
+      if (!src.$view) data.type = "objectView";
     }
     if (
       data.config?.collapsed !== undefined ||

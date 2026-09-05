@@ -1,6 +1,21 @@
 import sdk = require("@squeed/flow-sdk");
 
 const callbacks: sdk.FlowDiagramCallbacks = {
+  onNodeBorderColorChange: (_nodeId, color) => {
+    void color.length;
+  },
+  onNodeBorderStyleChange: (_nodeId, style) => {
+    void style.toUpperCase();
+  },
+  onNodeBorderWidthChange: (_nodeId, width) => {
+    void width?.toFixed(1);
+  },
+  onNodeContentChange: (_nodeId, content) => {
+    void content.length;
+  },
+  onNodeAnimationChange: (_nodeId, animated) => {
+    void animated.valueOf();
+  },
   onNodeOutlineChange: (_nodeId, outline) => {
     void outline.valueOf();
   },
@@ -24,7 +39,7 @@ const props: sdk.FlowDiagramProps = {
   config: {
     edgeMode,
     parentNodeStyle: { outline: true },
-    selectionToolbar: { hide: ["outline"] },
+    selectionToolbar: { hide: ["outline", "animation", "borderColor"] },
   },
 };
 const result = sdk.compileSqueed(
@@ -52,4 +67,21 @@ if (
   sdk.getNode(added.json, added.address) !== "added"
 )
   throw new Error("CommonJS styling and address helpers failed");
+const contentGraph = sdk.compileSqueed(
+  sdk.setNodeProp(
+    sdk.setNodeProp({ node: {} }, "root.node", "$content", ""),
+    "root.node",
+    "$isNodeAnimated",
+    true,
+  ),
+);
+const contentNode = contentGraph.nodes.find(
+  (node) => node.data.id === "root.node",
+)!;
+if (
+  contentNode.data.config?.content !== "" ||
+  !contentNode.data.isNodeAnimated ||
+  contentNode.data.type !== "objectView"
+)
+  throw new Error("CommonJS content and animation API failed");
 console.log("CommonJS runtime and public types passed");

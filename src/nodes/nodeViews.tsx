@@ -1,14 +1,20 @@
-import { Box, Flex, Text } from "@chakra-ui/react";
+import { Box, Flex, Icon, Text } from "@chakra-ui/react";
 import { useState } from "react";
-import { PiGear, PiNotepad } from "react-icons/pi";
+import { PiArticle, PiTable } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
+import {
+  ToolbarIconButton,
+  ToolbarTooltip,
+} from "../components/toolbarControls";
 import { contentObjTheme, getChakraColorHex } from "../theme/colorUtils";
 import { useThemeContentColors } from "../theme/useCustomColors";
 import DynamicIcon from "../utils/DynamicIcon";
 import { EditableLabel } from "./EditableLabel";
+import { EditableContent } from "./EditableContent";
 import NodeView from "./NodeView";
 import { NodeText } from "./nodeText";
 import { NodeTextInput } from "./nodeTextInput";
+import { getNodeBorderProps } from "./nodeBorder";
 
 const getColorVars = (data, themeColor, colorMode) => {
   const bg = data?.viewProps?.bgColor || themeColor;
@@ -52,6 +58,9 @@ const truncateText = (value, maxLength = 350) =>
 const formatHeaderTitle = (title) =>
   title?.includes("root") ? title.replace("root", "untitled") : title;
 
+const OBJECT_VALUE_WIDTH = 600;
+const OBJECT_BORDER_WIDTH = 3;
+
 const calculateUniformKeyWidth = (description) => {
   const longestKeyLength = Math.max(
     ...Object.keys(description || {}).map((key) => key.length),
@@ -82,11 +91,19 @@ const NodeJsonObjectView = (props) => {
         const uniformKeyWidth = calculateUniformKeyWidth(data.description);
         const icon = props.data?.config?.icon;
         const content = props.data?.config?.content;
+        const hasContent = typeof content === "string";
+        const borderProps = getNodeBorderProps(
+          data?.viewProps,
+          colors.hexborderColor,
+          isActive,
+          OBJECT_BORDER_WIDTH,
+        );
 
         return (
           <Flex
             justifyContent="space-between"
             {...data?.viewProps}
+            data-flow-node-surface=""
             direction="column"
             p={0}
             borderRadius={data?.viewProps?.borderRadius}
@@ -97,9 +114,14 @@ const NodeJsonObjectView = (props) => {
               transition: "border-color 0.2s ease-in-out",
             }}
             width="100%"
-            borderColor={!isActive ? colors.hexborderColor : "white"}
-            _hover={{ borderColor: "white" }}
-            borderWidth={3}
+            minW={
+              hasContent
+                ? uniformKeyWidth +
+                  OBJECT_VALUE_WIDTH +
+                  borderProps.borderWidth * 2
+                : undefined
+            }
+            {...borderProps}
           >
             <Flex
               width="100%"
@@ -109,7 +131,7 @@ const NodeJsonObjectView = (props) => {
               borderWidth={0}
               overflow="hidden"
             >
-              {headerTitle && (
+              {(headerTitle || hasContent) && (
                 <Flex
                   justify="flex-start"
                   direction="row"
@@ -118,14 +140,14 @@ const NodeJsonObjectView = (props) => {
                   minWidth="max-content !important"
                   width="100%"
                   textTransform="capitalize"
-                  align={content ? "left" : "center"}
+                  align="center"
                   textOverflow="ellipsis"
                   alignItems="center"
                   fontWeight="bold"
                   color={colors.propertyColor}
                   bgColor={colors.highlightColor}
                   borderBottomColor={
-                    !hasConfig && !content
+                    !hasConfig && !hasContent
                       ? "transparent"
                       : colors.hexborderColor
                   }
@@ -148,18 +170,42 @@ const NodeJsonObjectView = (props) => {
                     onEditStart={onEditStart}
                     onEditEnd={onEditEnd}
                   />
-                  {!!content && (
-                    <Box ml={10} onClick={() => setObjVisible(!objVisible)}>
-                      {objVisible ? (
-                        <PiGear size={30} style={{ cursor: "pointer" }} />
-                      ) : (
-                        <PiNotepad size={30} style={{ cursor: "pointer" }} />
-                      )}
+                  {hasContent && (
+                    <Box
+                      ml="auto"
+                      pl={6}
+                      flexShrink={0}
+                      data-flow-content-toggle=""
+                    >
+                      <ToolbarTooltip
+                        label={objVisible ? "Show content" : "Show properties"}
+                      >
+                        <ToolbarIconButton
+                          aria-label={
+                            objVisible ? "Show content" : "Show properties"
+                          }
+                          icon={
+                            <Icon
+                              as={objVisible ? PiArticle : PiTable}
+                              boxSize={8}
+                            />
+                          }
+                          variant="ghost"
+                          w={12}
+                          h={12}
+                          minW={12}
+                          color={colors.hextextColor}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setObjVisible(!objVisible);
+                          }}
+                        />
+                      </ToolbarTooltip>
                     </Box>
                   )}
                 </Flex>
               )}
-              {content && !objVisible ? (
+              {hasContent && !objVisible ? (
                 <Flex
                   w="100%"
                   overflow="auto"
@@ -168,16 +214,12 @@ const NodeJsonObjectView = (props) => {
                   p={10}
                   fontSize="5xl"
                   lineHeight="normal"
-                  cursor="text"
                 >
-                  <Text
-                    whiteSpace="pre-wrap"
-                    overflow="hidden"
-                    textOverflow="ellipsis"
+                  <EditableContent
+                    nodeId={id}
+                    content={content}
                     color={data?.viewProps?.textColor || colors.hextextColor}
-                  >
-                    {content}
-                  </Text>
+                  />
                 </Flex>
               ) : (
                 <Box>
@@ -225,7 +267,7 @@ const NodeJsonObjectView = (props) => {
                               overflow="hidden"
                               p={4}
                               background={colors.hexbgColor}
-                              w={600}
+                              w={OBJECT_VALUE_WIDTH}
                               maxH={200}
                             >
                               <Text

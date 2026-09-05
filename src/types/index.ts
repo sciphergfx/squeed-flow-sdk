@@ -52,6 +52,7 @@ export interface FlowDiagramNode {
     description?: Record<string, any>;
     viewProps?: any;
     config?: Record<string, any>;
+    isNodeAnimated?: boolean;
   };
 }
 
@@ -81,8 +82,10 @@ export interface SelectionToolbarConfig {
     | "label"
     | "color"
     | "textColor"
+    | "borderColor"
     | "style"
     | "outline"
+    | "animation"
     | "icon"
     | "collapse"
     | "delete"
@@ -254,6 +257,7 @@ export interface FlowDiagramCallbacks {
   onNodeDelete?: (nodeId: string, nodeData: any) => void;
   /** Fires when a node label is edited inline */
   onNodeLabelChange?: (nodeId: string, newLabel: string) => void;
+  onNodeContentChange?: (nodeId: string, content: string) => void;
   /** Fires when a node's collapse toggle is clicked */
   onNodeCollapse?: (nodeId: string, collapsed: boolean) => void;
   /** Fires when a node's color is changed via the toolbar */
@@ -265,6 +269,10 @@ export interface FlowDiagramCallbacks {
   /** Fires when a node's icon is changed via the toolbar */
   onNodeIconChange?: (nodeId: string, iconName: string) => void;
   onNodeOutlineChange?: (nodeId: string, outline: boolean) => void;
+  onNodeBorderColorChange?: (nodeId: string, color: string) => void;
+  onNodeBorderStyleChange?: (nodeId: string, style: "solid" | "dashed") => void;
+  onNodeBorderWidthChange?: (nodeId: string, width: number | undefined) => void;
+  onNodeAnimationChange?: (nodeId: string, animated: boolean) => void;
   /** Fires when a hover overlay action is clicked */
   onNodeHoverAction?: (actionId: string, nodeId: string, nodeData: any) => void;
 
@@ -321,9 +329,12 @@ export interface FlowDiagramCallbacks {
 export interface SqueedChangeInfo {
   type:
     | "nodeLabel"
+    | "nodeContent"
     | "nodeColor"
+    | "nodeStyle"
     | "nodeIcon"
     | "nodeOutline"
+    | "nodeAnimation"
     | "nodeCollapse"
     | "nodeCreate"
     | "nodeDelete"

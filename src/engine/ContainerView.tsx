@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { NodeBorderAnimation } from "./NodeBorderAnimation";
 import { EDGE_LABEL_FONT_FAMILY } from "./text";
 import type { Rect } from "./types";
 
@@ -17,6 +18,8 @@ export interface ContainerStyle {
   labelPosition: "top" | "center" | "bottom";
   /** cytoscape `text-margin-y` magnitude for top/bottom placement */
   labelMargin: number;
+  animated?: boolean;
+  animationColor?: string;
 }
 
 export interface ContainerViewProps {
@@ -87,6 +90,17 @@ function ContainerView({
           fill="none"
           stroke={style.borderColor}
           strokeWidth={bw / 3}
+        />
+      )}
+      {style.animated && bw > 0 && (
+        <NodeBorderAnimation
+          x={rect.x1}
+          y={rect.y1}
+          width={w}
+          height={h}
+          radius={style.borderRadius}
+          color={style.animationColor || style.borderColor}
+          strokeWidth={Math.max(8, bw * 1.6)}
         />
       )}
       {label && (

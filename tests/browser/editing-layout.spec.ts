@@ -6,7 +6,7 @@ for (const type of ["text", "arrayView", "objectView"] as const) {
     { width: 1440, height: 900 },
     { width: 390, height: 844 },
   ]) {
-    test(`${type} keeps its dimensions while editing at ${viewport.width}px`, async ({
+    test(`${type} starts at its current size and grows while editing at ${viewport.width}px`, async ({
       page,
     }) => {
       await page.setViewportSize(viewport);
@@ -47,6 +47,8 @@ for (const type of ["text", "arrayView", "objectView"] as const) {
       await label.dblclick();
       const input = node.getByRole("textbox");
       await expect(input).toBeVisible();
+      await expect(input).toHaveCSS("outline-style", "none");
+      await expect(input).toHaveCSS("box-shadow", "none");
       const expectStableSize = async () => {
         const editing = await node.evaluate((element: HTMLElement) => {
           const input = element.querySelector("input")!;
@@ -69,7 +71,21 @@ for (const type of ["text", "arrayView", "objectView"] as const) {
       };
       await expectStableSize();
       await input.fill("A draft label much longer than the original");
-      await expectStableSize();
+      await expect
+        .poll(() =>
+          input.evaluate((element: HTMLInputElement) => element.offsetWidth),
+        )
+        .toBeGreaterThan(before.labelWidth);
+      expect(
+        await node.evaluate((element: HTMLElement) => element.offsetWidth),
+      ).toBeGreaterThan(before.width);
+      await expect(input).toBeFocused();
+      await input.fill("A long draft ".repeat(80));
+      expect(
+        await input.evaluate(
+          (element: HTMLInputElement) => element.offsetWidth,
+        ),
+      ).toBeLessThanOrEqual(900);
       await input.press("Escape");
       await expect(label).toHaveText("Editable node");
       expect(

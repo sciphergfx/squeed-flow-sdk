@@ -7,6 +7,7 @@ import {
 import { getChakraColorHex } from "../theme/colorUtils";
 import DynamicIcon from "../utils/DynamicIcon";
 import { EditableLabel } from "./EditableLabel";
+import { getNodeBorderProps } from "./nodeBorder";
 
 export const NodeTextInput = ({
   id,
@@ -46,14 +47,13 @@ export const NodeTextInput = ({
 
   return (
     <Flex
+      data-flow-node-surface=""
       align="center"
       borderRadius={data?.viewProps?.borderRadius}
       bgColor={hexbgColor}
       style={{ backgroundColor: hexbgColor }}
       textTransform="capitalize"
-      borderColor={!isActive ? hexborderColor : "white"}
-      _hover={{ borderColor: "white" }}
-      borderWidth={2}
+      {...getNodeBorderProps(data?.viewProps, hexborderColor, isActive, 2)}
       px={50}
       w="fit-content"
       whiteSpace="nowrap"

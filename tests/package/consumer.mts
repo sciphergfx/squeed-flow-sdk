@@ -36,10 +36,25 @@ const props: FlowDiagramProps = {
     nodeAlignment,
     edgeMode,
     parentNodeStyle: { outline: true },
-    selectionToolbar: { hide: ["outline"] },
+    selectionToolbar: { hide: ["outline", "animation", "borderColor"] },
   },
   showBottomBar: false,
   callbacks: {
+    onNodeBorderColorChange: (_nodeId, color) => {
+      void color.length;
+    },
+    onNodeBorderStyleChange: (_nodeId, style) => {
+      void style.toUpperCase();
+    },
+    onNodeBorderWidthChange: (_nodeId, width) => {
+      void width?.toFixed(1);
+    },
+    onNodeContentChange: (_nodeId, content) => {
+      void content.length;
+    },
+    onNodeAnimationChange: (_nodeId, animated) => {
+      void animated.valueOf();
+    },
     onNodeOutlineChange: (_nodeId, outline) => {
       void outline.valueOf();
     },
@@ -77,4 +92,21 @@ if (
   getNode(added.json, added.address) !== "added"
 )
   throw new Error("ESM styling and address helpers failed");
+const contentGraph = compileSqueed(
+  setNodeProp(
+    setNodeProp(props.json!, "root.service", "$content", ""),
+    "root.service",
+    "$isNodeAnimated",
+    true,
+  ),
+);
+const contentNode = contentGraph.nodes.find(
+  (node) => node.data.id === "root.service",
+)!;
+if (
+  contentNode.data.config?.content !== "" ||
+  !contentNode.data.isNodeAnimated ||
+  contentNode.data.type !== "objectView"
+)
+  throw new Error("ESM content and animation API failed");
 console.log("ESM runtime and public types passed");

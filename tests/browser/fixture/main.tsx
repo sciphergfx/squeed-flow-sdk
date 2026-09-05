@@ -159,6 +159,75 @@ function Fixture() {
           ),
         );
     },
+    onNodeContentChange: (id, content) => {
+      record("content", { id, content });
+      if (raw)
+        setNodes((current) =>
+          current.map((node) =>
+            node.data.id === id
+              ? {
+                  data: {
+                    ...node.data,
+                    config: { ...node.data.config, content },
+                  },
+                }
+              : node,
+          ),
+        );
+    },
+    onNodeAnimationChange: (id, isNodeAnimated) => {
+      record("node-animation", { id, animated: isNodeAnimated });
+      if (raw)
+        setNodes((current) =>
+          current.map((node) =>
+            node.data.id === id
+              ? { data: { ...node.data, isNodeAnimated } }
+              : node,
+          ),
+        );
+    },
+    onNodeBorderColorChange: (id, color) => {
+      record("border-color", { id, color });
+      if (raw)
+        setNodes((current) =>
+          current.map((node) => {
+            if (node.data.id !== id) return node;
+            const viewProps = { ...node.data.viewProps };
+            if (color) viewProps.borderColor = color;
+            else delete viewProps.borderColor;
+            return { data: { ...node.data, viewProps } };
+          }),
+        );
+    },
+    onNodeBorderStyleChange: (id, borderStyle) => {
+      record("border-style", { id, style: borderStyle });
+      if (raw)
+        setNodes((current) =>
+          current.map((node) =>
+            node.data.id === id
+              ? {
+                  data: {
+                    ...node.data,
+                    viewProps: { ...node.data.viewProps, borderStyle },
+                  },
+                }
+              : node,
+          ),
+        );
+    },
+    onNodeBorderWidthChange: (id, width) => {
+      record("border-width", { id, width });
+      if (raw)
+        setNodes((current) =>
+          current.map((node) => {
+            if (node.data.id !== id) return node;
+            const viewProps = { ...node.data.viewProps };
+            if (width === undefined) delete viewProps.borderWidth;
+            else viewProps.borderWidth = width;
+            return { data: { ...node.data, viewProps } };
+          }),
+        );
+    },
     onNodeOutlineChange: (id, outline) => {
       record("outline", { id, outline });
       if (raw)

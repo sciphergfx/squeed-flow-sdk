@@ -64,6 +64,13 @@ try {
     await readFile(join(root, "package.json"), "utf8"),
   );
   assert.equal(manifest.version, expected.version);
+  assert.equal(typeof manifest.peerDependencies["markdown-to-jsx"], "string");
+  assert.equal(manifest.peerDependencies["markdown-to-jsx"], expected.peerDependencies["markdown-to-jsx"]);
+  assert.ok(!("markdown-to-jsx" in manifest.dependencies));
+  for (const format of ["js", "cjs"]) {
+    const map = JSON.parse(await readFile(join(root, `dist/index.${format}.map`), "utf8"));
+    assert.ok(!map.sources.some((source) => source.includes("markdown-to-jsx")), `Markdown was bundled into ${format}`);
+  }
   assert.ok(
     !Object.keys(manifest.dependencies).some((name) =>
       name.includes("cytoscape"),
