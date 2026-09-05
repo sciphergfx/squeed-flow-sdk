@@ -1,20 +1,18 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { PiUploadSimple, PiX, PiTreeStructure, PiTable } from "react-icons/pi";
-import {
-  connectionIssue,
-} from "../core/workflowContract";
-import { readWorkflowInterface } from "../core/workflowInterface";
+import { PiTable, PiTreeStructure, PiUploadSimple, PiX } from "react-icons/pi";
 import { readFormSchema } from "../core/forms";
+import { connectionIssue } from "../core/workflowContract";
+import { readWorkflowInterface } from "../core/workflowInterface";
 import { FormDocumentContext } from "../nodes/NodeForm";
-import { ErrorToast } from "./ErrorToast";
-import { useCustomColors } from "../theme/useCustomColors";
 import { getChakraColorHex } from "../theme/colorUtils";
+import { useCustomColors } from "../theme/useCustomColors";
+import { ErrorToast } from "./ErrorToast";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
 import {
+  ToolbarDivider,
   ToolbarIconButton,
   ToolbarSelect,
   ToolbarTooltip,
-  ToolbarDivider,
 } from "./toolbarControls";
 
 export function WorkflowControls() {
@@ -48,10 +46,9 @@ export function WorkflowControls() {
         connectionIssue(workflowContract, edge.data),
       ).length
     : 0;
-  const status =
-    (workflowContract
-      ? `${workflowContract.name}: ${schema ? `${Object.keys(schema).length} form types loaded; ` : ""}${invalid} invalid or unverified connections`
-      : "");
+  const status = workflowContract
+    ? `${workflowContract.name}: ${schema ? `${Object.keys(schema).length} form types loaded; ` : ""}${invalid} invalid or unverified connections`
+    : "";
   return (
     <>
       <ErrorToast message={error} onDismiss={() => setError("")} />
@@ -82,7 +79,7 @@ export function WorkflowControls() {
         <option value="nodes">Nodes</option>
         <option value="properties">Properties</option>
       </ToolbarSelect>
-      {(
+      {
         <>
           <ToolbarTooltip
             label={
@@ -116,15 +113,39 @@ export function WorkflowControls() {
               setError("");
               try {
                 const loaded = bindings
-                  ? await readFormSchema(file, [...new Set(Object.values(bindings).map(binding => binding.type))])
+                  ? await readFormSchema(file, [
+                      ...new Set(
+                        Object.values(bindings).map((binding) => binding.type),
+                      ),
+                    ])
                   : undefined;
                 if (bindings && loaded) {
                   for (const binding of Object.values(bindings))
-                    if (!Object.prototype.hasOwnProperty.call(loaded, binding.type)) throw new Error(`Missing form type: ${binding.type}`);
+                    if (
+                      !Object.prototype.hasOwnProperty.call(
+                        loaded,
+                        binding.type,
+                      )
+                    )
+                      throw new Error(`Missing form type: ${binding.type}`);
                 }
-                const { contract, schema: nextSchema } = bindings && loaded
-                  ? { schema: loaded, contract: { name: file.name, nodes: Object.fromEntries(Object.entries(bindings).map(([address, binding]) => [address, { type: loaded[binding.type], optional: false }])) } }
-                  : await readWorkflowInterface(file, data);
+                const { contract, schema: nextSchema } =
+                  bindings && loaded
+                    ? {
+                        schema: loaded,
+                        contract: {
+                          name: file.name,
+                          nodes: Object.fromEntries(
+                            Object.entries(bindings).map(
+                              ([address, binding]) => [
+                                address,
+                                { type: loaded[binding.type], optional: false },
+                              ],
+                            ),
+                          ),
+                        },
+                      }
+                    : await readWorkflowInterface(file, data);
                 if (request !== version.current) return;
                 setSchema?.(nextSchema);
                 setWorkflowContract(contract);
@@ -132,9 +153,11 @@ export function WorkflowControls() {
               } catch (failure) {
                 if (request === version.current)
                   setError(
-                    `${file.name}: ${failure instanceof Error
-                      ? failure.message
-                      : "Unable to load interface."}`,
+                    `${file.name}: ${
+                      failure instanceof Error
+                        ? failure.message
+                        : "Unable to load interface."
+                    }`,
                   );
               } finally {
                 if (request === version.current) setBusy(false);
@@ -175,7 +198,7 @@ export function WorkflowControls() {
             </ToolbarTooltip>
           )}
         </>
-      )}
+      }
     </>
   );
 }

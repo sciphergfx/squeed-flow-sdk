@@ -9,8 +9,8 @@ import {
   type ContainerStyle,
   type FlowEngine,
 } from "../engine";
-import DefaultViews from "../nodes/nodeViews";
 import { getNodeBorderWidth } from "../nodes/nodeBorder";
+import DefaultViews from "../nodes/nodeViews";
 import { blendHexColors, getChakraColorHex } from "../theme/colorUtils";
 import {
   useCustomColors,
@@ -481,10 +481,16 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         setIsMultiSelectMode(!isMultiSelectMode);
       if (e.key === "d" || e.key === "D") setIsDragMode(!isDragMode);
 
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedEdgeIdRef.current) {
+      if (
+        (e.key === "Delete" || e.key === "Backspace") &&
+        selectedEdgeIdRef.current
+      ) {
         e.preventDefault();
         const edgeId = selectedEdgeIdRef.current;
-        callbacks.onEdgeDelete?.(edgeId, edgeByIdRef.current.get(edgeId)?.data ?? { id: edgeId });
+        callbacks.onEdgeDelete?.(
+          edgeId,
+          edgeByIdRef.current.get(edgeId)?.data ?? { id: edgeId },
+        );
         setSelectedEdgeId(null);
         return;
       }
@@ -646,6 +652,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           dragMode={isDragMode}
           multiSelect={!!isMultiSelectMode}
           onInit={handleInit}
+          onLayoutComplete={callbacks.onLayoutComplete}
+          animateViewport={config.animateViewport}
           onViewportChange={handleViewportChange}
           onBackgroundTap={handleBackgroundTap}
           onBoxSelect={handleBoxSelect}

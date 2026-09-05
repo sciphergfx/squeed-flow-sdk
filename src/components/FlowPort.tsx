@@ -8,8 +8,19 @@ export interface FlowPortProps {
 }
 
 export function FlowPort({ id, role, children, style }: FlowPortProps) {
-  return <div data-flow-property={id} data-flow-port-role={role}
-    style={{ minHeight: 32, display: "flex", alignItems: "center", justifyContent: role === "source" ? "flex-end" : "flex-start", ...style }}>
-    {children ?? id}
-  </div>;
+  return (
+    <div
+      data-flow-property={id}
+      data-flow-port-role={role}
+      style={{
+        minHeight: 32,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: role === "source" ? "flex-end" : "flex-start",
+        ...style,
+      }}
+    >
+      {children ?? id}
+    </div>
+  );
 }

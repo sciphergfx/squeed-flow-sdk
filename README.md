@@ -183,6 +183,36 @@ the source tree. Edit this single JSON source to keep the guide current.
 
 ## Callbacks
 
+### Animated Viewport Actions
+
+Capture `FlowEngine` through `callbacks.onInit`. Set `config.animateViewport`
+to animate viewport actions by default, or pass a boolean per call:
+
+```ts
+engine.fit(60, true);
+engine.centerAndFit(60, true);
+engine.center(true);
+engine.focusNode(nodeId, 60, true);
+engine.focusBranch(nodeId, 60, true);
+engine.isolateBranch(nodeId, 60, true);
+engine.restoreView(true);
+```
+
+Animation defaults to false. Explicit false overrides the config default.
+Transitions interpolate pan and zoom over 300ms; center preserves zoom.
+Reduced-motion preferences disable animation. New viewport commands cancel
+previous transitions, and unmount cancels pending frames. Methods return when
+dispatched, not when animation finishes; `onViewportChange` reports intermediate
+and final positions. Use `onLayoutComplete(engine)` to fit newly laid-out data:
+
+```tsx
+<FlowDiagram config={{ animateViewport: true }}
+  callbacks={{ onLayoutComplete: engine => engine.centerAndFit(60) }} />
+```
+
+This callback runs after each settled layout, not viewport-only changes. Hosts
+that only want to fit after dataset selection should gate it with a pending flag.
+
 ### Compose Your Own Controls
 
 All reusable control components are exported from `@squeed/flow-sdk` through
@@ -190,28 +220,48 @@ All reusable control components are exported from `@squeed/flow-sdk` through
 and mount your controls as children to share the diagram and form providers:
 
 ```tsx
-import { FlowDiagram, WorkflowControls, DiagramAppearanceControls,
-  SvgExportButton, ToolbarDivider } from "@squeed/flow-sdk";
+import {
+  FlowDiagram,
+  WorkflowControls,
+  DiagramAppearanceControls,
+  SvgExportButton,
+  ToolbarDivider,
+} from "@squeed/flow-sdk";
 
-<FlowDiagram json={view} forms={forms} callbacks={callbacks} showBottomBar={false}>
-  <div style={{ position: "absolute", bottom: 20, left: 20, right: 20,
-    display: "flex", alignItems: "center", overflowX: "auto", zIndex: 100 }}>
+<FlowDiagram
+  json={view}
+  forms={forms}
+  callbacks={callbacks}
+  showBottomBar={false}
+>
+  <div
+    style={{
+      position: "absolute",
+      bottom: 20,
+      left: 20,
+      right: 20,
+      display: "flex",
+      alignItems: "center",
+      overflowX: "auto",
+      zIndex: 100,
+    }}
+  >
     <WorkflowControls />
     <ToolbarDivider />
     <DiagramAppearanceControls />
     <SvgExportButton />
   </div>
-</FlowDiagram>
+</FlowDiagram>;
 ```
 
-| Category | Public exports |
-| --- | --- |
+| Category           | Public exports                                                                                                                                                      |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Toolbar primitives | `ToolbarIconButton`, `ToolbarTooltip`, `ToolbarDivider`, `ToolbarSelect`, `ToolbarScrollContainer`, `TooltipIconButton`, `ToolbarCommitInput`, `ToolbarCloseButton` |
-| Selection controls | `NodeTools`, `EdgeTools`, `Swatches`, `NodeBorderRadiusControl`, `NodeIconPicker`, `DEFAULT_PALETTE`, `TEXT_PALETTE` |
-| Control groups | `BottomBar`, `WorkflowControls`, `DiagramAppearanceControls`, `SvgExportButton` |
-| Forms | `NodeForm`, `NodeFormPopover`, `NodeConfigSummary`, `FormDocumentContext` |
-| Composition | `FlowDiagramProvider`, `FlowView`, `useFlowDiagramContext`, `useFlowData`, `FlowDiagramContextValue` |
-| Feedback | `ErrorToast` |
+| Selection controls | `NodeTools`, `EdgeTools`, `Swatches`, `NodeBorderRadiusControl`, `NodeIconPicker`, `DEFAULT_PALETTE`, `TEXT_PALETTE`                                                |
+| Control groups     | `BottomBar`, `WorkflowControls`, `DiagramAppearanceControls`, `SvgExportButton`                                                                                     |
+| Forms              | `NodeForm`, `NodeFormPopover`, `NodeConfigSummary`, `FormDocumentContext`                                                                                           |
+| Composition        | `FlowDiagramProvider`, `FlowView`, `useFlowDiagramContext`, `useFlowData`, `FlowDiagramContextValue`                                                                |
+| Feedback           | `ErrorToast`                                                                                                                                                        |
 
 Use `useFlowDiagramContext()` inside a child component for mode setters,
 selection, bound edit callbacks and `engineRef`; `useFlowData()` supplies node

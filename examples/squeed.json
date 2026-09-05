@@ -1,5 +1,39 @@
 {
-          "title": "Squeed",
+          "title": "Documentation",
+          "consumerGuide": {
+                    "$label": "Consumer Guide",
+                    "$icon": "PiBookOpen",
+                    "$collapsed": true,
+                    "$content": "# SDK Integration\nBuild resource editors from UI JSON, TypeScript interfaces and independent state. The SDK renders and edits diagrams; the host owns persistence, authorization, external data and execution.",
+                    "state": {
+                              "$label": "Separate State from Design",
+                              "$content": "Pass design through `json` and resource values through `forms.state`. `forms.bindings` maps a view-node address to a state address and interface name. Save design edits with `callbacks.onJsonChange`; save form edits with `forms.onChange`. Neither document should be substituted for the other.\n\nUse `examples/workflow-state/view.json`, `state.json`, `bindings.json` and `interface.ts` as a complete editing example. Legacy `$form` bindings remain supported but store values in the design document."
+                    },
+                    "forms": {
+                              "$label": "Interfaces and Dynamic Options",
+                              "$content": "Upload supported `.ts` interfaces or JSON Schema through Upload workflow interface, or supply `config.formSchema`. Literal unions become dropdown choices; booleans become Yes/No pills. Optional values can be reset. Nested objects and non-enum arrays use JSON editors.\n\n`resolveFormOptions` supplies host-owned dynamic choices and receives an AbortSignal. `onFormChange` can return synchronous dependent edits; `forms.onChange` receives the resulting state. Arbitrary TypeScript, `any`, generic records and complete Zod refinements are not supported. Validate authoritative business rules in the host/backend."
+                    },
+                    "references": {
+                              "$label": "State References",
+                              "$content": "Use a structured reference such as `$content: { $state: \"root.steps.0.config.prompt\" }` or `$label: { $state: \"root.resource.name\" }`. The renderer resolves a temporary display copy; the original reference stays in UI JSON. Missing values render blank. No JavaScript is evaluated.\n\nIndex-based bindings must be updated by the host when arrays are reordered. Visual connections do not automatically rewrite resource relationships or execution branches."
+                    },
+                    "controls": {
+                              "$label": "Compose Controls",
+                              "$content": "Import components and types from `@squeed/flow-sdk`; `src/index.ts` is the public entry point. Set `showBottomBar={false}` and mount custom controls as FlowDiagram children to retain provider access.\n\nReuse ToolbarIconButton, ToolbarSelect, ToolbarTooltip, ToolbarDivider, NodeTools, EdgeTools, WorkflowControls, DiagramAppearanceControls, NodeForm and SvgExportButton. `useFlowDiagramContext` provides bound callbacks, selection, mode setters and engineRef; `useFlowData` provides node/edge lookups. Controlled config values remain authoritative."
+                    },
+                    "viewport": {
+                              "$label": "Viewport and Visibility",
+                              "$content": "Capture the engine with `callbacks.onInit`. `fit(padding)` and `centerAndFit(padding)` fit and center the graph; `center()` preserves zoom. `focusNode(id, padding)` fits one laid-out node. `focusBranch(id, padding, animate)` fits the selected node, hierarchy descendants and all outgoing reachable nodes, regardless of their ID naming. Traversal handles cycles; connected peers reachable by outgoing links are included. Padding is in screen pixels. Focus does not expand collapsed descendants.\n\n```ts\nengine.focusBranch(nodeId, 60, true);  // Animated pan and zoom\nengine.focusBranch(nodeId, 60, false); // Instant fit\nengine.isolateBranch(nodeId, 60, true);\nengine.restoreView(true);\n```\n\nOmitting animate uses config.animateViewport (false by default). The flag also applies to fit, centerAndFit and focusNode after padding, and to center as its first argument. Animation lasts 300ms and respects reduced motion. New viewport commands cancel active transitions; onViewportChange reports intermediate and final positions.\n\nCall focus after callbacks.onLayoutComplete when replacing data or expanding nodes so bounds reflect the settled layout. Zoom limits still apply, so extremely large branches may not fit at the configured minimum zoom.\n\n`isolateBranch` temporarily hides other nodes; `restoreView` ends isolation and restores its saved viewport. `setEdgesVisible(false)` hides edge paths, labels and hit targets; pass true to restore them. These actions do not edit resource state. The host chooses whether double-click invokes focus. Expansion centers newly revealed children after layout."
+                    },
+                    "views": {
+                              "$label": "Views and Ports",
+                              "$content": "Built-in views include text, object properties, Markdown content and icon nodes. `$view: \"icon-label\"` places a caption below the icon. Custom view registrations extend the defaults rather than replacing the entire registry.\n\nFlowPort declares named input/output rows in custom React views. In Properties mode, the engine measures their anchors and passes port IDs as sourceProperty/targetProperty. Current placement is left/right, reversed in RL mode. JSON-defined ports, top/bottom anchors and connection-to-state synchronization are not yet provided."
+                    },
+                    "boundaries": {
+                              "$label": "Production Boundaries",
+                              "$content": "Demo model/tool choices are local examples, not live integrations. The SDK does not execute workflows, authenticate remote agents, host MCP tools or expose a WebSocket server. Those belong in a host adapter with explicit permissions and validated commands.\n\nRun typecheck, unit tests, Chromium browser tests and clean-package checks before release. A working example is not proof of full backend validation or release readiness."
+                    }
+          },
           "start": {
                     "$label": "Start Here",
                     "$icon": "PiCompass",

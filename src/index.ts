@@ -1,34 +1,48 @@
 // @squeed/flow-sdk - Standalone flow diagram renderer
 
 // Main component
-export { FlowDiagram } from "./components/FlowDiagram";
 export { default as BottomBar } from "./components/BottomBar";
-export { default as FlowView } from "./components/FlowView";
-export { FlowDiagramProvider, useFlowDiagramContext, useFlowData } from "./components/FlowDiagramContext";
-export type { FlowDiagramContextValue } from "./components/FlowDiagramContext";
-export { ToolbarIconButton, ToolbarTooltip, ToolbarDivider, ToolbarSelect } from "./components/toolbarControls";
-export { ToolbarScrollContainer } from "./components/ToolbarScrollContainer";
-export { default as TooltipIconButton } from "./components/TooltipIconButton";
-export { NodeTools, EdgeTools, Swatches, DEFAULT_PALETTE, TEXT_PALETTE,
-  CommitInput as ToolbarCommitInput, CloseButton as ToolbarCloseButton,
-  BorderRadiusControl as NodeBorderRadiusControl } from "./components/SelectionToolbar";
 export { DiagramAppearanceControls } from "./components/DiagramAppearanceControls";
-export { WorkflowControls } from "./components/WorkflowControls";
-export { SvgExportButton } from "./components/SvgExportButton";
-export { NodeIconPicker } from "./components/NodeIconPicker";
-export { NodeFormPopover } from "./components/NodeFormPopover";
-export { NodeForm, FormDocumentContext } from "./nodes/NodeForm";
-export { NodeConfigSummary } from "./nodes/NodeConfigSummary";
 export { ErrorToast } from "./components/ErrorToast";
+export { FlowDiagram } from "./components/FlowDiagram";
+export {
+  FlowDiagramProvider,
+  useFlowData,
+  useFlowDiagramContext,
+} from "./components/FlowDiagramContext";
+export type { FlowDiagramContextValue } from "./components/FlowDiagramContext";
 export { FlowPort } from "./components/FlowPort";
 export type { FlowPortProps } from "./components/FlowPort";
+export { default as FlowView } from "./components/FlowView";
+export { NodeFormPopover } from "./components/NodeFormPopover";
+export { NodeIconPicker } from "./components/NodeIconPicker";
+export {
+  DEFAULT_PALETTE,
+  EdgeTools,
+  BorderRadiusControl as NodeBorderRadiusControl,
+  NodeTools,
+  Swatches,
+  TEXT_PALETTE,
+  CloseButton as ToolbarCloseButton,
+  CommitInput as ToolbarCommitInput,
+} from "./components/SelectionToolbar";
+export { SvgExportButton } from "./components/SvgExportButton";
+export {
+  ToolbarDivider,
+  ToolbarIconButton,
+  ToolbarSelect,
+  ToolbarTooltip,
+} from "./components/toolbarControls";
+export { ToolbarScrollContainer } from "./components/ToolbarScrollContainer";
+export { default as TooltipIconButton } from "./components/TooltipIconButton";
+export { WorkflowControls } from "./components/WorkflowControls";
 export { createFormNode } from "./core/createFormNode";
-export type { FormCreation } from "./core/forms";
 export { applyFormChange, formValueError, readFormSchema } from "./core/forms";
 export type {
   FormBinding,
   FormChange,
   FormCondition,
+  FormCreation,
   FormEdit,
   FormFieldConfig,
   FormOption,
@@ -38,9 +52,11 @@ export type {
   FormValue,
 } from "./core/forms";
 export { parseTypeScriptForm } from "./core/workflowContract";
+export { NodeConfigSummary } from "./nodes/NodeConfigSummary";
+export { FormDocumentContext, NodeForm } from "./nodes/NodeForm";
 export { downloadSvg, exportSvg } from "./utils/exportSvg";
-export type { StateForms, StateFormBinding } from "./utils/formState";
-export { resolveStateView } from "./utils/formState";
+export { resolveStateView, applyStateEdits } from "./utils/formState";
+export type { StateFormBinding, StateForms } from "./utils/formState";
 
 // Core diagram generation
 export { createFlowDiagram } from "./core/createFlowDiagram";

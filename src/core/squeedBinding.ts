@@ -199,10 +199,16 @@ export function bindSqueedCallbacks(
       });
     },
     onNodeCreate: (params) => {
-      const created = params.sourceNodeId && createFormNode(json, params.sourceNodeId, formSchema);
+      const created =
+        params.sourceNodeId &&
+        createFormNode(json, params.sourceNodeId, formSchema);
       if (created) {
         callbacks.onNodeCreate?.(params);
-        emit(created.json, { type: "nodeCreate", address: created.address, value: "form" });
+        emit(created.json, {
+          type: "nodeCreate",
+          address: created.address,
+          value: "form",
+        });
         return;
       }
       callbacks.onNodeCreate?.(params);

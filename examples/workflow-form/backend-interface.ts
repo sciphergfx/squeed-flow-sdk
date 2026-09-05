@@ -1,4 +1,11 @@
-type TriggerType = "manual" | "event" | "schedule" | "webhook" | "api" | "auto" | "on_violation";
+type TriggerType =
+  | "manual"
+  | "event"
+  | "schedule"
+  | "webhook"
+  | "api"
+  | "auto"
+  | "on_violation";
 
 interface Retry {
   maxAttempts?: number;

@@ -9,16 +9,16 @@ import {
 } from "react";
 import type {
   EdgeMode,
-  FlowEdgeProperties,
-  NodeAlignment,
   FlowDiagramConfig,
   FlowDiagramEdge,
+  FlowEdgeProperties,
+  NodeAlignment,
 } from "../types";
+import { branchRoutes } from "./branchRouting";
 import ContainerView, { type ContainerStyle } from "./ContainerView";
 import EdgeView from "./EdgeView";
-import { placeEdgeLabels } from "./labelPlacement";
-import { branchRoutes } from "./branchRouting";
 import type { TaxiDir } from "./geometry";
+import { placeEdgeLabels } from "./labelPlacement";
 import { computeContainers, runDagreLayout } from "./layout";
 import NodeHost from "./NodeHost";
 import type { PropertyRow } from "./propertyRows";
@@ -87,6 +87,7 @@ export interface CanvasProps {
   maxZoom: number;
   initialViewport: ViewportState;
   fitOnInit?: boolean;
+  animateViewport?: boolean;
   readOnly?: boolean;
   containerStyle: (id: string) => ContainerStyle & { padding: number };
   /** Ghost edge colour while drawing */
@@ -96,6 +97,7 @@ export interface CanvasProps {
   dragMode: boolean;
   multiSelect: boolean;
   onInit?: (engine: FlowEngine) => void;
+  onLayoutComplete?: (engine: FlowEngine) => void;
   onViewportChange?: (vp: ViewportState) => void;
   onBackgroundTap?: () => void;
   onBoxSelect?: (ids: string[]) => void;
@@ -220,6 +222,7 @@ function Canvas(props: CanvasProps) {
   const positionsRef = useRef(positions);
   positionsRef.current = positions;
   const hasLayoutRunRef = useRef(false);
+  const [layoutRevision, setLayoutRevision] = useState(0);
   const layoutTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const settleTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const animRef = useRef<number | null>(null);
@@ -247,6 +250,7 @@ function Canvas(props: CanvasProps) {
     clearTimeout(settleTimerRef.current);
     settleTimerRef.current = setTimeout(() => {
       hasLayoutRunRef.current = true;
+      setLayoutRevision(revision => revision + 1);
     }, LAYOUT_SETTLE_MS);
   };
 
@@ -308,6 +312,7 @@ function Canvas(props: CanvasProps) {
   };
 
   const scheduleLayout = useCallback(() => {
+    clearTimeout(settleTimerRef.current);
     clearTimeout(layoutTimerRef.current);
     layoutTimerRef.current = setTimeout(
       runLayoutNow,
@@ -317,9 +322,17 @@ function Canvas(props: CanvasProps) {
   }, []);
 
   useEffect(() => {
-    const previous = new Map(previousNodes.current.map(node => [node.id, node]));
-    if (nodes.some(node => previous.get(node.id)?.collapsed === true && !node.collapsed)) {
-      revealedNodes.current = nodes.filter(node => !previous.has(node.id)).map(node => node.id);
+    const previous = new Map(
+      previousNodes.current.map((node) => [node.id, node]),
+    );
+    if (
+      nodes.some(
+        (node) => previous.get(node.id)?.collapsed === true && !node.collapsed,
+      )
+    ) {
+      revealedNodes.current = nodes
+        .filter((node) => !previous.has(node.id))
+        .map((node) => node.id);
     }
     previousNodes.current = nodes;
     if (
@@ -543,7 +556,7 @@ function Canvas(props: CanvasProps) {
   useEffect(() => {
     if (centerRevealed.current) {
       centerRevealed.current = false;
-      const boxes = revealedNodes.current.flatMap(id => {
+      const boxes = revealedNodes.current.flatMap((id) => {
         const box = boxFor(id);
         return box ? [boxToRect(box)] : [];
       });
@@ -551,14 +564,14 @@ function Canvas(props: CanvasProps) {
       const bounds = unionRects(boxes);
       if (bounds) {
         pendingFitRef.current = false;
-        viewport.center(bounds);
+        viewport.center(bounds, propsRef.current.animateViewport);
         return;
       }
     }
     if (!pendingFitRef.current) return;
     pendingFitRef.current = false;
     const bb = elementsBBox();
-    if (bb) viewport.fit(bb, 50);
+    if (bb) viewport.fit(bb, 50, propsRef.current.animateViewport);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [positions]);
 
@@ -571,23 +584,36 @@ function Canvas(props: CanvasProps) {
       while (pending.length) {
         const parent = pending.pop()!;
         for (const node of current.nodes) {
-          const child = node.parent === parent || node.id.startsWith(`${parent}.`) ||
-            (!id.startsWith("root") && current.edges.some(edge =>
-              (edge.inverted ? edge.target : edge.source) === parent &&
-              (edge.inverted ? edge.source : edge.target) === node.id));
-          if (child && !ids.has(node.id)) { ids.add(node.id); pending.push(node.id); }
+          const child =
+            node.parent === parent ||
+            node.id.startsWith(`${parent}.`) ||
+            current.edges.some(
+                (edge) =>
+                  (edge.inverted ? edge.target : edge.source) === parent &&
+                  (edge.inverted ? edge.source : edge.target) === node.id,
+              );
+          if (child && !ids.has(node.id)) {
+            ids.add(node.id);
+            pending.push(node.id);
+          }
         }
       }
       return ids;
     };
-    const focus = (ids: Set<string>, padding = 50) => {
-      const bounds = unionRects([...ids].flatMap(id => {
-        const box = boxFor(id);
-        return box ? [boxToRect(box)] : [];
-      }));
+    const focus = (ids: Set<string>, padding = 50, animate = propsRef.current.animateViewport) => {
+      const bounds = unionRects(
+        [...ids].flatMap((id) => {
+          const box = boxFor(id);
+          return box ? [boxToRect(box)] : [];
+        }),
+      );
       if (bounds) {
         pendingFitRef.current = false;
-        viewport.fit(bounds, Number.isFinite(padding) ? Math.max(0, padding) : 50);
+        viewport.fit(
+          bounds,
+          Number.isFinite(padding) ? Math.max(0, padding) : 50,
+          animate,
+        );
       }
     };
     const zoom = ((level?: number) => {
@@ -606,31 +632,39 @@ function Canvas(props: CanvasProps) {
       zoom,
       pan,
       setEdgesVisible,
-      focusNode: (id, padding) => focus(new Set([id]), padding),
-      focusBranch: (id, padding) => focus(branchIds(id), padding),
-      isolateBranch: (id, padding) => {
+      focusNode: (id, padding, animate) => focus(new Set([id]), padding, animate),
+      focusBranch: (id, padding, animate) => focus(branchIds(id), padding, animate),
+      isolateBranch: (id, padding, animate) => {
         if (!boxFor(id)) return;
-        if (!savedViewport.current) savedViewport.current = { pan: { ...viewport.pan }, zoom: viewport.zoom };
+        if (!savedViewport.current)
+          savedViewport.current = {
+            pan: { ...viewport.pan },
+            zoom: viewport.zoom,
+          };
         const ids = branchIds(id);
         isolatedIdsRef.current = ids;
         setIsolatedIds(ids);
-        focus(ids, padding);
+        focus(ids, padding, animate);
       },
-      restoreView: () => {
+      restoreView: (animate = propsRef.current.animateViewport) => {
         isolatedIdsRef.current = null;
         setIsolatedIds(null);
         const previous = savedViewport.current;
         savedViewport.current = null;
-        if (previous) viewport.set(previous.pan, previous.zoom);
+        if (previous) viewport.transition(previous, animate);
       },
       zoomAt: (level, pt) => viewport.zoomAt(level, pt),
-      fit: (padding = 0) => {
+      fit: (padding = 0, animate = propsRef.current.animateViewport) => {
         const bb = elementsBBox();
-        if (bb) viewport.fit(bb, padding);
+        if (bb) viewport.fit(bb, padding, animate);
       },
-      center: () => {
+      centerAndFit: (padding = 0, animate = propsRef.current.animateViewport) => {
         const bb = elementsBBox();
-        if (bb) viewport.center(bb);
+        if (bb) viewport.fit(bb, padding, animate);
+      },
+      center: (animate = propsRef.current.animateViewport) => {
+        const bb = elementsBBox();
+        if (bb) viewport.center(bb, animate);
       },
       clientToModel: (cx, cy) => viewport.renderedToModel(rendered(cx, cy)),
       modelToClient: (p) => {
@@ -646,7 +680,11 @@ function Canvas(props: CanvasProps) {
 
   useEffect(() => {
     propsRef.current.onInit?.(engine);
+    return () => viewport.cancelAnimation();
   }, [engine]);
+  useEffect(() => {
+    if (layoutRevision > 0) propsRef.current.onLayoutComplete?.(engine);
+  }, [engine, layoutRevision]);
 
   // ── pointer interaction on the background ──
   const gestureRef = useRef<Gesture | null>(null);
@@ -689,7 +727,8 @@ function Canvas(props: CanvasProps) {
     let closest: { nodeId: string; property: string; distance: number } | null =
       null;
     for (const node of [...propsRef.current.nodes].reverse()) {
-      if (isolatedIdsRef.current && !isolatedIdsRef.current.has(node.id)) continue;
+      if (isolatedIdsRef.current && !isolatedIdsRef.current.has(node.id))
+        continue;
       const box = boxFor(node.id);
       const rows = propertyRowsRef.current.get(node.id);
       if (!box || !rows || containersRef.current.has(node.id)) continue;
@@ -1071,56 +1110,63 @@ function Canvas(props: CanvasProps) {
       <svg className="flow-sdk-svg">
         <g ref={svgGroupRef}>
           <g className="flow-sdk-containers">
-            {[...containers].filter(([id]) => !isolatedIds || isolatedIds.has(id)).map(([id, rect]) => (
-              <ContainerView
-                key={id}
-                id={id}
-                rect={rect}
-                label={labelById.get(id)}
-                labelLayer={labelLayer}
-                style={containerStyle(id)}
-                onSelect={onContainerSelect}
-              />
-            ))}
+            {[...containers]
+              .filter(([id]) => !isolatedIds || isolatedIds.has(id))
+              .map(([id, rect]) => (
+                <ContainerView
+                  key={id}
+                  id={id}
+                  rect={rect}
+                  label={labelById.get(id)}
+                  labelLayer={labelLayer}
+                  style={containerStyle(id)}
+                  onSelect={onContainerSelect}
+                />
+              ))}
           </g>
           <g className="flow-sdk-edges">
-            {edgesVisible && edges.map((e) => {
-              if (isolatedIds && (!isolatedIds.has(e.source) || !isolatedIds.has(e.target))) return null;
-              const s = boxFor(e.source);
-              const t = boxFor(e.target);
-              if (!s || !t) return null;
-              return (
-                <EdgeView
-                  key={e.id}
-                  id={e.id}
-                  edgeData={e.data}
-                  validationIssue={e.validationIssue}
-                  edgeType={e.type}
-                  edgeRadius={props.edgeRadius}
-                  propertyMode={edgeMode === "properties"}
-                  customEdgeTypes={props.customEdgeTypes}
-                  source={s}
-                  target={t}
-                  sourceProperty={e.sourceProperty}
-                  targetProperty={e.targetProperty}
-                  sourceY={propertyY(e.source, e.sourceProperty)}
-                  targetY={propertyY(e.target, e.targetProperty)}
-                  dir={taxiDir}
-                  turn={branches.get(e.id)?.turn ?? e.turn}
-                  labelAtTarget={branches.get(e.id)?.labelAtTarget}
-                  labelFraction={branches.get(e.id)?.labelFraction}
-                  color={e.color}
-                  labelBg={e.labelBg}
-                  label={e.label}
-                  labelLayer={labelLayer}
-                  dashed={e.dashed}
-                  animated={e.animated && !isPerformanceMode}
-                  inverted={e.inverted}
-                  loopIndex={loopIndex.get(e.id) ?? 0}
-                  onSelect={onEdgeSelect}
-                />
-              );
-            })}
+            {edgesVisible &&
+              edges.map((e) => {
+                if (
+                  isolatedIds &&
+                  (!isolatedIds.has(e.source) || !isolatedIds.has(e.target))
+                )
+                  return null;
+                const s = boxFor(e.source);
+                const t = boxFor(e.target);
+                if (!s || !t) return null;
+                return (
+                  <EdgeView
+                    key={e.id}
+                    id={e.id}
+                    edgeData={e.data}
+                    validationIssue={e.validationIssue}
+                    edgeType={e.type}
+                    edgeRadius={props.edgeRadius}
+                    propertyMode={edgeMode === "properties"}
+                    customEdgeTypes={props.customEdgeTypes}
+                    source={s}
+                    target={t}
+                    sourceProperty={e.sourceProperty}
+                    targetProperty={e.targetProperty}
+                    sourceY={propertyY(e.source, e.sourceProperty)}
+                    targetY={propertyY(e.target, e.targetProperty)}
+                    dir={taxiDir}
+                    turn={branches.get(e.id)?.turn ?? e.turn}
+                    labelAtTarget={branches.get(e.id)?.labelAtTarget}
+                    labelFraction={branches.get(e.id)?.labelFraction}
+                    color={e.color}
+                    labelBg={e.labelBg}
+                    label={e.label}
+                    labelLayer={labelLayer}
+                    dashed={e.dashed}
+                    animated={e.animated && !isPerformanceMode}
+                    inverted={e.inverted}
+                    loopIndex={loopIndex.get(e.id) ?? 0}
+                    onSelect={onEdgeSelect}
+                  />
+                );
+              })}
           </g>
           {edgesVisible && ghost && ghostSource && ghostTarget && (
             <g className="flow-sdk-ghost" pointerEvents="none">

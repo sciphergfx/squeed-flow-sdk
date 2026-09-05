@@ -1,17 +1,25 @@
 import { useContext } from "react";
 import { useFlowData } from "../components/FlowDiagramContext";
-import { FormDocumentContext } from "../nodes/NodeForm";
 import { getNode } from "../core/squeedEdits";
+import { FormDocumentContext } from "../nodes/NodeForm";
 
 export function useNodeHasChildren(id: string) {
   const { viewData: data } = useContext(FormDocumentContext);
   const { nodeById, edgeById, parentIds } = useFlowData();
   if (data) {
     const node = getNode(data, id);
-    const children = node && typeof node === "object" && !Array.isArray(node) && "$" in node ? node.$ : node;
+    const children =
+      node && typeof node === "object" && !Array.isArray(node) && "$" in node
+        ? node.$
+        : node;
     if (Array.isArray(children)) return children.length > 0;
-    return !!children && typeof children === "object" && Object.entries(children).some(
-      ([key, value]) => !key.startsWith("$") && value !== null && typeof value === "object",
+    return (
+      !!children &&
+      typeof children === "object" &&
+      Object.entries(children).some(
+        ([key, value]) =>
+          !key.startsWith("$") && value !== null && typeof value === "object",
+      )
     );
   }
   if (parentIds.has(id)) return true;

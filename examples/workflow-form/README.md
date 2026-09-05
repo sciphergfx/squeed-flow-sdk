@@ -13,19 +13,20 @@ Execution Mode uses local, server and hybrid. Step action/type remain strings:
 the backend permits custom tool names, not just its built-in action list.
 
 Projection limits:
+
 - System-owned tenantVisible, cache and cacheable are intentionally excluded
-	from editable forms; existing document values are preserved.
+  from editable forms; existing document values are preserved.
 - Trigger uses the string-enum branch; object triggers are not represented.
 - Mixed-value fields `version`, `loop` and `tools` are omitted because the
-	current form controls cannot faithfully edit both branches.
+  current form controls cannot faithfully edit both branches.
 - Arbitrary JSON fields are omitted: step input/params/config/conditions/defaultValue,
-	workflow onError/input/config, config onError/input/context/monitoring,
-	pausePoint metadata, prefetch filter and goalConfig validators.
+  workflow onError/input/config, config onError/input/context/monitoring,
+  pausePoint metadata, prefetch filter and goalConfig validators.
 - Files, images and RAG preserve declared fields only; passthrough keys are not modeled.
 - Numeric bounds, nonempty strings/arrays, strict unknown-key checks, cross-field
-	refinements and per-action parameter checks remain backend validation concerns.
+  refinements and per-action parameter checks remain backend validation concerns.
 - Backend config requires an ID. The existing admin-oriented graph has no ID;
-	enter one in its form. Admin-only values such as isPublic are not backend fields.
+  enter one in its form. Admin-only values such as isPublic are not backend fields.
 
 The older supported/full interfaces and inventory below remain admin-editor probes.
 

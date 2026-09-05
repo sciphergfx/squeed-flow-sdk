@@ -388,271 +388,270 @@ const BottomBar = () => {
               ) : nodeToolsActive ? (
                 <NodeTools ids={selectedNodeIds} onClose={handleNodeDeselect} />
               ) : null}
-                <div style={{ display: edgeToolsActive || nodeToolsActive ? "none" : "contents" }}>
-                  {/* Pin/Unpin */}
-                  <ToolbarTooltip label={isPinned ? "Unpin" : "Pin"}>
-                    <ToolbarIconButton
-                      aria-label="Pin"
-                      icon={
-                        <Icon
-                          as={isPinned ? PiPushPinFill : PiPushPin}
-                          boxSize={5}
-                        />
-                      }
-                      size="sm"
-                      variant="ghost"
-                      color={isPinned ? themeColor : colorInactive}
-                      onClick={() => {
-                        const next = !isPinned;
-                        setIsPinned(next);
-                        setShowDirectionMenu(false);
-                      }}
-                    />
-                  </ToolbarTooltip>
-
-                  <Icon
-                    mx={-1}
-                    as={PiLineVerticalThin}
-                    boxSize={5}
-                    color={border}
+              <div
+                style={{
+                  display:
+                    edgeToolsActive || nodeToolsActive ? "none" : "contents",
+                }}
+              >
+                {/* Pin/Unpin */}
+                <ToolbarTooltip label={isPinned ? "Unpin" : "Pin"}>
+                  <ToolbarIconButton
+                    aria-label="Pin"
+                    icon={
+                      <Icon
+                        as={isPinned ? PiPushPinFill : PiPushPin}
+                        boxSize={5}
+                      />
+                    }
+                    size="sm"
+                    variant="ghost"
+                    color={isPinned ? themeColor : colorInactive}
+                    onClick={() => {
+                      const next = !isPinned;
+                      setIsPinned(next);
+                      setShowDirectionMenu(false);
+                    }}
                   />
+                </ToolbarTooltip>
 
-                  {/* Zoom controls */}
-                  <ToolbarTooltip label="Zoom Out">
-                    <ToolbarIconButton
-                      aria-label="Zoom out"
-                      icon={<Icon as={PiMinus} boxSize={5} />}
-                      size="sm"
-                      variant="ghost"
-                      color={colorText}
-                      onClick={() => handleZoom("decrease")}
+                <Icon
+                  mx={-1}
+                  as={PiLineVerticalThin}
+                  boxSize={5}
+                  color={border}
+                />
+
+                {/* Zoom controls */}
+                <ToolbarTooltip label="Zoom Out">
+                  <ToolbarIconButton
+                    aria-label="Zoom out"
+                    icon={<Icon as={PiMinus} boxSize={5} />}
+                    size="sm"
+                    variant="ghost"
+                    color={colorText}
+                    onClick={() => handleZoom("decrease")}
+                  />
+                </ToolbarTooltip>
+                <ToolbarTooltip label="Zoom In">
+                  <ToolbarIconButton
+                    aria-label="Zoom in"
+                    icon={<Icon as={PiPlus} boxSize={5} />}
+                    size="sm"
+                    variant="ghost"
+                    color={colorText}
+                    onClick={() => handleZoom("increase")}
+                  />
+                </ToolbarTooltip>
+                <ToolbarTooltip label="Reset Zoom">
+                  <ToolbarIconButton
+                    aria-label="Reset zoom"
+                    icon={<Icon as={PiArrowCounterClockwise} boxSize={5} />}
+                    size="sm"
+                    variant="ghost"
+                    color={colorText}
+                    onClick={() => handleZoom("reset")}
+                  />
+                </ToolbarTooltip>
+                {!isCollapsed && (
+                  <>
+                    <Icon
+                      mx={-1}
+                      as={PiLineVerticalThin}
+                      boxSize={5}
+                      color={border}
                     />
-                  </ToolbarTooltip>
-                  <ToolbarTooltip label="Zoom In">
-                    <ToolbarIconButton
-                      aria-label="Zoom in"
-                      icon={<Icon as={PiPlus} boxSize={5} />}
-                      size="sm"
-                      variant="ghost"
-                      color={colorText}
-                      onClick={() => handleZoom("increase")}
-                    />
-                  </ToolbarTooltip>
-                  <ToolbarTooltip label="Reset Zoom">
-                    <ToolbarIconButton
-                      aria-label="Reset zoom"
-                      icon={<Icon as={PiArrowCounterClockwise} boxSize={5} />}
-                      size="sm"
-                      variant="ghost"
-                      color={colorText}
-                      onClick={() => handleZoom("reset")}
-                    />
-                  </ToolbarTooltip>
-                  {!isCollapsed && (
-                    <>
-                      <Icon
-                        mx={-1}
-                        as={PiLineVerticalThin}
-                        boxSize={5}
-                        color={border}
-                      />
 
-                      {/* Zoom/Pan mode */}
-                      <ToolbarTooltip
-                        label={isZoomMode ? "Zoom Mode (z)" : "Pan Mode (z)"}
-                      >
-                        <ToolbarIconButton
-                          aria-label="Toggle zoom mode"
-                          icon={
-                            <Icon
-                              as={
-                                isZoomMode
-                                  ? PiMagnifyingGlassPlus
-                                  : PiArrowsOutCardinal
-                              }
-                              boxSize={5}
-                            />
-                          }
-                          size="sm"
-                          variant="ghost"
-                          color={isZoomMode ? themeColor : colorInactive}
-                          onClick={() => setIsZoomMode(!isZoomMode)}
-                        />
-                      </ToolbarTooltip>
-
-                      <Icon
-                        mx={-1}
-                        as={PiLineVerticalThin}
-                        boxSize={5}
-                        color={border}
-                      />
-
-                      {/* Multi-select */}
-                      <ToolbarTooltip
-                        label={
-                          isMultiSelectMode
-                            ? "Multi-Select On (m)"
-                            : "Multi-Select Off (m)"
-                        }
-                      >
-                        <ToolbarIconButton
-                          aria-label="Toggle multi-select"
-                          icon={<Icon as={PiSelectionPlus} boxSize={5} />}
-                          size="sm"
-                          variant="ghost"
-                          color={isMultiSelectMode ? themeColor : colorInactive}
-                          onClick={() =>
-                            setIsMultiSelectMode(!isMultiSelectMode)
-                          }
-                        />
-                      </ToolbarTooltip>
-
-                      <Icon
-                        mx={-1}
-                        as={PiLineVerticalThin}
-                        boxSize={5}
-                        color={border}
-                      />
-
-                      {/* Drag mode */}
-                      <ToolbarTooltip
-                        label={
-                          isDragMode ? "Drag Mode On (d)" : "Drag Mode Off (d)"
-                        }
-                      >
-                        <ToolbarIconButton
-                          aria-label="Toggle drag mode"
-                          icon={<Icon as={PiHandGrabbing} boxSize={5} />}
-                          size="sm"
-                          variant="ghost"
-                          color={isDragMode ? themeColor : colorInactive}
-                          onClick={() => setIsDragMode(!isDragMode)}
-                        />
-                      </ToolbarTooltip>
-
-                      {config.edgeHandles !== false && (
-                        <>
+                    {/* Zoom/Pan mode */}
+                    <ToolbarTooltip
+                      label={isZoomMode ? "Zoom Mode (z)" : "Pan Mode (z)"}
+                    >
+                      <ToolbarIconButton
+                        aria-label="Toggle zoom mode"
+                        icon={
                           <Icon
-                            mx={-1}
-                            as={PiLineVerticalThin}
-                            boxSize={5}
-                            color={border}
-                          />
-
-                          {/* Draw mode */}
-                          <ToolbarTooltip
-                            label={
-                              isEdgeHandlesEnabled
-                                ? "Draw Mode On"
-                                : "Draw Mode Off"
+                            as={
+                              isZoomMode
+                                ? PiMagnifyingGlassPlus
+                                : PiArrowsOutCardinal
                             }
-                          >
-                            <ToolbarIconButton
-                              aria-label="Toggle draw mode"
-                              icon={
-                                <Icon as={PiPencilSimpleLine} boxSize={5} />
-                              }
-                              size="sm"
-                              variant="ghost"
-                              color={
-                                isEdgeHandlesEnabled
-                                  ? themeColor
-                                  : colorInactive
-                              }
-                              onClick={() =>
-                                setIsEdgeHandlesEnabled(!isEdgeHandlesEnabled)
-                              }
-                            />
-                          </ToolbarTooltip>
-                        </>
-                      )}
-
-                      <Icon
-                        mx={-1}
-                        as={PiLineVerticalThin}
-                        boxSize={5}
-                        color={border}
-                      />
-
-                      {/* Set / Array node mode */}
-                      <ToolbarTooltip
-                        label={
-                          isArrayNodeMode ? "Array Mode [ ]" : "Set Mode { }"
+                            boxSize={5}
+                          />
                         }
-                      >
-                        <ToolbarIconButton
-                          aria-label="Toggle array mode"
-                          icon={
-                            <Icon
-                              as={
-                                isArrayNodeMode
-                                  ? PiBracketsSquare
-                                  : PiBracketsCurly
-                              }
-                              boxSize={5}
-                            />
+                        size="sm"
+                        variant="ghost"
+                        color={isZoomMode ? themeColor : colorInactive}
+                        onClick={() => setIsZoomMode(!isZoomMode)}
+                      />
+                    </ToolbarTooltip>
+
+                    <Icon
+                      mx={-1}
+                      as={PiLineVerticalThin}
+                      boxSize={5}
+                      color={border}
+                    />
+
+                    {/* Multi-select */}
+                    <ToolbarTooltip
+                      label={
+                        isMultiSelectMode
+                          ? "Multi-Select On (m)"
+                          : "Multi-Select Off (m)"
+                      }
+                    >
+                      <ToolbarIconButton
+                        aria-label="Toggle multi-select"
+                        icon={<Icon as={PiSelectionPlus} boxSize={5} />}
+                        size="sm"
+                        variant="ghost"
+                        color={isMultiSelectMode ? themeColor : colorInactive}
+                        onClick={() => setIsMultiSelectMode(!isMultiSelectMode)}
+                      />
+                    </ToolbarTooltip>
+
+                    <Icon
+                      mx={-1}
+                      as={PiLineVerticalThin}
+                      boxSize={5}
+                      color={border}
+                    />
+
+                    {/* Drag mode */}
+                    <ToolbarTooltip
+                      label={
+                        isDragMode ? "Drag Mode On (d)" : "Drag Mode Off (d)"
+                      }
+                    >
+                      <ToolbarIconButton
+                        aria-label="Toggle drag mode"
+                        icon={<Icon as={PiHandGrabbing} boxSize={5} />}
+                        size="sm"
+                        variant="ghost"
+                        color={isDragMode ? themeColor : colorInactive}
+                        onClick={() => setIsDragMode(!isDragMode)}
+                      />
+                    </ToolbarTooltip>
+
+                    {config.edgeHandles !== false && (
+                      <>
+                        <Icon
+                          mx={-1}
+                          as={PiLineVerticalThin}
+                          boxSize={5}
+                          color={border}
+                        />
+
+                        {/* Draw mode */}
+                        <ToolbarTooltip
+                          label={
+                            isEdgeHandlesEnabled
+                              ? "Draw Mode On"
+                              : "Draw Mode Off"
                           }
-                          size="sm"
-                          variant="ghost"
-                          color={isArrayNodeMode ? themeColor : colorInactive}
-                          onClick={() => {
-                            const next = !isArrayNodeMode;
-                            setIsArrayNodeMode(next);
-                            callbacks.onArrayModeChange?.(next);
+                        >
+                          <ToolbarIconButton
+                            aria-label="Toggle draw mode"
+                            icon={<Icon as={PiPencilSimpleLine} boxSize={5} />}
+                            size="sm"
+                            variant="ghost"
+                            color={
+                              isEdgeHandlesEnabled ? themeColor : colorInactive
+                            }
+                            onClick={() =>
+                              setIsEdgeHandlesEnabled(!isEdgeHandlesEnabled)
+                            }
+                          />
+                        </ToolbarTooltip>
+                      </>
+                    )}
+
+                    <Icon
+                      mx={-1}
+                      as={PiLineVerticalThin}
+                      boxSize={5}
+                      color={border}
+                    />
+
+                    {/* Set / Array node mode */}
+                    <ToolbarTooltip
+                      label={
+                        isArrayNodeMode ? "Array Mode [ ]" : "Set Mode { }"
+                      }
+                    >
+                      <ToolbarIconButton
+                        aria-label="Toggle array mode"
+                        icon={
+                          <Icon
+                            as={
+                              isArrayNodeMode
+                                ? PiBracketsSquare
+                                : PiBracketsCurly
+                            }
+                            boxSize={5}
+                          />
+                        }
+                        size="sm"
+                        variant="ghost"
+                        color={isArrayNodeMode ? themeColor : colorInactive}
+                        onClick={() => {
+                          const next = !isArrayNodeMode;
+                          setIsArrayNodeMode(next);
+                          callbacks.onArrayModeChange?.(next);
+                        }}
+                      />
+                    </ToolbarTooltip>
+                    {backgroundSelected && !readOnly && (
+                      <>
+                        <Icon
+                          mx={-1}
+                          as={PiLineVerticalThin}
+                          boxSize={5}
+                          color={border}
+                        />
+                        <Swatches
+                          label="Graph theme"
+                          colors={DEFAULT_PALETTE}
+                          value={themeColor}
+                          includeTransparent={false}
+                          onPick={(color) => {
+                            setThemeColor(color);
+                            callbacks.onThemeColorChange?.(color);
                           }}
                         />
-                      </ToolbarTooltip>
-                      {backgroundSelected && !readOnly && (
-                        <>
-                          <Icon
-                            mx={-1}
-                            as={PiLineVerticalThin}
-                            boxSize={5}
-                            color={border}
-                          />
-                          <Swatches
-                            label="Graph theme"
-                            colors={DEFAULT_PALETTE}
-                            value={themeColor}
-                            includeTransparent={false}
-                            onPick={(color) => {
-                              setThemeColor(color);
-                              callbacks.onThemeColorChange?.(color);
-                            }}
-                          />
-                        </>
-                      )}
-                      <WorkflowControls />
-                      <DiagramAppearanceControls />
-                    </>
-                  )}
+                      </>
+                    )}
+                    <WorkflowControls />
+                    <DiagramAppearanceControls />
+                  </>
+                )}
 
-                  <Icon
-                    mx={-1}
-                    as={PiLineVerticalThin}
-                    boxSize={5}
-                    color={border}
+                <Icon
+                  mx={-1}
+                  as={PiLineVerticalThin}
+                  boxSize={5}
+                  color={border}
+                />
+
+                <ToolbarTooltip
+                  label={isCollapsed ? "Expand toolbar" : "Collapse toolbar"}
+                >
+                  <ToolbarIconButton
+                    aria-label="Toggle toolbar collapse"
+                    icon={
+                      <Icon
+                        as={isCollapsed ? PiCaretRight : PiCaretLeft}
+                        boxSize={5}
+                      />
+                    }
+                    size="sm"
+                    variant="ghost"
+                    color={colorInactive}
+                    onClick={() => setIsCollapsed(!isCollapsed)}
                   />
-
-                  <ToolbarTooltip
-                    label={isCollapsed ? "Expand toolbar" : "Collapse toolbar"}
-                  >
-                    <ToolbarIconButton
-                      aria-label="Toggle toolbar collapse"
-                      icon={
-                        <Icon
-                          as={isCollapsed ? PiCaretRight : PiCaretLeft}
-                          boxSize={5}
-                        />
-                      }
-                      size="sm"
-                      variant="ghost"
-                      color={colorInactive}
-                      onClick={() => setIsCollapsed(!isCollapsed)}
-                    />
-                  </ToolbarTooltip>
-                  {!isCollapsed && <SvgExportButton />}
-                </div>
+                </ToolbarTooltip>
+                {!isCollapsed && <SvgExportButton />}
+              </div>
             </HStack>
           </ToolbarScrollContainer>
 

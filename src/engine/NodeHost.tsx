@@ -138,24 +138,26 @@ function NodeHost({
       {drawHandles &&
         propertyMode &&
         rows.map((row) =>
-          (["source", "target"] as const).filter(role => !row.role || row.role === role).map((role) => (
-            <button
-              key={`${row.property}:${role}`}
-              type="button"
-              className="flow-sdk-property-port"
-              data-property={row.property}
-              data-port-role={role}
-              aria-label={`${role === "source" ? "Connect" : "Input"} ${row.property}`}
-              title={`${role === "source" ? "Connect" : "Input"} ${row.property}`}
-              style={{
-                color: handleColor,
-                top: row.top + row.height / 2,
-                [(role === "source") !== !!reversePorts ? "right" : "left"]:
-                  -16,
-              }}
-              onClick={(event) => event.stopPropagation()}
-            />
-          )),
+          (["source", "target"] as const)
+            .filter((role) => !row.role || row.role === role)
+            .map((role) => (
+              <button
+                key={`${row.property}:${role}`}
+                type="button"
+                className="flow-sdk-property-port"
+                data-property={row.property}
+                data-port-role={role}
+                aria-label={`${role === "source" ? "Connect" : "Input"} ${row.property}`}
+                title={`${role === "source" ? "Connect" : "Input"} ${row.property}`}
+                style={{
+                  color: handleColor,
+                  top: row.top + row.height / 2,
+                  [(role === "source") !== !!reversePorts ? "right" : "left"]:
+                    -16,
+                }}
+                onClick={(event) => event.stopPropagation()}
+              />
+            )),
         )}
       {drawHandles &&
         !hasCollapseControl &&

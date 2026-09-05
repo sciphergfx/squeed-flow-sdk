@@ -33,17 +33,19 @@ export interface FlowEngine {
   /** Zoom keeping the model point under `renderedPoint` (container px) fixed */
   zoomAt(level: number, renderedPoint: Point): void;
   /** Fit all elements into the container with `padding` rendered px */
-  fit(padding?: number): void;
+  fit(padding?: number, animate?: boolean): void;
+  /** Explicit alias for fit: fit and centre all elements with screen-pixel padding. */
+  centerAndFit(padding?: number, animate?: boolean): void;
   /** Centre all elements at the current zoom */
-  center(): void;
+  center(animate?: boolean): void;
   /** Fit one currently laid-out node; padding is in screen pixels (default 50). */
-  focusNode(id: string, padding?: number): void;
-  /** Fit a node and its currently laid-out descendants; does not expand collapsed nodes. */
-  focusBranch(id: string, padding?: number): void;
+  focusNode(id: string, padding?: number, animate?: boolean): void;
+  /** Fit laid-out hierarchy descendants and outgoing reachable nodes. Does not expand collapsed nodes. Animate overrides config.animateViewport. */
+  focusBranch(id: string, padding?: number, animate?: boolean): void;
   /** Temporarily show only this branch and fit it, preserving graph data. */
-  isolateBranch(id: string, padding?: number): void;
+  isolateBranch(id: string, padding?: number, animate?: boolean): void;
   /** End isolation and restore the viewport saved when isolation began. */
-  restoreView(): void;
+  restoreView(animate?: boolean): void;
   /** Hide/show edge paths, labels and hit targets without changing graph data. */
   setEdgesVisible(visible: boolean): void;
   clientToModel(clientX: number, clientY: number): Point;

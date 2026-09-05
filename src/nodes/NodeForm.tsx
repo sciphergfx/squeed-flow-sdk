@@ -1,4 +1,5 @@
 import styled from "@emotion/styled";
+import { startCase } from "lodash";
 import {
   createContext,
   useContext,
@@ -8,7 +9,6 @@ import {
   useState,
 } from "react";
 import { PiArrowCounterClockwise, PiCaretDown } from "react-icons/pi";
-import { startCase } from "lodash";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import {
   conditionMatches,
@@ -72,8 +72,13 @@ const Fields = styled.div`
     min-height: 96px;
     resize: vertical;
   }
-  & [data-form-select] { position: relative; }
-  & [data-form-select] select { appearance: none; padding-right: 40px; }
+  & [data-form-select] {
+    position: relative;
+  }
+  & [data-form-select] select {
+    appearance: none;
+    padding-right: 40px;
+  }
   & [data-form-select] > svg {
     position: absolute;
     right: 12px;
@@ -81,8 +86,12 @@ const Fields = styled.div`
     transform: translateY(-50%);
     pointer-events: none;
   }
-  & [data-form-select] select:disabled + svg { opacity: 0.55; }
-  & details { border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
+  & [data-form-select] select:disabled + svg {
+    opacity: 0.55;
+  }
+  & details {
+    border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  }
   & summary {
     display: flex;
     align-items: center;
@@ -93,10 +102,20 @@ const Fields = styled.div`
     font-weight: 600;
     list-style: none;
   }
-  & summary::-webkit-details-marker { display: none; }
-  & summary > span { min-width: 0; overflow-wrap: anywhere; }
-  & summary > svg { flex-shrink: 0; transform: rotate(-90deg); }
-  & details[open] > summary > svg { transform: rotate(0deg); }
+  & summary::-webkit-details-marker {
+    display: none;
+  }
+  & summary > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  & summary > svg {
+    flex-shrink: 0;
+    transform: rotate(-90deg);
+  }
+  & details[open] > summary > svg {
+    transform: rotate(0deg);
+  }
   & input[type="checkbox"] {
     width: 18px;
     height: 18px;
@@ -136,8 +155,14 @@ function Field({
   const { themeColor } = useFlowDiagramContext();
   const { background } = useCustomColors();
   const id = useId();
-  const structured = property.type.kind === "object" || property.type.kind === "array";
-  const formatted = value === undefined ? "" : structured ? JSON.stringify(value, null, 2) : String(value);
+  const structured =
+    property.type.kind === "object" || property.type.kind === "array";
+  const formatted =
+    value === undefined
+      ? ""
+      : structured
+        ? JSON.stringify(value, null, 2)
+        : String(value);
   const [draft, setDraft] = useState(formatted);
   const [failure, setFailure] = useState("");
   const [retry, setRetry] = useState(0);
@@ -209,7 +234,10 @@ function Field({
       ? remote.options
       : []
     : property.type.kind === "boolean"
-      ? [{ label: "Yes", value: true }, { label: "No", value: false }]
+      ? [
+          { label: "Yes", value: true },
+          { label: "No", value: false },
+        ]
       : formOptions(property.type);
   const multiple = property.type.kind === "array";
   const control =
@@ -220,7 +248,9 @@ function Field({
         : "select"
       : property.type.kind === "boolean"
         ? "checkbox"
-        : structured ? "textarea" : "input");
+        : structured
+          ? "textarea"
+          : "input");
   const required =
     !property.optional ||
     (!!config.$requiredWhen && conditionMatches(config.$requiredWhen, data));
@@ -247,11 +277,17 @@ function Field({
   const commitDraft = () => {
     if (structured) {
       try {
-        const next = draft === "" && property.optional ? undefined : JSON.parse(draft);
+        const next =
+          draft === "" && property.optional ? undefined : JSON.parse(draft);
         const error = formValueError(property.type, next, required);
-        if (error) { setFailure(error); return; }
+        if (error) {
+          setFailure(error);
+          return;
+        }
         commit(next);
-      } catch { setFailure("Enter valid JSON"); }
+      } catch {
+        setFailure("Enter valid JSON");
+      }
       return;
     }
     const numeric =
@@ -300,7 +336,18 @@ function Field({
             aria-label={`Reset ${label}`}
             title={`Reset ${label}`}
             disabled={disabled}
-            style={{ width: 24, height: 24, padding: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: 0, background: "transparent", color: "inherit" }}
+            style={{
+              width: 24,
+              height: 24,
+              padding: 0,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              border: 0,
+              background: "transparent",
+              color: "inherit",
+            }}
             onClick={() => commit(undefined)}
           >
             <PiArrowCounterClockwise size={14} />
@@ -309,27 +356,32 @@ function Field({
       </div>
       {control === "select" ? (
         <div data-form-select="">
-        <select
-          {...props}
-          disabled={disabled || loading || !!remote?.error}
-          value={
-            options?.findIndex((option) => Object.is(option.value, value)) ?? -1
-          }
-          onChange={(event) => {
-            const option = options?.[Number(event.target.value)];
-            if (option) commit(option.value);
-          }}
-        >
-          <option value={-1} disabled>
-            {value !== undefined ? String(value) : ""}
-          </option>
-          {options?.map((option, index) => (
-            <option key={index} value={index} style={{ background: getChakraColorHex(background) }}>
-              {startCase(option.label)}
+          <select
+            {...props}
+            disabled={disabled || loading || !!remote?.error}
+            value={
+              options?.findIndex((option) => Object.is(option.value, value)) ??
+              -1
+            }
+            onChange={(event) => {
+              const option = options?.[Number(event.target.value)];
+              if (option) commit(option.value);
+            }}
+          >
+            <option value={-1} disabled>
+              {value !== undefined ? String(value) : ""}
             </option>
-          ))}
-        </select>
-        <PiCaretDown size={16} aria-hidden="true" />
+            {options?.map((option, index) => (
+              <option
+                key={index}
+                value={index}
+                style={{ background: getChakraColorHex(background) }}
+              >
+                {startCase(option.label)}
+              </option>
+            ))}
+          </select>
+          <PiCaretDown size={16} aria-hidden="true" />
         </div>
       ) : control === "pills" ? (
         <div
@@ -424,36 +476,61 @@ function Field({
 }
 
 export function NodeForm({ nodeAddress }: { nodeAddress: string }) {
-  const { data, schema, callbacks, bindings, editable } = useContext(FormDocumentContext);
+  const { data, schema, callbacks, bindings, editable } =
+    useContext(FormDocumentContext);
   const { readOnly, config } = useFlowDiagramContext();
   if (!data)
     return <Fields role="alert">Forms require a JSON document.</Fields>;
-  const bound = bindings ? resolveStateForm(bindings, nodeAddress, schema) : undefined;
-  const resolved = bindings ? bound : schema && resolveFormNode(data, nodeAddress, schema);
+  const bound = bindings
+    ? resolveStateForm(bindings, nodeAddress, schema)
+    : undefined;
+  const resolved = bindings
+    ? bound
+    : schema && resolveFormNode(data, nodeAddress, schema);
   if (!resolved) return <Fields role="status">Form schema unavailable.</Fields>;
   const stateAddress = bound?.address ?? nodeAddress;
   const node = getNode(data, stateAddress);
-  if (!node || typeof node !== "object") return <Fields role="alert">Bound form state is unavailable.</Fields>;
+  if (!node || typeof node !== "object")
+    return <Fields role="alert">Bound form state is unavailable.</Fields>;
   const entries = Object.entries(resolved.type.properties).filter(([key]) =>
     conditionMatches(resolved.fields[key]?.$visibleWhen, data),
   );
-  const sectioned = entries.length > 8 || entries.some(([key]) => resolved.fields[key]?.$section);
+  const sectioned =
+    entries.length > 8 ||
+    entries.some(([key]) => resolved.fields[key]?.$section);
   const sections = new Map<string, typeof entries>();
   for (const entry of entries) {
     const [key, property] = entry;
-    const section = sectioned ? startCase(resolved.fields[key]?.$section ??
-      (property.type.kind === "object" || property.type.kind === "array" ? key : property.optional ? "Options" : "General")) : "";
+    const section = sectioned
+      ? startCase(
+          resolved.fields[key]?.$section ??
+            (property.type.kind === "object" || property.type.kind === "array"
+              ? key
+              : property.optional
+                ? "Options"
+                : "General"),
+        )
+      : "";
     if (!sections.has(section)) sections.set(section, []);
     sections.get(section)!.push(entry);
   }
-  const renderField = ([key, property]: typeof entries[number]) => (
+  const renderField = ([key, property]: (typeof entries)[number]) => (
     <Field
       key={`${node.id ?? nodeAddress}:${key}`}
-      request={{ data, address: `${stateAddress}.${key}`, nodeAddress: stateAddress, nodeId: typeof node.id === "string" ? node.id : undefined }}
+      request={{
+        data,
+        address: `${stateAddress}.${key}`,
+        nodeAddress: stateAddress,
+        nodeId: typeof node.id === "string" ? node.id : undefined,
+      }}
       property={property}
       config={resolved.fields[key] ?? {}}
       value={node[key]}
-      disabled={readOnly || config.editable === false || !(editable ?? !!callbacks.onJsonChange)}
+      disabled={
+        readOnly ||
+        config.editable === false ||
+        !(editable ?? !!callbacks.onJsonChange)
+      }
     />
   );
   return (
@@ -462,12 +539,19 @@ export function NodeForm({ nodeAddress }: { nodeAddress: string }) {
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
     >
-      {[...sections].map(([section, fields]) => sectioned && fields.length > 1 ? (
-        <details key={section} open>
-          <summary><span>{section}</span><PiCaretDown size={16} aria-hidden="true" /></summary>
-          {fields.map(renderField)}
-        </details>
-      ) : fields.map(renderField))}
+      {[...sections].map(([section, fields]) =>
+        sectioned && fields.length > 1 ? (
+          <details key={section} open>
+            <summary>
+              <span>{section}</span>
+              <PiCaretDown size={16} aria-hidden="true" />
+            </summary>
+            {fields.map(renderField)}
+          </details>
+        ) : (
+          fields.map(renderField)
+        ),
+      )}
     </Fields>
   );
 }

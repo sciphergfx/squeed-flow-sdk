@@ -1,16 +1,54 @@
 {
-  "id": "it-ops",
-  "name": "IT Ops Workflow",
-  "trigger": { "type": "event", "event": "user.created" },
-  "steps": [
-    { "id": "assistant", "name": "AI Agent", "type": "llm", "config": {
-      "prompt": "Review the new user and determine whether they are a manager.",
-      "model": "example-model", "memory": ["knowledge_entry"], "tools": [], "temperature": 0.3
-    } },
-    { "id": "manager-check", "name": "Is a manager?", "type": "conditional", "config": {
-      "condition": "return input.isManager === true;", "onTrue": "add-channel", "onFalse": "update-profile"
-    } },
-    { "id": "add-channel", "name": "Add to channel", "type": "http", "config": { "method": "POST", "url": "", "body": "" } },
-    { "id": "update-profile", "name": "Update profile", "type": "http", "config": { "method": "POST", "url": "", "body": "" } }
-  ]
+          "id": "it-ops",
+          "name": "IT Ops Workflow",
+          "trigger": {
+                    "type": "event",
+                    "event": "user.created"
+          },
+          "steps": [
+                    {
+                              "id": "assistant",
+                              "name": "AI Agent",
+                              "type": "llm",
+                              "config": {
+                                        "prompt": "Review the new user and determine whether they are a manager.",
+                                        "model": "example-model",
+                                        "memory": [
+                                                  "knowledge_entry"
+                                        ],
+                                        "tools": [],
+                                        "temperature": 0.3
+                              }
+                    },
+                    {
+                              "id": "manager-check",
+                              "name": "Is a manager?",
+                              "type": "conditional",
+                              "config": {
+                                        "condition": "return input.isManager === true;",
+                                        "onTrue": "add-channel",
+                                        "onFalse": "update-profile"
+                              }
+                    },
+                    {
+                              "id": "add-channel",
+                              "name": "Add to channel",
+                              "type": "http",
+                              "config": {
+                                        "method": "POST",
+                                        "url": "",
+                                        "body": ""
+                              }
+                    },
+                    {
+                              "id": "update-profile",
+                              "name": "Update profile",
+                              "type": "http",
+                              "config": {
+                                        "method": "POST",
+                                        "url": "",
+                                        "body": ""
+                              }
+                    }
+          ]
 }

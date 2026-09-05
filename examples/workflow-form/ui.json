@@ -1,22 +1,28 @@
 {
-  "workflow": {
-    "$label": "Workflow",
-    "$form": { "$type": "WorkflowForm" },
-    "name": "Order Processing",
-    "trigger": "manual",
-    "timeoutMs": 30000,
-    "isPublic": false,
-    "steps": [
-      {
-        "$label": "Check Order",
-        "$form": { "$type": "WorkflowStep" },
-        "id": "check-order",
-        "name": "Check Order",
-        "type": "conditional",
-        "executionTarget": "local",
-        "parallel": false,
-        "retry": { "maxAttempts": 3 }
-      }
-    ]
-  }
+          "workflow": {
+                    "$label": "Workflow",
+                    "$form": {
+                              "$type": "WorkflowForm"
+                    },
+                    "name": "Order Processing",
+                    "trigger": "manual",
+                    "timeoutMs": 30000,
+                    "isPublic": false,
+                    "steps": [
+                              {
+                                        "$label": "Check Order",
+                                        "$form": {
+                                                  "$type": "WorkflowStep"
+                                        },
+                                        "id": "check-order",
+                                        "name": "Check Order",
+                                        "type": "conditional",
+                                        "executionTarget": "local",
+                                        "parallel": false,
+                                        "retry": {
+                                                  "maxAttempts": 3
+                                        }
+                              }
+                    ]
+          }
 }

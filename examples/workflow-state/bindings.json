@@ -1,21 +1,86 @@
 {
-  "root.trigger": {
-    "address": "root.trigger", "type": "TriggerConfig",
-    "fields": {
-      "event": { "$visibleWhen": { "$address": "root.trigger.type", "$equals": "event" }, "$requiredWhen": { "$address": "root.trigger.type", "$equals": "event" } },
-      "cron": { "$visibleWhen": { "$address": "root.trigger.type", "$equals": "schedule" }, "$requiredWhen": { "$address": "root.trigger.type", "$equals": "schedule" } }
-    }
-  },
-  "root.assistant": {
-    "address": "root.steps.0.config", "type": "LlmConfig",
-    "fields": {
-      "prompt": { "$control": "textarea" }, "instructions": { "$control": "textarea" },
-      "model": { "$options": { "$source": "callback", "$dependsOn": [] } },
-      "memory": { "$label": "Knowledge Base", "$options": { "$source": "callback", "$dependsOn": [] } },
-      "tools": { "$options": { "$source": "callback", "$dependsOn": [] } }
-    }
-  },
-  "root.decision": { "address": "root.steps.1.config", "type": "ConditionalConfig", "fields": { "condition": { "$control": "textarea" } } },
-  "root.addChannel": { "address": "root.steps.2.config", "type": "HttpConfig", "fields": { "body": { "$control": "textarea" } } },
-  "root.updateProfile": { "address": "root.steps.3.config", "type": "HttpConfig", "fields": { "body": { "$control": "textarea" } } }
+          "root.trigger": {
+                    "address": "root.trigger",
+                    "type": "TriggerConfig",
+                    "fields": {
+                              "event": {
+                                        "$visibleWhen": {
+                                                  "$address": "root.trigger.type",
+                                                  "$equals": "event"
+                                        },
+                                        "$requiredWhen": {
+                                                  "$address": "root.trigger.type",
+                                                  "$equals": "event"
+                                        }
+                              },
+                              "cron": {
+                                        "$visibleWhen": {
+                                                  "$address": "root.trigger.type",
+                                                  "$equals": "schedule"
+                                        },
+                                        "$requiredWhen": {
+                                                  "$address": "root.trigger.type",
+                                                  "$equals": "schedule"
+                                        }
+                              }
+                    }
+          },
+          "root.assistant": {
+                    "address": "root.steps.0.config",
+                    "type": "LlmConfig",
+                    "fields": {
+                              "prompt": {
+                                        "$control": "textarea"
+                              },
+                              "instructions": {
+                                        "$control": "textarea"
+                              },
+                              "model": {
+                                        "$options": {
+                                                  "$source": "callback",
+                                                  "$dependsOn": []
+                                        }
+                              },
+                              "memory": {
+                                        "$label": "Knowledge Base",
+                                        "$options": {
+                                                  "$source": "callback",
+                                                  "$dependsOn": []
+                                        }
+                              },
+                              "tools": {
+                                        "$options": {
+                                                  "$source": "callback",
+                                                  "$dependsOn": []
+                                        }
+                              }
+                    }
+          },
+          "root.decision": {
+                    "address": "root.steps.1.config",
+                    "type": "ConditionalConfig",
+                    "fields": {
+                              "condition": {
+                                        "$control": "textarea"
+                              }
+                    }
+          },
+          "root.addChannel": {
+                    "address": "root.steps.2.config",
+                    "type": "HttpConfig",
+                    "fields": {
+                              "body": {
+                                        "$control": "textarea"
+                              }
+                    }
+          },
+          "root.updateProfile": {
+                    "address": "root.steps.3.config",
+                    "type": "HttpConfig",
+                    "fields": {
+                              "body": {
+                                        "$control": "textarea"
+                              }
+                    }
+          }
 }

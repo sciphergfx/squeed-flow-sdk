@@ -190,6 +190,8 @@ export interface BottomBarRenderProps {
 
 /** Configuration for the flow diagram appearance and behavior */
 export interface FlowDiagramConfig {
+  /** Animate fit/center/focus actions for 300ms by default. Per-action flags override this; reduced motion stays instant. */
+  animateViewport?: boolean;
   formSchema?: import("../core/forms").FormSchema;
   spacing?: NodeSpacing;
   edgeRadius?: number;
@@ -259,7 +261,9 @@ export interface FlowDiagramConfig {
 
 /** Event callbacks for the flow diagram */
 export interface FlowDiagramCallbacks {
-  onFormSchemaChange?: (schema: import("../core/forms").FormSchema | undefined) => void;
+  onFormSchemaChange?: (
+    schema: import("../core/forms").FormSchema | undefined,
+  ) => void;
   onFormChange?: (
     event: import("../core/forms").FormChange,
   ) => import("../core/forms").FormEdit[] | void;
@@ -356,6 +360,8 @@ export interface FlowDiagramCallbacks {
   onArrayModeChange?: (isArrayMode: boolean) => void;
   /** Fires once the renderer is ready with the engine handle (zoom/pan/fit/coordinate helpers) */
   onInit?: (engine: FlowEngine) => void;
+  /** Fires after layout and measurement settle; viewport-only changes do not trigger it. */
+  onLayoutComplete?: (engine: FlowEngine) => void;
 
   // ── Squeed document mode (when `json` prop is used) ──
   /**
@@ -399,6 +405,10 @@ export interface SqueedChangeInfo {
 
 /** Top-level props for the FlowDiagram component */
 export interface FlowDiagramProps {
+  /** Show the loader while the host fetches data; initial compilation waits until false. */
+  loading?: boolean;
+  /** Custom loading content. Defaults to an accessible status message. Also shown while new JSON is prepared. */
+  loader?: React.ReactNode;
   /** Title shown on the root node */
   title?: string;
   /**

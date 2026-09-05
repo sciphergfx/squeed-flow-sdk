@@ -1,4 +1,5 @@
 import { IconButton, Tooltip, Portal, chakra } from "@chakra-ui/react";
+import { startCase } from "lodash";
 import {
   Children,
   cloneElement,
@@ -122,7 +123,7 @@ export function ToolbarSelect({
       };
       return {
         value: String(props.value),
-        label: props.children,
+        label: typeof props.children === "string" ? startCase(props.children) : props.children,
         disabled: props.disabled,
       };
     });
@@ -179,6 +180,7 @@ export function ToolbarSelect({
           ref={trigger}
           type="button"
           role="combobox"
+          data-flow-select-icon={icon ? "" : undefined}
           aria-label={label}
           title={title ?? label}
           aria-haspopup={popupContent ? "dialog" : "listbox"}
@@ -234,6 +236,7 @@ export function ToolbarSelect({
         minW="180px"
         maxW="calc(100vw - 24px)"
         overflowY="auto"
+        css={{ scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" } }}
         bg={background}
         color={colorText}
         borderWidth={1}

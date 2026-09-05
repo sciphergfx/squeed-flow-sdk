@@ -2,6 +2,7 @@ import { Box, Flex, Icon, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import { PiCircleFill } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
+import { NodeFormPopover } from "../components/NodeFormPopover";
 import {
   ToolbarIconButton,
   ToolbarTooltip,
@@ -9,14 +10,13 @@ import {
 import { contentObjTheme, getChakraColorHex } from "../theme/colorUtils";
 import { useThemeContentColors } from "../theme/useCustomColors";
 import DynamicIcon from "../utils/DynamicIcon";
-import { EditableLabel } from "./EditableLabel";
 import { EditableContent } from "./EditableContent";
-import { NodeFormPopover } from "../components/NodeFormPopover";
+import { EditableLabel } from "./EditableLabel";
 import { NodeConfigSummary } from "./NodeConfigSummary";
 import NodeView from "./NodeView";
+import { getNodeBorderProps } from "./nodeBorder";
 import { NodeText } from "./nodeText";
 import { NodeTextInput } from "./nodeTextInput";
-import { getNodeBorderProps } from "./nodeBorder";
 
 const getColorVars = (data, themeColor, colorMode) => {
   const bg = data?.viewProps?.bgColor || themeColor;
@@ -200,7 +200,13 @@ const NodeJsonObjectView = (props) => {
                       </ToolbarTooltip>
                     </Box>
                   )}
-                  {data.config?.form && <NodeFormPopover nodeAddress={id} active={isActive} label={formatHeaderTitle(headerTitle) || "Node"} />}
+                  {data.config?.form && (
+                    <NodeFormPopover
+                      nodeAddress={id}
+                      active={isActive}
+                      label={formatHeaderTitle(headerTitle) || "Node"}
+                    />
+                  )}
                 </Flex>
               )}
               {hasContent && !objVisible ? (

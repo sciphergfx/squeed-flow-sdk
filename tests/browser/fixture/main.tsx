@@ -1,15 +1,4 @@
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
-import { StrictMode, useState } from "react";
-import { createRoot } from "react-dom/client";
-import { EditableCustomNode } from "./EditableCustomNode";
-import { SvgIconNode } from "./SvgIconNode";
-import { PortNode } from "./PortNode";
-import { ConsumerControls } from "./ConsumerControls";
-import workflowDocument from "../../../examples/workflow-form/ui.json";
-import stateView from "../../../examples/workflow-state/view.json";
-import initialState from "../../../examples/workflow-state/state.json";
-import stateBindings from "../../../examples/workflow-state/bindings.json";
-import { onExampleFormChange, resolveExampleOptions } from "../../../examples/workflow-state/callbacks";
 import type { StateForms } from "@squeed/flow-sdk";
 import {
   applyCollapsed,
@@ -21,6 +10,20 @@ import {
   type FlowEngine,
   type SqueedJson,
 } from "@squeed/flow-sdk";
+import { StrictMode, useState } from "react";
+import { createRoot } from "react-dom/client";
+import workflowDocument from "../../../examples/workflow-form/ui.json";
+import stateBindings from "../../../examples/workflow-state/bindings.json";
+import {
+  onExampleFormChange,
+  resolveExampleOptions,
+} from "../../../examples/workflow-state/callbacks";
+import initialState from "../../../examples/workflow-state/state.json";
+import stateView from "../../../examples/workflow-state/view.json";
+import { ConsumerControls } from "./ConsumerControls";
+import { EditableCustomNode } from "./EditableCustomNode";
+import { PortNode } from "./PortNode";
+import { SvgIconNode } from "./SvgIconNode";
 
 const initialDocument = {
   alpha: { $label: "Alpha", $collapsed: false, child: { $label: "Nested" } },
@@ -104,15 +107,21 @@ function CustomNode({ data }: { data: FlowDiagramNode["data"] }) {
 function Fixture() {
   const query = new URLSearchParams(location.search);
   const independent = query.get("graph") === "state";
-  const raw = !["json", "basic-json", "connections", "state"].includes(query.get("graph") ?? "");
-  const [formState, setFormState] = useState<SqueedJson>(() => structuredClone(initialState));
+  const raw = !["json", "basic-json", "connections", "state"].includes(
+    query.get("graph") ?? "",
+  );
+  const [formState, setFormState] = useState<SqueedJson>(() =>
+    structuredClone(initialState),
+  );
   const [document, setDocument] = useState<SqueedJson>(() =>
     structuredClone(
-      independent ? stateView : query.get("graph") === "connections"
-        ? connectionDocument
-        : query.get("graph") === "json"
-          ? workflowDocument
-          : initialDocument,
+      independent
+        ? stateView
+        : query.get("graph") === "connections"
+          ? connectionDocument
+          : query.get("graph") === "json"
+            ? workflowDocument
+            : initialDocument,
     ),
   );
   const [nodes, setNodes] = useState(() => structuredClone(initialNodes));
@@ -165,7 +174,12 @@ function Fixture() {
   const record = (name: string, value?: unknown) =>
     control.events.push({ name, value });
   const callbacks: FlowDiagramCallbacks = {
-    ...(independent ? { onFormChange: onExampleFormChange, resolveFormOptions: resolveExampleOptions } : {}),
+    ...(independent
+      ? {
+          onFormChange: onExampleFormChange,
+          resolveFormOptions: resolveExampleOptions,
+        }
+      : {}),
     onInit: (engine) => {
       control.engine = engine;
       record("init");
@@ -182,11 +196,22 @@ function Fixture() {
     onNodeSelect: (id) => record("select-node", id),
     onNodeDeselect: () => record("deselect-node"),
     onNodeDoubleClick: (id) => record("double-click", id),
+    onLayoutComplete: () => record("layout-complete"),
     onNodeCreate: (params) => record("create-node", params),
     onEdgeCreate: (source, target, properties) => {
       record("create-edge", { source, target, ...properties });
       if (query.get("custom") === "ports")
-        setEdges(current => [...current, { data: { id: `port-${current.length}`, source, target, ...properties } }]);
+        setEdges((current) => [
+          ...current,
+          {
+            data: {
+              id: `port-${current.length}`,
+              source,
+              target,
+              ...properties,
+            },
+          },
+        ]);
     },
     onEdgeSelect: (id) => record("select-edge", id),
     onEdgeIconChange: (id, icon) => {
@@ -342,7 +367,18 @@ function Fixture() {
         {mounted && (
           <FlowDiagram
             {...(raw ? graph : { json: document })}
-            forms={independent ? { state: formState, bindings: stateBindings as StateForms["bindings"], onChange: (next, change) => { setFormState(next); record("form-state", change); } } : undefined}
+            forms={
+              independent
+                ? {
+                    state: formState,
+                    bindings: stateBindings as StateForms["bindings"],
+                    onChange: (next, change) => {
+                      setFormState(next);
+                      record("form-state", change);
+                    },
+                  }
+                : undefined
+            }
             config={config}
             callbacks={callbacks}
             showBottomBar={!query.has("consumerControls")}

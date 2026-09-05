@@ -1,5 +1,12 @@
 interface TriggerConfig {
-  type: "manual" | "event" | "schedule" | "webhook" | "api" | "auto" | "on_violation";
+  type:
+    | "manual"
+    | "event"
+    | "schedule"
+    | "webhook"
+    | "api"
+    | "auto"
+    | "on_violation";
   event?: string;
   cron?: string;
 }

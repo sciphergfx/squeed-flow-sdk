@@ -20,7 +20,10 @@ export function measurePropertyRows(host: HTMLElement): PropertyRow[] {
         property: element.getAttribute("data-flow-property")!,
         top: Math.round(((rect.top - bounds.top) / scale) * 1000) / 1000,
         height: Math.round((rect.height / scale) * 1000) / 1000,
-        ...(element.dataset.flowPortRole === "source" || element.dataset.flowPortRole === "target" ? { role: element.dataset.flowPortRole } : {}),
+        ...(element.dataset.flowPortRole === "source" ||
+        element.dataset.flowPortRole === "target"
+          ? { role: element.dataset.flowPortRole }
+          : {}),
       },
     ];
   });

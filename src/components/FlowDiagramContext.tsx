@@ -202,6 +202,7 @@ export function FlowDiagramProvider({
       onWorkflowContractChange: wrap("onWorkflowContractChange"),
       onArrayModeChange: wrap("onArrayModeChange"),
       onInit: wrap("onInit"),
+      onLayoutComplete: wrap("onLayoutComplete"),
       onJsonChange: wrap("onJsonChange"),
     } as FlowDiagramCallbacks;
   }, []);

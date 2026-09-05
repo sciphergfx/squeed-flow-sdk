@@ -3,8 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import {
   PiArrowsInLineVertical,
   PiArrowsOutLineVertical,
-  PiBoundingBox,
   PiBezierCurve,
+  PiBoundingBox,
   PiEraser,
   PiFastForward,
   PiLineSegment,
@@ -17,13 +17,13 @@ import {
   PiX,
 } from "react-icons/pi";
 import { TbBorderRadius } from "react-icons/tb";
-import { getChakraColorHex } from "../theme/colorUtils";
-import { useCustomColors } from "../theme/useCustomColors";
 import { useNodeHasChildren } from "../hooks/useNodeHasChildren";
 import { getNodeBorderWidth } from "../nodes/nodeBorder";
-import { NodeIconPicker } from "./NodeIconPicker";
+import { getChakraColorHex } from "../theme/colorUtils";
+import { useCustomColors } from "../theme/useCustomColors";
 import type { SelectionToolbarConfig } from "../types";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
+import { NodeIconPicker } from "./NodeIconPicker";
 import {
   ToolbarIconButton,
   ToolbarSelect,

@@ -1,6 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { chooseToolbarOption } from "./helpers";
-import { dragBetween, expectScrollableToolbar, ready } from "./helpers";
+import {
+  chooseToolbarOption,
+  dragBetween,
+  expectScrollableToolbar,
+  ready,
+} from "./helpers";
 
 const schema = {
   type: "object",

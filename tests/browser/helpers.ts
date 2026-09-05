@@ -1,4 +1,4 @@
-import { expect, type Page, type Locator } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 import type {} from "./fixture/main";
 
 export async function chooseToolbarOption(trigger: Locator, option: string) {

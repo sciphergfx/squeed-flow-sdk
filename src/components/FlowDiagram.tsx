@@ -1,7 +1,6 @@
 import { Box } from "@chakra-ui/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { resolveFormNode } from "../core/forms";
-import { changeFormState, resolveStateForm, resolveStateView } from "../utils/formState";
 import { recolorGraph } from "../core/recolorGraph";
 import { bindSqueedCallbacks } from "../core/squeedBinding";
 import { compileSqueed, getNode } from "../core/squeedEdits";
@@ -12,6 +11,11 @@ import type {
   FlowDiagramNode,
   FlowDiagramProps,
 } from "../types";
+import {
+  changeFormState,
+  resolveStateForm,
+  resolveStateView,
+} from "../utils/formState";
 import BottomBar from "./BottomBar";
 import { FlowDiagramProvider } from "./FlowDiagramContext";
 import FlowView from "./FlowView";
@@ -33,7 +37,39 @@ function injectStyles() {
   stylesInjected = true;
 }
 
-export function FlowDiagram({
+export function FlowDiagram({ loading = false, loader, ...props }: FlowDiagramProps) {
+  const [prepared, setPrepared] = useState<{ json: FlowDiagramProps["json"] } | null>(null);
+  const pending = prepared === null || prepared.json !== props.json;
+  const busy = loading || pending;
+
+  useEffect(() => {
+    if (loading || !pending) return;
+    let nextFrame: number | undefined;
+    const firstFrame = requestAnimationFrame(() => {
+      nextFrame = requestAnimationFrame(() => setPrepared({ json: props.json }));
+    });
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      if (nextFrame !== undefined) cancelAnimationFrame(nextFrame);
+    };
+  }, [loading, pending, props.json]);
+
+  return (
+    <Box className={props.className} style={props.style} width="100%" height="100%" position="relative" aria-busy={busy}>
+      <div style={{ width: "100%", height: "100%" }} ref={element => {
+        if (busy) element?.setAttribute("inert", "");
+        else element?.removeAttribute("inert");
+      }}>
+        {prepared && <FlowDiagramContent {...props} className={undefined} style={undefined} json={prepared.json} />}
+      </div>
+      {busy && <Box data-flow-loader="" role="status" aria-label="Loading diagram" position="absolute" inset={0} zIndex={1000} display="grid" placeItems="center" background={props.config?.colorMode === "dark" ? "gray.800" : "gray.100"} color={props.config?.colorMode === "dark" ? "whiteAlpha.800" : "blackAlpha.800"}>
+        {loader === undefined ? <span>Loading diagram...</span> : loader}
+      </Box>}
+    </Box>
+  );
+}
+
+function FlowDiagramContent({
   title = "untitled",
   json,
   forms,
@@ -50,7 +86,10 @@ export function FlowDiagram({
   const [localFormSchema, setLocalFormSchema] =
     useState<import("../core/forms").FormSchema>();
   const formSchema = config.formSchema ?? localFormSchema;
-  const displayJson = useMemo(() => json && forms ? resolveStateView(json, forms.state) : json, [json, forms?.state]);
+  const displayJson = useMemo(
+    () => (json && forms ? resolveStateView(json, forms.state) : json),
+    [json, forms?.state],
+  );
 
   const isCenter = config.direction === "C";
   const compileDocument = useMemo(() => {
@@ -74,20 +113,38 @@ export function FlowDiagram({
   const resolvedNodes: FlowDiagramNode[] = useMemo(() => {
     const source = compiled?.nodes ?? nodes ?? [];
     return source.map((node) => {
-      const labelBelow = (json && getNode(json, node.data.id)?.$view === "icon-label") || node.data.config?.labelBelow;
-      const form = formSchema && (forms ? resolveStateForm(forms.bindings, node.data.id, formSchema) : json && resolveFormNode(json, node.data.id, formSchema));
-      return (form || labelBelow)
+      const labelBelow =
+        (json && getNode(json, node.data.id)?.$view === "icon-label") ||
+        node.data.config?.labelBelow;
+      const form =
+        formSchema &&
+        (forms
+          ? resolveStateForm(forms.bindings, node.data.id, formSchema)
+          : json && resolveFormNode(json, node.data.id, formSchema));
+      return form || labelBelow
         ? {
             ...node,
             data: {
               ...node.data,
               type: labelBelow ? "arrayView" : "objectView",
-              ...(forms ? { description: Object.fromEntries(Object.entries(node.data.description ?? {}).filter(([key]) => !key.startsWith("$"))) } : {}),
-              config: { ...node.data.config, ...(form ? { form: true } : {}), ...(labelBelow ? { labelBelow: true } : {}) },
+              ...(forms
+                ? {
+                    description: Object.fromEntries(
+                      Object.entries(node.data.description ?? {}).filter(
+                        ([key]) => !key.startsWith("$"),
+                      ),
+                    ),
+                  }
+                : {}),
+              config: {
+                ...node.data.config,
+                ...(form ? { form: true } : {}),
+                ...(labelBelow ? { labelBelow: true } : {}),
+              },
             },
           }
         : node;
-      });
+    });
   }, [compiled, nodes, json, formSchema, forms?.bindings]);
   const resolvedEdges: FlowDiagramEdge[] = compiled?.edges ?? edges ?? [];
 
@@ -111,11 +168,12 @@ export function FlowDiagram({
     return {
       ...viewCallbacks,
       onFormChange: (change: import("../core/forms").FormChange) => {
-        if (!forms.onChange) return;
+        const onStateChange = forms.onStateChange ?? forms.onChange;
+        if (!onStateChange) return;
         const next = changeFormState(state, change, callbacks.onFormChange);
         if (next === state) return;
         state = next;
-        forms.onChange(next, { ...change, data: next });
+        onStateChange(next, { ...change, data: next });
       },
     };
   }, [viewCallbacks, forms, callbacks.onFormChange]);
@@ -126,7 +184,7 @@ export function FlowDiagram({
         data: forms?.state ?? json,
         viewData: json,
         bindings: forms?.bindings,
-        editable: forms ? !!forms.onChange : !!callbacks.onJsonChange,
+        editable: forms ? !!(forms.onStateChange ?? forms.onChange) : !!callbacks.onJsonChange,
         schema: formSchema,
         setSchema: (schema) => {
           setLocalFormSchema(schema);

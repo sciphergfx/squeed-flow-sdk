@@ -3,9 +3,9 @@ import { memo, useCallback, useRef, useState } from "react";
 import { PiMinusBold, PiPlusBold } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import TooltipIconButton from "../components/TooltipIconButton";
+import { useNodeHasChildren } from "../hooks/useNodeHasChildren";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
-import { useNodeHasChildren } from "../hooks/useNodeHasChildren";
 
 interface NodeViewProps {
   data: any;
@@ -223,7 +223,8 @@ const NodeView = ({
           onEditStart: () => setIsEditing(true),
           onEditEnd: () => setIsEditing(false),
         })}
-        {hasChildren && nodeData?.config?.collapsed !== undefined &&
+        {hasChildren &&
+          nodeData?.config?.collapsed !== undefined &&
           (() => {
             const pillVertical = direction === "TB" || direction === "BT";
             const pillOnLeft = isInverted || direction === "RL";
@@ -373,7 +374,8 @@ const NodeView = ({
           </>
         )}
       <Box position="relative" display="flex" h="100%" w="100%">
-        {hasChildren && nodeData?.config?.collapsed !== undefined &&
+        {hasChildren &&
+          nodeData?.config?.collapsed !== undefined &&
           !isParent &&
           (() => {
             const pillVertical = direction === "TB" || direction === "BT";

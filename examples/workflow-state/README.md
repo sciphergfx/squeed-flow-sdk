@@ -22,7 +22,7 @@ const [state, setState] = useState(initialState);
     onFormChange: onExampleFormChange,
     resolveFormOptions: resolveExampleOptions,
   }}
-/>
+/>;
 ```
 
 For preloaded types, supply `config.formSchema`. Uploads read the interface
