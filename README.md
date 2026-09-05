@@ -1,6 +1,6 @@
 # @squeed/flow-sdk
 
-Interactive React flow diagrams from JSON, using DOM nodes, SVG edges, and Dagre layout. Cytoscape is not included.
+Interactive React flow diagrams from JSON, using DOM nodes, SVG edges, and Dagre layout.
 
 ## Install
 
@@ -407,6 +407,11 @@ const hex = getChakraColorHex("blue.500"); // → "#3182ce"
 ```
 
 ## Development Checks
+
+See [CONTRIBUTING.md](https://github.com/sciphergfx/flow-sdk/blob/main/CONTRIBUTING.md)
+for local setup and pull-request guidance, and
+[SECURITY.md](https://github.com/sciphergfx/flow-sdk/blob/main/SECURITY.md)
+for private vulnerability reporting.
 
 ```bash
 npm ci

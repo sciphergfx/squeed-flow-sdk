@@ -4,6 +4,14 @@
   "description": "Standalone React component for rendering interactive flow diagrams using JSON",
   "license": "AGPL-3.0",
   "author": "seyi ogunbowale",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sciphergfx/flow-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sciphergfx/flow-sdk/issues"
+  },
+  "homepage": "https://github.com/sciphergfx/flow-sdk#readme",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
