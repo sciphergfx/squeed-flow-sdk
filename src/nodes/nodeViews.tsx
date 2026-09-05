@@ -5,6 +5,7 @@ import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import { contentObjTheme, getChakraColorHex } from "../theme/colorUtils";
 import { useThemeContentColors } from "../theme/useCustomColors";
 import DynamicIcon from "../utils/DynamicIcon";
+import { EditableLabel } from "./EditableLabel";
 import NodeView from "./NodeView";
 import { NodeText } from "./nodeText";
 import { NodeTextInput } from "./nodeTextInput";
@@ -63,8 +64,9 @@ const NodeJsonObjectView = (props) => {
 
   return (
     <NodeView {...props}>
-      {({ data, isActive, isLowZoom }) => {
+      {({ id, data, isActive, isEditing, onEditStart, onEditEnd }) => {
         const colors = getColorVars(data, themeColor);
+        const headerTitle = data.label ?? data.headerTitle;
         const hasConfig = Object.entries(data.description || {}).length > 0;
         const uniformKeyWidth = calculateUniformKeyWidth(data.description);
         const icon = props.data?.config?.icon;
@@ -96,7 +98,7 @@ const NodeJsonObjectView = (props) => {
               borderWidth={0}
               overflow="hidden"
             >
-              {data.headerTitle && (
+              {headerTitle && (
                 <Flex
                   justify="flex-start"
                   direction="row"
@@ -118,31 +120,23 @@ const NodeJsonObjectView = (props) => {
                   }
                 >
                   {!!icon && (
-                    <Box
-                      mr={8}
-                      justifyContent="flex-start"
-                      height="100%"
-                      w={50}
-                      alignItems="center"
-                      rounded="full"
-                    >
+                    <Flex mr={6} alignItems="center" flexShrink={0}>
                       <DynamicIcon
                         key={colors.hextextColor}
                         name={icon}
-                        size={80}
+                        size={64}
                         color={colors.hextextColor}
                       />
-                    </Box>
+                    </Flex>
                   )}
-                  <Text
-                    fontSize="5xl"
-                    lineClamp={2}
-                    textOverflow="ellipsis"
-                    whiteSpace="nowrap"
-                    color={data?.viewProps?.textColor}
-                  >
-                    {formatHeaderTitle(data.headerTitle)}
-                  </Text>
+                  <EditableLabel
+                    nodeId={id}
+                    label={formatHeaderTitle(headerTitle)}
+                    color={data?.viewProps?.textColor || colors.propertyColor}
+                    isEditing={isEditing}
+                    onEditStart={onEditStart}
+                    onEditEnd={onEditEnd}
+                  />
                   {!!content && (
                     <Box ml={10} onClick={() => setObjVisible(!objVisible)}>
                       {objVisible ? (
@@ -186,7 +180,7 @@ const NodeJsonObjectView = (props) => {
                       ];
 
                       return (
-                        <Box key={index}>
+                        <Box key={key} data-flow-property={key}>
                           <Flex flexWrap="nowrap" overflow="hidden">
                             <Flex
                               justifyContent="start"

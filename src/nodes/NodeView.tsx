@@ -32,10 +32,11 @@ const NodeView = ({
   const {
     selectedNodeIds,
     setSelectedNodeIds,
+    selectedEdgeId,
     setSelectedEdgeId,
     isMultiSelectMode,
     isPerformanceMode,
-    cyRef,
+    engineRef,
     callbacks,
     config,
     themeColor,
@@ -54,7 +55,7 @@ const NodeView = ({
 
   const isLowZoom = (() => {
     try {
-      const zoom = cyRef.current?.zoom();
+      const zoom = engineRef.current?.zoom();
       return zoom !== undefined && zoom < 0.08;
     } catch {
       return false;
@@ -62,10 +63,12 @@ const NodeView = ({
   })();
 
   const handleClick = useCallback(() => {
-    if (isEditing) return;
+    if (isEditing || config.readOnly) return;
     // one selection toolbar at a time
-    setSelectedEdgeId(null);
-    cyRef.current?.edges(":selected").unselect();
+    if (selectedEdgeId) {
+      setSelectedEdgeId(null);
+      callbacks.onEdgeDeselect?.();
+    }
     if (isMultiSelectMode) {
       const isAlreadySelected = selectedNodeIds.includes(id);
       const newIds = isAlreadySelected
@@ -85,18 +88,19 @@ const NodeView = ({
     id,
     nodeData,
     selectedNodeIds,
+    selectedEdgeId,
     isMultiSelectMode,
     isEditing,
     setSelectedNodeIds,
     setSelectedEdgeId,
-    cyRef,
     callbacks,
+    config,
   ]);
 
   const handleDoubleClick = useCallback(() => {
-    if (isEditing) return;
+    if (isEditing || config.readOnly) return;
     callbacks.onNodeDoubleClick?.(id, nodeData);
-  }, [id, nodeData, isEditing, callbacks]);
+  }, [id, nodeData, isEditing, callbacks, config]);
 
   const handleMouseEnter = useCallback(() => {
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
@@ -237,6 +241,7 @@ const NodeView = ({
                       transform: "translateY(-50%)",
                     })}
                 aria-label={nodeData.config.collapsed ? "Expand" : "Collapse"}
+                disabled={config.readOnly}
                 onClick={(e) => {
                   e.stopPropagation();
                   callbacks.onNodeCollapse?.(id, !nodeData.config.collapsed);
@@ -383,6 +388,7 @@ const NodeView = ({
                       alignSelf: "center",
                     })}
                 aria-label={nodeData.config.collapsed ? "Expand" : "Collapse"}
+                disabled={config.readOnly}
                 onClick={(e) => {
                   e.stopPropagation();
                   callbacks.onNodeCollapse?.(id, !nodeData.config.collapsed);

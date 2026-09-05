@@ -1,8 +1,14 @@
 import { v4 as uuidv4 } from "uuid";
 
-import { nodeArrayConfig, nodeJsonObjectConfig, nodePlainTextConfig, nodeWorkflowStepConfig } from "./nodeConfigs";
+import {
+  nodeArrayConfig,
+  nodeJsonObjectConfig,
+  nodePlainTextConfig,
+  nodeWorkflowStepConfig,
+} from "./nodeConfigs";
 export const isObject = (value) => typeof value === "object";
-export const isObj = (value) => typeof value === "object" && !Array.isArray(value);
+export const isObj = (value) =>
+  typeof value === "object" && !Array.isArray(value);
 export const isObjectEmpty = (value) => Object.keys(value).length === 0;
 const isArray = (value) => Array.isArray(value);
 
@@ -72,8 +78,16 @@ export const collectIterObject = (data) => {
   }, {});
 };
 
-export const createNode = (config, id, { label, parent = undefined }, description, jsonCode = null) => {
-  if (jsonCode !== null) if (isObject(jsonCode) || isArray(jsonCode)) jsonCode = JSON.stringify(jsonCode, null, 2);
+export const createNode = (
+  config,
+  id,
+  { label, parent = undefined },
+  description,
+  jsonCode = null,
+) => {
+  if (jsonCode !== null)
+    if (isObject(jsonCode) || isArray(jsonCode))
+      jsonCode = JSON.stringify(jsonCode, null, 2);
 
   return {
     data: {
@@ -89,7 +103,15 @@ export const createNode = (config, id, { label, parent = undefined }, descriptio
   };
 };
 
-export const createEdge = (sourceId, targetId, customId = null, label = null, isInverted = null, isEdgeAnimated = false, parent = null) => {
+export const createEdge = (
+  sourceId,
+  targetId,
+  customId = null,
+  label = null,
+  isInverted = null,
+  isEdgeAnimated = false,
+  parent = null,
+) => {
   const id = uuidv4();
   return {
     data: {
@@ -124,7 +146,15 @@ export const collectConfigObject = (data, exclude = []) => {
 export const getCustomizations = (view, newConfig) => {
   let config: any = nodeJsonObjectConfig;
 
-  const { view: configView, borderColor, borderRadius, bgColor, textColor, fontSize, stepType } = newConfig as any;
+  const {
+    view: configView,
+    borderColor,
+    borderRadius,
+    bgColor,
+    textColor,
+    fontSize,
+    stepType,
+  } = newConfig as any;
 
   view = configView || view;
 
@@ -143,7 +173,7 @@ export const getCustomizations = (view, newConfig) => {
 
   config["data"]["viewProps"] = {
     ...style,
-    borderRadius: borderRadius || (stepType ? 15 : 50),
+    borderRadius: borderRadius || (stepType ? 15 : 53),
     bgColor,
     borderColor,
     textColor,
@@ -184,7 +214,8 @@ export const findRefPropertyObject = (key, { ids, jsnObjct }) => {
 
 export const collectObjWithId = (path, jsonObj) => {
   let ids = path.split(".").splice(1);
-  const isDecorator = ids[ids.length - 1] === "#" || ids[ids.length - 1].includes("{");
+  const isDecorator =
+    ids[ids.length - 1] === "#" || ids[ids.length - 1].includes("{");
 
   ids = isDecorator ? ids.slice(0, -2) : ids;
   const rst = (obj) =>

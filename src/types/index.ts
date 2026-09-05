@@ -1,3 +1,7 @@
+import type { FlowEngine } from "../engine/types";
+
+export type { FlowEngine } from "../engine/types";
+
 export enum FlowType {
   TOP_DOWN = "TB",
   BOTTOM_UP = "BT",
@@ -8,6 +12,26 @@ export enum FlowType {
 
 /** "C" = center: root in the middle, children fan out both ways (generate with `isCntr: true`); laid out as LR */
 export type FlowDirection = "LR" | "RL" | "TB" | "BT" | "C";
+export type NodeAlignment = "leading" | "center" | "trailing";
+export type EdgeMode = "workflow" | "properties";
+export interface FlowEdgeProperties {
+  sourceProperty?: string;
+  targetProperty?: string;
+}
+
+export interface SqueedConnection extends FlowEdgeProperties {
+  target: string;
+  id?: string;
+  label?: string;
+  color?: string;
+  style?: "solid" | "dashed" | "animated";
+}
+
+export interface SqueedConnectionRef {
+  address: string;
+  key: string;
+}
+
 export type LayoutAlgorithm =
   | "dagre"
   | "elk"
@@ -36,6 +60,9 @@ export interface FlowDiagramEdge {
     id: string;
     source: string;
     target: string;
+    sourceProperty?: string;
+    targetProperty?: string;
+    connection?: SqueedConnectionRef;
     label?: string;
     /** Chakra token or hex; overrides the theme/edgeColor line color for this edge */
     color?: string;
@@ -141,6 +168,8 @@ export interface BottomBarRenderProps {
 export interface FlowDiagramConfig {
   /** Layout direction: "LR", "RL", "TB", "BT" */
   direction?: FlowDirection;
+  nodeAlignment?: NodeAlignment;
+  edgeMode?: EdgeMode;
   /** Layout algorithm */
   layout?: LayoutAlgorithm;
   /** Theme accent color (Chakra token e.g. "blue.500") */
@@ -232,7 +261,11 @@ export interface FlowDiagramCallbacks {
 
   // ── Edge events ──
   /** Fires when a new edge is drawn between two nodes */
-  onEdgeCreate?: (sourceId: string, targetId: string) => void;
+  onEdgeCreate?: (
+    sourceId: string,
+    targetId: string,
+    properties?: FlowEdgeProperties,
+  ) => void;
   /** Fires when an edge is clicked/selected */
   onEdgeSelect?: (edgeId: string, edgeData: any) => void;
   /** Fires when edge selection is cleared */
@@ -261,8 +294,8 @@ export interface FlowDiagramCallbacks {
   onDirectionChange?: (direction: FlowDirection) => void;
   /** Fires when array/set mode toggles in bottom bar */
   onArrayModeChange?: (isArrayMode: boolean) => void;
-  /** Fires when Cytoscape instance is initialized (for advanced use) */
-  onCyInit?: (cy: any) => void;
+  /** Fires once the renderer is ready with the engine handle (zoom/pan/fit/coordinate helpers) */
+  onInit?: (engine: FlowEngine) => void;
 
   // ── Squeed document mode (when `json` prop is used) ──
   /**
@@ -290,7 +323,12 @@ export interface SqueedChangeInfo {
     | "edgeCreate"
     | "edgeDelete";
   address?: string;
-  edge?: { source: string; target: string; isInverted?: boolean | null };
+  edge?: FlowEdgeProperties & {
+    source: string;
+    target: string;
+    isInverted?: boolean | null;
+    connection?: SqueedConnectionRef;
+  };
   key?: string;
   value?: unknown;
 }
@@ -312,6 +350,7 @@ export interface FlowDiagramProps {
   config?: FlowDiagramConfig;
   /** Event callbacks */
   callbacks?: FlowDiagramCallbacks;
+  showBottomBar?: boolean;
   /** CSS class name */
   className?: string;
   /** Inline styles */

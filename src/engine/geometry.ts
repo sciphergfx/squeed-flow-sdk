@@ -1,0 +1,383 @@
+import { boxToRect, type Box, type Point, type Rect } from "./types";
+
+export type TaxiDir = "rightward" | "leftward" | "downward" | "upward";
+
+export interface EdgeGeometry {
+  /** SVG path of the line (endpoints already stand off the nodes and the arrowhead) */
+  d: string;
+  /** SVG path of the filled arrowhead, if any */
+  arrow?: string;
+  /** Label anchor (model units) and autorotate angle in degrees, range (-90, 90] */
+  label: { x: number; y: number; angle: number };
+}
+
+export interface EdgeGeometryOptions {
+  /** Gap between node border and line start/end (cytoscape `*-distance-from-node`) */
+  srcDist: number;
+  tgtDist: number;
+  /** Extra line shortening under the arrowhead (cytoscape arrow `gap`) */
+  arrowGap: number;
+  /** cytoscape arrow "size" (`getArrowWidth`); triangle is 0.3×size long and wide */
+  arrowSize: number;
+  radius: number;
+  arrowAt: "target" | "source" | "none";
+}
+
+const f = (n: number) => (Math.round(n * 10) / 10).toString();
+const pt = (p: Point) => `${f(p.x)} ${f(p.y)}`;
+const sign = (v: number) => (v > 0 ? 1 : v < 0 ? -1 : 0);
+const subDWH = (dxy: number, dwh: number) =>
+  dxy > 0 ? Math.max(dxy - dwh, 0) : Math.min(dxy + dwh, 0);
+
+/** Port of cytoscape `findTaxiPoints` (taxi-turn as a fraction, explicit direction) */
+export function taxiPoints(
+  s: Box,
+  t: Box,
+  dir: TaxiDir,
+  turn: number,
+  minD = 10,
+): Point[] {
+  const pdx = t.x - s.x;
+  const pdy = t.y - s.y;
+  const dx = subDWH(pdx, (s.w + t.w) / 2);
+  const dy = subDWH(pdy, (s.h + t.h) / 2);
+  const isVert = dir === "downward" || dir === "upward";
+  const l = isVert ? dy : dx;
+  const pl = isVert ? pdy : pdx;
+  const sgnL = sign(pl);
+  const d = turn * l;
+  const tooClose = (v: number) =>
+    Math.abs(v) < minD || Math.abs(v) >= Math.abs(l);
+  const isTooClose = tooClose(d) || tooClose(Math.abs(l) - Math.abs(d));
+
+  let ctrl: number[];
+  if (isTooClose) {
+    if (isVert) {
+      if (Math.abs(pl) <= s.h / 2) {
+        const x = (s.x + t.x) / 2;
+        ctrl = [x, s.y, x, t.y];
+      } else if (Math.abs(pdx) <= t.w / 2) {
+        const y = (s.y + t.y) / 2;
+        ctrl = [s.x, y, t.x, y];
+      } else ctrl = [s.x, t.y];
+    } else if (Math.abs(pl) <= s.w / 2) {
+      const y = (s.y + t.y) / 2;
+      ctrl = [s.x, y, t.x, y];
+    } else if (Math.abs(pdy) <= t.h / 2) {
+      const x = (s.x + t.x) / 2;
+      ctrl = [x, s.y, x, t.y];
+    } else ctrl = [t.x, s.y];
+  } else if (isVert) {
+    const y = s.y + d + (s.h / 2) * sgnL;
+    ctrl = [s.x, y, t.x, y];
+  } else {
+    const x = s.x + d + (s.w / 2) * sgnL;
+    ctrl = [x, s.y, x, t.y];
+  }
+
+  const pts: Point[] = [{ x: s.x, y: s.y }];
+  for (let i = 0; i < ctrl.length; i += 2)
+    pts.push({ x: ctrl[i], y: ctrl[i + 1] });
+  pts.push({ x: t.x, y: t.y });
+  return pts;
+}
+
+/** Point where segment a→b (a inside `r`) crosses the rect boundary; null when b is inside too */
+function exitRect(a: Point, b: Point, r: Rect): Point | null {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const tx = dx > 0 ? (r.x2 - a.x) / dx : dx < 0 ? (r.x1 - a.x) / dx : Infinity;
+  const ty = dy > 0 ? (r.y2 - a.y) / dy : dy < 0 ? (r.y1 - a.y) / dy : Infinity;
+  const t = Math.min(tx, ty);
+  if (!Number.isFinite(t) || t >= 1 || t < 0) return null;
+  return { x: a.x + dx * t, y: a.y + dy * t };
+}
+
+/** cytoscape `shortenIntersection`: move `p` toward `toward` by `amount` (clamped) */
+function shorten(p: Point, toward: Point, amount: number): Point {
+  const dx = p.x - toward.x;
+  const dy = p.y - toward.y;
+  const len = Math.hypot(dx, dy);
+  if (!len) return p;
+  let ratio = (len - amount) / len;
+  if (ratio < 0) ratio = 0.00001;
+  return { x: toward.x + ratio * dx, y: toward.y + ratio * dy };
+}
+
+function arrowPath(tip: Point, from: Point, size: number): string {
+  const dx = tip.x - from.x;
+  const dy = tip.y - from.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const L = 0.3 * size;
+  const W = 0.15 * size;
+  const bx = tip.x - ux * L;
+  const by = tip.y - uy * L;
+  return `M${pt(tip)} L${f(bx - uy * W)} ${f(by + ux * W)} L${f(bx + uy * W)} ${f(by - ux * W)} Z`;
+}
+
+/** cytoscape `lineAngleFromDelta` in degrees: never upside down */
+function autoAngle(dx: number, dy: number): number {
+  let a = Math.atan(dy / dx);
+  if (dx === 0 && a < 0) a = -a;
+  if (!Number.isFinite(a)) a = 0;
+  return (a * 180) / Math.PI;
+}
+
+interface Corner {
+  p1: Point;
+  b: Point;
+  p2: Point;
+  r: number;
+}
+
+function cornerFor(a: Point, b: Point, c: Point, radius: number): Corner {
+  const v1 = { x: b.x - a.x, y: b.y - a.y };
+  const v2 = { x: c.x - b.x, y: c.y - b.y };
+  const l1 = Math.hypot(v1.x, v1.y);
+  const l2 = Math.hypot(v2.x, v2.y);
+  const cross = v1.x * v2.y - v1.y * v2.x;
+  if (l1 < 1e-6 || l2 < 1e-6 || Math.abs(cross) < 1e-6)
+    return { p1: b, b, p2: b, r: 0 };
+  const r = Math.min(radius, l1 / 2, l2 / 2);
+  return {
+    p1: { x: b.x - (v1.x / l1) * r, y: b.y - (v1.y / l1) * r },
+    b,
+    p2: { x: b.x + (v2.x / l2) * r, y: b.y + (v2.y / l2) * r },
+    r,
+  };
+}
+
+/**
+ * Clip a centre-to-centre polyline to the node borders, apply stand-offs and arrowhead,
+ * and round the corners (cytoscape `round-taxi` semantics).
+ */
+export function polylineGeometry(
+  pts: Point[],
+  s: Box,
+  t: Box,
+  o: EdgeGeometryOptions,
+): EdgeGeometry | null {
+  const sr = boxToRect(s);
+  const tr = boxToRect(t);
+  let si = -1;
+  let sExit: Point | null = null;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const e = exitRect(pts[i], pts[i + 1], sr);
+    if (e) {
+      si = i;
+      sExit = e;
+      break;
+    }
+  }
+  let ti = -1;
+  let tExit: Point | null = null;
+  for (let i = pts.length - 1; i > 0; i--) {
+    const e = exitRect(pts[i], pts[i - 1], tr);
+    if (e) {
+      ti = i;
+      tExit = e;
+      break;
+    }
+  }
+  if (!sExit || !tExit || si >= ti) return null;
+
+  const interior = pts.slice(si + 1, ti);
+  const afterStart = interior[0] ?? tExit;
+  const beforeEnd = interior[interior.length - 1] ?? sExit;
+
+  let lineStart: Point;
+  let lineEnd: Point;
+  let arrow: string | undefined;
+  if (o.arrowAt === "source") {
+    const tip = shorten(sExit, afterStart, o.srcDist);
+    lineStart = shorten(sExit, afterStart, o.srcDist + o.arrowGap);
+    arrow = arrowPath(tip, afterStart, o.arrowSize);
+  } else lineStart = shorten(sExit, afterStart, o.srcDist);
+  if (o.arrowAt === "target") {
+    const tip = shorten(tExit, beforeEnd, o.tgtDist);
+    lineEnd = shorten(tExit, beforeEnd, o.tgtDist + o.arrowGap);
+    arrow = arrowPath(tip, beforeEnd, o.arrowSize);
+  } else lineEnd = shorten(tExit, beforeEnd, o.tgtDist);
+
+  return roundedGeometry(lineStart, interior, lineEnd, arrow, o.radius);
+}
+
+function roundedGeometry(
+  lineStart: Point,
+  interior: Point[],
+  lineEnd: Point,
+  arrow: string | undefined,
+  radius: number,
+): EdgeGeometry {
+  const all = [lineStart, ...interior, lineEnd];
+  const corners: Corner[] = [];
+  let d = `M${pt(lineStart)}`;
+  for (let i = 1; i < all.length - 1; i++) {
+    const c = cornerFor(all[i - 1], all[i], all[i + 1], radius);
+    corners.push(c);
+    if (c.r === 0) d += ` L${pt(c.b)}`;
+    else d += ` L${pt(c.p1)} Q${pt(c.b)} ${pt(c.p2)}`;
+  }
+  d += ` L${pt(lineEnd)}`;
+
+  // Label: cytoscape `storeAllpts` / `calculateArrowAngles` for segments
+  let label: EdgeGeometry["label"];
+  const n = interior.length;
+  if (n === 0) {
+    label = {
+      x: (lineStart.x + lineEnd.x) / 2,
+      y: (lineStart.y + lineEnd.y) / 2,
+      angle: autoAngle(lineEnd.x - lineStart.x, lineEnd.y - lineStart.y),
+    };
+  } else if (n % 2 === 0) {
+    const a = interior[n / 2 - 1];
+    const b = interior[n / 2];
+    label = {
+      x: (a.x + b.x) / 2,
+      y: (a.y + b.y) / 2,
+      angle: autoAngle(b.x - a.x, b.y - a.y),
+    };
+  } else {
+    const c = corners[(n - 1) / 2];
+    if (c.r === 0) {
+      const next = all[(n - 1) / 2 + 2];
+      label = {
+        x: c.b.x,
+        y: c.b.y,
+        angle: autoAngle(next.x - c.b.x, next.y - c.b.y),
+      };
+    } else {
+      label = {
+        x: 0.25 * c.p1.x + 0.5 * c.b.x + 0.25 * c.p2.x,
+        y: 0.25 * c.p1.y + 0.5 * c.b.y + 0.25 * c.p2.y,
+        angle: autoAngle(c.p2.x - c.p1.x, c.p2.y - c.p1.y),
+      };
+    }
+  }
+  return { d, arrow, label };
+}
+
+export function propertyGeometry(
+  source: Box,
+  target: Box,
+  dir: TaxiDir,
+  sourceY: number | undefined,
+  targetY: number | undefined,
+  turn: number,
+  options: EdgeGeometryOptions,
+): EdgeGeometry {
+  const direction = dir === "leftward" ? -1 : 1;
+  const start = {
+    x: source.x + direction * (source.w / 2 + options.srcDist),
+    y: sourceY ?? source.y,
+  };
+  const end = {
+    x: target.x - direction * (target.w / 2 + options.tgtDist),
+    y: targetY ?? target.y,
+  };
+  const clearance = Math.max(80, options.arrowGap + options.arrowSize * 0.3);
+  const sourceStub = start.x + direction * clearance;
+  const targetStub = end.x - direction * clearance;
+  let interior: Point[];
+  if (direction * (targetStub - sourceStub) >= 0) {
+    const desired = start.x + (end.x - start.x) * turn;
+    const column = Math.max(
+      Math.min(sourceStub, targetStub),
+      Math.min(Math.max(sourceStub, targetStub), desired),
+    );
+    interior = [
+      { x: column, y: start.y },
+      { x: column, y: end.y },
+    ];
+  } else {
+    const row =
+      Math.min(source.y - source.h / 2, target.y - target.h / 2) -
+      clearance * (1 + turn);
+    interior = [
+      { x: sourceStub, y: start.y },
+      { x: sourceStub, y: row },
+      { x: targetStub, y: row },
+      { x: targetStub, y: end.y },
+    ];
+  }
+  const lineStart =
+    options.arrowAt === "source"
+      ? shorten(start, interior[0], options.arrowGap)
+      : start;
+  const lineEnd =
+    options.arrowAt === "target"
+      ? shorten(end, interior[interior.length - 1], options.arrowGap)
+      : end;
+  const arrow =
+    options.arrowAt === "source"
+      ? arrowPath(start, interior[0], options.arrowSize)
+      : options.arrowAt === "target"
+        ? arrowPath(end, interior[interior.length - 1], options.arrowSize)
+        : undefined;
+  return roundedGeometry(
+    lineStart,
+    interior,
+    lineEnd,
+    arrow,
+    Math.min(options.radius, 40),
+  );
+}
+
+export function taxiGeometry(
+  s: Box,
+  t: Box,
+  dir: TaxiDir,
+  turn: number,
+  o: EdgeGeometryOptions,
+): EdgeGeometry | null {
+  return polylineGeometry(taxiPoints(s, t, dir, turn), s, t, o);
+}
+
+/** Port of cytoscape `findLoopPoints` + the two-quadratic self-edge drawing */
+export function loopGeometry(
+  b: Box,
+  loopIndex: number,
+  o: EdgeGeometryOptions,
+  loopDirDeg = -90,
+  loopSweepDeg = -60,
+  stepSize = 350,
+): EdgeGeometry | null {
+  const loopDir = (loopDirDeg * Math.PI) / 180;
+  const loopSwp = (loopSweepDeg * Math.PI) / 180;
+  const loopAngle = loopDir - Math.PI / 2;
+  const outAngle = loopAngle - loopSwp / 2;
+  const inAngle = loopAngle + loopSwp / 2;
+  const k = 1.4 * stepSize * (loopIndex / 3 + 1);
+  const c1 = {
+    x: b.x + Math.cos(outAngle) * k,
+    y: b.y + Math.sin(outAngle) * k,
+  };
+  const c2 = { x: b.x + Math.cos(inAngle) * k, y: b.y + Math.sin(inAngle) * k };
+  const r = boxToRect(b);
+  const center = { x: b.x, y: b.y };
+  const sExit = exitRect(center, c1, r);
+  const tExit = exitRect(center, c2, r);
+  if (!sExit || !tExit) return null;
+  const mid = { x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 };
+
+  let lineStart = shorten(sExit, c1, o.srcDist);
+  let lineEnd = shorten(tExit, c2, o.tgtDist);
+  let arrow: string | undefined;
+  if (o.arrowAt === "target") {
+    const tip = lineEnd;
+    lineEnd = shorten(tExit, c2, o.tgtDist + o.arrowGap);
+    arrow = arrowPath(tip, c2, o.arrowSize);
+  } else if (o.arrowAt === "source") {
+    const tip = lineStart;
+    lineStart = shorten(sExit, c1, o.srcDist + o.arrowGap);
+    arrow = arrowPath(tip, c1, o.arrowSize);
+  }
+  const d = `M${pt(lineStart)} Q${pt(c1)} ${pt(mid)} Q${pt(c2)} ${pt(lineEnd)}`;
+  return {
+    d,
+    arrow,
+    label: { x: mid.x, y: mid.y, angle: autoAngle(c2.x - c1.x, c2.y - c1.y) },
+  };
+}

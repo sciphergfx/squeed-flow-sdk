@@ -1,7 +1,9 @@
 import type { FlowDiagramCallbacks, FlowDiagramEdge } from "../types";
 import {
   addChild,
+  addConnection,
   addTargetEdge,
+  getNode,
   removeEdge,
   removeNode,
   setCollapsed,
@@ -54,12 +56,21 @@ export function bindSqueedCallbacks(
   onJsonChange?: (json: SqueedJson, change: SqueedChange) => void,
 ): FlowDiagramCallbacks {
   const emit = (next: SqueedJson, change: SqueedChange) => {
-    if (next !== json) onJsonChange?.(next, change);
+    if (next === json) return;
+    json = next;
+    onJsonChange?.(next, change);
   };
   const edgeRef = (edgeId: string): RenderedEdgeRef | undefined => {
     const d = compiledEdges.find((e) => e.data.id === edgeId)?.data;
     return (
-      d && { source: d.source, target: d.target, isInverted: d.isInverted }
+      d && {
+        source: d.source,
+        target: d.target,
+        isInverted: d.isInverted,
+        sourceProperty: d.sourceProperty,
+        targetProperty: d.targetProperty,
+        connection: d.connection,
+      }
     );
   };
 
@@ -105,7 +116,7 @@ export function bindSqueedCallbacks(
     onNodeCreate: (params) => {
       callbacks.onNodeCreate?.(params);
       const parent = params.sourceNodeId || "root";
-      const parentNode = parent === "root" ? json : undefined;
+      const parentNode = getNode(json, parent);
       // set mode → object child, array mode → array child; the compiler labels them by key
       const key = uniqueKey(parentNode, params.isArrayMode ? "list" : "node");
       const res = addChild(json, parent, params.isArrayMode ? [] : {}, key);
@@ -119,14 +130,25 @@ export function bindSqueedCallbacks(
       callbacks.onNodeDelete?.(id, data);
       emit(removeNode(json, id), { type: "nodeDelete", address: id });
     },
-    onEdgeCreate: (s, t) => {
-      callbacks.onEdgeCreate?.(s, t);
-      emit(addTargetEdge(json, s, t), {
-        type: "edgeCreate",
-        address: s,
-        key: "$target",
-        value: t,
-      });
+    onEdgeCreate: (source, target, properties) => {
+      callbacks.onEdgeCreate?.(source, target, properties);
+      const connection =
+        properties &&
+        (properties.sourceProperty !== undefined ||
+          properties.targetProperty !== undefined)
+          ? { ...properties, target }
+          : undefined;
+      emit(
+        connection
+          ? addConnection(json, source, connection)
+          : addTargetEdge(json, source, target),
+        {
+          type: "edgeCreate",
+          address: source,
+          key: connection ? "$connections" : "$target",
+          value: connection ?? target,
+        },
+      );
     },
     onEdgeLabelChange: (edgeId, label) => {
       callbacks.onEdgeLabelChange?.(edgeId, label);
@@ -135,7 +157,7 @@ export function bindSqueedCallbacks(
         emit(setEdgeProp(json, ref, "$sourceLabel", label), {
           type: "edgeLabel",
           edge: ref,
-          key: "$sourceLabel",
+          key: ref.connection ? "$connections" : "$sourceLabel",
           value: label,
         });
     },
@@ -156,7 +178,7 @@ export function bindSqueedCallbacks(
         emit(setEdgeProp(json, ref, "$edgeColor", color), {
           type: "edgeColor",
           edge: ref,
-          key: "$edgeColor",
+          key: ref.connection ? "$connections" : "$edgeColor",
           value: color,
         });
     },
@@ -166,7 +188,11 @@ export function bindSqueedCallbacks(
       if (!ref) return;
       const res = removeEdge(json, ref);
       if (res.removed)
-        emit(res.json, { type: "edgeDelete", edge: ref, key: "$target" });
+        emit(res.json, {
+          type: "edgeDelete",
+          edge: ref,
+          key: ref.connection ? "$connections" : "$target",
+        });
     },
   };
 }

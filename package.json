@@ -1,7 +1,7 @@
 {
   "name": "@squeed/flow-sdk",
-  "version": "1.1.16",
-  "description": "Standalone React component for rendering interactive flow diagrams from JSON",
+  "version": "2.0.0",
+  "description": "Standalone React component for rendering interactive flow diagrams using JSON",
   "license": "AGPL-3.0",
   "author": "seyi ogunbowale",
   "type": "module",
@@ -10,18 +10,31 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "THIRD_PARTY_NOTICES.txt"
   ],
   "scripts": {
     "dev": "vite build --watch",
-    "build": "tsc && vite build",
-    "typecheck": "tsc --noEmit"
+    "build": "tsc && vite build && node scripts/finalize-build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run test:unit && npm run test:browser",
+    "test:unit": "node tests/run-unit.mjs",
+    "test:browser": "npm run build && playwright test",
+    "test:package": "npm run build && node tests/check-package.mjs",
+    "check:release": "npm test && node tests/check-package.mjs && npm audit --omit=dev --audit-level=moderate",
+    "prepack": "npm run build",
+    "test:serve": "vite --config tests/vite.config.ts --host 127.0.0.1 --port 4196 --strictPort"
   },
   "peerDependencies": {
     "@chakra-ui/react": "^3.36.0",
@@ -32,21 +45,20 @@
     "react-dom": "^18.0.0"
   },
   "dependencies": {
-    "cytoscape": "^3.33.0",
-    "cytoscape-dagre": "^2.5.0",
-    "cytoscape-dom-node": "github:sciphergfx/cytoscape-dom-node",
-    "cytoscape-edgehandles": "^4.0.1",
-    "lodash": "^4.17.21",
+    "dagre": "0.8.5",
+    "lodash": "^4.18.1",
+    "lodash-es": "^4.18.1",
     "react-icons": "^5.3.0",
-    "uuid": "^9.0.0"
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
-    "@types/cytoscape": "^3.21.9",
+    "@playwright/test": "^1.62.1",
+    "@types/dagre": "^0.7.52",
     "@types/lodash": "^4.17.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@types/uuid": "^9.0.0",
     "@vitejs/plugin-react": "^4.3.3",
+    "esbuild": "^0.28.2",
     "typescript": "^5.6.3",
     "vite": "^6.2.4",
     "vite-plugin-dts": "^4.0.0"

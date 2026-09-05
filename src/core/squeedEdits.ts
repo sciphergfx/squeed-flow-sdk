@@ -1,6 +1,17 @@
-import type { FlowDiagramEdge, FlowDiagramNode } from "../types";
+import { v4 as uuidv4 } from "uuid";
+import type {
+  FlowDiagramEdge,
+  FlowDiagramNode,
+  FlowEdgeProperties,
+  SqueedConnection,
+  SqueedConnectionRef,
+} from "../types";
 import { createFlowDiagram } from "./createFlowDiagram";
-import { collectConfigObject } from "./createFlowDiagramComponents";
+import {
+  connectionEntries,
+  prepareConnections,
+  updateConnection,
+} from "./squeedConnections";
 
 /**
  * Squeed JSON = the source document `createFlowDiagram` compiles into nodes/edges.
@@ -21,7 +32,8 @@ export type SqueedNodeKey =
   | "$content"
   | "$media"
   | "$collapsed"
-  | "$parent";
+  | "$parent"
+  | "$connections";
 
 /** Schema keys that describe the edge *into* a node (parent → child) */
 export type SqueedEdgeKey =
@@ -46,8 +58,7 @@ export function addressToPath(address: string): string[] {
 /** Children may be nested under a "$" array; mirror the compiler's descent */
 function childContainer(node: any): any {
   if (node == null || typeof node !== "object") return node;
-  const { arrayObject } = collectConfigObject(node);
-  return Array.isArray(arrayObject) && arrayObject.length ? arrayObject : node;
+  return Array.isArray(node.$) ? node.$ : node;
 }
 
 export function getNode(json: SqueedJson, address: string): any {
@@ -71,14 +82,13 @@ export function updateNode(
   const walk = (node: any, i: number): any => {
     if (i === path.length) return fn(node);
     const seg = path[i];
-    const { arrayObject } = collectConfigObject(node);
-    const usesDollarArray =
-      Array.isArray(arrayObject) && arrayObject.length > 0;
-    const container = usesDollarArray ? arrayObject : node;
+    const container = childContainer(node);
     if (container == null || typeof container !== "object") return node;
+    const child = walk(container[seg], i + 1);
+    if (Object.is(child, container[seg])) return node;
     const nextContainer = cloneShallow(container);
-    nextContainer[seg] = walk(container[seg], i + 1);
-    return usesDollarArray ? { ...node, $: nextContainer } : nextContainer;
+    nextContainer[seg] = child;
+    return container !== node ? { ...node, $: nextContainer } : nextContainer;
   };
   return walk(json, 0);
 }
@@ -104,19 +114,24 @@ export function setNodeProp(
   key: SqueedNodeKey,
   value: any,
 ): SqueedJson {
-  return updateNode(json, address, (n) => withKey(n, key, value));
+  return updateNode(json, address, (node) =>
+    key === "$label" && typeof node === "string" && typeof value === "string" && value !== ""
+      ? value
+      : withKey(node, key, value),
+  );
 }
 
 export const setCollapsed = (
   json: SqueedJson,
   address: string,
   collapsed: boolean,
-) => setNodeProp(json, address, "$collapsed", collapsed || undefined);
+) => setNodeProp(json, address, "$collapsed", collapsed);
 
-export interface RenderedEdgeRef {
+export interface RenderedEdgeRef extends FlowEdgeProperties {
   source: string;
   target: string;
   isInverted?: boolean | null;
+  connection?: SqueedConnectionRef;
 }
 
 /**
@@ -126,8 +141,10 @@ export interface RenderedEdgeRef {
  */
 export function resolveEdgeOwner(edge: RenderedEdgeRef): {
   address: string;
-  kind: "hierarchy" | "target";
+  kind: "hierarchy" | "target" | "connection";
 } {
+  if (edge.connection)
+    return { address: edge.connection.address, kind: "connection" };
   const src = edge.isInverted ? edge.target : edge.source;
   const tgt = edge.isInverted ? edge.source : edge.target;
   const a = addressToPath(src).join("."),
@@ -145,6 +162,25 @@ export function setEdgeProp(
   key: SqueedEdgeKey,
   value: any,
 ): SqueedJson {
+  if (edge.connection) {
+    const reference = edge.connection;
+    return updateNode(json, reference.address, (node) =>
+      updateConnection(node, reference.key, (connection) => {
+        if (key === "$sourceLabel" || key === "$edgeColor")
+          return withKey(
+            connection,
+            key === "$sourceLabel" ? "label" : "color",
+            value,
+          );
+        const style = key === "$isEdgeAnimated" ? "animated" : "dashed";
+        return value
+          ? { ...connection, style }
+          : connection.style === style
+            ? withKey(connection, "style", undefined)
+            : connection;
+      }),
+    );
+  }
   const { address, kind } = resolveEdgeOwner(edge);
   const k = kind === "target" && key === "$sourceLabel" ? "$targetLabel" : key;
   return updateNode(json, address, (n) => withKey(n, k, value));
@@ -176,16 +212,18 @@ export function addChild(
 ): { json: SqueedJson; address: string } {
   let newKey = key || "";
   const next = updateNode(json, parentAddress, (n) => {
+    const container = childContainer(n);
+    if (Array.isArray(container)) {
+      newKey = String(container.length);
+      const children = [...container, child];
+      return container === n ? children : { ...n, $: children };
+    }
     const base =
       n != null && typeof n === "object" && !Array.isArray(n)
         ? { ...n }
         : n != null && typeof n !== "object"
           ? { $label: String(n) }
           : {};
-    if (Array.isArray(n)) {
-      newKey = String(n.length);
-      return [...n, child];
-    }
     if (!newKey) {
       let i = 1;
       while (`node_${i}` in base) i++;
@@ -204,11 +242,12 @@ export function removeNode(json: SqueedJson, address: string): SqueedJson {
   const last = path[path.length - 1];
   const parentAddress = [ROOT, ...path.slice(0, -1)].join(".");
   return updateNode(json, parentAddress, (n) => {
-    const { arrayObject } = collectConfigObject(n);
-    if (Array.isArray(arrayObject) && arrayObject.length) {
-      return { ...n, $: arrayObject.filter((_, i) => String(i) !== last) };
+    const container = childContainer(n);
+    if (container == null || typeof container !== "object" || !Object.prototype.hasOwnProperty.call(container, last)) return n;
+    if (Array.isArray(container)) {
+      const children = container.filter((_, index) => String(index) !== last);
+      return container === n ? children : { ...n, $: children };
     }
-    if (Array.isArray(n)) return n.filter((_, i) => String(i) !== last);
     const { [last]: _omit, ...rest } = n;
     return rest;
   });
@@ -233,11 +272,50 @@ export const addTargetEdge = (
     targetAddress,
   );
 
+export function addConnection(
+  json: SqueedJson,
+  sourceAddress: string,
+  connection: SqueedConnection,
+): SqueedJson {
+  const node = getNode(json, sourceAddress);
+  const entries = connectionEntries(node);
+  if (
+    entries.some(
+      ({ value }) =>
+        value.target === connection.target &&
+        value.sourceProperty === connection.sourceProperty &&
+        value.targetProperty === connection.targetProperty,
+    )
+  )
+    return json;
+  return updateNode(json, sourceAddress, (current) =>
+    withKey(current, "$connections", [
+      ...(Array.isArray(current?.$connections) ? current.$connections : []),
+      { ...connection, id: connection.id || uuidv4() },
+    ]),
+  );
+}
+
 /** Removes a `$target` edge; hierarchy edges cannot be removed without removing the child (returns json unchanged). */
 export function removeEdge(
   json: SqueedJson,
   edge: RenderedEdgeRef,
 ): { json: SqueedJson; removed: boolean } {
+  if (edge.connection) {
+    const reference = edge.connection;
+    if (
+      !connectionEntries(getNode(json, reference.address)).some(
+        (entry) => entry.key === reference.key,
+      )
+    )
+      return { json, removed: false };
+    return {
+      json: updateNode(json, reference.address, (node) =>
+        updateConnection(node, reference.key, () => null),
+      ),
+      removed: true,
+    };
+  }
   const { address, kind } = resolveEdgeOwner(edge);
   if (kind !== "target") return { json, removed: false };
   const next = updateNode(json, address, (n) => {
@@ -265,8 +343,9 @@ export function compileSqueed(
   json: SqueedJson,
   opts: CompileOptions = {},
 ): { nodes: FlowDiagramNode[]; edges: FlowDiagramEdge[] } {
+  const prepared = prepareConnections(json);
   const { nodes, edges } = createFlowDiagram(
-    json,
+    prepared.json,
     ROOT,
     [],
     [],
@@ -277,17 +356,37 @@ export function compileSqueed(
       isCntr: !!opts.isCenter,
     },
   );
+  const renderedIds = new Set(nodes.map((node) => node.data.id));
+  const leafAddresses = new Map<string, string>();
+  for (const node of nodes) {
+    const id = node.data.id;
+    if (!id.endsWith(".0") || getNode(json, id) !== undefined) continue;
+    const address = id.slice(0, -2);
+    const source = getNode(json, address);
+    if (!renderedIds.has(address) && source && typeof source === "object" &&
+      !Array.isArray(source) && typeof source.$label === "string" &&
+      Object.keys(source).every((key) => key.startsWith("$") && key !== "$")) {
+      leafAddresses.set(id, address);
+    }
+  }
+  const canonicalAddress = (id: string) => leafAddresses.get(id) ?? id;
   const outNodes: FlowDiagramNode[] = nodes.map((n) => {
-    const src = getNode(json, n.data.id);
+    const id = canonicalAddress(n.data.id);
+    const src = getNode(json, id);
     if (!src || typeof src !== "object" || Array.isArray(src)) return n;
-    const data = { ...n.data };
+    const data = { ...n.data, id };
+    if (data.parent) data.parent = canonicalAddress(data.parent);
     if (typeof src.$label === "string") {
       data.label = src.$label;
       data.headerTitle = src.$label;
     }
-    if (src.$collapsed !== undefined || src.$icon !== undefined) {
+    if (
+      data.config?.collapsed !== undefined ||
+      src.$collapsed !== undefined ||
+      src.$icon !== undefined
+    ) {
       data.config = { ...(data.config || {}) };
-      if (src.$collapsed !== undefined)
+      if (src.$collapsed !== undefined || data.config.collapsed !== undefined)
         data.config.collapsed = !!src.$collapsed;
       if (src.$icon !== undefined) data.config.icon = src.$icon;
     }
@@ -295,14 +394,18 @@ export function compileSqueed(
   });
   const seen = new Map<string, number>();
   const outEdges: FlowDiagramEdge[] = edges.map((e) => {
-    const base = `${e.data.source}->${e.data.target}`;
+    const source = canonicalAddress(e.data.source);
+    const target = canonicalAddress(e.data.target);
+    const base = `${source}->${target}`;
     const n = seen.get(base) ?? 0;
     seen.set(base, n + 1);
-    const owner = getNode(json, resolveEdgeOwner(e.data).address);
     const data: FlowDiagramEdge["data"] = {
       ...e.data,
       id: n ? `${base}#${n}` : base,
+      source,
+      target,
     };
+    const owner = getNode(json, resolveEdgeOwner(data).address);
     if (owner && typeof owner === "object") {
       if (owner.$isEdgeAnimated !== undefined)
         data.isEdgeAnimated = !!owner.$isEdgeAnimated;
@@ -312,7 +415,32 @@ export function compileSqueed(
     }
     return { data };
   });
-  return { nodes: outNodes, edges: outEdges };
+  const nodeIds = new Set(outNodes.map((node) => node.data.id));
+  outEdges.push(
+    ...prepared.edges.filter(
+      (edge) => nodeIds.has(edge.data.source) && nodeIds.has(edge.data.target),
+    ),
+  );
+  const collapsedPaths = outNodes
+    .filter((node) => node.data.config?.collapsed)
+    .map((node) => addressToPath(node.data.id));
+  if (!collapsedPaths.length) return { nodes: outNodes, edges: outEdges };
+  const visibleNodes = outNodes.filter((node) => {
+    const path = addressToPath(node.data.id);
+    return !collapsedPaths.some(
+      (parent) =>
+        parent.length < path.length &&
+        parent.every((segment, index) => segment === path[index]),
+    );
+  });
+  const visibleIds = new Set(visibleNodes.map((node) => node.data.id));
+  return {
+    nodes: visibleNodes,
+    edges: outEdges.filter(
+      (edge) =>
+        visibleIds.has(edge.data.source) && visibleIds.has(edge.data.target),
+    ),
+  };
 }
 
 /**

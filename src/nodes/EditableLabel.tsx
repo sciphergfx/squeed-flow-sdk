@@ -27,6 +27,7 @@ export const EditableLabel = ({
   const { callbacks, config, readOnly } = useFlowDiagramContext();
   const editable = config.editable && !readOnly;
   const [editValue, setEditValue] = useState(label);
+  const [editorSize, setEditorSize] = useState<{ width: number; height: number }>();
   const inputRef = useRef<HTMLInputElement>(null);
   const committedRef = useRef(false);
   const wrapperRef = useStopPropagation<HTMLDivElement>(isEditing);
@@ -57,10 +58,17 @@ export const EditableLabel = ({
         color={color}
         fontWeight={fontWeight}
         fontSize={fontSize}
+        minW={0}
+        maxW="100%"
+        whiteSpace="nowrap"
+        overflow="hidden"
+        textOverflow="ellipsis"
+        title={label}
         onDoubleClick={
           editable
             ? (e) => {
                 e.stopPropagation();
+              setEditorSize({ width: e.currentTarget.offsetWidth, height: e.currentTarget.offsetHeight });
                 setEditValue(label);
                 onEditStart();
               }
@@ -74,7 +82,7 @@ export const EditableLabel = ({
   }
 
   return (
-    <div ref={wrapperRef}>
+    <div ref={wrapperRef} style={editorSize}>
       <Input
         ref={inputRef}
         value={editValue}
@@ -82,7 +90,10 @@ export const EditableLabel = ({
         onBlur={commit}
         onKeyDown={(e) => {
           if (e.key === "Enter") commit();
-          if (e.key === "Escape") onEditEnd();
+          if (e.key === "Escape") {
+            committedRef.current = true;
+            onEditEnd();
+          }
         }}
         color={color}
         fontWeight={fontWeight}
@@ -90,7 +101,11 @@ export const EditableLabel = ({
         bg="transparent"
         borderWidth={0}
         p={0}
-        h="auto"
+        display="block"
+        w="100%"
+        h="100%"
+        minW={0}
+        minH={0}
         lineHeight="normal"
       />
     </div>

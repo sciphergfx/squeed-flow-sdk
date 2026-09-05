@@ -5,6 +5,10 @@ import dts from "vite-plugin-dts";
 
 export default defineConfig({
   plugins: [react(), dts({ rollupTypes: true })],
+  resolve: {
+    // The compiler imports from "lodash" (CJS, not tree-shakeable); bundle the ESM build instead
+    alias: [{ find: /^lodash$/, replacement: "lodash-es" }],
+  },
   build: {
     lib: {
       entry: resolve(__dirname, "src/index.ts"),

@@ -1,46 +1,87 @@
 # @squeed/flow-sdk
 
-Standalone React component for rendering interactive flow diagrams from JSON.
+Interactive React flow diagrams from JSON, using DOM nodes, SVG edges, and Dagre layout. Cytoscape is not included.
 
 ## Install
 
 ```bash
-npm install @squeed/flow-sdk
+npm install @squeed/flow-sdk@^2 react@^18 react-dom@^18
 ```
 
-Peer dependencies: `react`, `react-dom`, `@chakra-ui/react`, `@chakra-ui/icons`, `@emotion/react`, `@emotion/styled`, `framer-motion`
+Requires React 18 and Chakra UI 3.36 or later. Peer dependencies: `react`, `react-dom`, `@chakra-ui/react`, `@emotion/react`, `@emotion/styled`, and `framer-motion` (11 or 12). npm installs the remaining peers automatically. React 19 is not currently supported.
 
 ## Quick Start
 
 ```tsx
-import { FlowDiagram } from "@squeed/flow-sdk";
+import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
+import { useState } from "react";
+import {
+  FlowDiagram,
+  type FlowDirection,
+  type SqueedJson,
+} from "@squeed/flow-sdk";
 
 function App() {
+  const [doc, setDoc] = useState<SqueedJson>({
+    service: { $label: "Service", $collapsed: false, worker: {} },
+    database: { $label: "Database" },
+  });
+  const [direction, setDirection] = useState<FlowDirection>("LR");
+
   return (
-    <FlowDiagram
-      json={{ name: "Hello", version: "1.0", nested: { key: "value" } }}
-      title="My Diagram"
-      config={{ direction: "LR", colorMode: "dark", themeColor: "blue.500" }}
-    />
+    <ChakraProvider value={defaultSystem}>
+      <div style={{ height: 600 }}>
+        <FlowDiagram
+          json={doc}
+          title="My Diagram"
+          config={{ direction, editable: true, themeColor: "blue.500" }}
+          callbacks={{ onJsonChange: setDoc, onDirectionChange: setDirection }}
+        />
+      </div>
+    </ChakraProvider>
   );
 }
 ```
+
+The container must have a height. Styles are injected automatically; no CSS import is required. Keep your existing Chakra provider if the application already has one.
+
+`json` accepts a parsed object or array. Edits produce a new document via `onJsonChange(next, change)`; store `next` and pass it back. Granular callbacks still fire for notifications, but should not apply the same document edit again. With `nodes`/`edges` instead, the consumer owns graph updates and collapse filtering.
+
+Editing a plain-string node label updates that string in place, preserving its JSON address and connections. Object-node labels continue to use `$label`.
+
+## Migrating From v1
+
+**v2 is a breaking release for consumers of the Cytoscape instance.** `onCyInit` has been removed. Use `onInit(engine)` to capture a `FlowEngine`; it is not a Cytoscape-compatible object.
+
+| v1                                                | v2                                                                                  |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `onCyInit(cy)`                                    | `onInit(engine)`                                                                    |
+| `cy.zoom()` / `cy.zoom(level)`                    | `engine.zoom()` / `engine.zoom(level)`                                              |
+| `cy.pan()` / `cy.pan(position)`                   | `engine.pan()` / `engine.pan(position)`                                             |
+| `cy.zoom({ level, renderedPosition })`            | `engine.zoomAt(level, renderedPosition)`                                            |
+| `cy.fit(undefined, 50)` / `cy.center()`           | `engine.fit(50)` / `engine.center()`                                                |
+| `cy.on("pan zoom", ...)`                          | `callbacks.onViewportChange` or `engine.onViewportChange(listener)`                 |
+| `cy.nodes()`, `cy.edges()`, `cy.style()`, plugins | Update the JSON, `nodes`/`edges`, or SDK config; no Cytoscape equivalent is exposed |
+
+`engine.getNodeBox(id)` returns `{ x, y, w, h }` in model units after layout, or `undefined` before placement. `clientToModel(clientX, clientY)` and `modelToClient({ x, y })` convert coordinates. `onViewportChange(listener)` returns an unsubscribe function.
+
+Direction, selection, drawing, editing, collapse, and custom render callbacks remain available. Internal Cytoscape DOM classes are gone. SVG routing and text metrics can differ from the old canvas renderer; exact pixel parity is not guaranteed. `initialViewport` is now respected instead of being overwritten by automatic fitting.
 
 ## Props
 
 ### `FlowDiagramProps`
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `json` | `any` | JSON object or string to render as a flow diagram |
-| `title` | `string` | Title shown on the root node (default: `"untitled"`) |
-| `nodes` | `FlowDiagramNode[]` | Pre-computed nodes (alternative to `json`) |
-| `edges` | `FlowDiagramEdge[]` | Pre-computed edges (alternative to `json`) |
-| `config` | `FlowDiagramConfig` | Diagram configuration |
-| `callbacks` | `FlowDiagramCallbacks` | Event callbacks |
-| `showBottomBar` | `boolean` | Show the direction/mode bottom bar (default: `true`) |
-| `className` | `string` | CSS class name |
-| `style` | `CSSProperties` | Inline styles |
+| Prop            | Type                   | Description                                                        |
+| --------------- | ---------------------- | ------------------------------------------------------------------ |
+| `json`          | `SqueedJson`           | Parsed JSON object or array; takes precedence over `nodes`/`edges` |
+| `title`         | `string`               | Title shown on the root node (default: `"untitled"`)               |
+| `nodes`         | `FlowDiagramNode[]`    | Pre-computed nodes (alternative to `json`)                         |
+| `edges`         | `FlowDiagramEdge[]`    | Pre-computed edges (alternative to `json`)                         |
+| `config`        | `FlowDiagramConfig`    | Diagram configuration                                              |
+| `callbacks`     | `FlowDiagramCallbacks` | Event callbacks                                                    |
+| `showBottomBar` | `boolean`              | Show the direction/mode bottom bar (default: `true`)               |
+| `className`     | `string`               | CSS class name                                                     |
+| `style`         | `CSSProperties`        | Inline styles                                                      |
 
 You can provide either `json` (auto-generates nodes/edges) or `nodes` + `edges` (pre-computed).
 
@@ -48,104 +89,96 @@ You can provide either `json` (auto-generates nodes/edges) or `nodes` + `edges` 
 
 ### `FlowDiagramConfig`
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `direction` | `"LR" \| "RL" \| "TB" \| "BT"` | `"LR"` | Layout direction |
-| `layout` | `"dagre" \| "elk" \| "tidytree" \| "concentric" \| "cose"` | `"dagre"` | Layout algorithm |
-| `themeColor` | `string` | `"blue.500"` | Accent color (Chakra token) |
-| `colorMode` | `"light" \| "dark"` | `"light"` | Color mode |
-| `backgroundPattern` | `"dot" \| "grid" \| "steel" \| "none"` | `"dot"` | Background pattern |
-| `backgroundColor` | `string` | — | Background color override |
-| `edgeColor` | `string` | — | Edge/line color override |
-| `minZoom` | `number` | `0.01` | Minimum zoom level |
-| `maxZoom` | `number` | `1.5` | Maximum zoom level |
-| `initialViewport` | `{ pan: { x, y }, zoom }` | — | Initial viewport |
-| `edgeHandles` | `boolean` | `true` | Enable edge drawing handles |
-| `readOnly` | `boolean` | `false` | Disable all interactions |
-| `editable` | `boolean` | `false` | Enable inline node label editing |
-| `autoCollapse` | `boolean \| AutoCollapseConfig` | — | Auto-collapse deep nodes for large data |
-| `nodeOverlayActions` | `NodeOverlayAction[]` | — | Actions in node hover overlay |
-| `renderNodeOverlay` | `(props: NodeOverlayProps) => ReactNode` | — | Custom node hover overlay |
-| `renderSelectedNodeToolbar` | `(props: SelectedNodeToolbarProps) => ReactNode` | — | Custom multi-select toolbar |
+| Option                                                                  | Type                                             | Default      | Description                                                                            |
+| ----------------------------------------------------------------------- | ------------------------------------------------ | ------------ | -------------------------------------------------------------------------------------- |
+| `direction`                                                             | `"LR" \| "RL" \| "TB" \| "BT" \| "C"`            | `"LR"`       | Layout direction; `C` splits the JSON root's branches                                  |
+| `nodeAlignment`                                                         | `"leading" \| "center" \| "trailing"`            | `"center"`   | Align unequal node sizes within each layout rank                                       |
+| `edgeMode`                                                              | `"workflow" \| "properties"`                     | `"workflow"` | Attach edges to node boxes or named object-property rows; saved mappings are unchanged |
+| `layout`                                                                | `LayoutAlgorithm`                                | `"dagre"`    | Only Dagre is implemented; other legacy values do not select a different layout        |
+| `themeColor`                                                            | `string`                                         | `"blue.500"` | Accent color (Chakra token)                                                            |
+| `colorMode`                                                             | `"light" \| "dark"`                              | `"light"`    | Color mode                                                                             |
+| `backgroundPattern`                                                     | `"dot" \| "grid" \| "steel" \| "none"`           | `"dot"`      | Background pattern                                                                     |
+| `backgroundColor`                                                       | `string`                                         | —            | Background color override                                                              |
+| `edgeColor`                                                             | `string`                                         | —            | Edge/line color override                                                               |
+| `minZoom`                                                               | `number`                                         | `0.01`       | Minimum zoom level                                                                     |
+| `maxZoom`                                                               | `number`                                         | `1.5`        | Maximum zoom level                                                                     |
+| `initialViewport`                                                       | `{ pan: { x, y }, zoom }`                        | —            | Initial viewport; omitted means fit on first layout                                    |
+| `edgeHandles`                                                           | `boolean`                                        | —            | `false` disables edge drawing; `true` also starts in draw mode                         |
+| `readOnly`                                                              | `boolean`                                        | `false`      | Disable graph gestures and edits; toolbar navigation remains available                 |
+| `editable`                                                              | `boolean`                                        | `false`      | Enable inline node label editing                                                       |
+| `parentNodeStyle`                                                       | `ParentNodeStyle`                                | —            | Compound-node fill, border, padding, and label defaults                                |
+| `selectionToolbar`                                                      | `SelectionToolbarConfig \| false`                | —            | Customize palette and hidden controls, or disable selection tools                      |
+| `nodeOverlayActions`                                                    | `NodeOverlayAction[]`                            | —            | Actions in node hover overlay                                                          |
+| `renderNodeOverlay`                                                     | `(props: NodeOverlayProps) => ReactNode`         | —            | Custom node hover overlay                                                              |
+| `renderSelectedNodeToolbar`                                             | `(props: SelectedNodeToolbarProps) => ReactNode` | —            | Custom multi-select toolbar                                                            |
+| `renderSelectedEdgeToolbar`                                             | `(props: SelectedEdgeToolbarProps) => ReactNode` | —            | Custom edge selection toolbar                                                          |
+| `renderBottomBar`                                                       | `(props: BottomBarRenderProps) => ReactNode`     | —            | Replace the bottom bar                                                                 |
+| `customViews`                                                           | `Record<string, ComponentType>`                  | —            | Override node views                                                                    |
+| `disableKeyboardShortcuts`                                              | `boolean`                                        | `false`      | Disable built-in keyboard shortcuts                                                    |
+| `isZoomMode`, `isMultiSelectMode`, `isDragMode`, `isEdgeHandlesEnabled` | `boolean`                                        | —            | Externally controlled interaction modes                                                |
 
-## Auto-Collapse
+Use `$collapsed: true` to collapse a JSON branch, and `false` to keep the expansion control. Automatic depth-based collapse is not part of the current API.
 
-For large JSON structures, enable auto-collapse to keep the diagram manageable. Nodes are collapsed at every Nth depth level when the data exceeds size thresholds.
-
-```tsx
-// Use defaults (800+ lines AND 5+ depth triggers collapse every 3 levels)
-<FlowDiagram json={largeJson} config={{ autoCollapse: true }} />
-
-// Custom thresholds
-<FlowDiagram
-  json={largeJson}
-  config={{
-    autoCollapse: {
-      minLines: 200,
-      minDepth: 3,
-      collapseEveryNLevels: 2,
-    },
-  }}
-/>
-```
-
-### `AutoCollapseConfig`
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `minLines` | `number` | `800` | Min JSON lines to trigger |
-| `minDepth` | `number` | `5` | Min depth to trigger |
-| `collapseEveryNLevels` | `number` | `3` | Collapse every Nth depth level |
-
-Both `minLines` and `minDepth` must be exceeded for auto-collapse to apply.
+`nodeAlignment: "leading"` aligns left edges in `LR`/`C`, right edges in `RL`, top edges in `TB`, and bottom edges in `BT`. `"trailing"` aligns the opposite edge. Node dimensions and graph connections are unchanged; containers and edge paths follow the aligned positions.
 
 ## Callbacks
 
 ### Node Events
 
-| Callback | Signature | Description |
-|----------|-----------|-------------|
-| `onNodeSelect` | `(nodeId, nodeData) => void` | Node clicked/selected |
-| `onNodeDeselect` | `() => void` | Selection cleared |
-| `onNodeDoubleClick` | `(nodeId, nodeData) => void` | Node double-clicked |
-| `onNodeCreate` | `(params) => void` | Node created via edge drawing into empty space |
-| `onNodeDelete` | `(nodeId, nodeData) => void` | Node deleted |
-| `onNodeLabelChange` | `(nodeId, newLabel) => void` | Node label edited inline |
-| `onNodeCollapse` | `(nodeId, collapsed) => void` | Collapse toggle clicked |
-| `onNodeColorChange` | `(nodeId, colorType, color) => void` | Node color changed via toolbar |
-| `onNodeHoverAction` | `(actionId, nodeId, nodeData) => void` | Hover overlay action clicked |
+| Callback            | Signature                              | Description                                    |
+| ------------------- | -------------------------------------- | ---------------------------------------------- |
+| `onNodeSelect`      | `(nodeId, nodeData) => void`           | Node clicked/selected                          |
+| `onNodeDeselect`    | `() => void`                           | Selection cleared                              |
+| `onNodeDoubleClick` | `(nodeId, nodeData) => void`           | Node double-clicked                            |
+| `onNodeCreate`      | `(params) => void`                     | Node created via edge drawing into empty space |
+| `onNodeDelete`      | `(nodeId, nodeData) => void`           | Node deleted                                   |
+| `onNodeLabelChange` | `(nodeId, newLabel) => void`           | Node label edited inline                       |
+| `onNodeCollapse`    | `(nodeId, collapsed) => void`          | Collapse toggle clicked                        |
+| `onNodeColorChange` | `(nodeId, colorType, color) => void`   | Node color changed via toolbar                 |
+| `onNodeIconChange`  | `(nodeId, iconName) => void`           | Node icon changed via toolbar                  |
+| `onNodeHoverAction` | `(actionId, nodeId, nodeData) => void` | Hover overlay action clicked                   |
 
 ### Edge Events
 
-| Callback | Signature | Description |
-|----------|-----------|-------------|
-| `onEdgeCreate` | `(sourceId, targetId) => void` | New edge drawn between nodes |
-| `onEdgeSelect` | `(edgeId, edgeData) => void` | Edge clicked/selected |
-| `onEdgeDeselect` | `() => void` | Edge selection cleared |
-| `onEdgeRemove` | `(edgeId, edgeData) => void` | Edge removed |
-| `onEdgeColorChange` | `(edgeId, color) => void` | Edge color changed |
+| Callback            | Signature                                                       | Description                                                                |
+| ------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `onEdgeCreate`      | `(sourceId, targetId, properties?: FlowEdgeProperties) => void` | New edge drawn; optional `sourceProperty` / `targetProperty` identify rows |
+| `onEdgeSelect`      | `(edgeId, edgeData) => void`                                    | Edge clicked/selected                                                      |
+| `onEdgeDeselect`    | `() => void`                                                    | Edge selection cleared                                                     |
+| `onEdgeRemove`      | `(edgeId, edgeData) => void`                                    | Edge removed                                                               |
+| `onEdgeDelete`      | `(edgeId, edgeData) => void`                                    | User requested deletion                                                    |
+| `onEdgeColorChange` | `(edgeId, color) => void`                                       | Edge color changed                                                         |
+| `onEdgeLabelChange` | `(edgeId, label) => void`                                       | Edge label changed                                                         |
+| `onEdgeStyleChange` | `(edgeId, "solid" \| "dashed" \| "animated") => void`           | Edge style changed                                                         |
 
 ### Diagram Events
 
-| Callback | Signature | Description |
-|----------|-----------|-------------|
-| `onViewportChange` | `(viewport) => void` | Pan/zoom changed |
-| `onDirectionChange` | `(direction) => void` | Direction changed via bottom bar |
-| `onArrayModeChange` | `(isArrayMode) => void` | Array/set mode toggled |
-| `onCyInit` | `(cy) => void` | Cytoscape instance initialized |
+| Callback            | Signature                                              | Description                                                           |
+| ------------------- | ------------------------------------------------------ | --------------------------------------------------------------------- |
+| `onViewportChange`  | `(viewport) => void`                                   | Pan/zoom changed                                                      |
+| `onDirectionChange` | `(direction) => void`                                  | Direction changed via bottom bar                                      |
+| `onArrayModeChange` | `(isArrayMode) => void`                                | Array/set mode toggled                                                |
+| `onInit`            | `(engine: FlowEngine) => void`                         | Renderer handle initialized; node boxes become available after layout |
+| `onJsonChange`      | `(next: SqueedJson, change: SqueedChangeInfo) => void` | Immutable document update                                             |
 
 ## JSON Conventions
 
 Special `$`-prefixed keys control node rendering:
 
-| Key | Description |
-|-----|-------------|
-| `$label` | Display label for the node |
-| `$bgColor` | Background color (Chakra token, e.g. `"blue.500"`) |
-| `$textColor` | Text color |
-| `$collapsed` | `true` to collapse children, `false` to force expanded |
-| `$parent` | Parent node ID (creates compound/container nodes) |
-| `$` | Array value (creates array child list, e.g. `{ $: ["a", "b"] }`) |
+| Key                                 | Description                                                                     |
+| ----------------------------------- | ------------------------------------------------------------------------------- |
+| `$label`                            | Display label for the node                                                      |
+| `$bgColor`                          | Background color (Chakra token, e.g. `"blue.500"`)                              |
+| `$textColor`                        | Text color                                                                      |
+| `$icon`                             | React Icons name, e.g. `PiGear`                                                 |
+| `$collapsed`                        | `true` to collapse children, `false` to force expanded                          |
+| `$parent`                           | Parent node ID (creates compound/container nodes)                               |
+| `$target`                           | Cross-link to a JSON address, e.g. `root.database`; one per source node         |
+| `$connections`                      | `SqueedConnection[]`; multiple node/property mappings, independent of `$target` |
+| `$sourceLabel` / `$targetLabel`     | Hierarchy-edge / cross-link label                                               |
+| `$edgeColor`                        | Edge color                                                                      |
+| `$isEdgeDashed` / `$isEdgeAnimated` | Dashed or animated edges                                                        |
+| `$`                                 | Array value (creates array child list, e.g. `{ $: ["a", "b"] }`)                |
 
 ```json
 {
@@ -163,75 +196,156 @@ Special `$`-prefixed keys control node rendering:
 }
 ```
 
+### Property Connections
+
+Store mappings on the source node. Property references are exact row keys, while `target` is the destination node's JSON address:
+
+```json
+{
+  "backend": {
+    "runtime": "Node",
+    "api": "REST",
+    "$connections": [
+      {
+        "sourceProperty": "api",
+        "target": "root.handlers",
+        "targetProperty": "http"
+      },
+      {
+        "sourceProperty": "runtime",
+        "target": "root.handlers",
+        "targetProperty": "ws"
+      }
+    ]
+  },
+  "handlers": { "http": "express", "ws": "socket.io" }
+}
+```
+
+```tsx
+<FlowDiagram
+  json={doc}
+  config={{ edgeMode: "properties" }}
+  callbacks={{ onJsonChange: setDoc }}
+/>
+```
+
+`"workflow"` attaches the same edges to node boxes; `"properties"` attaches to rows. Switching modes does not change the document or graph connections. Edges without property references keep their ordinary node attachment. Row ports stay left/right, reversed in `RL`, even for vertical layouts.
+
+Drag an output port to an input port or destination row to append a mapping. Property drags into empty space cancel. Existing node-level drawing still writes `$target`. The edge toolbar edits/deletes only the selected mapping. In document mode, store the full `onJsonChange` document; in raw `nodes`/`edges` mode, store the optional third `onEdgeCreate` argument in the edge's `data`.
+
+Each entry accepts `target`, optional `sourceProperty`/`targetProperty`, `id`, `label`, `color` (Chakra token or hex), and `style: "solid" | "dashed" | "animated"`. Drag-created mappings receive IDs and duplicate endpoint mappings are not appended. Supply explicit unique IDs when declaring otherwise identical mappings that need distinct identities.
+
+Missing or unrendered rows fall back to the corresponding node endpoint. Missing/collapsed nodes hide their edges without deleting the saved mappings. Custom views can expose rows with `data-flow-property={key}`; their positions are measured automatically. `readOnly` and `edgeHandles: false` disable port dragging.
+
+Mappings are metadata. The SDK does not execute workflows or transfer data.
+
 ## Exported Utilities
 
 ```tsx
-import { createFlowDiagram, getJsonSize, applyAutoCollapse } from "@squeed/flow-sdk";
+import { compileSqueed, setNodeProp, applyCollapsed } from "@squeed/flow-sdk";
 
-// Generate nodes/edges from JSON manually
-const { nodes, edges } = createFlowDiagram(json, "root", [], [], "Title", {
-  hideDefaultObject: false,
-  sprtObjctKy: false,
-  isCntr: false,
+const next = setNodeProp(json, "root.service", "$label", "API");
+const { nodes, edges } = compileSqueed(next, {
+  title: "Services",
+  isCenter: false,
 });
-
-// Measure JSON complexity
-const { lines, depth, nodes: nodeCount } = getJsonSize(json);
-
-// Apply auto-collapse manually
-const collapsed = applyAutoCollapse(structuredClone(json), 3); // collapse every 3 levels
+const visible = applyCollapsed(handBuiltNodes, handBuiltEdges);
 ```
+
+`createFlowDiagram` remains exported as the lower-level compiler. Use `compileSqueed` for stable edge IDs, document styling, and `$connections`. `addConnection(json, sourceAddress, connection)` appends a mapping immutably. Hierarchy edges are removed by removing the child; `$target` links and individual `$connections` can be deleted independently.
 
 ## Custom Overlays
 
 ### Node Hover Overlay
 
 ```tsx
+import { HStack, IconButton } from "@chakra-ui/react";
+import { PiPencilSimple, PiTrash } from "react-icons/pi";
+
 <FlowDiagram
   json={data}
   config={{
     renderNodeOverlay: ({ nodeId, nodeData, isRoot }) => (
-      <HStack bg="gray.800" px={2} py={1} borderRadius={15}>
-        <IconButton icon={<EditIcon />} size="xs" onClick={() => edit(nodeId)} />
-        {!isRoot && <IconButton icon={<DeleteIcon />} size="xs" onClick={() => remove(nodeId)} />}
+      <HStack bg="gray.800" px={2} py={1} borderRadius={8}>
+        <IconButton
+          aria-label="Edit node"
+          size="xs"
+          onClick={() => edit(nodeId)}
+        >
+          <PiPencilSimple />
+        </IconButton>
+        {!isRoot && (
+          <IconButton
+            aria-label="Delete node"
+            size="xs"
+            onClick={() => remove(nodeId)}
+          >
+            <PiTrash />
+          </IconButton>
+        )}
       </HStack>
     ),
   }}
-/>
+/>;
 ```
 
 ### Selection Toolbar
 
 ```tsx
+import { HStack, IconButton, Text } from "@chakra-ui/react";
+import { PiX } from "react-icons/pi";
+
 <FlowDiagram
   json={data}
   config={{
     renderSelectedNodeToolbar: ({ selectedNodeIds, onDeselect }) => (
-      <HStack bg="gray.800" px={3} py={2} borderRadius={15}>
+      <HStack bg="gray.800" px={3} py={2} borderRadius={8}>
         <Text fontSize="xs">{selectedNodeIds.length} selected</Text>
-        <IconButton icon={<CloseIcon />} size="xs" onClick={onDeselect} />
+        <IconButton aria-label="Clear selection" size="xs" onClick={onDeselect}>
+          <PiX />
+        </IconButton>
       </HStack>
     ),
   }}
-/>
+/>;
 ```
 
 ## Keyboard Shortcuts
 
-| Key | Action |
-|-----|--------|
-| `Z` | Toggle zoom mode (scroll to zoom) |
-| `M` | Toggle multi-select mode |
-| `D` | Toggle drag/pan mode |
+| Key                    | Action                            |
+| ---------------------- | --------------------------------- |
+| `Z`                    | Toggle zoom mode (scroll to zoom) |
+| `M`                    | Toggle multi-select mode          |
+| `D`                    | Toggle drag/pan mode              |
+| `Delete` / `Backspace` | Delete selected non-root nodes    |
+| `Escape`               | Cancel drawing or a label edit    |
+
+The canvas supports pointer panning, wheel zoom, and two-finger pinch zoom. Interactive inputs inside nodes retain their own keyboard behavior.
 
 ## Theme Utilities
 
 ```tsx
-import { useCustomColors, getChakraColorHex, getColorVariant } from "@squeed/flow-sdk";
+import {
+  useCustomColors,
+  getChakraColorHex,
+  getColorVariant,
+} from "@squeed/flow-sdk";
 
 const { background, colorText, border } = useCustomColors();
 const hex = getChakraColorHex("blue.500"); // → "#3182ce"
 ```
+
+## Development Checks
+
+```bash
+npm ci
+npx playwright install chromium
+npm run check:release
+npm pack --dry-run
+```
+
+The release check runs unit tests, browser tests against the built ESM package, a clean tarball installation with ESM/CommonJS type and runtime checks, and the production dependency audit. Packing rebuilds the artifacts. React, Chakra, Emotion, Framer Motion, and React Icons are external to the SDK bundle; application download size includes whichever peers and icon libraries it uses.
 
 ---
 

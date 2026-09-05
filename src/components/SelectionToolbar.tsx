@@ -1,5 +1,5 @@
 import { Box, HStack, Icon, Input, Text } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   PiArrowsInLineVertical,
   PiArrowsOutLineVertical,
@@ -76,10 +76,13 @@ function CommitInput({
   width?: string;
   onCommit: (v: string) => void;
 }) {
-  const { colorText, border } = useCustomColors();
+  const { colorText } = useCustomColors();
   const [v, setV] = useState(value);
+  const committedRef = useRef(false);
   useEffect(() => setV(value), [value]);
   const commit = () => {
+    if (committedRef.current) return;
+    committedRef.current = true;
     const t = v.trim();
     if (t !== value) onCommit(t);
   };
@@ -91,8 +94,12 @@ function CommitInput({
       value={v}
       placeholder={placeholder}
       color={colorText}
-      borderColor={border}
+      borderWidth={0}
+      _focusVisible={{ boxShadow: "none", outline: "none" }}
       borderRadius="8px"
+      onFocus={() => {
+        committedRef.current = false;
+      }}
       onChange={(e) => setV(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => {
@@ -101,6 +108,7 @@ function CommitInput({
           (e.target as HTMLInputElement).blur();
         }
         if (e.key === "Escape") {
+          committedRef.current = true;
           setV(value);
           (e.target as HTMLInputElement).blur();
         }

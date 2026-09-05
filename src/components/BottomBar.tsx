@@ -1,4 +1,4 @@
-import { Box, Flex, HStack, Icon, Text } from "@chakra-ui/react";
+import { Box, Flex, HStack, Icon, Text, chakra } from "@chakra-ui/react";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   PiAlignCenterHorizontal,
@@ -66,7 +66,7 @@ const DIRECTIONS: {
 
 const BottomBar = () => {
   const {
-    cyRef,
+    engineRef,
     themeColor,
     direction,
     selectedNodeIds,
@@ -89,7 +89,7 @@ const BottomBar = () => {
     config,
     readOnly,
   } = useFlowDiagramContext();
-  const { nodeById } = useFlowData();
+  const { nodeById, edgeById, parentIds } = useFlowData();
 
   const isDark = config.colorMode === "dark";
   const {
@@ -100,75 +100,36 @@ const BottomBar = () => {
     colorActive,
     darkBackgroundSecondary,
   } = useCustomColors();
-  const [showToolbar, setShowToolbar] = useState(true);
-  const [isHoveringIndicator, setIsHoveringIndicator] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(true);
   const [showDirectionMenu, setShowDirectionMenu] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
 
-  useEffect(() => {
-    const checkDevice = () => setIsDesktop(window.innerWidth >= 768);
-    checkDevice();
-    window.addEventListener("resize", checkDevice);
-    return () => window.removeEventListener("resize", checkDevice);
-  }, []);
-
-  useEffect(() => {
-    if (!isDesktop) {
-      setShowToolbar(true);
-      return;
-    }
-    if (!isPinned) {
-      setShowToolbar(false);
-      return;
-    }
-    const handleMouseMove = (e: MouseEvent) => {
-      setShowToolbar(window.innerHeight - e.clientY <= 250);
-    };
-    const handleMouseLeave = () => setShowToolbar(false);
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseleave", handleMouseLeave);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseleave", handleMouseLeave);
-    };
-  }, [isDesktop, isPinned]);
-
   const handleZoom = useCallback(
     (action: "increase" | "decrease" | "reset") => {
-      const cy = cyRef.current;
-      if (!cy) return;
+      const engine = engineRef.current;
+      if (!engine) return;
 
       const minZoom = config.minZoom ?? 0.01;
       const maxZoom = config.maxZoom ?? 1.5;
       const zoomStep = 0.02;
 
-      const prevZooming = cy.zoomingEnabled();
-      const prevUserZooming = cy.userZoomingEnabled();
-      cy.zoomingEnabled(true);
-      cy.userZoomingEnabled(true);
-
-      let zoom = cy.zoom();
+      let zoom = engine.zoom();
       switch (action) {
         case "increase":
           zoom = Math.min(maxZoom, zoom + zoomStep);
-          cy.zoom(zoom);
-          cy.center();
+          engine.zoom(zoom);
+          engine.center();
           break;
         case "decrease":
           zoom = Math.max(minZoom, zoom - zoomStep);
-          cy.zoom(zoom);
-          cy.center();
+          engine.zoom(zoom);
+          engine.center();
           break;
         case "reset":
-          cy.fit(undefined, 50);
+          engine.fit(50);
           break;
       }
-
-      cy.zoomingEnabled(prevZooming);
-      cy.userZoomingEnabled(prevUserZooming);
     },
-    [cyRef, config.minZoom, config.maxZoom],
+    [engineRef, config.minZoom, config.maxZoom],
   );
 
   const renderSelectedNodeToolbar = config.renderSelectedNodeToolbar;
@@ -177,14 +138,11 @@ const BottomBar = () => {
 
   const selectedNodeData = useMemo(() => {
     if (!hasNodeSelection) return [];
-    const cy = cyRef.current;
     return selectedNodeIds.map((nid) => {
-      const ele = cy?.getElementById(nid);
-      const base =
-        nodeById.get(nid)?.data ?? (ele?.length ? ele.data() : { id: nid });
-      return { ...base, isParent: !!ele?.length && ele.isParent() };
+      const base = nodeById.get(nid)?.data ?? { id: nid };
+      return { ...base, isParent: parentIds.has(nid) };
     });
-  }, [hasNodeSelection, selectedNodeIds, cyRef, nodeById]);
+  }, [hasNodeSelection, selectedNodeIds, nodeById, parentIds]);
 
   const handleNodeDeselect = useCallback(() => {
     setSelectedNodeIds([]);
@@ -196,18 +154,13 @@ const BottomBar = () => {
 
   const selectedEdgeData = useMemo(() => {
     if (!hasEdgeSelection || !selectedEdgeId) return null;
-    const cy = cyRef.current;
-    if (!cy) return { id: selectedEdgeId };
-    const ele = cy.getElementById(selectedEdgeId);
-    return ele?.length ? ele.data() : { id: selectedEdgeId };
-  }, [hasEdgeSelection, selectedEdgeId, cyRef]);
+    return edgeById.get(selectedEdgeId)?.data ?? { id: selectedEdgeId };
+  }, [hasEdgeSelection, selectedEdgeId, edgeById]);
 
   const handleEdgeDeselect = useCallback(() => {
     setSelectedEdgeId(null);
-    const cy = cyRef.current;
-    if (cy) cy.edges().unselect();
     callbacks.onEdgeDeselect?.();
-  }, [setSelectedEdgeId, cyRef, callbacks]);
+  }, [setSelectedEdgeId, callbacks]);
 
   // Built-in selection tools replace the left tool group ([x] label | style | color | ...)
   const builtInSelection = config.selectionToolbar !== false && !readOnly;
@@ -220,9 +173,11 @@ const BottomBar = () => {
     !renderSelectedNodeToolbar;
   const selectionActive = edgeToolsActive || nodeToolsActive;
 
-  // Open menu / active selection extend beyond the 250px auto-hide threshold; keep bar mounted
-  const visible =
-    showToolbar || isHoveringIndicator || showDirectionMenu || selectionActive;
+  useEffect(() => {
+    if (selectionActive) setIsPinned(true);
+  }, [selectionActive, setIsPinned]);
+
+  const visible = isPinned || showDirectionMenu || selectionActive;
 
   const customRenderBottomBar = config.renderBottomBar;
 
@@ -334,8 +289,11 @@ const BottomBar = () => {
       {!isPinned && (
         <Box position="absolute" bottom={5} left={0} zIndex={101} w={3}>
           <ToolbarTooltip label="Show Bottom Bar">
-            <Flex
-              align="center"
+            <chakra.button
+              type="button"
+              aria-label="Show Bottom Bar"
+              display="flex"
+              alignItems="center"
               bg={background}
               borderColor={border}
               borderWidth={1}
@@ -345,11 +303,8 @@ const BottomBar = () => {
               h={50}
               borderRadius="15px"
               borderLeftRadius={0}
-              onMouseEnter={() => {
-                setIsHoveringIndicator(true);
-                setShowToolbar(true);
-              }}
-              onMouseLeave={() => setIsHoveringIndicator(false)}
+              onMouseEnter={() => setIsPinned(true)}
+              onClick={() => setIsPinned(true)}
               _hover={{ bg: darkBackgroundSecondary }}
             >
               <Icon
@@ -358,12 +313,14 @@ const BottomBar = () => {
                 boxSize={5}
                 color={border}
               />
-            </Flex>
+            </chakra.button>
           </ToolbarTooltip>
         </Box>
       )}
 
       <Box
+        role="toolbar"
+        aria-label="Diagram controls"
         position="absolute"
         bottom={0}
         left={0}
@@ -373,16 +330,8 @@ const BottomBar = () => {
         transition="opacity 0.3s ease-in, transform 0.3s ease"
         transform={visible ? "translateY(0)" : "translateY(100%)"}
         pointerEvents={visible ? "auto" : "none"}
+        visibility={visible ? "visible" : "hidden"}
         opacity={visible ? 1 : 0}
-        onMouseEnter={() => {
-          if (!isPinned) setShowToolbar(true);
-        }}
-        onMouseLeave={() => {
-          if (!isPinned) {
-            setShowToolbar(false);
-            setIsHoveringIndicator(false);
-          }
-        }}
       >
         <Flex
           w="100%"
@@ -427,7 +376,7 @@ const BottomBar = () => {
                       onClick={() => {
                         const next = !isPinned;
                         setIsPinned(next);
-                        setShowToolbar(next);
+                        setShowDirectionMenu(false);
                       }}
                     />
                   </ToolbarTooltip>
@@ -658,11 +607,7 @@ const BottomBar = () => {
 
           {/* Direction picker */}
           {!selectionActive && (
-            <Box
-              position="relative"
-              ml="auto"
-              onMouseLeave={() => setShowDirectionMenu(false)}
-            >
+            <Box position="relative" ml="auto">
               <Box
                 bg={background}
                 borderWidth={1}
@@ -694,7 +639,6 @@ const BottomBar = () => {
               </Box>
 
               {showDirectionMenu && (
-                // pb bridges the gap so the pointer never leaves the wrapper
                 <Box
                   position="absolute"
                   bottom="100%"

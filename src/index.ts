@@ -11,6 +11,7 @@ export { bindSqueedCallbacks } from "./core/squeedBinding";
 export type { SqueedChange } from "./core/squeedBinding";
 export {
   addChild,
+  addConnection,
   addressToPath,
   addTargetEdge,
   applyCollapsed,
@@ -55,13 +56,17 @@ export { default as DynamicIcon } from "./utils/DynamicIcon";
 export type {
   BackgroundPattern,
   BottomBarRenderProps,
+  EdgeMode,
   FlowDiagramCallbacks,
   FlowDiagramConfig,
   FlowDiagramEdge,
   FlowDiagramNode,
   FlowDiagramProps,
   FlowDirection,
+  FlowEdgeProperties,
+  FlowEngine,
   LayoutAlgorithm,
+  NodeAlignment,
   NodeOverlayAction,
   NodeOverlayProps,
   ParentNodeStyle,
@@ -69,4 +74,6 @@ export type {
   SelectedNodeToolbarProps,
   SelectionToolbarConfig,
   SqueedChangeInfo,
+  SqueedConnection,
+  SqueedConnectionRef,
 } from "./types";

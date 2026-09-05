@@ -1,9 +1,12 @@
 import { createContext, useContext, useMemo, useRef, useState } from "react";
+import type { FlowEngine } from "../engine";
 import type {
   FlowDiagramCallbacks,
   FlowDiagramConfig,
   FlowDiagramEdge,
   FlowDiagramNode,
+  NodeAlignment,
+  EdgeMode,
   ParentNodeStyle,
 } from "../types";
 
@@ -12,6 +15,8 @@ export interface FlowDiagramContextValue {
   edgeColor: string;
   colorMode: "light" | "dark";
   direction: string;
+  nodeAlignment: NodeAlignment;
+  edgeMode: EdgeMode;
   parentNodeStyle?: ParentNodeStyle;
   selectedNodeIds: string[];
   setSelectedNodeIds: (ids: string[]) => void;
@@ -31,7 +36,7 @@ export interface FlowDiagramContextValue {
   setIsPinned: (v: boolean) => void;
   isPerformanceMode: boolean;
   setIsPerformanceMode: (v: boolean) => void;
-  cyRef: React.MutableRefObject<any>;
+  engineRef: React.MutableRefObject<FlowEngine | null>;
   callbacks: FlowDiagramCallbacks;
   config: FlowDiagramConfig;
   readOnly: boolean;
@@ -43,9 +48,11 @@ const FlowDiagramContext = createContext<FlowDiagramContextValue | null>(null);
 const FlowDataContext = createContext<{
   nodeById: Map<string, FlowDiagramNode>;
   edgeById: Map<string, FlowDiagramEdge>;
+  parentIds: Set<string>;
 }>({
   nodeById: new Map(),
   edgeById: new Map(),
+  parentIds: new Set(),
 });
 
 export function useFlowData() {
@@ -77,10 +84,12 @@ export function FlowDiagramProvider({
     for (const n of nodes) if (n.data?.id) nodeById.set(n.data.id, n);
     const edgeById = new Map<string, FlowDiagramEdge>();
     for (const e of edges) if (e.data?.id) edgeById.set(e.data.id, e);
-    return { nodeById, edgeById };
+    const parentIds = new Set<string>();
+    for (const n of nodes) if (n.data?.parent) parentIds.add(n.data.parent);
+    return { nodeById, edgeById, parentIds };
   }, [nodes, edges]);
 
-  const cyRef = useRef<any>(null);
+  const engineRef = useRef<FlowEngine | null>(null);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [isZoomMode, setIsZoomMode] = useState(true);
@@ -125,7 +134,7 @@ export function FlowDiagramProvider({
       onViewportChange: wrap("onViewportChange"),
       onDirectionChange: wrap("onDirectionChange"),
       onArrayModeChange: wrap("onArrayModeChange"),
-      onCyInit: wrap("onCyInit"),
+      onInit: wrap("onInit"),
       onJsonChange: wrap("onJsonChange"),
     } as FlowDiagramCallbacks;
   }, []);
@@ -134,6 +143,8 @@ export function FlowDiagramProvider({
   const edgeColor = config.edgeColor || "";
   const colorMode = config.colorMode || "light";
   const direction = config.direction || "LR";
+  const nodeAlignment = config.nodeAlignment ?? "center";
+  const edgeMode = config.edgeMode ?? "workflow";
   const readOnly = config.readOnly ?? false;
   // Value-stable so inline literals don't re-render every consumer
   const parentNodeStyleKey = JSON.stringify(config.parentNodeStyle ?? null);
@@ -163,6 +174,12 @@ export function FlowDiagramProvider({
       ({
         get direction() {
           return configRef.current.direction;
+        },
+        get nodeAlignment() {
+          return configRef.current.nodeAlignment;
+        },
+        get edgeMode() {
+          return configRef.current.edgeMode;
         },
         get themeColor() {
           return configRef.current.themeColor;
@@ -247,6 +264,8 @@ export function FlowDiagramProvider({
       edgeColor,
       colorMode,
       direction,
+      nodeAlignment,
+      edgeMode,
       parentNodeStyle,
       selectedNodeIds,
       setSelectedNodeIds,
@@ -266,7 +285,7 @@ export function FlowDiagramProvider({
       setIsPinned,
       isPerformanceMode,
       setIsPerformanceMode,
-      cyRef,
+      engineRef,
       callbacks: stableCallbacks,
       config: stableConfig,
       readOnly,
@@ -276,6 +295,8 @@ export function FlowDiagramProvider({
       edgeColor,
       colorMode,
       direction,
+      nodeAlignment,
+      edgeMode,
       parentNodeStyle,
       selectedNodeIds,
       selectedEdgeId,
@@ -287,6 +308,7 @@ export function FlowDiagramProvider({
       isPinned,
       isPerformanceMode,
       readOnly,
+      config.edgeHandles,
       stableCallbacks,
       stableConfig,
     ],
