@@ -75,6 +75,7 @@ export interface CanvasProps {
   nodeAlignment?: NodeAlignment;
   edgeMode?: EdgeMode;
   edgeType?: FlowDiagramConfig["edgeType"];
+  edgeRadius?: number;
   customEdgeTypes?: FlowDiagramConfig["customEdgeTypes"];
   rankSep: number;
   edgeSep: number;
@@ -1016,6 +1017,7 @@ function Canvas(props: CanvasProps) {
                   edgeData={e.data}
                   validationIssue={e.validationIssue}
                   edgeType={e.type}
+                  edgeRadius={props.edgeRadius}
                   propertyMode={edgeMode === "properties"}
                   customEdgeTypes={props.customEdgeTypes}
                   source={s}
@@ -1053,6 +1055,7 @@ function Canvas(props: CanvasProps) {
                   targetProperty: ghost.targetProperty,
                 }}
                 edgeType={props.edgeType}
+                edgeRadius={props.edgeRadius}
                 propertyMode={edgeMode === "properties"}
                 customEdgeTypes={props.customEdgeTypes}
                 source={ghostSource}

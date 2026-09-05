@@ -1,4 +1,5 @@
 import type { FlowDiagramCallbacks, FlowDiagramEdge } from "../types";
+import { applyFormChange } from "./forms";
 import {
   addChild,
   addConnection,
@@ -17,6 +18,7 @@ import {
 /** What changed in the Squeed document (delivered alongside the new JSON) */
 export interface SqueedChange {
   type:
+    | "form"
     | "nodeLabel"
     | "nodeContent"
     | "nodeColor"
@@ -80,6 +82,11 @@ export function bindSqueedCallbacks(
 
   return {
     ...callbacks,
+    onFormChange: (event) => {
+      const owner = getNode(json, event.nodeAddress);
+      if (!owner || (event.nodeId !== undefined && owner.id !== event.nodeId)) throw new Error("This form node has moved. Retry the edit.");
+      emit(applyFormChange(json, event, callbacks.onFormChange), { type: "form", address: event.address, value: event.value });
+    },
     onNodeLabelChange: (id, label) => {
       callbacks.onNodeLabelChange?.(id, label);
       emit(setNodeProp(json, id, "$label", label), {

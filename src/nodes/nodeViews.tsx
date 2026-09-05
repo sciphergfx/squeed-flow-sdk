@@ -11,6 +11,7 @@ import { useThemeContentColors } from "../theme/useCustomColors";
 import DynamicIcon from "../utils/DynamicIcon";
 import { EditableLabel } from "./EditableLabel";
 import { EditableContent } from "./EditableContent";
+import { NodeForm } from "./NodeForm";
 import NodeView from "./NodeView";
 import { NodeText } from "./nodeText";
 import { NodeTextInput } from "./nodeTextInput";
@@ -200,13 +201,13 @@ const NodeJsonObjectView = (props) => {
                   )}
                 </Flex>
               )}
-              {hasContent && !objVisible ? (
+              {data.config?.form ? <NodeForm nodeAddress={id} /> : hasContent && !objVisible ? (
                 <Flex
                   w="100%"
                   overflow="auto"
                   justifyContent="start"
                   background={colors.highlightColor}
-                  p={10}
+                  p={12}
                   fontSize="5xl"
                   lineHeight="normal"
                 >

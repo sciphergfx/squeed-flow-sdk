@@ -168,6 +168,19 @@ The custom renderer must apply the styling fields it supports, such as
 HTML or SVG. Raw-graph callbacks must update node data; JSON mode persists edits
 through `onJsonChange`. The wrapper does not change custom SVG geometry.
 
+## Maintainer Guide
+
+[examples/squeed.json](examples/squeed.json) is an expandable diagram for new
+maintainers: setup, architecture, data ownership, UI code, change recipes,
+testing, workflow contracts, and SDK Test integration. Load it through the
+`json` prop; the local Backflow admin SDK Test page includes it as **squeed**
+alongside **advanced**. Its **File Map** chapter links concrete source files
+with labeled runtime imports, type-only dependencies, re-exports, and tooling
+relationships. **Trace a Change Across Files** explains callback/data flow and
+ownership separately. The map covers important internal relationships, not every
+external dependency. Tests verify mapped paths and import/export arrows against
+the source tree. Edit this single JSON source to keep the guide current.
+
 ## Callbacks
 
 ### Edge Shapes

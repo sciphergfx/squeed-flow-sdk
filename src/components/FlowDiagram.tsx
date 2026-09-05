@@ -1,7 +1,10 @@
 import { Box } from "@chakra-ui/react";
 import { useMemo } from "react";
+import { recolorGraph } from "../core/recolorGraph";
 import { bindSqueedCallbacks } from "../core/squeedBinding";
 import { compileSqueed } from "../core/squeedEdits";
+import { resolveFormNode } from "../core/forms";
+import { FormDocumentContext } from "../nodes/NodeForm";
 import { NODE_BORDER_ANIMATION_STYLES } from "../engine/NodeBorderAnimation";
 import type {
   FlowDiagramEdge,
@@ -43,12 +46,27 @@ export function FlowDiagram({
   injectStyles();
 
   const isCenter = config.direction === "C";
+  const compileDocument = useMemo(() => {
+    let previous: typeof json;
+    let graph: ReturnType<typeof compileSqueed> | undefined;
+    return (document: NonNullable<typeof json>) => {
+      graph = previous && graph ? recolorGraph(previous, document, graph) ?? compileSqueed(document, { title, isCenter }) : compileSqueed(document, { title, isCenter });
+      previous = document;
+      return graph;
+    };
+  }, [title, isCenter]);
   const compiled = useMemo(
-    () => (json ? compileSqueed(json, { title, isCenter }) : null),
-    [json, title, isCenter],
+    () => (json ? compileDocument(json) : null),
+    [json, compileDocument],
   );
 
-  const resolvedNodes: FlowDiagramNode[] = compiled?.nodes ?? nodes ?? [];
+  const resolvedNodes: FlowDiagramNode[] = useMemo(() => {
+    const source = compiled?.nodes ?? nodes ?? [];
+    if (!json || !config.formSchema) return source;
+    return source.map(node => resolveFormNode(json, node.data.id, config.formSchema!)
+      ? { ...node, data: { ...node.data, type: "objectView", config: { ...node.data.config, form: true } } }
+      : node);
+  }, [compiled, nodes, json, config.formSchema]);
   const resolvedEdges: FlowDiagramEdge[] = compiled?.edges ?? edges ?? [];
 
   // Document mode: edits are applied to the JSON and surfaced via onJsonChange
@@ -66,6 +84,7 @@ export function FlowDiagram({
   );
 
   return (
+    <FormDocumentContext.Provider value={{ data: json, schema: config.formSchema, callbacks: boundCallbacks }}>
     <FlowDiagramProvider
       config={config}
       callbacks={boundCallbacks}
@@ -90,6 +109,7 @@ export function FlowDiagram({
         {showBottomBar && <BottomBar />}
       </Box>
     </FlowDiagramProvider>
+    </FormDocumentContext.Provider>
   );
 }
 

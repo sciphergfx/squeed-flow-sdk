@@ -190,6 +190,7 @@ export interface BottomBarRenderProps {
 
 /** Configuration for the flow diagram appearance and behavior */
 export interface FlowDiagramConfig {
+  formSchema?: import("../core/forms").FormSchema;
   spacing?: NodeSpacing;
   edgeRadius?: number;
   backgroundVariant?: BackgroundVariant;
@@ -258,6 +259,8 @@ export interface FlowDiagramConfig {
 
 /** Event callbacks for the flow diagram */
 export interface FlowDiagramCallbacks {
+  onFormChange?: (event: import("../core/forms").FormChange) => import("../core/forms").FormEdit[] | void;
+  resolveFormOptions?: (request: import("../core/forms").FormOptionsRequest) => Promise<import("../core/forms").FormOption[]> | import("../core/forms").FormOption[];
   onSpacingChange?: (spacing: NodeSpacing) => void;
   onEdgeRadiusChange?: (radius: number) => void;
   onBackgroundVariantChange?: (variant: BackgroundVariant) => void;

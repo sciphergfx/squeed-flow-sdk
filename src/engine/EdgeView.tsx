@@ -1,6 +1,5 @@
 import { memo, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import DynamicIcon from "../utils/DynamicIcon";
 import type {
   FlowDiagramConfig,
@@ -43,6 +42,7 @@ export interface EdgeViewProps {
   id: string;
   edgeData?: FlowDiagramEdge["data"];
   edgeType?: string;
+  edgeRadius?: number;
   customEdgeTypes?: FlowDiagramConfig["customEdgeTypes"];
   source: Box;
   target: Box;
@@ -75,6 +75,7 @@ function EdgeView({
   edgeData,
   validationIssue,
   edgeType = "rounded-orthogonal",
+  edgeRadius,
   customEdgeTypes,
   source,
   target,
@@ -97,7 +98,6 @@ function EdgeView({
   loopIndex = 0,
   onSelect,
 }: EdgeViewProps) {
-  const { edgeRadius } = useFlowDiagramContext();
   const lines = useMemo(
     () => (label ? wrapText(label, LABEL_FONT, LABEL_MAX_WIDTH) : []),
     [label],

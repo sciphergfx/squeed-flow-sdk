@@ -217,10 +217,11 @@ export function parseJsonContract(
   return { name, nodes: contract.properties };
 }
 
-export async function parseTypeScriptContract(
+export async function parseTypeScriptForm(
   source: string,
   name: string,
-): Promise<WorkflowContract> {
+  typeName?: string,
+): Promise<Extract<ContractType, { kind: "object" }>> {
   let remaining = 512;
   const ts = await import("typescript");
   const file = ts.createSourceFile(
@@ -335,15 +336,23 @@ export async function parseTypeScriptContract(
     }
     throw new Error(`Unsupported TypeScript type: ${node.getText(file)}`);
   };
-  const root = declarations.has("Graph")
+  const root = typeName ?? (declarations.has("Graph")
     ? "Graph"
     : declarations.size === 1
       ? [...declarations.keys()][0]
-      : undefined;
+      : undefined);
   if (!root) throw new Error("Declare an interface Graph keyed by node ID.");
   const contract = resolve(root, []);
   if (contract.kind !== "object")
     throw new Error("Graph must be an object keyed by node ID.");
+  return contract;
+}
+
+export async function parseTypeScriptContract(
+  source: string,
+  name: string,
+): Promise<WorkflowContract> {
+  const contract = await parseTypeScriptForm(source, name);
   if (
     Object.values(contract.properties).some(
       (property) => property.type.kind !== "object",

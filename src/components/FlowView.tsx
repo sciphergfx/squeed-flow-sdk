@@ -46,6 +46,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   const {
     themeColor,
     spacing,
+    edgeRadius,
     backgroundVariant,
     setBackgroundSelected,
     edgeColor,
@@ -616,6 +617,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           nodeAlignment={nodeAlignment}
           edgeMode={edgeMode}
           edgeType={config.edgeType}
+          edgeRadius={edgeRadius}
           customEdgeTypes={config.customEdgeTypes}
           rankSep={rankSep}
           edgeSep={edgeSep}

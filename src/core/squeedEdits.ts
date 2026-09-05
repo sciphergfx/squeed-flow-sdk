@@ -23,6 +23,7 @@ export type SqueedJson = Record<string, any> | any[];
 /** Schema keys that live on a node */
 export type SqueedNodeKey =
   | "$label"
+  | "$form"
   | "$bgColor"
   | "$textColor"
   | "$borderColor"
@@ -427,6 +428,10 @@ export function compileSqueed(
       delete data.viewProps.borderWidth;
     }
     if (!src || typeof src !== "object" || Array.isArray(src)) return { data };
+    if (src.$form && typeof src.$form === "object") {
+      data.config = { ...data.config, form: src.$form };
+      data.type = "objectView";
+    }
     if (data.parent) data.parent = canonicalAddress(data.parent);
     if (typeof src.$label === "string") {
       data.label = src.$label;
