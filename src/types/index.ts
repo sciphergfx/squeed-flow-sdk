@@ -20,7 +20,7 @@ export enum FlowType {
 /** "C" = center: root in the middle, children fan out both ways (generate with `isCntr: true`); laid out as LR */
 export type FlowDirection = "LR" | "RL" | "TB" | "BT" | "C";
 export type NodeAlignment = "leading" | "center" | "trailing";
-export type NodeViewMode = "default" | "properties";
+export type NodeViewMode = "default" | "properties" | "icon-label";
 export const NODE_TYPE_VIEWS = ["", "icon-label", "object", "text"] as const;
 export type NodeTypeView = Exclude<(typeof NODE_TYPE_VIEWS)[number], "">;
 export type NodeAnimationVariant = "traveling" | "pulse";
@@ -288,6 +288,7 @@ export interface FlowNodeCreationRequest {
 
 /** Event callbacks for the flow diagram */
 export interface FlowDiagramCallbacks {
+  onAllNodesIconLabelChange?: (enabled: boolean) => void;
   onNodeCreateRequest?: (request: FlowNodeCreationRequest) => boolean;
   onFormSchemaChange?: (
     schema: import("../core/forms").FormSchema | undefined,

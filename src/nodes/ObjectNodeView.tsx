@@ -1,5 +1,5 @@
 import { Flex } from "@chakra-ui/react";
-import { useState } from "react";
+import { useNodeViewActions } from "../hooks/useNodeViewActions";
 import NodeView from "./NodeView";
 import { CompactNodeView } from "./CompactNodeView";
 import { EditableContent } from "./EditableContent";
@@ -28,15 +28,16 @@ export const ObjectNodeView = (props) => {
     inspectionPorts,
     extraPorts,
   } = useObjectInspection(props);
-  const [iconVisible, setIconVisible] = useState(false);
+  const actions = useNodeViewActions();
+  const iconVisible = actions.getNodeViewMode(props.data.id) === "icon-label";
   const canShowNativeIcon =
     !props.onShowIcon &&
     !props.data.config?.parentContainer &&
     typeof props.data.config?.content !== "string";
   const onShowNativeIcon = canShowNativeIcon
-    ? () => setIconVisible(true)
+    ? () => actions.setNodeViewMode(props.data.id, "icon-label")
     : undefined;
-  if (canShowNativeIcon && iconVisible)
+  if (!props.onShowIcon && iconVisible)
     return (
       <CompactNodeView
         {...props}
@@ -49,7 +50,7 @@ export const ObjectNodeView = (props) => {
             icon: props.data.config?.icon || "PiBracketsCurly",
           },
         }}
-        onExpand={() => setIconVisible(false)}
+        onExpand={() => actions.restoreNodeView(props.data.id)}
       />
     );
   return (

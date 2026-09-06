@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import type { FlowEngine } from "../engine";
 import type {
   FlowDiagramCallbacks,
@@ -14,6 +14,8 @@ import type {
 } from "../types";
 
 export interface FlowDiagramContextValue {
+  allNodesIconLabel: boolean;
+  setAllNodesIconLabel: (enabled: boolean) => void;
   nodeViewModes: Record<string, NodeViewMode>;
   setNodeViewMode: (nodeId: string, mode: NodeViewMode) => void;
   spacing: number;
@@ -129,6 +131,14 @@ export function FlowDiagramProvider({
     Record<string, NodeViewMode>
   >({});
   const nodeViewModes = config.nodeViewModes ?? localNodeViewModes;
+  const iconLabelNodes = [...dataValue.nodeById.values()].filter(node =>
+    dataValue.parentIds.has(node.data.id) || node.data.config?.parentContainer ||
+    node.data.type === "objectView" || node.data.type === "arrayView");
+  const allNodesIconLabel = !!iconLabelNodes.length && iconLabelNodes.every(node =>
+    dataValue.parentIds.has(node.data.id) || node.data.config?.parentContainer
+      ? !!node.data.config?.collapsed
+      : nodeViewModes[node.data.id] === "icon-label" ||
+        node.data.config?.labelBelow && nodeViewModes[node.data.id] !== "properties");
   const [localSpacing, setSpacing] = useState<NodeSpacing>("normal");
   const [localEdgeRadius, setEdgeRadius] = useState<number>();
   const requestedEdgeRadius = config.edgeRadius ?? localEdgeRadius;
@@ -361,17 +371,28 @@ export function FlowDiagramProvider({
     [],
   );
 
+  const setNodeViewMode = useCallback((nodeId: string, mode: NodeViewMode) => {
+    if (mode !== "default" && mode !== "properties" && mode !== "icon-label")
+      throw new Error("Unknown node view mode.");
+    setLocalNodeViewModes(current =>
+      current[nodeId] === mode ? current : { ...current, [nodeId]: mode });
+    callbacks.onNodeViewModeChange?.(nodeId, mode);
+  }, [callbacks.onNodeViewModeChange]);
+
   const value: FlowDiagramContextValue = useMemo(
     () => ({
-      nodeViewModes,
-      setNodeViewMode: (nodeId, mode) => {
-        if (mode !== "default" && mode !== "properties")
-          throw new Error("Unknown node view mode.");
-        setLocalNodeViewModes((current) =>
-          current[nodeId] === mode ? current : { ...current, [nodeId]: mode },
-        );
-        callbacks.onNodeViewModeChange?.(nodeId, mode);
+      allNodesIconLabel,
+      setAllNodesIconLabel: (enabled) => {
+        for (const node of iconLabelNodes) {
+          if (dataValue.parentIds.has(node.data.id) || node.data.config?.parentContainer) {
+            if (!readOnly && !!node.data.config?.collapsed !== enabled)
+              callbacks.onNodeCollapse?.(node.data.id, enabled);
+          } else setNodeViewMode(node.data.id, enabled ? "icon-label" : "default");
+        }
+        callbacks.onAllNodesIconLabelChange?.(enabled);
       },
+      nodeViewModes,
+      setNodeViewMode,
       spacing,
       setSpacing,
       edgeRadius,
@@ -417,6 +438,11 @@ export function FlowDiagramProvider({
       readOnly,
     }),
     [
+      allNodesIconLabel,
+      dataValue,
+      setNodeViewMode,
+      callbacks.onNodeCollapse,
+      callbacks.onAllNodesIconLabelChange,
       nodeViewModes,
       callbacks.onNodeViewModeChange,
       themeColor,

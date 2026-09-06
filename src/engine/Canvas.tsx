@@ -868,7 +868,7 @@ function Canvas(props: CanvasProps) {
         return { x: v.x + (r?.left ?? 0), y: v.y + (r?.top ?? 0) };
       },
       getNodeBox: (id) => boxFor(id),
-      setNodePosition: (id, position) => {
+      setNodePosition: (id, position, options) => {
         if (!positionsRef.current.has(id)) return false;
         if (
           position &&
@@ -883,9 +883,11 @@ function Canvas(props: CanvasProps) {
         }
         const next = new Map(positionsRef.current);
         next.set(id, { ...position });
-        placedNodes.current.set(id, { ...position });
+        if (options?.persist === false) placedNodes.current.delete(id);
+        else placedNodes.current.set(id, { ...position });
         positionsRef.current = next;
         setPositions(next);
+        if (options?.persist === false) scheduleLayout();
         return true;
       },
       onViewportChange: (fn) => viewport.onChange(fn),

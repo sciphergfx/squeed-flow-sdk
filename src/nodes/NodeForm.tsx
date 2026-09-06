@@ -27,6 +27,8 @@ import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
 import type { FlowDiagramCallbacks } from "../types";
 import { resolveStateForm, type StateForms } from "../utils/formState";
+import type { StructuredForms } from "../utils/structuredForms";
+import { StructuredFieldControls } from "./StructuredFieldControls";
 
 export const FormDocumentContext = createContext<{
   setSchema?: (schema: FormSchema | undefined) => void;
@@ -36,6 +38,7 @@ export const FormDocumentContext = createContext<{
   editable?: boolean;
   schema?: FormSchema;
   renderForm?: StateForms["renderForm"];
+  structured?: StructuredForms;
   callbacks: FlowDiagramCallbacks;
 }>({ callbacks: {} });
 
@@ -152,7 +155,7 @@ function Field({
   value: unknown;
   disabled: boolean;
 }) {
-  const { callbacks } = useContext(FormDocumentContext);
+  const { callbacks, structured: structuredForms } = useContext(FormDocumentContext);
   const { themeColor } = useFlowDiagramContext();
   const { background } = useCustomColors();
   const id = useId();
@@ -236,7 +239,9 @@ function Field({
     ? remote?.key === optionKey
       ? remote.options
       : []
-    : property.type.kind === "boolean"
+    : property.type.kind === "null"
+      ? [{ label: "Null", value: null }]
+      : property.type.kind === "boolean"
       ? [
           { label: "Yes", value: true },
           { label: "No", value: false },
@@ -244,7 +249,7 @@ function Field({
       : formOptions(property.type);
   const multiple = property.type.kind === "array";
   const control =
-    (config.$control === "checkbox" ? "pills" : config.$control) ??
+    (structuredForms && structured ? "pills" : config.$control === "checkbox" ? "pills" : config.$control) ??
     (options
       ? multiple || property.type.kind === "boolean"
         ? "pills"
@@ -380,7 +385,7 @@ function Field({
                 value={index}
                 style={{ background: getChakraColorHex(background) }}
               >
-                {startCase(option.label)}
+                {startCase(option.label) || option.label}
               </option>
             ))}
           </select>
@@ -425,7 +430,7 @@ function Field({
                   )
                 }
               >
-                {startCase(option.label)}
+                {startCase(option.label) || option.label}
               </button>
             );
           })}
@@ -479,7 +484,7 @@ function Field({
 }
 
 export function NodeForm({ nodeAddress }: { nodeAddress: string }) {
-  const { data, schema, callbacks, bindings, editable, renderForm } =
+  const { data, schema, callbacks, bindings, editable, renderForm, structured } =
     useContext(FormDocumentContext);
   const { readOnly, config } = useFlowDiagramContext();
   const rendered = renderForm?.(nodeAddress);
@@ -504,7 +509,8 @@ export function NodeForm({ nodeAddress }: { nodeAddress: string }) {
   if (!resolved) return <Fields role="status">Form schema unavailable.</Fields>;
   const stateAddress = bound?.address ?? nodeAddress;
   const node = getNode(data, stateAddress);
-  if (!node || typeof node !== "object")
+  const scalar = structured?.containers.get(nodeAddress)?.scalar;
+  if (node === undefined || (typeof node !== "object" && !scalar))
     return <Fields role="alert">Bound form state is unavailable.</Fields>;
   const entries = Object.entries(resolved.type.properties).filter(([key]) =>
     conditionMatches(resolved.fields[key]?.$visibleWhen, data),
@@ -530,16 +536,16 @@ export function NodeForm({ nodeAddress }: { nodeAddress: string }) {
   }
   const renderField = ([key, property]: (typeof entries)[number]) => (
     <Field
-      key={`${node.id ?? nodeAddress}:${key}`}
+      key={`${node?.id ?? nodeAddress}:${key}`}
       request={{
         data,
-        address: `${stateAddress}.${key}`,
+        address: scalar ? stateAddress : `${stateAddress}.${key}`,
         nodeAddress: stateAddress,
-        nodeId: typeof node.id === "string" ? node.id : undefined,
+        nodeId: typeof node?.id === "string" ? node.id : undefined,
       }}
       property={property}
       config={resolved.fields[key] ?? {}}
-      value={node[key]}
+      value={scalar ? node : node?.[key]}
       disabled={
         readOnly ||
         config.editable === false ||
@@ -553,6 +559,7 @@ export function NodeForm({ nodeAddress }: { nodeAddress: string }) {
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
     >
+      {structured && <StructuredFieldControls nodeAddress={nodeAddress} />}
       {bound && resolved.type.additionalProperties && entries.length === 0 && (
         <Field
           request={{ data, address: stateAddress, nodeAddress: stateAddress }}

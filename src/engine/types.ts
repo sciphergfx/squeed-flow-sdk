@@ -59,7 +59,7 @@ export interface FlowEngine {
   clientToModel(clientX: number, clientY: number): Point;
   modelToClient(p: Point): Point;
   getNodeBox(id: string): Box | undefined;
-  setNodePosition(id: string, position: Point | undefined): boolean;
+  setNodePosition(id: string, position: Point | undefined, options?: { persist?: boolean }): boolean;
   onViewportChange(fn: (vp: ViewportState) => void): () => void;
 }
 

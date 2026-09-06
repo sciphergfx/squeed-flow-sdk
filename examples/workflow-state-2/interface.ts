@@ -18,11 +18,33 @@ interface CastDatabaseConfig {
   operation: string;
   provider?: string;
   id?: string;
-  where?: any;
+  where?: CastFilterConfig[];
   limit?: number;
-  orderBy?: any;
+  orderBy?: CastSortConfig[];
   single?: boolean;
-  data?: any;
+  data?: CastDataConfig;
+}
+
+/** @port output resource */
+interface CastFilterConfig {
+  field: string;
+  operator: "==" | "!=" | ">" | ">=" | "<" | "<=" | "in" | "contains";
+  value: string | number | boolean;
+}
+
+/** @port output resource */
+interface CastSortConfig {
+  field: string;
+  direction: "asc" | "desc";
+}
+
+/** @port output resource */
+interface CastDataConfig {
+  [key: string]: any;
+  status?: string;
+  execution_id?: string;
+  summary?: string;
+  asset_id?: string;
 }
 
 /**

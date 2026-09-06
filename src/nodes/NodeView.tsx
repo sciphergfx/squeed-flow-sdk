@@ -454,6 +454,9 @@ const NodeView = ({
           (() => {
             const pillVertical = direction === "TB" || direction === "BT";
             const pillOnLeft = isInverted || direction === "RL";
+            const iconHalfSize = nodeData?.config?.labelBelow
+              ? ((nodeData?.viewProps?.fontSize || 1) * 100 + 100) / 2
+              : undefined;
             return (
               <IconButton
                 position="absolute"
@@ -464,9 +467,12 @@ const NodeView = ({
                       transform: "translateX(-50%)",
                     }
                   : {
-                      right: pillOnLeft ? undefined : "-75px",
-                      left: pillOnLeft ? "-75px" : undefined,
-                      alignSelf: "center",
+                      right: pillOnLeft ? undefined : iconHalfSize === undefined ? "-75px" : `calc(50% - ${iconHalfSize + 75}px)`,
+                      left: pillOnLeft ? iconHalfSize === undefined ? "-75px" : `calc(50% - ${iconHalfSize + 75}px)` : undefined,
+                      alignSelf: iconHalfSize === undefined ? "center" : undefined,
+                      top: iconHalfSize === undefined ? undefined : `${iconHalfSize}px`,
+                      transform: iconHalfSize === undefined ? undefined : "translateY(-50%)",
+                      zIndex: iconHalfSize === undefined ? undefined : 1,
                     })}
                 aria-label={nodeData.config.collapsed ? "Expand" : "Collapse"}
                 disabled={config.readOnly}

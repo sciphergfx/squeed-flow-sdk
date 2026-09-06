@@ -349,6 +349,22 @@ the source tree. Edit this single JSON source to keep the guide current.
 
 ## Callbacks
 
+### All Icon-Label Views
+
+Inside a diagram, `useNodeViewActions()` (or `useFlowDiagramContext()`) exposes
+`allNodesIconLabel` and `setAllNodesIconLabel(boolean)`. The bulk action reuses
+`setNodeViewMode(id, "icon-label")` for objects/arrays and `onNodeCollapse` for
+parents. Disable it to restore default object views and reopen parents. Dots use
+the same per-node actions and remain interactive; there is no global view lock
+or separate override state. `allNodesIconLabel` reflects the current node modes.
+
+`NodeViewMode` supports `"default"`, `"properties"` and `"icon-label"`; controlled
+consumers continue using `config.nodeViewModes` and `onNodeViewModeChange`.
+Parent changes follow the host's existing collapse persistence behavior. The
+name `collapsed` remains reserved for child-collapse behavior, not object view
+modes. `onAllNodesIconLabelChange` reports bulk actions. SDK Test exposes the
+action under Visibility as **All icon labels** and fits the resulting layout.
+
 ### Reusable Nodes From Property Draws
 
 SDK Test opens a reusable-node picker when a Properties-mode draw ends on empty
@@ -368,6 +384,11 @@ the draw endpoint without changing viewport zoom or pan. This renderer-local
 placement is retained across relayouts while the node remains rendered; pass
 `undefined` to release it back to automatic layout. It is not serialized into
 the workflow document.
+
+Use `engine.setNodePosition(id, position, { persist: false })` for an initial
+drop placement that settles into the size-aware automatic layout. The example
+creation picker uses this mode so object expansion, property edits, and the
+spacing slider can reposition new nodes without retaining their drop positions.
 
 ### Animated Viewport Actions
 
@@ -400,6 +421,33 @@ and final positions. Use `onLayoutComplete(engine)` to fit newly laid-out data:
 
 This callback runs after each settled layout, not viewport-only changes. Hosts
 that only want to fit after dataset selection should gate it with a pending flag.
+
+### Structured Form Bindings
+
+Set `forms.structured: true` with `forms.state`, `forms.bindings` and
+`config.formSchema` to author nested objects and arrays through flow nodes.
+Use `config.edgeMode: "properties"` for their input and output handles.
+This is opt-in; existing form consumers keep their current controls.
+
+Objects expose typed scalar fields and nested configuration ports. Arrays have
+ordered item nodes with add, remove and move controls. Open dictionaries expose
+property-name and value-type controls. JSON and mixed-type values have typed
+value nodes instead of JSON textareas. Existing resource option selectors remain
+available. Missing optional values are not created until the user adds them.
+
+Dragging an empty configuration port into space creates its value node.
+Connecting a compatible value node to another field copies the value into that
+field; it does not create a shared reference. Subsequent edits are independent.
+Deleting an ownership edge or generated node removes the value; array deletion
+compacts the remaining indices. Reordering changes index-based item identities.
+All edits use `forms.onStateChange` (or `onChange`) and preserve the original
+inline state/export shape. Read-only diagrams disable these mutations.
+
+Generated nodes, ports and schemas are derived, not written into your view JSON;
+their appearance is inherited rather than saved through document style callbacks.
+Existing explicit bindings at the same state address are reused. Projection is
+limited to 24 levels and 512 form nodes, using the SDK's existing safe dot-path
+property addressing. Custom `renderForm` implementations remain host-owned.
 
 ### Compose Your Own Controls
 

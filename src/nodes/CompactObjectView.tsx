@@ -1,5 +1,5 @@
-import { useNodeViewActions } from "../hooks/useNodeViewActions";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
+import { useNodeViewActions } from "../hooks/useNodeViewActions";
 import { CompactNodeView } from "./CompactNodeView";
 import { ObjectNodeView } from "./ObjectNodeView";
 
