@@ -7,23 +7,23 @@ import {
   configureResources,
   type ResourceMapping,
 } from "../workflow-state/resourceMapping";
-import sharedState from "./shared-state.json";
-import sharedBindings from "./shared-bindings.json";
-import sharedView from "./shared-view.json";
-import propertyState from "./property-state.json";
-import propertyBindings from "./property-bindings.json";
-import propertyView from "./property-view.json";
 import mapping from "./mapping.json";
+import propertyBindings from "./property-bindings.json";
+import propertyState from "./property-state.json";
+import propertyView from "./property-view.json";
 import { schema } from "./schema";
+import sharedBindings from "./shared-bindings.json";
+import sharedState from "./shared-state.json";
+import sharedView from "./shared-view.json";
 
 export {
-  sharedState,
-  sharedBindings,
-  sharedView,
-  propertyState,
   propertyBindings,
+  propertyState,
   propertyView,
   schema,
+  sharedBindings,
+  sharedState,
+  sharedView,
 };
 
 export function projectSharedExample(

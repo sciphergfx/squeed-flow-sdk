@@ -26,9 +26,9 @@ import {
   type NodeTypeView,
   type SelectionToolbarConfig,
 } from "../types";
+import { AnimationVariantSelect } from "./AnimationVariantSelect";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
 import { NodeIconPicker } from "./NodeIconPicker";
-import { AnimationVariantSelect } from "./AnimationVariantSelect";
 import {
   ToolbarCloseButton as CloseButton,
   ToolbarIconButton,

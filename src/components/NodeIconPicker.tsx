@@ -16,7 +16,11 @@ import {
   svgIconDataUrl,
 } from "../utils/iconSources";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
-import { ToolbarCloseButton, ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
+import {
+  ToolbarCloseButton,
+  ToolbarIconButton,
+  ToolbarTooltip,
+} from "./toolbarControls";
 
 export function NodeIconPicker({
   nodeId,

@@ -6,14 +6,21 @@ import type {
   FlowDirection,
 } from "../types";
 import DynamicIcon from "../utils/DynamicIcon";
+import {
+  LABEL_FONT_SIZE,
+  LABEL_MARGIN_X,
+  LABEL_PADDING,
+  measureEdgeLabel,
+  NODE_LABEL_FONT_SIZE,
+} from "./edgeLabel";
 import { EdgeTraceAnimation } from "./EdgeTraceAnimation";
 import {
   bezierGeometry,
   connectorEndpoints,
-  perimeterGeometry,
-  portOffset,
   loopGeometry,
+  perimeterGeometry,
   polylineGeometry,
+  portOffset,
   propertyGeometry,
   straightPortGeometry,
   taxiGeometry,
@@ -21,17 +28,10 @@ import {
   type TaxiDir,
 } from "./geometry";
 import { EDGE_LABEL_FONT_FAMILY } from "./text";
-import {
-  LABEL_FONT_SIZE,
-  NODE_LABEL_FONT_SIZE,
-  LABEL_PADDING,
-  LABEL_MARGIN_X,
-  measureEdgeLabel,
-} from "./edgeLabel";
 import type { Box, PortAnchor } from "./types";
 
-import { EDGE_WIDTH, ARROW_SIZE, ARROW_GAP, STANDOFF } from "./edgeMetrics";
-export { EDGE_WIDTH, ARROW_SIZE } from "./edgeMetrics";
+import { ARROW_GAP, ARROW_SIZE, EDGE_WIDTH, STANDOFF } from "./edgeMetrics";
+export { ARROW_SIZE, EDGE_WIDTH } from "./edgeMetrics";
 const TAXI_RADIUS = 500;
 export const DASH_PATTERN = "32 18";
 
@@ -107,7 +107,10 @@ function EdgeView({
     iconWidth,
     contentWidth: labelWidth,
     contentHeight: labelHeight,
-  } = useMemo(() => measureEdgeLabel(label, icon, labelFontSize), [label, icon, labelFontSize]);
+  } = useMemo(
+    () => measureEdgeLabel(label, icon, labelFontSize),
+    [label, icon, labelFontSize],
+  );
   const geo = useMemo(() => {
     const opts: EdgeGeometryOptions = {
       srcDist: STANDOFF,
@@ -279,7 +282,13 @@ function EdgeView({
   const horizontalLabel =
     (dir === "rightward" || dir === "leftward") &&
     !Object.prototype.hasOwnProperty.call(customEdgeTypes ?? {}, edgeType) &&
-    !(propertyMode && (sourceY !== undefined || targetY !== undefined || sourcePort || targetPort));
+    !(
+      propertyMode &&
+      (sourceY !== undefined ||
+        targetY !== undefined ||
+        sourcePort ||
+        targetPort)
+    );
   const labelTransform = horizontalLabel
     ? `translate(${geo.label.x} ${geo.label.y - labelHeight / 2 - 2 * LABEL_PADDING})`
     : `translate(${geo.label.x} ${geo.label.y}) rotate(${geo.label.angle}) translate(${labelAtTarget || Object.prototype.hasOwnProperty.call(customEdgeTypes ?? {}, edgeType) ? 0 : LABEL_MARGIN_X} 0)`;
@@ -338,7 +347,10 @@ function EdgeView({
         <text
           fill={color}
           fontSize={labelFontSize}
-          style={{ fontSize: labelFontSize, fontFamily: EDGE_LABEL_FONT_FAMILY }}
+          style={{
+            fontSize: labelFontSize,
+            fontFamily: EDGE_LABEL_FONT_FAMILY,
+          }}
           fontFamily={EDGE_LABEL_FONT_FAMILY}
           textAnchor="middle"
           dominantBaseline="central"

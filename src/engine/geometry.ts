@@ -2,9 +2,9 @@ import {
   boxToRect,
   type Box,
   type Point,
-  type Rect,
   type PortAnchor,
   type PortSide,
+  type Rect,
 } from "./types";
 
 export type TaxiDir = "rightward" | "leftward" | "downward" | "upward";

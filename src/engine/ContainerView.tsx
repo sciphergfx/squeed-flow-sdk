@@ -1,14 +1,14 @@
 import { memo } from "react";
+import { createPortal } from "react-dom";
 import { PiCircleFill } from "react-icons/pi";
 import {
   ToolbarIconButton,
   ToolbarTooltip,
 } from "../components/toolbarControls";
-import { createPortal } from "react-dom";
+import type { NodeSelectionModifiers } from "../types";
 import { NodeBorderAnimation } from "./NodeBorderAnimation";
 import { EDGE_LABEL_FONT_FAMILY, measureText } from "./text";
 import type { Rect } from "./types";
-import type { NodeSelectionModifiers } from "../types";
 
 export interface ContainerStyle {
   /** hex */
@@ -121,7 +121,11 @@ function ContainerView({
               fontSize={style.fontSize}
               fontWeight="bold"
               fontFamily={EDGE_LABEL_FONT_FAMILY}
-              style={{ fontSize: style.fontSize, fontWeight: "bold", fontFamily: EDGE_LABEL_FONT_FAMILY }}
+              style={{
+                fontSize: style.fontSize,
+                fontWeight: "bold",
+                fontFamily: EDGE_LABEL_FONT_FAMILY,
+              }}
               textAnchor="middle"
               dominantBaseline="central"
             >

@@ -1,11 +1,11 @@
 import type * as TypeScript from "typescript";
+import type { FormSchema } from "../../src/core/forms";
 import {
   getNode,
   removeNode,
   setNodeProp,
   type SqueedJson,
 } from "../../src/core/squeedEdits";
-import type { FormSchema } from "../../src/core/forms";
 import type { FlowDirection } from "../../src/types";
 import type { StateFormBinding } from "../../src/utils/formState";
 import { applyStateEdits } from "../../src/utils/formState";
@@ -110,10 +110,9 @@ export async function readTemplateUses(
         )
           scan(value, target, field, false, `${binding.address}.${field}`);
   }
-  for (const [id, resource] of Object.entries(getNode(state, "root.sdkResources") ?? {}) as [
-    string,
-    { value?: unknown },
-  ][]) {
+  for (const [id, resource] of Object.entries(
+    getNode(state, "root.sdkResources") ?? {},
+  ) as [string, { value?: unknown }][]) {
     const target = `root.${id}`;
     if (!getNode(view, target)) continue;
     if (

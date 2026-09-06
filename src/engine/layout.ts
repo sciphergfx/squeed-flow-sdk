@@ -1,7 +1,7 @@
 import dagre from "dagre";
 import type { NodeAlignment } from "../types";
-import type { Point, Rect } from "./types";
 import { LABEL_MARGIN_X, measureEdgeLabel } from "./edgeLabel";
+import type { Point, Rect } from "./types";
 
 export interface LayoutNodeInput {
   id: string;
@@ -74,9 +74,15 @@ export function runDagreLayout(
   for (const e of edges) {
     if (!ids.has(e.source) || !ids.has(e.target)) continue;
     if (parents.has(e.source) || parents.has(e.target)) continue;
-    const label = measureEdgeLabel(e.label, e.icon ?? e.data?.icon, opts.edgeLabelFontSize);
+    const label = measureEdgeLabel(
+      e.label,
+      e.icon ?? e.data?.icon,
+      opts.edgeLabelFontSize,
+    );
     const horizontal = opts.rankDir === "LR" || opts.rankDir === "RL";
-    const length = (label.width ? label.width + 2 * LABEL_MARGIN_X : 0) + (e.connectorClearance ?? 0);
+    const length =
+      (label.width ? label.width + 2 * LABEL_MARGIN_X : 0) +
+      (e.connectorClearance ?? 0);
     g.setEdge(
       e.source,
       e.target,

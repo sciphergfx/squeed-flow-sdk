@@ -1,4 +1,4 @@
-import { IconButton, Tooltip, Portal, chakra } from "@chakra-ui/react";
+import { IconButton, Portal, Tooltip, chakra } from "@chakra-ui/react";
 import { startCase } from "lodash";
 import {
   Children,
@@ -9,8 +9,8 @@ import {
   useId,
   useRef,
   useState,
-  type ReactNode,
   type CSSProperties,
+  type ReactNode,
 } from "react";
 import { PiCaretUp, PiCheck, PiXLight } from "react-icons/pi";
 import { useCustomColors } from "../theme/useCustomColors";

@@ -39,7 +39,10 @@ export function projectWorkflowView(
       const field = port.slice(port.indexOf(":") + 1);
       const label = value?.name ?? field;
       if (getNode(next, address)[field] !== label)
-        next = updateNode(next, address, node => ({ ...node, [field]: label }));
+        next = updateNode(next, address, (node) => ({
+          ...node,
+          [field]: label,
+        }));
     }
   }
   const trigger = getNode(state, "root.trigger");

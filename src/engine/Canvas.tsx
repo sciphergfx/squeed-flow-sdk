@@ -12,25 +12,28 @@ import type {
   FlowDiagramConfig,
   FlowDiagramEdge,
   FlowEdgeProperties,
-  NodeSelectionModifiers,
   NodeAlignment,
+  NodeSelectionModifiers,
 } from "../types";
-import { branchRoutes } from "./branchRouting";
 import { branchNodeIds } from "./branchNodeIds";
-import { connectedNodeIds } from "./connectedNodeIds";
+import { branchRoutes } from "./branchRouting";
 import { resolveConfigPortRows } from "./configPortLayout";
+import { connectedNodeIds } from "./connectedNodeIds";
 import ContainerView, { type ContainerStyle } from "./ContainerView";
-import EdgeView from "./EdgeView";
+import { LABEL_FONT_SIZE, NODE_LABEL_FONT_SIZE } from "./edgeLabel";
+import {
+  NODE_CONNECTOR_CLEARANCE,
+  PROPERTY_CONNECTOR_CLEARANCE,
+} from "./edgeMetrics";
 import { isEdgeVisible, isNodeVisible, visibleLayoutGraph } from "./edgeMode";
+import EdgeView from "./EdgeView";
 import type { TaxiDir } from "./geometry";
 import { placeEdgeLabels } from "./labelPlacement";
 import { computeContainers, runDagreLayout } from "./layout";
-import { LABEL_FONT_SIZE, NODE_LABEL_FONT_SIZE } from "./edgeLabel";
-import { NODE_CONNECTOR_CLEARANCE, PROPERTY_CONNECTOR_CLEARANCE } from "./edgeMetrics";
 import NodeHost from "./NodeHost";
+import { surfaceBox, type NodeSurface } from "./nodeSurface";
 import type { PropertyRow } from "./propertyRows";
 import { EDGE_LABEL_FONT_FAMILY, measureText } from "./text";
-import { surfaceBox, type NodeSurface } from "./nodeSurface";
 import {
   boxToRect,
   pointInRect,
@@ -375,17 +378,25 @@ function Canvas(props: CanvasProps) {
     });
     let target: Map<string, Point>;
     try {
-      const compact = p.compactPropertyLayout && (p.edgeMode === "properties" || !!isolatedIdsRef.current);
+      const compact =
+        p.compactPropertyLayout &&
+        (p.edgeMode === "properties" || !!isolatedIdsRef.current);
       const propertyMode = p.edgeMode !== "nodes" && p.edgeMode !== "workflow";
-      const layoutEdges = graph.edges.map(edge => ({
+      const layoutEdges = graph.edges.map((edge) => ({
         ...edge,
-        connectorClearance: !compact ? 0
-          : propertyMode && (edge.sourceProperty !== undefined || edge.targetProperty !== undefined)
+        connectorClearance: !compact
+          ? 0
+          : propertyMode &&
+              (edge.sourceProperty !== undefined ||
+                edge.targetProperty !== undefined)
             ? PROPERTY_CONNECTOR_CLEARANCE
             : NODE_CONNECTOR_CLEARANCE,
       }));
       target = runDagreLayout(inputs, layoutEdges, {
-        edgeLabelFontSize: p.edgeMode === "nodes" || p.edgeMode === "workflow" ? NODE_LABEL_FONT_SIZE : LABEL_FONT_SIZE,
+        edgeLabelFontSize:
+          p.edgeMode === "nodes" || p.edgeMode === "workflow"
+            ? NODE_LABEL_FONT_SIZE
+            : LABEL_FONT_SIZE,
         rankDir: p.direction,
         compact,
         nodeAlignment: p.nodeAlignment,
@@ -394,7 +405,8 @@ function Canvas(props: CanvasProps) {
         nodeSep: 5 * connectionSpacing,
         spacingFactor: p.spacingFactor ?? 1.3,
         compactSpacingScale:
-          (p.compactSpacingScale ?? (p.spacingFactor ?? 1.3) / 1.3) * connectionSpacing,
+          (p.compactSpacingScale ?? (p.spacingFactor ?? 1.3) / 1.3) *
+          connectionSpacing,
       });
     } catch (err) {
       console.warn("[flow-sdk] layout failed", err);
