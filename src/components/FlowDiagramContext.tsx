@@ -181,6 +181,7 @@ export function FlowDiagramProvider({
       onNodeDeselect: wrap("onNodeDeselect"),
       onNodeDoubleClick: wrap("onNodeDoubleClick"),
       onNodeViewToggle: wrap("onNodeViewToggle"),
+      onNodeTypeViewChange: wrap("onNodeTypeViewChange"),
       onNodeCreate: wrap("onNodeCreate"),
       onNodeCreateRequest: wrap("onNodeCreateRequest"),
       onNodeDelete: wrap("onNodeDelete"),

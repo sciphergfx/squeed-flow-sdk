@@ -48,7 +48,9 @@ export function runDagreLayout(
   const compactScale = opts.spacingFactor > 0 ? opts.spacingFactor / 1.3 : 1;
   g.setGraph({
     rankdir: opts.rankDir,
-    nodesep: opts.nodeSep,
+    nodesep: opts.compact
+      ? Math.max(opts.nodeSep, 24 * compactScale)
+      : opts.nodeSep,
     edgesep: opts.compact
       ? Math.min(opts.edgeSep, 24 * compactScale)
       : opts.edgeSep,

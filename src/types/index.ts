@@ -21,6 +21,8 @@ export enum FlowType {
 export type FlowDirection = "LR" | "RL" | "TB" | "BT" | "C";
 export type NodeAlignment = "leading" | "center" | "trailing";
 export type NodeViewMode = "default" | "properties";
+export const NODE_TYPE_VIEWS = ["", "icon-label", "object", "text"] as const;
+export type NodeTypeView = Exclude<(typeof NODE_TYPE_VIEWS)[number], "">;
 export type NodeAnimationVariant = "traveling" | "pulse";
 export type EdgeAnimationVariant = "dashed" | "traveling";
 export type EdgeMode = "auto" | "nodes" | "properties" | "workflow";
@@ -99,6 +101,7 @@ export interface SelectionToolbarConfig {
   /** Hide individual controls */
   hide?: Array<
     | "label"
+    | "typeView"
     | "color"
     | "textColor"
     | "borderColor"
@@ -314,6 +317,7 @@ export interface FlowDiagramCallbacks {
   onNodeDoubleClick?: (nodeId: string, nodeData: any) => void;
   onNodeViewModeChange?: (nodeId: string, mode: NodeViewMode) => void;
   onNodeViewToggle?: (nodeId: string) => void;
+  onNodeTypeViewChange?: (nodeId: string, view: NodeTypeView | undefined) => void;
   /** Fires when a node is created via edge drawing into empty space */
   onNodeCreate?: (params: {
     type: string;

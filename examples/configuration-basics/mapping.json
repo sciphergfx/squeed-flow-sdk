@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "fields": [
+    {
+      "type": "DeliveryConfig",
+      "field": "message"
+    }
+  ]
+}

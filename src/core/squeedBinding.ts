@@ -1,4 +1,4 @@
-import type { FlowDiagramCallbacks, FlowDiagramEdge } from "../types";
+import { NODE_TYPE_VIEWS, type FlowDiagramCallbacks, type FlowDiagramEdge } from "../types";
 import { createFormNode } from "./createFormNode";
 import type { FormSchema } from "./forms";
 import { applyFormChange } from "./forms";
@@ -112,6 +112,16 @@ export function bindSqueedCallbacks(
         address: id,
         key: "$content",
         value: content,
+      });
+    },
+    onNodeTypeViewChange: (id, view) => {
+      if (view !== undefined && !NODE_TYPE_VIEWS.includes(view)) return;
+      callbacks.onNodeTypeViewChange?.(id, view);
+      emit(setNodeProp(json, id, "$view", view), {
+        type: "nodeStyle",
+        address: id,
+        key: "$view",
+        value: view,
       });
     },
     onNodeColorChange: (id, kind, color) => {

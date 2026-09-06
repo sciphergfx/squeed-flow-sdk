@@ -1,0 +1,36 @@
+{
+  "$label": "One Configuration, Two Steps",
+  "$hideRoot": true,
+  "first": {
+    "$label": "1. Email Receipt",
+    "$icon": "PiEnvelope",
+    "$view": "icon-label",
+    "$subtitle": "configRef: receipt",
+    "$bgColor": "blue.500",
+    "$target": "root.receipt",
+    "$targetLabel": "same configRef"
+  },
+  "second": {
+    "$label": "2. Email Reminder",
+    "$icon": "PiBell",
+    "$view": "icon-label",
+    "$subtitle": "configRef: receipt",
+    "$bgColor": "yellow.600",
+    "$target": "root.receipt",
+    "$targetLabel": "same configRef"
+  },
+  "receipt": {
+    "$label": "3. Shared Settings",
+    "$icon": "PiSlidersHorizontal",
+    "$view": "object",
+    "$bgColor": "teal.600",
+    "$content": "Double-click any of these three nodes. Their forms all bind to `root.configs.receipt.config`; an edit is shared, not copied.",
+    "$target": "root.resolved",
+    "$targetLabel": "resolve references"
+  },
+  "resolved": {
+    "$label": "4. Resolved Export",
+    "$icon": "PiExport",
+    "$content": ""
+  }
+}

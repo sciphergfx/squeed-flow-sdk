@@ -1,4 +1,5 @@
 import { FLOW_COMMANDS, commandSchema } from "./commands";
+import { generationRoute, generationWorkflow } from "./generation";
 
 export function createSqueedProvision() {
   const workflowId = "squeed-sdk-command";
@@ -90,15 +91,22 @@ export function createSqueedProvision() {
   });
   return {
     permissions: ["workflow:read", "workflow:execute"],
-    workflows,
-    routes,
+    workflows: [...workflows, generationWorkflow],
+    routes: [...routes, generationRoute],
   };
 }
 
 export function squeedResourceScopes() {
-  return FLOW_COMMANDS.map((command) => ({
-    resourceType: "route",
-    resourceId: `/squeed/${command.name}`,
-    access: "write",
-  }));
+  return [
+    ...FLOW_COMMANDS.map((command) => ({
+      resourceType: "route",
+      resourceId: `/squeed/${command.name}`,
+      access: "write",
+    })),
+    {
+      resourceType: "route",
+      resourceId: generationRoute.path,
+      access: "write",
+    },
+  ];
 }

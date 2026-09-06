@@ -1,0 +1,27 @@
+{
+  "id": "shared-configuration-example",
+  "name": "Shared Configuration",
+  "steps": [
+    {
+      "id": "first",
+      "name": "Email Receipt",
+      "type": "notification",
+      "configRef": "receipt"
+    },
+    {
+      "id": "second",
+      "name": "Email Reminder",
+      "type": "notification",
+      "configRef": "receipt"
+    }
+  ],
+  "configs": {
+    "receipt": {
+      "type": "notification",
+      "config": {
+        "message": "Thank you for your order",
+        "enabled": true
+      }
+    }
+  }
+}

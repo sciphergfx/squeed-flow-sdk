@@ -4,6 +4,64 @@ import { chooseToolbarOption } from "./helpers";
 test.skip(!process.env.SDK_TEST_URL, "Requires SDK Test consumer");
 
 for (const width of [1440, 390])
+  test(`compact conditional branch keeps a small gap between property boxes at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 950 });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.route("**/sdk-test/SDKExamplesPanel.tsx*", async (route) => {
+      const response = await route.fetch();
+      const body = await response.text();
+      const anchor = "const colors = S.useCustomColors();";
+      expect(body).toContain(anchor);
+      await route.fulfill({
+        response,
+        body: body.replace(
+          anchor,
+          `${anchor} window.__branchSpacing = context;`,
+        ),
+      });
+    });
+    await page.goto(process.env.SDK_TEST_URL!);
+    await chooseToolbarOption(
+      page.getByRole("combobox", { name: "Example dataset", exact: true }),
+      "Conditional Workflow",
+    );
+    await expect(page.locator('[data-node-id="root.step_run"]')).toHaveCount(1);
+    await page.evaluate(() => {
+      const context = (window as any).__branchSpacing;
+      context.setNodeViewMode("root.step_run", "properties");
+      context.setNodeViewMode("root.step_skip", "properties");
+    });
+    await expect(page.locator('[data-node-id="root.step_run"]')).toContainText(
+      "workflowId",
+    );
+    await expect(page.locator('[data-node-id="root.step_skip"]')).toContainText(
+      "mapping",
+    );
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const engine = (window as any).__branchSpacing.engineRef.current;
+          const upper = engine.getNodeBox("root.step_run"),
+            lower = engine.getNodeBox("root.step_skip");
+          return upper && lower
+            ? Math.abs(lower.y - upper.y) - (upper.h + lower.h) / 2
+            : 0;
+        }),
+      )
+      .toBeGreaterThanOrEqual(24);
+    await page
+      .getByRole("region", { name: "SDK control examples", exact: true })
+      .getByRole("button", { name: "Close selection tools", exact: true })
+      .click();
+    await page.evaluate(() =>
+      (window as any).__branchSpacing.engineRef.current.centerAndFit(60, false),
+    );
+    await page.screenshot({ path: `/tmp/squeed-conditional-gap-${width}.png` });
+  });
+
+for (const width of [1440, 390])
   test(`compact property graph reduces mixed-node gaps at ${width}px`, async ({
     page,
   }) => {

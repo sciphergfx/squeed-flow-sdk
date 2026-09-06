@@ -1,0 +1,14 @@
+{
+  "root.first": {
+    "address": "root.configs.receipt.config",
+    "type": "DeliveryConfig"
+  },
+  "root.second": {
+    "address": "root.configs.receipt.config",
+    "type": "DeliveryConfig"
+  },
+  "root.receipt": {
+    "address": "root.configs.receipt.config",
+    "type": "DeliveryConfig"
+  }
+}

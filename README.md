@@ -130,6 +130,38 @@ Use `$collapsed: true` to collapse a JSON branch, and `false` to keep the expans
 
 `nodeAlignment: "leading"` aligns left edges in `LR`/`C`, right edges in `RL`, top edges in `TB`, and bottom edges in `BT`. `"trailing"` aligns the opposite edge. Node dimensions and graph connections are unchanged; containers and edge paths follow the aligned positions.
 
+## JSON Streaming And Playback
+
+`createJsonStream` accepts incremental `append(chunk)` or cumulative
+`snapshot(text)` input. Supply `parse`, `repair`, `preview`, and `commit`
+callbacks: repaired previews are throttled, while `finish()` strictly parses the
+original JSON before committing. `cancel()` clears pending work. The defaults
+are a 150 ms preview interval and a 1 MiB input limit. The host supplies its
+repair library, such as `jsonrepair`; the SDK has no model or transport dependency.
+
+`createJsonPlayback` reuses that buffer for a saved document:
+
+```ts
+const player = createJsonPlayback({
+  ...streamOptions,
+  source: JSON.stringify(document),
+  onChange: ({ position, total, playing }) =>
+    updateProgress(position, total, playing),
+  onError: reportError,
+});
+player.play();
+player.pause();
+player.seek(0);
+player.dispose();
+```
+
+Playback defaults to eight seconds, supports resuming and replaying, and reports
+character offsets for a progress slider. Use `projectJsonPlaybackPreview(partial,
+document)` when replaying Squeed JSON to keep structured metadata such as `$state`
+references atomic. Keep previews separate from saved documents. SDK Test includes
+a themed top-right player that reveals connections with their endpoints and
+automatically fits every new layout without modifying the saved document.
+
 ## Custom Node Editing
 
 Custom views replace the node renderer. Wrap custom visuals in the exported
@@ -218,6 +250,11 @@ two nodes, plain state, one binding, and a three-field interface. Its
 [React component](examples/form-connection/MinimalExample.tsx) shows the complete
 setup, including form edits, display references, appearance, and connection modes.
 No workflow backend is required.
+
+Then try **Shared Configuration** and **Reusable Property** in SDK Test's Templates
+menu. The [small-step walkthrough](examples/configuration-basics/README.md) shows
+two consumers sharing values, editing them, and exporting plain data, before
+introducing field-level mapping and returning values inline.
 
 ## Maintainer Guide
 

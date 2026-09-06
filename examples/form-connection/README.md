@@ -1,5 +1,8 @@
 # Bind Your Own Properties
 
+Next: [Shared Configuration and Reusable Property](../configuration-basics/README.md)
+build on this example with two consumers, shared edits, and resolved exports.
+
 [MinimalExample.tsx](MinimalExample.tsx) is a two-node React example: double-click
 the settings node to edit three fields; the preview displays their current values.
 It uses the public SDK API, with no Backflow account, workflow executor, or backend.

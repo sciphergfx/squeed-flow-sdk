@@ -1,0 +1,20 @@
+{
+  "steps": [
+    {
+      "id": "first",
+      "name": "Email Receipt",
+      "config": {
+        "message": "Thank you for your order",
+        "enabled": true
+      }
+    },
+    {
+      "id": "second",
+      "name": "Email Reminder",
+      "config": {
+        "message": "Your order is ready",
+        "enabled": false
+      }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # SDK Test MCP Map
 
-The command catalog contains 72 actions. `provision.ts` generates the Squeed manifest: one authenticated, uncached POST route per command, two legacy workflows, and one shared `emit_event` workflow. No backend or SDK runtime changes are required.
+The command catalog contains 72 viewer actions plus a separate model-generation route. `provision.ts` generates 73 authenticated, uncached POST routes and four workflows: two legacy workflows, one shared `emit_event` workflow, and one Backflow model-generation workflow. No backend or SDK runtime changes are required.
 
 | Group      | Commands                                                                                                                                  |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -35,6 +35,62 @@ The optional `runSqueedAgentLoop` adapter in SDK Test's `squeedAgentLoop.ts` tak
 Restricted server MCP discovery currently returns tool names without their input fields. The adapter supplies the schemas from the same catalog instead of granting configuration-read permissions. Collection suggestions use the browser's existing authenticated API, not the route-only MCP key. Do not treat a Squeed publication response as browser state or an LLM answer.
 
 An `applied` browser event means the handler completed, not that asynchronous layout has settled. Use the SDK's `onLayoutComplete` callback before making geometry-dependent follow-up operations.
+
+## Backflow Model Streaming
+
+`route_post_squeed_generate_diagram` accepts one complete prompt; the Backflow
+model generates the JSON and streams it to SDK Test. Third-party MCP clients do
+not need to stream partial tool arguments. This is a separate model-powered
+service and consumes model usage, not just the bridge request price.
+
+1. Select **AI Diagram** in SDK Test. Execution controls open automatically.
+2. Connect a fresh dedicated execution ID and wait for **subscribed**.
+3. Call the generation tool (or POST `/squeed/generate-diagram`):
+
+   ```json
+   {
+     "body": {
+       "executionId": "diagram-demo-1",
+       "requestId": "generation-1",
+       "prompt": "Show a three-stage order approval flow"
+     }
+   }
+   ```
+
+   For HTTP, send the contents of `body` as the request body. For the optional
+   local agent adapter, set `includeGeneration: true`; it is off by default to
+   avoid granting model-spending capability to ordinary viewer commands.
+
+The workflow inherits the authenticated tenant's Backflow model configuration,
+with no API keys in the payload. It emits `squeed_generation_started`, then
+`llm_output_chunk` cumulative text snapshots, then `squeed_generation_completed`.
+The viewer reuses `jsonrepair` (also used by AiAssistantPanel) for provisional
+previews, validates JSON and preflights diagram compilation, and updates at most
+once every 150ms. Invalid intermediate snapshots leave the last preview visible.
+Generated metadata is restricted to text labels/content/icons/colors/links,
+parent grouping, view mode, and collapse/root visibility. Invalid types and
+unsupported metadata (including media, form bindings, or executable content)
+are rejected; nesting is limited to 32 levels. The final snapshot must parse
+strictly, without repair, before commit. Final
+commit also requires the matching workflow completion marker. Saved JSON is not
+changed during previews; failure, disconnect, timeout, or switching templates
+discards the preview. Editing is disabled while generation is active.
+
+Use **one generation per execution ID**. Chunk events do not contain a request ID,
+so do not share a generation channel with other LLM workflows or concurrent runs.
+Viewer limits: 1 MiB buffered UTF-8, 180-second timeout. Workflow limits: 8,192
+output tokens and a 120-second per-attempt model timeout; provider fallbacks may
+take longer. Disconnect stops the local preview, not backend model execution.
+Providers without streaming may deliver only a complete final snapshot.
+
+The AI Diagram listener is independent of the deferred diagram render. Other
+templates continue to use the existing viewer-command bridge. AI Diagram is a
+dedicated generation view, not the ordinary 72-command session. HTTP/MCP results
+report backend generation completion, not browser rendering acknowledgement.
+
+Provision the updated manifest and add the exact `/squeed/generate-diagram` write
+scope to the client key before use; the generator does not modify deployed keys.
+Tests mock model events and do not execute a paid live model request.
 
 ## Regeneration
 

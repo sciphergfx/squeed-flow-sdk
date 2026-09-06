@@ -2,7 +2,10 @@
 
 // Main component
 export { default as BottomBar } from "./components/BottomBar";
-export { DiagramAppearanceControls } from "./components/DiagramAppearanceControls";
+export {
+  DiagramAppearanceControls,
+  RangeInput as ToolbarRangeInput,
+} from "./components/DiagramAppearanceControls";
 export { ConnectionsOnlyToggle } from "./components/ConnectionsOnlyToggle";
 export { CompactPropertyLayoutToggle } from "./components/CompactPropertyLayoutToggle";
 export type { ConnectionsOnlyToggleProps } from "./components/ConnectionsOnlyToggle";
@@ -19,6 +22,8 @@ export { useNodeViewActions } from "./hooks/useNodeViewActions";
 export type { FlowPortProps } from "./components/FlowPort";
 export { default as FlowView } from "./components/FlowView";
 export { NodeFormPopover } from "./components/NodeFormPopover";
+export { NODE_TYPE_VIEWS } from "./types";
+export type { NodeTypeView } from "./types";
 export { NodeIconPicker } from "./components/NodeIconPicker";
 export {
   DEFAULT_PALETTE,
@@ -41,6 +46,9 @@ export { ToolbarScrollContainer } from "./components/ToolbarScrollContainer";
 export { default as TooltipIconButton } from "./components/TooltipIconButton";
 export { WorkflowControls } from "./components/WorkflowControls";
 export { createFormNode } from "./core/createFormNode";
+export { createJsonStream, createJsonPlayback } from "./core/jsonStream";
+export { projectJsonPlaybackPreview } from "./core/jsonPlaybackPreview";
+export type { JsonStreamOptions, JsonPlaybackState } from "./core/jsonStream";
 export { applyFormChange, formValueError, readFormSchema } from "./core/forms";
 export {
   createFlowDocumentActions,

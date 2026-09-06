@@ -14,7 +14,7 @@ import { useCustomColors } from "../theme/useCustomColors";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
 import { ToolbarSelect, ToolbarDivider } from "./toolbarControls";
 
-const RangeInput = styled.input`
+export const RangeInput = styled.input`
   appearance: none;
   width: 100%;
   height: 24px;

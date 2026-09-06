@@ -1,0 +1,10 @@
+{
+  "root.first": {
+    "address": "root.steps.0.config",
+    "type": "DeliveryConfig"
+  },
+  "root.second": {
+    "address": "root.steps.1.config",
+    "type": "DeliveryConfig"
+  }
+}

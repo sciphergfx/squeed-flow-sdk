@@ -146,6 +146,16 @@ for (const rankDir of ["LR", "RL", "TB", "BT"] as const) {
       );
     };
     assert.ok(area(compact) < area(regular) * 0.8);
+    const horizontal = rankDir === "LR" || rankDir === "RL";
+    const axis = horizontal ? "y" : "x";
+    const dimension = horizontal ? "height" : "width";
+    const siblings = alignmentNodes.filter(
+      (node) => node.id === "narrow" || node.id === "wide",
+    );
+    const siblingGap =
+      Math.abs(compact.get("narrow")![axis] - compact.get("wide")![axis]) -
+      (siblings[0][dimension] + siblings[1][dimension]) / 2;
+    assert.ok(siblingGap >= 24, `Compact sibling gap is only ${siblingGap}`);
     for (const first of alignmentNodes)
       for (const second of alignmentNodes) {
         if (first.id === second.id) continue;

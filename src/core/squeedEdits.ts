@@ -23,6 +23,7 @@ export type SqueedJson = Record<string, any> | any[];
 
 /** Schema keys that live on a node */
 export type SqueedNodeKey =
+  | "$view"
   | "$label"
   | "$subtitle"
   | "$form"

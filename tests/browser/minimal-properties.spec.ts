@@ -32,7 +32,10 @@ for (const width of [1440, 390]) {
     await editedDialog
       .getByRole("spinbutton", { name: /^retries$/i })
       .fill("5");
-    await editedDialog.getByRole("group", { name: /^enabled$/i }).getByRole("button", { name: "No", exact: true }).click();
+    await editedDialog
+      .getByRole("group", { name: /^enabled$/i })
+      .getByRole("button", { name: "No", exact: true })
+      .click();
     const bounds = (await editedDialog.boundingBox())!;
     expect(bounds.x).toBeGreaterThanOrEqual(0);
     expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);

@@ -5,6 +5,26 @@ import {
   squeedAgentTools,
 } from "../../../backflow/backflow-admin/src/pages/sdk-test/squeedAgentLoop";
 
+test("Backflow generation is a separately opted-in model tool with scoped inputs", () => {
+  assert.equal(squeedAgentTools("demo").length, 72);
+  const tools = squeedAgentTools("demo", true);
+  assert.equal(tools.length, 73);
+  const generation = tools.find(
+    (tool) => tool.name === "route_post_squeed_generate_diagram",
+  )!;
+  assert.match(generation.description, /model credits/);
+  assert.deepEqual(
+    generation.input_schema.properties.body.properties.executionId,
+    { type: "string", const: "demo" },
+  );
+  assert.ok(
+    generation.input_schema.properties.body.required.includes("prompt"),
+  );
+  assert.ok(
+    generation.input_schema.properties.body.required.includes("requestId"),
+  );
+});
+
 test("agent loop supplies full schemas and returns every MCP reply with its assistant tool calls", async () => {
   const tools = squeedAgentTools("demo");
   assert.equal(tools.length, 72);

@@ -1,0 +1,16 @@
+{
+  "$label": "Make One Property Reusable",
+  "$hideRoot": true,
+  "first": {
+    "$label": "Email Receipt",
+    "$view": "icon-label",
+    "$icon": "PiEnvelope",
+    "$bgColor": "blue.500"
+  },
+  "second": {
+    "$label": "Email Reminder",
+    "$view": "icon-label",
+    "$icon": "PiBell",
+    "$bgColor": "yellow.600"
+  }
+}

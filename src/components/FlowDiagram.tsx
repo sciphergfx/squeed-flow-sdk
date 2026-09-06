@@ -18,6 +18,7 @@ import {
   resolveStateView,
 } from "../utils/formState";
 import BottomBar from "./BottomBar";
+import { NODE_TYPE_VIEWS, type NodeTypeView } from "../types";
 import { FlowDiagramProvider } from "./FlowDiagramContext";
 import FlowView from "./FlowView";
 
@@ -167,20 +168,21 @@ function FlowDiagramContent({
   const resolvedNodes: FlowDiagramNode[] = useMemo(() => {
     const source = compiled?.nodes ?? nodes ?? [];
     return source.map((node) => {
-      const labelBelow =
-        (json && getNode(json, node.data.id)?.$view === "icon-label") ||
-        node.data.config?.labelBelow;
+      const requestedView = json ? getNode(json, node.data.id)?.$view : node.data.config?.typeView;
+      const typeView: NodeTypeView | undefined = requestedView && NODE_TYPE_VIEWS.includes(requestedView) ? requestedView : undefined;
+      const labelBelow = typeView ? typeView === "icon-label" : node.data.config?.labelBelow;
+      const renderedType = typeView === "object" ? "objectView" : typeView === "text" ? "text" : labelBelow ? "arrayView" : node.data.type;
       const form =
         formSchema &&
         (forms
           ? resolveStateForm(forms.bindings, node.data.id, formSchema)
           : json && resolveFormNode(json, node.data.id, formSchema));
-      return form || labelBelow
+      return form || labelBelow || typeView
         ? {
             ...node,
             data: {
               ...node.data,
-              type: labelBelow ? "arrayView" : node.data.type,
+              type: renderedType,
               ...(forms
                 ? {
                     description: Object.fromEntries(
@@ -193,7 +195,7 @@ function FlowDiagramContent({
               config: {
                 ...node.data.config,
                 ...(form ? { form: true } : {}),
-                ...(labelBelow ? { labelBelow: true } : {}),
+                ...(typeView ? { typeView, labelBelow: !!labelBelow } : labelBelow ? { labelBelow: true } : {}),
               },
             },
           }

@@ -7,6 +7,7 @@ import {
   PiBoundingBox,
   PiEraser,
   PiFastForward,
+  PiImage,
   PiLineSegment,
   PiLineSegments,
   PiLineVerticalThin,
@@ -21,7 +22,7 @@ import { useNodeHasChildren } from "../hooks/useNodeHasChildren";
 import { getNodeBorderWidth } from "../nodes/nodeBorder";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
-import type { SelectionToolbarConfig } from "../types";
+import { NODE_TYPE_VIEWS, type NodeTypeView, type SelectionToolbarConfig } from "../types";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
 import { NodeIconPicker } from "./NodeIconPicker";
 import { AnimationVariantSelect } from "./AnimationVariantSelect";
@@ -456,12 +457,19 @@ export function NodeTools({
   ids: string[];
   onClose: () => void;
 }) {
-  const { callbacks, colorMode, themeColor, config } = useFlowDiagramContext();
+  const { callbacks, colorMode, themeColor, config, setNodeViewMode } = useFlowDiagramContext();
   const { colorText, colorInactive } = useCustomColors();
   const { nodeById, parentIds } = useFlowData();
   const { palette, show } = useToolbarConfig();
   const single = ids.length === 1;
   const data = single ? nodeById.get(ids[0])?.data : undefined;
+  const typeViews = ids.map(id => nodeById.get(id)?.data.config?.typeView ?? "");
+  const mixedTypeView = typeViews.some(view => view !== typeViews[0]);
+  const typeView = mixedTypeView ? "mixed" : typeViews[0] ?? "";
+  const customTypeView = ids.some(id => {
+    const node = nodeById.get(id)?.data;
+    return node && (parentIds.has(id) || node.config?.parentContainer || Object.prototype.hasOwnProperty.call(config.customViews ?? {}, node.type));
+  });
   const collapsed = data?.config?.collapsed;
   const hasChildren = useNodeHasChildren(ids[0]);
   const isOutlined = (id: string) =>
@@ -523,6 +531,27 @@ export function NodeTools({
         <Text fontSize="xs" color={colorText} whiteSpace="nowrap" px={1}>
           {ids.length} selected
         </Text>
+      )}
+      {show("typeView") && (
+        <ToolbarSelect
+          aria-label="Type view"
+          title={customTypeView ? "Type view is managed by the custom renderer or container" : `Type view: ${typeView || "None (default)"}`}
+          icon={<PiImage size={20} />}
+          style={{ width: 36 }}
+          value={typeView}
+          disabled={config.readOnly || config.editable === false || customTypeView}
+          onValueChange={value => {
+            if (!NODE_TYPE_VIEWS.includes(value as NodeTypeView)) return;
+            each(id => {
+              callbacks.onNodeTypeViewChange?.(id, (value || undefined) as NodeTypeView | undefined);
+              setNodeViewMode(id, "default");
+              callbacks.onNodeViewToggle?.(id);
+            });
+          }}
+        >
+          {mixedTypeView && <option value="mixed" disabled>Mixed</option>}
+          {NODE_TYPE_VIEWS.map(view => <option key={view} value={view}>{view || "None"}</option>)}
+        </ToolbarSelect>
       )}
       {show("style") && (
         <BorderRadiusControl key={ids.join("\u0000")} ids={ids} />

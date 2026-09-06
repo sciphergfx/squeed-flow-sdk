@@ -175,6 +175,7 @@ test("every catalog binding resolves to an existing SDK or implemented host meth
     "onFormSchemaChange",
     "resolveFormOptions",
     "onNodeViewModeChange",
+    "onNodeTypeViewChange",
     "onThemeColorChange",
     "onEdgeModeChange",
     "onEdgeRadiusChange",
@@ -216,8 +217,8 @@ test("generated routes share the publish workflow and have MCP-compatible field 
     ),
     manifest,
   );
-  assert.equal(manifest.routes.length, FLOW_COMMANDS.length);
-  assert.equal(manifest.workflows.length, 3);
+  assert.equal(manifest.routes.length, FLOW_COMMANDS.length + 1);
+  assert.equal(manifest.workflows.length, 4);
   for (const route of manifest.routes) {
     assert.equal(route.requireAuth, true);
     assert.equal(route.mcpEnabled, true);

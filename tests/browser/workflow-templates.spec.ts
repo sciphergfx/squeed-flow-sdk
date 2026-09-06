@@ -83,7 +83,7 @@ for (const width of [1440, 390])
       exact: true,
     });
     await expect(dialog.locator("summary")).toHaveText("Templates");
-    await expect(dialog.getByRole("option")).toHaveCount(15);
+    await expect(dialog.getByRole("option")).toHaveCount(18);
     await dialog.locator("summary").click();
     await expect(dialog.getByRole("listbox")).toBeHidden();
     await dialog.locator("summary").click();

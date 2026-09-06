@@ -1,0 +1,42 @@
+[
+          {
+                    "type": "overview",
+                    "context": "Compose source, bindings, design and schema as a version 1 package. Source is plain data; design holds appearance."
+          },
+          {
+                    "type": "properties",
+                    "context": "Schema maps interface names to kind: object and properties. Each property has type: {kind: string} and optional: false."
+          },
+          {
+                    "type": "bindings",
+                    "context": "A form binding maps a root.viewNode to a source address and schema type. View addresses and state addresses differ."
+          },
+          {
+                    "type": "collection",
+                    "context": "collection sets address, idField, typeField, propertiesField, labelField, subtitleFields, nodePrefix and types."
+          },
+          {
+                    "type": "design",
+                    "context": "Design version 1 needs defaults, types, nodes and mapping: {version: 1, fields: []}. Put icons and colors here."
+          },
+          {
+                    "type": "connections",
+                    "context": "Use edge-create with source, target, sourceProperty and targetProperty. Match schema ports. Auto mode shows all edges."
+          },
+          {
+                    "type": "dependencies",
+                    "context": "bindings.dependencies maps a source dependency-array field to output:name and input:name ports. References use stable IDs."
+          },
+          {
+                    "type": "resources",
+                    "context": "design.mapping.fields selects {type, field} for sharing. Referencing one resource shares edits. Export resolves values."
+          },
+          {
+                    "type": "commands",
+                    "context": "Use executionId and requestId. form-schema installs types; form-set edits values; configuration-replace applies a package."
+          },
+          {
+                    "type": "results",
+                    "context": "Command replies confirm publication only. Inspect/export results arrive in browser squeed:mcp-result events, not MCP replies."
+          }
+]
