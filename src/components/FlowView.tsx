@@ -671,6 +671,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           rankSep={rankSep}
           edgeSep={edgeSep}
           spacingFactor={spacingFactor}
+          compactSpacingScale={spacing}
           layoutDebounce={layoutDebounce}
           isPerformanceMode={isPerformanceMode}
           minZoom={config.minZoom ?? 0.01}

@@ -169,6 +169,29 @@ for (const rankDir of ["LR", "RL", "TB", "BT"] as const) {
         assert.ok(separated, `${first.id} overlaps ${second.id}`);
       }
   });
+  test(`${rankDir} compact spacing scales sibling and rank gaps with the preference`, () => {
+    const nodes = [
+      { id: "start", width: 100, height: 100 },
+      { id: "first", width: 100, height: 100 },
+      { id: "second", width: 100, height: 100 },
+    ];
+    const edges = [
+      { id: "to-first", source: "start", target: "first" },
+      { id: "to-second", source: "start", target: "second" },
+    ];
+    const horizontal = rankDir === "LR" || rankDir === "RL";
+    for (const scale of [0.5, 1, 2]) {
+      const positions = runDagreLayout(nodes, edges, {
+        rankDir, compact: true, compactSpacingScale: scale,
+        rankSep: 220, edgeSep: 250, nodeSep: 5, spacingFactor: 1.3,
+      });
+      const siblingAxis = horizontal ? "y" : "x";
+      const rankAxis = horizontal ? "x" : "y";
+      const first = positions.get("first")!, second = positions.get("second")!, start = positions.get("start")!;
+      assert.equal(Math.abs(first[siblingAxis] - second[siblingAxis]) - 102, 24 * scale);
+      assert.equal(Math.abs(first[rankAxis] - start[rankAxis]) - 102, 80 * scale);
+    }
+  });
 }
 
 for (const rankDir of ["LR", "RL", "TB", "BT"] as const) {

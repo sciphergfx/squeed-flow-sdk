@@ -83,6 +83,7 @@ export interface FlowDiagramEdge {
     sourceProperty?: string;
     targetProperty?: string;
     connection?: SqueedConnectionRef;
+    collapsedEndpoints?: { source: string; target: string };
     label?: string;
     icon?: string;
     /** Chakra token or hex; overrides the theme/edgeColor line color for this edge */

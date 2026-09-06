@@ -14,18 +14,21 @@ export function applyParentGroups(json: SqueedJson, graph: Graph): Graph {
   collect(json);
   if (!groupIds.size) return graph;
   const byId = new Map(graph.nodes.map((node) => [node.data.id, node]));
-  const hidden = (node: FlowDiagramNode) => {
+  const visibleEndpoint = (node: FlowDiagramNode) => {
+    let endpoint = node.data.id;
     const seen = new Set<string>([node.data.id]);
     let parent = node.data.parent;
     while (parent && !seen.has(parent)) {
-      if (getNode(json, parent)?.$collapsed) return true;
+      if (groupIds.has(parent) && byId.has(parent) && getNode(json, parent)?.$collapsed)
+        endpoint = parent;
       seen.add(parent);
       parent = byId.get(parent)?.data.parent;
     }
-    return false;
+    return endpoint;
   };
+  const endpoints = new Map(graph.nodes.map(node => [node.data.id, visibleEndpoint(node)]));
   const nodes = graph.nodes
-    .filter((node) => !hidden(node))
+    .filter((node) => endpoints.get(node.data.id) === node.data.id)
     .map((node) => {
       if (!groupIds.has(node.data.id)) return node;
       const source = getNode(json, node.data.id);
@@ -49,8 +52,24 @@ export function applyParentGroups(json: SqueedJson, graph: Graph): Graph {
   const ids = new Set(nodes.map((node) => node.data.id));
   return {
     nodes,
-    edges: graph.edges.filter(
-      (edge) => ids.has(edge.data.source) && ids.has(edge.data.target),
-    ),
+    edges: graph.edges.flatMap(edge => {
+      const source = endpoints.get(edge.data.source);
+      const target = endpoints.get(edge.data.target);
+      if (!source || !target || !ids.has(source) || !ids.has(target)) return [];
+      if (source === edge.data.source && target === edge.data.target) return [edge];
+      if (source === target) return [];
+      return [{
+        ...edge,
+        data: {
+          ...edge.data,
+          source,
+          target,
+          collapsedEndpoints: edge.data.collapsedEndpoints ?? {
+            source: edge.data.source,
+            target: edge.data.target,
+          },
+        },
+      }];
+    }),
   };
 }

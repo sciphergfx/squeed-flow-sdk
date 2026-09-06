@@ -22,6 +22,7 @@ export interface LayoutEdgeInput {
 export interface LayoutOptions {
   rankDir: "LR" | "RL" | "TB" | "BT";
   compact?: boolean;
+  compactSpacingScale?: number;
   nodeAlignment?: NodeAlignment;
   rankSep: number;
   edgeSep: number;
@@ -45,7 +46,7 @@ export function runDagreLayout(
     if (n.parent && ids.has(n.parent)) parents.add(n.parent);
 
   const g = new dagre.graphlib.Graph({ multigraph: true, compound: true });
-  const compactScale = opts.spacingFactor > 0 ? opts.spacingFactor / 1.3 : 1;
+  const compactScale = opts.compactSpacingScale ?? (opts.spacingFactor > 0 ? opts.spacingFactor / 1.3 : 1);
   g.setGraph({
     rankdir: opts.rankDir,
     nodesep: opts.compact

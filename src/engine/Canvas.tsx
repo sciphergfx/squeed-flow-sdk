@@ -89,6 +89,7 @@ export interface CanvasProps {
   rankSep: number;
   edgeSep: number;
   spacingFactor?: number;
+  compactSpacingScale?: number;
   layoutDebounce: number;
   isPerformanceMode: boolean;
   minZoom: number;
@@ -182,6 +183,7 @@ function Canvas(props: CanvasProps) {
     rankSep,
     edgeSep,
     spacingFactor = 1.3,
+    compactSpacingScale,
     minZoom,
     maxZoom,
     initialViewport,
@@ -378,6 +380,7 @@ function Canvas(props: CanvasProps) {
         edgeSep: p.edgeSep,
         nodeSep: 5,
         spacingFactor: p.spacingFactor ?? 1.3,
+        compactSpacingScale: p.compactSpacingScale,
       });
     } catch (err) {
       console.warn("[flow-sdk] layout failed", err);
@@ -445,6 +448,7 @@ function Canvas(props: CanvasProps) {
     edgeSep,
     scheduleLayout,
     spacingFactor,
+    compactSpacingScale,
   ]);
 
   useEffect(

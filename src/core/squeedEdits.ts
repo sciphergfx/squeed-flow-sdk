@@ -151,6 +151,7 @@ export interface RenderedEdgeRef extends FlowEdgeProperties {
   target: string;
   isInverted?: boolean | null;
   connection?: SqueedConnectionRef;
+  collapsedEndpoints?: { source: string; target: string };
 }
 
 /**
@@ -164,8 +165,9 @@ export function resolveEdgeOwner(edge: RenderedEdgeRef): {
 } {
   if (edge.connection)
     return { address: edge.connection.address, kind: "connection" };
-  const src = edge.isInverted ? edge.target : edge.source;
-  const tgt = edge.isInverted ? edge.source : edge.target;
+  const endpoints = edge.collapsedEndpoints ?? edge;
+  const src = edge.isInverted ? endpoints.target : endpoints.source;
+  const tgt = edge.isInverted ? endpoints.source : endpoints.target;
   const a = addressToPath(src).join("."),
     b = addressToPath(tgt).join(".");
   if (b.startsWith(a ? a + "." : "") && b !== a)
@@ -563,12 +565,12 @@ export function compileSqueed(
       (edge) => nodeIds.has(edge.data.source) && nodeIds.has(edge.data.target),
     ),
   );
-  const collapsedPaths = outNodes
+  const grouped = applyParentGroups(json, { nodes: outNodes, edges: outEdges });
+  const collapsedPaths = grouped.nodes
     .filter((node) => node.data.config?.collapsed)
     .map((node) => addressToPath(node.data.id));
-  if (!collapsedPaths.length)
-    return applyParentGroups(json, { nodes: outNodes, edges: outEdges });
-  const visibleNodes = outNodes.filter((node) => {
+  if (!collapsedPaths.length) return grouped;
+  const visibleNodes = grouped.nodes.filter((node) => {
     const path = addressToPath(node.data.id);
     return !collapsedPaths.some(
       (parent) =>
@@ -577,13 +579,13 @@ export function compileSqueed(
     );
   });
   const visibleIds = new Set(visibleNodes.map((node) => node.data.id));
-  return applyParentGroups(json, {
+  return {
     nodes: visibleNodes,
-    edges: outEdges.filter(
+    edges: grouped.edges.filter(
       (edge) =>
         visibleIds.has(edge.data.source) && visibleIds.has(edge.data.target),
     ),
-  });
+  };
 }
 
 /**
