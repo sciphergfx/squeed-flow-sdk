@@ -70,7 +70,8 @@ function declaredPorts(
     const separator = id.indexOf(":");
     const kind = id.slice(0, separator);
     const name = id.slice(separator + 1);
-    if (separator > 0 && name && (kind === "output" || kind === "error")) ports[name] = { kind };
+    if (separator > 0 && name && (kind === "output" || kind === "error"))
+      ports[name] = { kind };
   }
   return ports;
 }

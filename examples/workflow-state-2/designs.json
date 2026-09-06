@@ -1,31 +1,178 @@
 {
-  "nodes": {
-    "step_agent_act": { "$view": "object", "$content": "Drive the browser session.\n\nReturn **status** and **summary** for the session result." }
-  },
-  "presets": [
-    { "id": "minimal", "label": "Minimal", "design": {
-      "root": { "$hideRoot": true }, "hideParentEdges": true,
-      "mapping": { "version": 1, "fields": [{ "type": "CastLlmConfig", "field": "prompt" }] }
-    } },
-    { "id": "groups", "label": "Step Groups", "design": {
-      "groups": [
-        { "id": "session", "node": { "$label": "Session", "$icon": "PiDatabase", "$collapsed": false }, "members": ["step_find", "step_mark_running", "step_announce_running"] },
-        { "id": "browser", "node": { "$label": "Browser", "$icon": "PiBrowser", "$collapsed": false }, "members": ["step_launch", "step_navigate", "step_stream", "step_agent_act", "step_stop_cast", "tools"] },
-        { "id": "reporting", "node": { "$label": "Reporting", "$icon": "PiBroadcast", "$collapsed": false }, "members": ["step_normalize_status", "step_announce", "step_link", "step_notify", "step_notify_passed", "step_notify_failed", "step_link_cast", "step_route_output"] }
-      ],
-      "mapping": { "version": 1, "fields": [{ "type": "CastLlmConfig", "field": "prompt" }, { "type": "CastLlmConfig", "field": "model", "createEmpty": true }] }
-    } },
-    { "id": "tools", "label": "Reusable Tools", "design": {
-      "resourceMode": "split",
-      "nodes": { "tools": { "$label": "Reusable Tools", "$icon": "PiWrench" } },
-      "mapping": { "version": 1, "fields": [{ "type": "CastLlmConfig", "field": "prompt" }, { "type": "CastLlmConfig", "field": "model", "createEmpty": true }, { "type": "CastNotificationConfig", "field": "templateData" }] }
-    } },
-    { "id": "data", "label": "Data Inspection", "design": {
-      "root": { "$hideRoot": true }, "hideParentEdges": true,
-      "mapping": { "version": 1, "templates": true, "fields": [{ "type": "CastDatabaseConfig", "field": "data" }, { "type": "CastOutputConfig", "field": "mapping" }] }
-    } },
-    { "id": "full", "label": "Full Bindings", "design": {
-      "mapping": { "version": 1, "templates": true, "fields": [{ "type": "CastLlmConfig", "field": "prompt" }, { "type": "CastLlmConfig", "field": "model", "createEmpty": true }, { "type": "CastDatabaseConfig", "field": "data" }] }
-    } }
-  ]
+          "nodes": {
+                    "step_agent_act": {
+                              "$view": "object",
+                              "$content": "Drive the browser session.\n\nReturn **status** and **summary** for the session result."
+                    }
+          },
+          "presets": [
+                    {
+                              "id": "minimal",
+                              "label": "Minimal",
+                              "design": {
+                                        "root": {
+                                                  "$hideRoot": true
+                                        },
+                                        "hideParentEdges": true,
+                                        "mapping": {
+                                                  "version": 1,
+                                                  "fields": [
+                                                            {
+                                                                      "type": "CastLlmConfig",
+                                                                      "field": "prompt"
+                                                            }
+                                                  ]
+                                        }
+                              }
+                    },
+                    {
+                              "id": "groups",
+                              "label": "Step Groups",
+                              "design": {
+                                        "groups": [
+                                                  {
+                                                            "id": "session",
+                                                            "node": {
+                                                                      "$label": "Session",
+                                                                      "$icon": "PiDatabase",
+                                                                      "$collapsed": false
+                                                            },
+                                                            "members": [
+                                                                      "step_find",
+                                                                      "step_mark_running",
+                                                                      "step_announce_running"
+                                                            ]
+                                                  },
+                                                  {
+                                                            "id": "browser",
+                                                            "node": {
+                                                                      "$label": "Browser",
+                                                                      "$icon": "PiBrowser",
+                                                                      "$collapsed": false
+                                                            },
+                                                            "members": [
+                                                                      "step_launch",
+                                                                      "step_navigate",
+                                                                      "step_stream",
+                                                                      "step_agent_act",
+                                                                      "step_stop_cast",
+                                                                      "tools"
+                                                            ]
+                                                  },
+                                                  {
+                                                            "id": "reporting",
+                                                            "node": {
+                                                                      "$label": "Reporting",
+                                                                      "$icon": "PiBroadcast",
+                                                                      "$collapsed": false
+                                                            },
+                                                            "members": [
+                                                                      "step_normalize_status",
+                                                                      "step_announce",
+                                                                      "step_link",
+                                                                      "step_notify",
+                                                                      "step_notify_passed",
+                                                                      "step_notify_failed",
+                                                                      "step_link_cast",
+                                                                      "step_route_output"
+                                                            ]
+                                                  }
+                                        ],
+                                        "mapping": {
+                                                  "version": 1,
+                                                  "fields": [
+                                                            {
+                                                                      "type": "CastLlmConfig",
+                                                                      "field": "prompt"
+                                                            },
+                                                            {
+                                                                      "type": "CastLlmConfig",
+                                                                      "field": "model",
+                                                                      "createEmpty": true
+                                                            }
+                                                  ]
+                                        }
+                              }
+                    },
+                    {
+                              "id": "tools",
+                              "label": "Reusable Tools",
+                              "design": {
+                                        "resourceMode": "split",
+                                        "nodes": {
+                                                  "tools": {
+                                                            "$label": "Reusable Tools",
+                                                            "$icon": "PiWrench"
+                                                  }
+                                        },
+                                        "mapping": {
+                                                  "version": 1,
+                                                  "fields": [
+                                                            {
+                                                                      "type": "CastLlmConfig",
+                                                                      "field": "prompt"
+                                                            },
+                                                            {
+                                                                      "type": "CastLlmConfig",
+                                                                      "field": "model",
+                                                                      "createEmpty": true
+                                                            },
+                                                            {
+                                                                      "type": "CastNotificationConfig",
+                                                                      "field": "templateData"
+                                                            }
+                                                  ]
+                                        }
+                              }
+                    },
+                    {
+                              "id": "data",
+                              "label": "Data Inspection",
+                              "design": {
+                                        "root": {
+                                                  "$hideRoot": true
+                                        },
+                                        "hideParentEdges": true,
+                                        "mapping": {
+                                                  "version": 1,
+                                                  "templates": true,
+                                                  "fields": [
+                                                            {
+                                                                      "type": "CastDatabaseConfig",
+                                                                      "field": "data"
+                                                            },
+                                                            {
+                                                                      "type": "CastOutputConfig",
+                                                                      "field": "mapping"
+                                                            }
+                                                  ]
+                                        }
+                              }
+                    },
+                    {
+                              "id": "full",
+                              "label": "Full Bindings",
+                              "design": {
+                                        "mapping": {
+                                                  "version": 1,
+                                                  "templates": true,
+                                                  "fields": [
+                                                            {
+                                                                      "type": "CastLlmConfig",
+                                                                      "field": "prompt"
+                                                            },
+                                                            {
+                                                                      "type": "CastLlmConfig",
+                                                                      "field": "model",
+                                                                      "createEmpty": true
+                                                            },
+                                                            {
+                                                                      "type": "CastDatabaseConfig",
+                                                                      "field": "data"
+                                                            }
+                                                  ]
+                                        }
+                              }
+                    }
+          ]
 }

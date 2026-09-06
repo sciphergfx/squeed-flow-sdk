@@ -1,19 +1,53 @@
 {
-  "version": 1,
-  "defaults": { "$view": "icon-label" },
-  "types": {
-    "database": { "$icon": "PiDatabase", "$bgColor": "blue.600" },
-    "browser": { "$icon": "PiBrowser", "$bgColor": "teal.600" },
-    "llm": { "$icon": "PiRobot", "$bgColor": "gray.700" },
-    "transform": { "$icon": "PiArrowsClockwise", "$bgColor": "cyan.700" },
-    "emit_event": { "$icon": "PiBroadcast", "$bgColor": "green.700" },
-    "notification": { "$icon": "PiBell", "$bgColor": "pink.700" },
-    "output": { "$icon": "PiExport", "$bgColor": "gray.600" }
-  },
-  "nodes": {
-    "trigger": { "$icon": "PiPlay", "$bgColor": "teal.700" },
-    "tools": { "$label": "Tools", "$view": "icon-label", "$icon": "PiWrench", "$bgColor": "gray.600" }
-  },
-  "resourceMode": "compact",
-  "mapping": { "version": 1, "fields": [] }
+          "version": 1,
+          "defaults": {
+                    "$view": "icon-label"
+          },
+          "types": {
+                    "database": {
+                              "$icon": "PiDatabase",
+                              "$bgColor": "blue.600"
+                    },
+                    "browser": {
+                              "$icon": "PiBrowser",
+                              "$bgColor": "teal.600"
+                    },
+                    "llm": {
+                              "$icon": "PiRobot",
+                              "$bgColor": "gray.700"
+                    },
+                    "transform": {
+                              "$icon": "PiArrowsClockwise",
+                              "$bgColor": "cyan.700"
+                    },
+                    "emit_event": {
+                              "$icon": "PiBroadcast",
+                              "$bgColor": "green.700"
+                    },
+                    "notification": {
+                              "$icon": "PiBell",
+                              "$bgColor": "pink.700"
+                    },
+                    "output": {
+                              "$icon": "PiExport",
+                              "$bgColor": "gray.600"
+                    }
+          },
+          "nodes": {
+                    "trigger": {
+                              "$icon": "PiPlay",
+                              "$bgColor": "teal.700"
+                    },
+                    "tools": {
+                              "$label": "Tools",
+                              "$view": "icon-label",
+                              "$icon": "PiWrench",
+                              "$bgColor": "gray.600"
+                    }
+          },
+          "resourceMode": "compact",
+          "mapping": {
+                    "version": 1,
+                    "fields": []
+          }
 }

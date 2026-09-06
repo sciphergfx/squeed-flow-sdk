@@ -1483,7 +1483,10 @@ function Canvas(props: CanvasProps) {
           <g
             ref={setLabelLayer}
             className="flow-sdk-labels"
-            style={{ pointerEvents: drawMode ? "none" : "visiblePainted", outline: "none" }}
+            style={{
+              pointerEvents: drawMode ? "none" : "visiblePainted",
+              outline: "none",
+            }}
           />
         </g>
       </svg>

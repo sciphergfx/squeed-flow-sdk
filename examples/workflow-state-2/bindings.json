@@ -1,34 +1,70 @@
 {
-  "version": 1,
-  "title": "root.workflow.name",
-  "exportAddress": "root.workflow",
-  "nodes": {
-    "trigger": { "address": "root.workflow", "type": "CastWorkflow", "label": "name", "subtitle": ["trigger"] }
-  },
-  "collection": {
-    "address": "root.workflow.steps",
-    "idField": "id",
-    "typeField": "type",
-    "propertiesField": "config",
-    "labelField": "name",
-    "subtitleFields": ["condition", "config.action", "config.operation", "type"],
-    "nodePrefix": "step_",
-    "types": {
-      "database": "CastDatabaseConfig",
-      "browser": "CastBrowserConfig",
-      "llm": "CastLlmConfig",
-      "transform": "CastTransformConfig",
-      "emit_event": "CastEventConfig",
-      "notification": "CastNotificationConfig",
-      "output": "CastOutputConfig"
-    },
-    "fields": {
-      "prompt": { "$control": "textarea" },
-      "tools": { "$options": { "$source": "callback", "$dependsOn": ["root.tools"] } }
-    }
-  },
-  "dependencies": { "field": "dependsOn", "sourceProperty": "output:output", "targetProperty": "input:input", "trigger": "trigger", "labelField": "condition" },
-  "resources": [
-    { "field": "config.tools", "registry": "tools", "type": "CastToolConfig", "registryType": "CastToolRegistry", "targetProperty": "config:tools", "nodePrefix": "tool_", "sourceProperty": "output:resource", "connectionPrefix": "tool" }
-  ]
+          "version": 1,
+          "title": "root.workflow.name",
+          "exportAddress": "root.workflow",
+          "nodes": {
+                    "trigger": {
+                              "address": "root.workflow",
+                              "type": "CastWorkflow",
+                              "label": "name",
+                              "subtitle": [
+                                        "trigger"
+                              ]
+                    }
+          },
+          "collection": {
+                    "address": "root.workflow.steps",
+                    "idField": "id",
+                    "typeField": "type",
+                    "propertiesField": "config",
+                    "labelField": "name",
+                    "subtitleFields": [
+                              "condition",
+                              "config.action",
+                              "config.operation",
+                              "type"
+                    ],
+                    "nodePrefix": "step_",
+                    "types": {
+                              "database": "CastDatabaseConfig",
+                              "browser": "CastBrowserConfig",
+                              "llm": "CastLlmConfig",
+                              "transform": "CastTransformConfig",
+                              "emit_event": "CastEventConfig",
+                              "notification": "CastNotificationConfig",
+                              "output": "CastOutputConfig"
+                    },
+                    "fields": {
+                              "prompt": {
+                                        "$control": "textarea"
+                              },
+                              "tools": {
+                                        "$options": {
+                                                  "$source": "callback",
+                                                  "$dependsOn": [
+                                                            "root.tools"
+                                                  ]
+                                        }
+                              }
+                    }
+          },
+          "dependencies": {
+                    "field": "dependsOn",
+                    "sourceProperty": "output:output",
+                    "targetProperty": "input:input",
+                    "trigger": "trigger",
+                    "labelField": "condition"
+          },
+          "resources": [
+                    {
+                              "field": "config.tools",
+                              "registry": "tools",
+                              "type": "CastToolConfig",
+                              "registryType": "CastToolRegistry",
+                              "targetProperty": "config:tools",
+                              "nodePrefix": "tool_",
+                              "sourceProperty": "output:resource",
+                              "connectionPrefix": "tool"
+                    }
+          ]
 }

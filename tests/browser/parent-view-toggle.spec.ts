@@ -194,7 +194,10 @@ for (const width of [1440, 390]) {
         exact: true,
       });
       await expect(collapse).toBeVisible();
-      await expect(page.locator(".flow-sdk-labels")).toHaveCSS("outline-style", "none");
+      await expect(page.locator(".flow-sdk-labels")).toHaveCSS(
+        "outline-style",
+        "none",
+      );
       await page.screenshot({
         path: test.info().outputPath("selected-parent.png"),
       });

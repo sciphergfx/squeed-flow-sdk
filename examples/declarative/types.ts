@@ -6,16 +6,36 @@ export interface DiagramBindings {
   version: 1;
   title: string;
   exportAddress: string;
-  nodes: Record<string, { address: string; type: string; label?: string; subtitle?: string[] }>;
+  nodes: Record<
+    string,
+    { address: string; type: string; label?: string; subtitle?: string[] }
+  >;
   collection: {
-    address: string; idField: string; typeField: string; propertiesField: string;
-    labelField: string; subtitleFields: string[]; nodePrefix: string;
-    types: Record<string, string>; fields?: StateFormBinding["fields"];
+    address: string;
+    idField: string;
+    typeField: string;
+    propertiesField: string;
+    labelField: string;
+    subtitleFields: string[];
+    nodePrefix: string;
+    types: Record<string, string>;
+    fields?: StateFormBinding["fields"];
   };
-  dependencies?: { field: string; sourceProperty: string; targetProperty: string; trigger?: string; labelField?: string };
+  dependencies?: {
+    field: string;
+    sourceProperty: string;
+    targetProperty: string;
+    trigger?: string;
+    labelField?: string;
+  };
   resources?: {
-    field: string; registry: string; type: string; registryType: string;
-    targetProperty: string; nodePrefix: string; sourceProperty: string;
+    field: string;
+    registry: string;
+    type: string;
+    registryType: string;
+    targetProperty: string;
+    nodePrefix: string;
+    sourceProperty: string;
     connectionPrefix?: string;
   }[];
 }
