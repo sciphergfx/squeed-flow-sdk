@@ -164,6 +164,9 @@ for (const width of [1440, 390]) {
         )
         .toBeLessThanOrEqual(82);
       await page
+        .getByRole("button", { name: "Close selection tools", exact: true })
+        .click();
+      await page
         .getByRole("button", { name: "Reset zoom", exact: true })
         .click();
       await compact.locator("[data-flow-node-surface]").click();
