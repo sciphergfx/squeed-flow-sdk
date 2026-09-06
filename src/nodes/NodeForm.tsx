@@ -483,7 +483,16 @@ export function NodeForm({ nodeAddress }: { nodeAddress: string }) {
     useContext(FormDocumentContext);
   const { readOnly, config } = useFlowDiagramContext();
   const rendered = renderForm?.(nodeAddress);
-  if (rendered !== undefined) return <fieldset data-flow-form={nodeAddress} disabled={readOnly || config.editable === false || !editable} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>{rendered}</fieldset>;
+  if (rendered !== undefined)
+    return (
+      <fieldset
+        data-flow-form={nodeAddress}
+        disabled={readOnly || config.editable === false || !editable}
+        style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}
+      >
+        {rendered}
+      </fieldset>
+    );
   if (!data)
     return <Fields role="alert">Forms require a JSON document.</Fields>;
   const bound = bindings

@@ -14,33 +14,53 @@ async function choose(page: Page, name: string) {
 }
 
 for (const width of [1440, 390])
-  test(`template switches restore ordinary connections and use a spaced toolbar caret at ${width}px`, async ({ page }) => {
+  test(`template switches restore ordinary connections and use a spaced toolbar caret at ${width}px`, async ({
+    page,
+  }) => {
     await page.setViewportSize({ width, height: 950 });
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(process.env.SDK_TEST_URL!);
-    await page.getByRole("combobox", { name: "Example dataset", exact: true }).click();
-    const directory = page.getByRole("dialog", { name: "Example dataset", exact: true });
+    await page
+      .getByRole("combobox", { name: "Example dataset", exact: true })
+      .click();
+    const directory = page.getByRole("dialog", {
+      name: "Example dataset",
+      exact: true,
+    });
     const heading = directory.locator("summary");
     await expect(heading).toHaveCSS("gap", "8px");
     await expect(heading.locator("svg")).toHaveAttribute("width", "16");
     await expect(heading.locator("svg")).toHaveCSS("transform", "none");
     await heading.press("Enter");
     await expect(directory.getByRole("listbox")).toBeHidden();
-    await expect(heading.locator("svg")).toHaveCSS("transform", "matrix(-1, 0, 0, -1, 0, 0)");
+    await expect(heading.locator("svg")).toHaveCSS(
+      "transform",
+      "matrix(-1, 0, 0, -1, 0, 0)",
+    );
     await heading.press("Enter");
-    await directory.getByRole("option", { name: "Mixed Views", exact: true }).click();
+    await directory
+      .getByRole("option", { name: "Mixed Views", exact: true })
+      .click();
     const canvas = page.locator(".flow-sdk-canvas");
     await expect(canvas).toHaveAttribute("data-edge-mode", "auto");
     await expect(page.locator(".flow-sdk-edge")).toHaveCount(7);
-    for (const workflow of ["Workflow State 2", "Workflow State 3", "Conditional Workflow"]) {
+    for (const workflow of [
+      "Workflow State 2",
+      "Workflow State 3",
+      "Conditional Workflow",
+    ]) {
       await choose(page, workflow);
       await expect(canvas).toHaveAttribute("data-edge-mode", "properties");
       await choose(page, "Mixed Views");
       await expect(canvas).toHaveAttribute("data-edge-mode", "auto");
       await expect(page.locator(".flow-sdk-edge")).toHaveCount(7);
-      await expect(page.locator('.flow-sdk-edge[data-edge-id="text-object"]')).toBeAttached();
+      await expect(
+        page.locator('.flow-sdk-edge[data-edge-id="text-object"]'),
+      ).toBeAttached();
     }
-    await page.screenshot({ path: `/tmp/squeed-template-connections-${width}.png` });
+    await page.screenshot({
+      path: `/tmp/squeed-template-connections-${width}.png`,
+    });
   });
 
 for (const width of [1440, 390])

@@ -118,7 +118,12 @@ export interface CanvasProps {
     targetId: string,
     properties?: FlowEdgeProperties,
   ) => void;
-  onDrawIntoSpace?: (sourceId: string, modelPos: Point, sourceProperty?: string, reverse?: boolean) => void;
+  onDrawIntoSpace?: (
+    sourceId: string,
+    modelPos: Point,
+    sourceProperty?: string,
+    reverse?: boolean,
+  ) => void;
 }
 
 const TAXI_DIR: Record<CanvasProps["direction"], TaxiDir> = {
@@ -380,7 +385,8 @@ function Canvas(props: CanvasProps) {
     }
     for (const [id, position] of placedNodes.current) {
       if (target.has(id)) target.set(id, position);
-      else if (!p.nodes.some(node => node.id === id)) placedNodes.current.delete(id);
+      else if (!p.nodes.some((node) => node.id === id))
+        placedNodes.current.delete(id);
     }
     if (hasLayoutRunRef.current && !p.isPerformanceMode) animateTo(target);
     else {
@@ -834,9 +840,17 @@ function Canvas(props: CanvasProps) {
       getNodeBox: (id) => boxFor(id),
       setNodePosition: (id, position) => {
         if (!positionsRef.current.has(id)) return false;
-        if (position && (!Number.isFinite(position.x) || !Number.isFinite(position.y))) return false;
+        if (
+          position &&
+          (!Number.isFinite(position.x) || !Number.isFinite(position.y))
+        )
+          return false;
         cancelAnim();
-        if (!position) { placedNodes.current.delete(id); scheduleLayout(); return true; }
+        if (!position) {
+          placedNodes.current.delete(id);
+          scheduleLayout();
+          return true;
+        }
         const next = new Map(positionsRef.current);
         next.set(id, { ...position });
         placedNodes.current.set(id, { ...position });

@@ -67,19 +67,23 @@ export function NodeFormPopover({
   const dialog = useRef<HTMLDialogElement>(null);
   const id = useId();
   const { data, schema, bindings } = useContext(FormDocumentContext);
-  const available = children !== undefined || !!(
-    data &&
-    schema &&
-    (bindings
-      ? resolveStateForm(bindings, nodeAddress, schema)
-      : resolveFormNode(data, nodeAddress, schema))
-  );
+  const available =
+    children !== undefined ||
+    !!(
+      data &&
+      schema &&
+      (bindings
+        ? resolveStateForm(bindings, nodeAddress, schema)
+        : resolveFormNode(data, nodeAddress, schema))
+    );
   useEffect(() => {
     if (!active || !available || !open) {
       dialog.current?.close();
     } else if (!dialog.current?.open) {
       dialog.current?.showModal();
-      dialog.current?.querySelector<HTMLInputElement>("[data-form-filter] input")?.focus();
+      dialog.current
+        ?.querySelector<HTMLInputElement>("[data-form-filter] input")
+        ?.focus();
     }
   }, [active, available, open]);
   const surface = getChakraColorHex(background);
@@ -146,8 +150,15 @@ export function NodeFormPopover({
                     />
                   </form>
                 </div>
-                {filter && <div data-form-filter="" style={{ flexShrink: 0 }}>{filter}</div>}
-                <FormContent data-form-scroll="" style={height ? { flex: 1 } : undefined}>
+                {filter && (
+                  <div data-form-filter="" style={{ flexShrink: 0 }}>
+                    {filter}
+                  </div>
+                )}
+                <FormContent
+                  data-form-scroll=""
+                  style={height ? { flex: 1 } : undefined}
+                >
                   {children ?? <NodeForm nodeAddress={nodeAddress} />}
                 </FormContent>
               </>

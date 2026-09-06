@@ -85,6 +85,7 @@ export function ToolbarSelect({
   title,
   icon,
   popupContent,
+  labelCase = "title",
   "aria-label": label,
 }: {
   children: ReactNode;
@@ -95,6 +96,7 @@ export function ToolbarSelect({
   title?: string;
   icon?: ReactNode;
   popupContent?: ReactNode;
+  labelCase?: "title" | "preserve";
   "aria-label": string;
 }) {
   const { colorMode } = useFlowDiagramContext();
@@ -124,7 +126,7 @@ export function ToolbarSelect({
       return {
         value: String(props.value),
         label:
-          typeof props.children === "string"
+          typeof props.children === "string" && labelCase === "title"
             ? startCase(props.children)
             : props.children,
         disabled: props.disabled,

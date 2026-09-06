@@ -19,12 +19,12 @@ types for TypeScript raw imports. The interface is parsed, never executed.
 
 ## Four Small Inputs
 
-| Input | Purpose | What to change |
-| --- | --- | --- |
-| [state.json](state.json) | Plain application values under `step` | Your objects and initial property values |
+| Input                                  | Purpose                                             | What to change                                   |
+| -------------------------------------- | --------------------------------------------------- | ------------------------------------------------ |
+| [state.json](state.json)               | Plain application values under `step`               | Your objects and initial property values         |
 | [minimal-view.json](minimal-view.json) | Node appearance, labels, preview, visual connection | Node keys, icons, colors, and display references |
-| [bindings.json](bindings.json) | Associates a view node with state and a form type | View-node address, state address, interface name |
-| [interface.ts](interface.ts) | Types for generated form fields | Property names, types, and optionality |
+| [bindings.json](bindings.json)         | Associates a view node with state and a form type   | View-node address, state address, interface name |
+| [interface.ts](interface.ts)           | Types for generated form fields                     | Property names, types, and optionality           |
 
 The essential binding is:
 

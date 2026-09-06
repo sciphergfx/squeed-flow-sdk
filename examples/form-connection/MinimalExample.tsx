@@ -18,13 +18,23 @@ export default function MinimalExample() {
 
   useEffect(() => {
     let active = true;
-    const file = new File([interfaceSource], "interface.ts", { type: "text/plain" });
-    const types = [...new Set(Object.values(bindings).map(binding => binding.type))];
+    const file = new File([interfaceSource], "interface.ts", {
+      type: "text/plain",
+    });
+    const types = [
+      ...new Set(Object.values(bindings).map((binding) => binding.type)),
+    ];
     readFormSchema(file, types).then(
-      value => { if (active) setSchema(value); },
-      cause => { if (active) setError(String(cause)); },
+      (value) => {
+        if (active) setSchema(value);
+      },
+      (cause) => {
+        if (active) setError(String(cause));
+      },
     );
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (error) return <p role="alert">{error}</p>;
@@ -35,7 +45,12 @@ export default function MinimalExample() {
       <FlowDiagram
         json={view}
         forms={{ state, bindings, onStateChange: setState }}
-        config={{ formSchema: schema, direction: "LR", edgeMode: "auto", editable: true }}
+        config={{
+          formSchema: schema,
+          direction: "LR",
+          edgeMode: "auto",
+          editable: true,
+        }}
         callbacks={{ onJsonChange: setView }}
       />
     </div>
