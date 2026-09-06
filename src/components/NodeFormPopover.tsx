@@ -106,7 +106,7 @@ export function NodeFormPopover({
               background: surface,
               color: getChakraColorHex(colorText),
               boxShadow: `0 0 0 8px color-mix(in srgb, ${surface} 60%, transparent)`,
-              fontSize: 14,
+              fontSize: 16,
               textTransform: "none",
             }}
           >

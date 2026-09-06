@@ -1,0 +1,98 @@
+import { Flex } from "@chakra-ui/react";
+import { useState } from "react";
+import NodeView from "./NodeView";
+import { CompactNodeView } from "./CompactNodeView";
+import { EditableContent } from "./EditableContent";
+import { getNodeBorderProps } from "./nodeBorder";
+import { getColorVars, calculateUniformKeyWidth, OBJECT_VALUE_WIDTH, OBJECT_BORDER_WIDTH } from "./objectViewTheme";
+import { useObjectInspection } from "./useObjectInspection";
+import { ObjectNodeHeader } from "./ObjectNodeHeader";
+import { ObjectPropertyTable } from "./ObjectPropertyTable";
+
+export const ObjectNodeView = (props) => {
+  const { themeColor, colorMode, direction, objVisible, setObjVisible, inspecting, resourcePorts, form, description, inspectionPorts, extraPorts } = useObjectInspection(props);
+  const [iconVisible, setIconVisible] = useState(false);
+  const canShowNativeIcon = !props.onShowIcon && !props.data.config?.parentContainer && typeof props.data.config?.content !== "string";
+  const onShowNativeIcon = canShowNativeIcon ? () => setIconVisible(true) : undefined;
+  if (canShowNativeIcon && iconVisible) return <CompactNodeView {...props}
+    data={{ ...props.data, label: props.data.label ?? props.data.headerTitle, config: { ...props.data.config, labelBelow: true, icon: props.data.config?.icon || "PiBracketsCurly" } }}
+    onExpand={() => setIconVisible(false)} />;
+  return (
+    <NodeView {...props} data={{ ...props.data, description }}>
+      {({ id, data, isActive, isEditing, onEditStart, onEditEnd }) => {
+        const colors = getColorVars(data, themeColor, colorMode);
+        const headerTitle = data.label ?? data.headerTitle;
+        const hasConfig = Object.entries(data.description || {}).length > 0;
+        const uniformKeyWidth = calculateUniformKeyWidth(data.description);
+        const icon = props.data?.config?.icon;
+        const content = props.data?.config?.content;
+        const hasContent = typeof content === "string" && !props.onShowIcon;
+        const borderProps = getNodeBorderProps(
+          data?.viewProps,
+          colors.hexborderColor,
+          isActive,
+          OBJECT_BORDER_WIDTH,
+        );
+
+        return (
+          <Flex
+            justifyContent="space-between"
+            {...data?.viewProps}
+            data-flow-node-surface=""
+            direction="column"
+            p={0}
+            borderRadius={data?.viewProps?.borderRadius}
+            overflow="hidden"
+            alignItems="center"
+            style={{
+              backgroundColor: colors.hexbgColor,
+              transition: "border-color 0.2s ease-in-out",
+            }}
+            width="100%"
+            minW={
+              hasContent || props.onShowIcon
+                ? uniformKeyWidth +
+                  OBJECT_VALUE_WIDTH +
+                  borderProps.borderWidth * 2
+                : undefined
+            }
+            {...borderProps}
+          >
+            <Flex
+              width="100%"
+              direction="column"
+              borderRadius={data?.viewProps?.borderRadius}
+              borderColor={colors.hexborderColor}
+              borderWidth={0}
+              overflow="hidden"
+            >
+              <ObjectNodeHeader {...{ headerTitle, hasContent, data, icon, colors, hasConfig, id, isActive, isEditing, onEditStart, onEditEnd, props, objVisible, setObjVisible, onShowNativeIcon }} />
+              {hasContent && !objVisible ? (
+                <Flex
+                  w="100%"
+                  overflow="auto"
+                  justifyContent="start"
+                  background={colors.highlightColor}
+                  p={12}
+                  fontSize="5xl"
+                  lineHeight="normal"
+                >
+                  <EditableContent
+                    nodeId={id}
+                    content={content}
+                    color={data?.viewProps?.textColor || colors.hextextColor}
+                  />
+                </Flex>
+              ) : (
+                <ObjectPropertyTable {...{ data, resourcePorts, inspecting, form, inspectionPorts, extraPorts, colors, direction, uniformKeyWidth }} />
+              )}
+            </Flex>
+          </Flex>
+        );
+      }}
+    </NodeView>
+  );
+};
+
+ObjectNodeView.displayName = "NodeJsonObjectView";
+

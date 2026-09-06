@@ -20,6 +20,7 @@ import {
 /** What changed in the Squeed document (delivered alongside the new JSON) */
 export interface SqueedChange {
   type:
+    | "documentReplace"
     | "form"
     | "nodeLabel"
     | "nodeContent"

@@ -1,4 +1,5 @@
 import type { ParentNodeStyle } from "../types";
+import { getInteractionShadow } from "../theme/interactionShadow";
 
 export function getNodeBorderWidth(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0
@@ -17,17 +18,10 @@ export function getNodeBorderProps(
   isActive: boolean,
   defaultWidth: number,
 ) {
-  const styled =
-    viewProps?.outline === true ||
-    !!viewProps?.borderColor ||
-    viewProps?.borderStyle !== undefined ||
-    viewProps?.borderWidth !== undefined;
   return {
-    borderColor: isActive && !styled ? "white" : color,
+    borderColor: color,
     borderWidth: getNodeBorderWidth(viewProps?.borderWidth, defaultWidth),
     borderStyle: viewProps?.borderStyle ?? "solid",
-    outline: isActive && styled ? "3px solid white" : undefined,
-    outlineOffset: "3px",
-    _hover: { borderColor: styled ? color : "white" },
+    ...getInteractionShadow(color === "transparent" ? "currentColor" : color, isActive, ".flow-sdk-node:hover &", !isActive),
   };
 }

@@ -3,6 +3,8 @@
 // Main component
 export { default as BottomBar } from "./components/BottomBar";
 export { DiagramAppearanceControls } from "./components/DiagramAppearanceControls";
+export { ConnectionsOnlyToggle } from "./components/ConnectionsOnlyToggle";
+export type { ConnectionsOnlyToggleProps } from "./components/ConnectionsOnlyToggle";
 export { ErrorToast } from "./components/ErrorToast";
 export { FlowDiagram } from "./components/FlowDiagram";
 export {
@@ -12,6 +14,7 @@ export {
 } from "./components/FlowDiagramContext";
 export type { FlowDiagramContextValue } from "./components/FlowDiagramContext";
 export { FlowPort } from "./components/FlowPort";
+export { useNodeViewActions } from "./hooks/useNodeViewActions";
 export type { FlowPortProps } from "./components/FlowPort";
 export { default as FlowView } from "./components/FlowView";
 export { NodeFormPopover } from "./components/NodeFormPopover";
@@ -38,6 +41,8 @@ export { default as TooltipIconButton } from "./components/TooltipIconButton";
 export { WorkflowControls } from "./components/WorkflowControls";
 export { createFormNode } from "./core/createFormNode";
 export { applyFormChange, formValueError, readFormSchema } from "./core/forms";
+export { createFlowDocumentActions, parseFlowDocument } from "./core/documentActions";
+export type { FlowDocumentActionOptions } from "./core/documentActions";
 export type {
   FormBinding,
   FormChange,
@@ -142,6 +147,7 @@ export type {
   NodeAlignment,
   NodeOverlayAction,
   NodeOverlayProps,
+  NodeSelectionModifiers,
   NodeSpacing,
   ParentNodeStyle,
   SelectedEdgeToolbarProps,

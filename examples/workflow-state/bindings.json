@@ -50,14 +50,14 @@
                               "model": {
                                         "$options": {
                                                   "$source": "callback",
-                                                  "$dependsOn": []
+                                                  "$dependsOn": ["root.models"]
                                         }
                               },
                               "memory": {
                                         "$label": "Knowledge Base",
                                         "$options": {
                                                   "$source": "callback",
-                                                  "$dependsOn": []
+                                                  "$dependsOn": ["root.memorySources"]
                                         }
                               },
                               "tools": {
@@ -88,6 +88,9 @@
                               }
                     }
           },
+          "root.model": { "address": "root.models.example-model", "type": "ModelConfig" },
+          "root.knowledgeMemory": { "address": "root.memorySources.knowledge_entry", "type": "MemoryConfig" },
+          "root.supportMemory": { "address": "root.memorySources.support_qa", "type": "MemoryConfig" },
           "root.directoryTool": {
                     "address": "root.tools.directory_lookup",
                     "type": "ToolConfig",

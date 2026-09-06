@@ -48,6 +48,8 @@ export interface FlowEngine {
   focusNode(id: string, padding?: number, animate?: boolean): void;
   /** Fit laid-out hierarchy descendants and outgoing reachable nodes. Does not expand collapsed nodes. Animate overrides config.animateViewport. */
   focusBranch(id: string, padding?: number, animate?: boolean): void;
+  focusConnections(id: string, padding?: number, animate?: boolean): void;
+  isolateConnections(id: string, padding?: number, animate?: boolean): void;
   /** Temporarily show only this branch and fit it, preserving graph data. */
   isolateBranch(id: string, padding?: number, animate?: boolean): void;
   /** End isolation and restore the viewport saved when isolation began. */

@@ -7,9 +7,10 @@ import { useCustomColors } from "../theme/useCustomColors";
 import { resolveStateForm } from "../utils/formState";
 import { FormDocumentContext } from "./NodeForm";
 
-export function NodeConfigSummary({ nodeAddress }: { nodeAddress: string }) {
+export function NodeConfigSummary({ nodeAddress, expanded = false }: { nodeAddress: string; expanded?: boolean }) {
   const { data, schema, bindings } = useContext(FormDocumentContext);
   const { colorText, background } = useCustomColors();
+  if (bindings?.[nodeAddress]?.portResources) return null;
   const form = bindings && resolveStateForm(bindings, nodeAddress, schema);
   if (!data || !form) return null;
   const state = getNode(data, form.address);
@@ -58,7 +59,8 @@ export function NodeConfigSummary({ nodeAddress }: { nodeAddress: string }) {
               style={{
                 overflow: "hidden",
                 textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
+                whiteSpace: expanded ? "pre-wrap" : "nowrap",
+                overflowWrap: expanded ? "anywhere" : undefined,
               }}
             >
               {text}

@@ -28,6 +28,9 @@ const displayView = useMemo(
     onJsonChange: setView,
     onFormChange: onExampleFormChange,
     resolveFormOptions: resolveExampleOptions,
+    onEdgeDelete: (_id, edge) => {
+      if (edge) setState(current => removeWorkflowResourceReference(current, edge));
+    },
   }}
 />;
 ```
@@ -67,11 +70,22 @@ Tools live in `state.tools`, keyed by stable ID. Steps reference those IDs in
 its configuration. Each tool has its own node and `ToolConfig` form. Removing
 a tool from a step removes its resource link, not the shared tool.
 
+Models and memory sources follow the same pattern in `state.models` and
+`state.memorySources`. They have `ModelConfig` and `MemoryConfig` nodes;
+`config.model` and `config.memory` reference their IDs. Selector labels read
+shared state, so renaming a resource updates every referring step's choices.
+
 Prompts and instructions live in `state.texts` and render as editable content
 nodes, not tool forms. Steps store `promptId` and `instructionIds`. Inline text
 and title edits update the referenced state value while preserving `$state`
 references. The example projection derives dashed links and bottom/top ports
 from these IDs; it does not execute the workflow.
+
+Deleting a projected resource edge calls `removeWorkflowResourceReference`
+from `callbacks.ts`. It removes only the matching step reference (one ID from
+an array, or the scalar field), so projection cannot recreate the edge. The
+shared resource and references from other steps remain intact. SDK Test wires
+this callback for toolbar and keyboard deletion; reconnect behavior is unchanged.
 
 Bindings are explicit and need not share addresses with state. The host must
 update index-based bindings if it reorders steps. Removing a visual node does
@@ -84,8 +98,13 @@ This is an editing example, not an executable integration. HTTP endpoints are
 local examples and model/tool choices are local samples, not fetched tenant resources.
 LLM `memory` represents the existing editor's entity-type knowledge context.
 The backend executor still owns condition evaluation, branch dispatch and full
-validation. The interface exposes the supported config subset, not arbitrary
-JSON, complete backend refinements or all workflow step types.
+validation. This interface exposes an illustrative config subset, not complete
+backend refinements or all workflow step types. **Config Catalog** uses the
+full current editor interface for all enabled step configs; see
+[../workflow-form/README.md](../workflow-form/README.md) for coverage and readiness.
+Neither example defines a production resource payload: tools use a local map
+rather than the executor's tool registry, and model/text/memory IDs still need
+host-owned resolution before execution.
 
 Form callbacks receive only independent state. Dependent edits are applied as
 one state update; Squeed metadata is rejected. Display changes emit

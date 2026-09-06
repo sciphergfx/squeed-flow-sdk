@@ -13,8 +13,12 @@
     "Select controls accept advanced values, so their type is string; options remain in this manifest.",
     "Conditionally required fields are optional in the merged interface; showWhen is preserved here, not enforced by structural validation.",
     "Dynamic tool params/custom step config cannot be enumerated without runtime schemas.",
-    "Supported projection explicitly omits unsupported members; it is not full-form validation."
+    "Supported projection explicitly omits unsupported members; it is not full-form validation.",
+    "The supported WorkflowForm.trigger enum is a deliberate example-only refinement, not the full editor trigger contract."
   ],
+  "projectionOverrides": {
+    "WorkflowForm.trigger": "\"manual\" | \"schedule\" | \"webhook\" | \"event\""
+  },
   "enabledStepTypes": [
     "http",
     "custom",

@@ -6,6 +6,7 @@ export interface FlowPortProps {
   role: "source" | "target";
   side?: PortSide;
   position?: number;
+  placement?: "config";
   children?: ReactNode;
   style?: CSSProperties;
 }
@@ -15,6 +16,7 @@ export function FlowPort({
   role,
   side,
   position = 0.5,
+  placement,
   children,
   style,
 }: FlowPortProps) {
@@ -24,6 +26,7 @@ export function FlowPort({
       data-flow-port-role={role}
       data-flow-port-side={side}
       data-flow-port-position={side ? position : undefined}
+      data-flow-port-placement={placement}
       style={{
         minHeight: 32,
         display: "flex",

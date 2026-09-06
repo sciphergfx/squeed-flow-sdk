@@ -224,8 +224,8 @@ test("hierarchy, inverted hierarchy and target edge edits affect only their owne
     assert.equal(edited.parent.child.$sourceLabel, "child link");
     assert.equal(edited.source, document.source);
     assert.deepEqual(removeEdge(edited, edge), {
-      json: edited,
-      removed: false,
+      json: { ...edited, parent: { ...edited.parent, child: { ...edited.parent.child, $hideParentEdge: true } } },
+      removed: true,
     });
   }
   const linked = addTargetEdge(document, "root.source", "root.target", "calls");

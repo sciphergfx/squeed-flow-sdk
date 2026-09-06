@@ -1,8 +1,11 @@
 import { memo } from "react";
+import { PiCircleFill } from "react-icons/pi";
+import { ToolbarIconButton, ToolbarTooltip } from "../components/toolbarControls";
 import { createPortal } from "react-dom";
 import { NodeBorderAnimation } from "./NodeBorderAnimation";
 import { EDGE_LABEL_FONT_FAMILY, measureText } from "./text";
 import type { Rect } from "./types";
+import type { NodeSelectionModifiers } from "../types";
 
 export interface ContainerStyle {
   /** hex */
@@ -30,7 +33,9 @@ export interface ContainerViewProps {
   label?: string;
   labelLayer?: SVGGElement | null;
   style: ContainerStyle;
-  onSelect?: (id: string) => void;
+  onSelect?: (id: string, modifiers?: NodeSelectionModifiers) => void;
+  onCollapse?: (id: string) => void;
+  selected?: boolean;
 }
 
 const stop = (e: { stopPropagation(): void }) => e.stopPropagation();
@@ -42,6 +47,8 @@ function ContainerView({
   labelLayer,
   style,
   onSelect,
+  onCollapse,
+  selected = false,
 }: ContainerViewProps) {
   const w = rect.x2 - rect.x1;
   const h = rect.y2 - rect.y1;
@@ -64,8 +71,13 @@ function ContainerView({
     ? measureText(label, `bold ${style.fontSize}px ${EDGE_LABEL_FONT_FAMILY}`)
     : 0;
   const padding = style.fontSize / 5;
-  const labelElement = label ? (
+  const labelElement = label || (selected && onCollapse) ? (
     <g className="flow-sdk-container-label" data-node-id={id}>
+      {selected && onCollapse && <foreignObject x={label ? cx + labelWidth / 2 + padding : rect.x2 - 56} y={label ? labelY - 24 : rect.y1 + 8} width={48} height={48} data-flow-content-toggle="" style={{ pointerEvents: "auto" }}>
+        <ToolbarTooltip label="Show icon"><ToolbarIconButton aria-label="Show icon" icon={<PiCircleFill />} variant="ghost"
+          style={{ width: 48, height: 48, color: style.textColor }} onClick={event => { event.stopPropagation(); onCollapse(id); }} /></ToolbarTooltip>
+      </foreignObject>}
+      {label && <>
       <rect
         x={cx - labelWidth / 2 - padding}
         y={labelY - style.fontSize / 2 - padding}
@@ -85,6 +97,7 @@ function ContainerView({
       >
         {label}
       </text>
+      </>}
     </g>
   ) : null;
 
@@ -95,7 +108,7 @@ function ContainerView({
       onPointerDown={stop}
       onClick={(e) => {
         e.stopPropagation();
-        onSelect?.(id);
+        onSelect?.(id, { shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, altKey: e.altKey });
       }}
     >
       <rect

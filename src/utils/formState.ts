@@ -10,6 +10,9 @@ import { getNode, type SqueedJson } from "../core/squeedEdits";
 export interface StateFormBinding {
   address: string;
   type: string;
+  schemaType?: string;
+  portResources?: Record<string, string>;
+  resourceType?: string;
   fields?: Record<string, FormFieldConfig>;
 }
 

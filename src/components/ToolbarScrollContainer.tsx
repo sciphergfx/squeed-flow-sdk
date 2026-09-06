@@ -1,5 +1,6 @@
 import { Box } from "@chakra-ui/react";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { getInteractionShadow } from "../theme/interactionShadow";
 
 export function ToolbarScrollContainer({
   children,
@@ -45,7 +46,7 @@ export function ToolbarScrollContainer({
       borderColor={border}
       borderWidth={1}
       borderRadius="30px"
-      boxShadow={`0 0 0 8px color-mix(in srgb, ${color} 60%, transparent)`}
+      {...getInteractionShadow(color)}
     >
       <Box
         ref={scrollRef}

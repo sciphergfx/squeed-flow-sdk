@@ -183,13 +183,29 @@ side="bottom" position={0.5} />` inside the node. `side` accepts `top`, `right`,
 `bottom`, or `left`; `position` ranges from 0 to 1 and defaults to the midpoint.
 Top/bottom positions run left to right; left/right positions run top to bottom.
 The handle and connector attach to the marked outline, including SVG slopes.
-These ports work in normal node mode as well as Properties mode. Omitting
+These ports work in Auto and Properties modes. Omitting
 `side` retains the existing property-row behavior.
 
 Built-in views accept the same declarations in `data.config.ports` or JSON
 `$ports`, for example `[{ "id": "prompt", "role": "target", "side": "top" }]`.
 Connections identify these ports using `sourceProperty` and `targetProperty`.
 Read-only mode and disabled edge handles continue to prevent dragging.
+
+`config.edgeMode` controls visibility: `"auto"` (default) shows both normal
+node edges and property/port edges; `"nodes"` shows only edges without property
+endpoints; `"properties"` shows only edges with `sourceProperty` or
+`targetProperty`. `"workflow"` remains an alias for `"nodes"`. Switching modes
+does not remove saved edges or change the graph used for layout by default.
+
+Set `config.compactPropertyLayout: true` to re-layout and fit only visible
+nodes and edges in Properties mode and in isolated views (including Auto and
+Nodes modes). Hidden nodes and connections no longer reserve layout space or
+influence edge routes. This flag defaults to `false`; SDK Test enables it.
+In SDK Test, use **Control examples > Layout > Compact property layout** to
+toggle it without editing code.
+Leaving Properties mode or restoring an isolated view restores the applicable
+full layout. Saved graph data is unchanged. Without the flag, isolation keeps
+the existing node positions.
 
 ## Maintainer Guide
 
@@ -199,6 +215,77 @@ The SDK Test **Form Connection** dataset loads
 [TypeScript interface](examples/form-connection/interface.ts). Double-click
 **Generated Form** to edit the separate state shown by the State JSON node.
 The test page preloads the bundled interface; manual uploads can replace it.
+
+**Config Catalog** covers all 25 enabled Backflow step types with independently
+bound, reusable configuration nodes. The full editor interface retains all
+138 declared config fields, including JSON and dictionaries. This is form
+coverage, not production execution validation. See the
+[coverage and readiness checks](examples/workflow-form/README.md).
+
+**Workflow State 2** loads the supplied
+[Run Cast Session workflow](examples/workflow-state-2/workflow.json) as a
+separate local dataset, with 16 step forms and 23 reusable tools. Its
+[view generator](examples/workflow-state-2/example.ts) renders all tools in one
+Object View node, with a distinct output port and connection identity per tool.
+Its `portResources` binding maps those ports to individual state entries.
+Forms edit `config`; the original `params`, `input`, and other
+workflow fields are retained independently. Dependency links initialize the
+view from `dependsOn`; diagram edits are not a production deployment adapter.
+
+SDK Test's **Forms** popover exposes **Reusable configuration** after an
+interface upload, or when a static mapping is configured. Choose an interface
+and check the inline fields to lift into resource nodes. Object values use
+Object View; compact form-bound nodes expose a floating dot to reveal their
+properties, and the object header dot returns to the icon.
+
+SDK Test fits the switched node or parent after layout completes. Its
+`focusOptions` prop controls both click focus and dot-switch focus:
+
+```tsx
+<SDKTest focusOptions={{ animate: true, padding: 90 }} />
+```
+
+These are the defaults; `animate: false` makes the fit immediate, and `padding`
+is in screen pixels. The SDK itself does not auto-focus on dot switches.
+`callbacks.onNodeViewToggle(nodeId)` notifies a client of a dot action; clients
+can queue `engine.focusNode(nodeId, padding, animate)` for `onLayoutComplete`.
+
+Object rows with an empty string value and an attached property connection
+show a full-width label without an empty value cell. Other fields retain both
+columns, and row order, port identities, and saved values are unchanged.
+
+The [mapping adapter](examples/workflow-state/resourceMapping.ts) uses the same
+JSON-serializable definition for static setup and popover edits:
+
+```ts
+const resourceMappings = {
+  "workflow-state-2": {
+    version: 1 as const,
+    templates: true,
+    fields: [
+      { type: "CastLlmConfig", field: "prompt" },
+      { type: "CastLlmConfig", field: "model", createEmpty: true },
+      { type: "CastDatabaseConfig", field: "data" },
+    ],
+  },
+};
+
+<SDKTest resourceMappings={resourceMappings} />;
+```
+
+These are also the static defaults for Workflow State 2. An empty Model resource
+does not add a model value to exported configuration until configured. Resource
+forms retain their source interface through `StateFormBinding.schemaType`, so
+reuploading the original interface does not require generated type declarations.
+The popover imports/exports mapping JSON and exports a resolved workflow;
+unmapping restores current resource values inline. Existing annotated resource
+ports stay separate from user-selected inline mappings.
+
+`templates` exposes runtime variables as Object View nodes and links step-output
+references to their consuming property rows. Expressions are parsed, never
+evaluated or rewritten; both sides of fallback expressions are represented.
+Collapsing a node retains its links, and deleted template links are not restored
+merely by rerendering. Runtime variable values are not fabricated.
 
 [examples/squeed.json](examples/squeed.json) is an expandable diagram for new
 maintainers: setup, architecture, data ownership, UI code, change recipes,
@@ -317,7 +404,7 @@ sliders are exposed together through `DiagramAppearanceControls`.
 
 ### Named Ports In Custom Views
 
-Use `FlowPort` inside a custom node component with `config.edgeMode: "properties"`
+Use `FlowPort` inside a custom node component with `config.edgeMode: "auto"` or `"properties"`
 and `config.edgeHandles: true`. Port IDs must be unique within a node.
 
 ```tsx

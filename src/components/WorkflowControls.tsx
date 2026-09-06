@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { PiTable, PiTreeStructure, PiUploadSimple, PiX } from "react-icons/pi";
+import { PiGraph, PiTable, PiTreeStructure, PiUploadSimple, PiX } from "react-icons/pi";
 import { readFormSchema } from "../core/forms";
 import { connectionIssue } from "../core/workflowContract";
 import { readWorkflowInterface } from "../core/workflowInterface";
@@ -59,12 +59,16 @@ export function WorkflowControls({
       <ToolbarSelect
         aria-label="Edge mode"
         title={
-          edgeMode === "properties"
+          edgeMode === "auto"
+            ? "Connections: Auto"
+            : edgeMode === "properties"
             ? "Connections: Properties"
             : "Connections: Nodes"
         }
         icon={
-          edgeMode === "properties" ? (
+          edgeMode === "auto" ? (
+            <PiGraph size={20} />
+          ) : edgeMode === "properties" ? (
             <PiTable size={20} />
           ) : (
             <PiTreeStructure size={20} />
@@ -74,16 +78,17 @@ export function WorkflowControls({
         value={edgeMode}
         disabled={readOnly}
         onValueChange={(value) => {
-          const mode = value === "properties" ? "properties" : "nodes";
+          const mode = value === "auto" ? "auto" : value === "properties" ? "properties" : "nodes";
           setEdgeMode(mode);
           callbacks.onEdgeModeChange?.(mode);
         }}
       >
+        <option value="auto">Auto</option>
         <option value="nodes">Nodes</option>
         <option value="properties">Properties</option>
       </ToolbarSelect>
       <span
-        style={{ display: edgeMode === "properties" ? "contents" : "none" }}
+        style={{ display: edgeMode === "auto" || edgeMode === "properties" ? "contents" : "none" }}
       >
         <ToolbarTooltip
           label={
@@ -119,16 +124,16 @@ export function WorkflowControls({
               const loaded = bindings
                 ? await readFormSchema(file, [
                     ...new Set(
-                      Object.values(bindings).map((binding) => binding.type),
+                      Object.values(bindings).map((binding) => binding.schemaType ?? binding.type),
                     ),
                   ])
                 : undefined;
               if (bindings && loaded) {
                 for (const binding of Object.values(bindings))
                   if (
-                    !Object.prototype.hasOwnProperty.call(loaded, binding.type)
+                    !Object.prototype.hasOwnProperty.call(loaded, binding.schemaType ?? binding.type)
                   )
-                    throw new Error(`Missing form type: ${binding.type}`);
+                    throw new Error(`Missing form type: ${binding.schemaType ?? binding.type}`);
               }
               const { contract, schema: nextSchema } =
                 bindings && loaded
@@ -139,7 +144,7 @@ export function WorkflowControls({
                         nodes: Object.fromEntries(
                           Object.entries(bindings).map(([address, binding]) => [
                             address,
-                            { type: loaded[binding.type], optional: false },
+                            { type: loaded[binding.schemaType ?? binding.type], optional: false },
                           ]),
                         ),
                       },

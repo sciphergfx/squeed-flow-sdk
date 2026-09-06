@@ -8,13 +8,14 @@ const colors = {
   $borderColor: "borderColor",
 } as const;
 
-export function recolorGraph(
-  previous: SqueedJson,
-  next: SqueedJson,
-  graph: Graph,
-): Graph | undefined {
-  if (previous === next) return graph;
+function colorChanges(previous: SqueedJson, next: SqueedJson) {
   const changed = new Map<string, Record<string, string>>();
+  const equal = (before: any, after: any): boolean => {
+    if (Object.is(before, after)) return true;
+    if (!before || !after || typeof before !== "object" || typeof after !== "object" || Array.isArray(before) !== Array.isArray(after)) return false;
+    const keys = Object.keys(before);
+    return keys.length === Object.keys(after).length && keys.every(key => Object.prototype.hasOwnProperty.call(after, key) && equal(before[key], after[key]));
+  };
   const compare = (before: any, after: any, address: string): boolean => {
     if (before === after) return true;
     if (
@@ -27,7 +28,7 @@ export function recolorGraph(
       return false;
     const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
     for (const key of keys) {
-      if (Object.is(before[key], after[key])) continue;
+      if (equal(before[key], after[key])) continue;
       if (Object.prototype.hasOwnProperty.call(colors, key)) {
         if (typeof after[key] !== "string" || !after[key]) return false;
         changed.set(address, {
@@ -47,6 +48,21 @@ export function recolorGraph(
     return true;
   };
   if (!compare(previous, next, "root")) return undefined;
+  return changed;
+}
+
+export function isColorOnlyUpdate(previous: SqueedJson, next: SqueedJson): boolean {
+  return colorChanges(previous, next) !== undefined;
+}
+
+export function recolorGraph(
+  previous: SqueedJson,
+  next: SqueedJson,
+  graph: Graph,
+): Graph | undefined {
+  if (previous === next) return graph;
+  const changed = colorChanges(previous, next);
+  if (!changed) return undefined;
   const ids = new Set(graph.nodes.map((node) => node.data.id));
   for (const address of changed.keys()) {
     if (!ids.has(address) || !getNode(next, address)) return undefined;

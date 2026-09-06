@@ -264,7 +264,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           targetProperty: data.targetProperty,
           label: data.label,
           validationIssue:
-            edgeMode === "properties" && workflowContract
+            (edgeMode === "auto" || edgeMode === "properties") &&
+            (data.sourceProperty !== undefined || data.targetProperty !== undefined) && workflowContract
               ? connectionIssue(workflowContract, data)
               : undefined,
           color: data.color ? getChakraColorHex(data.color) : lineColor,
@@ -312,7 +313,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         const isParentContainer =
           parentIds.has(node.data.id) && !node.data.parent;
         const nodeLabel = isParentContainer
-          ? node.data.label || node.data.headerTitle || "Container"
+          ? node.data.label ?? node.data.headerTitle ?? "Container"
           : undefined;
         const ViewComponent = isParentContainer
           ? Views.parentContainer
@@ -557,6 +558,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   // Tap on empty canvas clears node and edge selection
   const handleBackgroundTap = useCallback(() => {
     setBackgroundSelected(true);
+    callbacks.onBackgroundClick?.();
     if (selectedNodeIdsRef.current.length) {
       setSelectedNodeIds([]);
       callbacks.onNodeDeselect?.();
@@ -583,9 +585,9 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   );
 
   const handleContainerSelect = useCallback(
-    (id: string) => {
+    (id: string, modifiers?: import("../types").NodeSelectionModifiers) => {
       setSelectedNodeIds([id]);
-      callbacks.onNodeSelect?.(id, nodeByIdRef.current.get(id)?.data ?? { id });
+      callbacks.onNodeSelect?.(id, nodeByIdRef.current.get(id)?.data ?? { id }, modifiers);
     },
     [callbacks, setSelectedNodeIds],
   );
@@ -631,7 +633,10 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           edges={canvasEdges}
           direction={layoutDirection}
           nodeAlignment={nodeAlignment}
+          onContainerCollapse={id => { callbacks.onNodeCollapse?.(id, true); callbacks.onNodeViewToggle?.(id); }}
+          selectedNodeIds={selectedNodeIds}
           edgeMode={edgeMode}
+          compactPropertyLayout={config.compactPropertyLayout}
           edgeType={config.edgeType}
           edgeRadius={edgeRadius}
           customEdgeTypes={config.customEdgeTypes}

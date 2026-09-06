@@ -1,7 +1,7 @@
 import { Box } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
 import { resolveFormNode } from "../core/forms";
-import { recolorGraph } from "../core/recolorGraph";
+import { isColorOnlyUpdate, recolorGraph } from "../core/recolorGraph";
 import { bindSqueedCallbacks } from "../core/squeedBinding";
 import { compileSqueed, getNode } from "../core/squeedEdits";
 import { NODE_BORDER_ANIMATION_STYLES } from "../engine/NodeBorderAnimation";
@@ -20,7 +20,7 @@ import BottomBar from "./BottomBar";
 import { FlowDiagramProvider } from "./FlowDiagramContext";
 import FlowView from "./FlowView";
 
-const FLOW_SDK_STYLES = `.flow-sdk-canvas{position:relative;width:100%;height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none}.flow-sdk-svg{position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible;display:block}.flow-sdk-nodes{position:absolute;top:0;left:0;transform-origin:0 0;pointer-events:none;will-change:transform;backface-visibility:hidden;z-index:10}.flow-sdk-node{position:absolute;top:0;left:0;transform-origin:0 0;pointer-events:auto;will-change:transform;backface-visibility:hidden;z-index:10}.flow-sdk-node input,.flow-sdk-node textarea{pointer-events:auto;user-select:text;-webkit-user-select:text;cursor:text}.flow-sdk-edge-hit{fill:none;stroke:transparent;stroke-width:24px;vector-effect:non-scaling-stroke;pointer-events:stroke;cursor:pointer}.flow-sdk-container{cursor:pointer}.flow-sdk-edge-anim{animation:flow-sdk-dash .5s linear infinite}.flow-sdk-edge-anim-rev{animation-direction:reverse}@keyframes flow-sdk-dash{to{stroke-dashoffset:-50}}.flow-sdk-draw{cursor:crosshair}.flow-sdk-draw .flow-sdk-node,.flow-sdk-draw .flow-sdk-node input,.flow-sdk-draw .flow-sdk-node textarea,.flow-sdk-draw .flow-sdk-edge,.flow-sdk-draw .flow-sdk-container{pointer-events:none}.flow-sdk-perf.flow-sdk-busy .flow-sdk-edges{display:none}.flow-sdk-box{position:absolute;border:1px solid rgba(170,170,170,.9);background:rgba(221,221,221,.25);pointer-events:none;z-index:20}`;
+const FLOW_SDK_STYLES = `.flow-sdk-canvas{position:relative;width:100%;height:100%;overflow:clip;user-select:none;-webkit-user-select:none;touch-action:none}.flow-sdk-svg{position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible;display:block}.flow-sdk-nodes{position:absolute;top:0;left:0;transform-origin:0 0;pointer-events:none;will-change:transform;backface-visibility:hidden;z-index:10}.flow-sdk-node{position:absolute;top:0;left:0;transform-origin:0 0;pointer-events:auto;will-change:transform;backface-visibility:hidden;z-index:10}.flow-sdk-node input,.flow-sdk-node textarea{pointer-events:auto;user-select:text;-webkit-user-select:text;cursor:text}.flow-sdk-edge-hit{fill:none;stroke:transparent;stroke-width:24px;vector-effect:non-scaling-stroke;pointer-events:stroke;cursor:pointer}.flow-sdk-container{cursor:pointer}.flow-sdk-edge-anim{animation:flow-sdk-dash .5s linear infinite}.flow-sdk-edge-anim-rev{animation-direction:reverse}@keyframes flow-sdk-dash{to{stroke-dashoffset:-50}}.flow-sdk-draw{cursor:crosshair}.flow-sdk-draw .flow-sdk-node,.flow-sdk-draw .flow-sdk-node input,.flow-sdk-draw .flow-sdk-node textarea,.flow-sdk-draw .flow-sdk-edge,.flow-sdk-draw .flow-sdk-container{pointer-events:none}.flow-sdk-perf.flow-sdk-busy .flow-sdk-edges{display:none}.flow-sdk-box{position:absolute;border:1px solid rgba(170,170,170,.9);background:rgba(221,221,221,.25);pointer-events:none;z-index:20}`;
 
 let stylesInjected = false;
 function injectStyles() {
@@ -43,8 +43,13 @@ export function FlowDiagram({
   ...props
 }: FlowDiagramProps) {
   const [prepared, setPrepared] = useState<FlowDiagramProps | null>(null);
-  const pending = prepared === null || prepared.json !== props.json;
+  const colorOnly = useMemo(() => !!prepared?.json && !!props.json && isColorOnlyUpdate(prepared.json, props.json), [prepared?.json, props.json]);
+  const pending = prepared === null || (prepared.json !== props.json && !colorOnly);
   const busy = loading || pending;
+
+  useEffect(() => {
+    if (!loading && colorOnly && prepared?.json !== props.json) setPrepared(props);
+  }, [loading, colorOnly, prepared?.json, props.json]);
 
   useEffect(() => {
     if (loading || !pending) return;

@@ -8,6 +8,7 @@ export interface PropertyRow {
   height: number;
   role?: "source" | "target";
   anchor?: PortAnchor;
+  placement?: "config";
 }
 
 export function measurePropertyRows(host: HTMLElement): PropertyRow[] {
@@ -21,10 +22,12 @@ export function measurePropertyRows(host: HTMLElement): PropertyRow[] {
     w: host.offsetWidth,
     h: host.offsetHeight,
   };
-  return [
-    ...host.querySelectorAll<HTMLElement>("[data-flow-property]"),
-  ].flatMap((element) => {
+  const elements = [...host.querySelectorAll<HTMLElement>("[data-flow-property]")];
+  const inspectionIds = new Set(elements.filter(element => element.hasAttribute("data-flow-inspection-row") && element.getBoundingClientRect().height > 0)
+    .map(element => element.dataset.flowProperty));
+  return elements.flatMap((element) => {
     if (element.closest(".flow-sdk-node") !== host) return [];
+    if (inspectionIds.has(element.dataset.flowProperty) && !element.hasAttribute("data-flow-inspection-row")) return [];
     const side = element.dataset.flowPortSide;
     if (side && ["top", "right", "bottom", "left"].includes(side)) {
       const anchor = shapePort(
@@ -38,6 +41,7 @@ export function measurePropertyRows(host: HTMLElement): PropertyRow[] {
           top: anchor.y,
           height: 0,
           anchor,
+          ...(element.dataset.flowPortPlacement === "config" ? { placement: "config" as const } : {}),
           ...(element.dataset.flowPortRole === "source" ||
           element.dataset.flowPortRole === "target"
             ? { role: element.dataset.flowPortRole }

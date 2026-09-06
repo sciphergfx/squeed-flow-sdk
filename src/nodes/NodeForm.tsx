@@ -40,7 +40,7 @@ export const FormDocumentContext = createContext<{
 
 const Fields = styled.div`
   padding: 0;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.4;
   width: 100%;
   box-sizing: border-box;
@@ -51,7 +51,7 @@ const Fields = styled.div`
   & label {
     display: block;
     margin-bottom: 6px;
-    font-size: 13px;
+    font-size: 15px;
   }
   & input:not([type="checkbox"]),
   & textarea,
@@ -61,7 +61,7 @@ const Fields = styled.div`
     box-sizing: border-box;
     font: inherit;
     color: inherit;
-    padding: 8px 12px;
+    padding: 10px 14px;
     border: 0;
     border-radius: 16px;
     background: color-mix(in srgb, currentColor 7%, transparent);
@@ -69,7 +69,7 @@ const Fields = styled.div`
     box-shadow: none;
   }
   & textarea {
-    min-height: 96px;
+    min-height: 98px;
     resize: vertical;
   }
   & [data-form-select] {
@@ -117,8 +117,8 @@ const Fields = styled.div`
     transform: rotate(0deg);
   }
   & input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
   }
   & button {
     font: inherit;
@@ -133,7 +133,7 @@ const Fields = styled.div`
   }
   & [role="alert"] {
     color: #dc2626;
-    font-size: 12px;
+    font-size: 14px;
     margin-top: 8px;
   }
 `;
@@ -156,7 +156,7 @@ function Field({
   const { background } = useCustomColors();
   const id = useId();
   const structured =
-    property.type.kind === "object" || property.type.kind === "array";
+    property.type.kind === "object" || property.type.kind === "array" || property.type.kind === "json";
   const formatted =
     value === undefined
       ? ""
@@ -539,6 +539,15 @@ export function NodeForm({ nodeAddress }: { nodeAddress: string }) {
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
     >
+      {bound && resolved.type.additionalProperties && entries.length === 0 && (
+        <Field
+          request={{ data, address: stateAddress, nodeAddress: stateAddress }}
+          property={{ type: resolved.type, optional: false }}
+          config={{ $label: "Configuration", $control: "textarea" }}
+          value={node}
+          disabled={readOnly || config.editable === false || !editable}
+        />
+      )}
       {[...sections].map(([section, fields]) =>
         sectioned && fields.length > 1 ? (
           <details key={section} open>

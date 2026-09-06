@@ -20,7 +20,8 @@ export enum FlowType {
 /** "C" = center: root in the middle, children fan out both ways (generate with `isCntr: true`); laid out as LR */
 export type FlowDirection = "LR" | "RL" | "TB" | "BT" | "C";
 export type NodeAlignment = "leading" | "center" | "trailing";
-export type EdgeMode = "nodes" | "properties" | "workflow";
+export type NodeViewMode = "default" | "properties";
+export type EdgeMode = "auto" | "nodes" | "properties" | "workflow";
 export interface FlowEdgeProperties {
   sourceProperty?: string;
   targetProperty?: string;
@@ -190,6 +191,7 @@ export interface BottomBarRenderProps {
 
 /** Configuration for the flow diagram appearance and behavior */
 export interface FlowDiagramConfig {
+  bottomBarExtra?: React.ReactNode;
   /** Animate fit/center/focus actions for 300ms by default. Per-action flags override this; reduced motion stays instant. */
   animateViewport?: boolean;
   formSchema?: import("../core/forms").FormSchema;
@@ -202,6 +204,8 @@ export interface FlowDiagramConfig {
   direction?: FlowDirection;
   nodeAlignment?: NodeAlignment;
   edgeMode?: EdgeMode;
+  compactPropertyLayout?: boolean;
+    nodeViewModes?: Record<string, NodeViewMode>;
   workflowContract?: import("../core/workflowContract").WorkflowContract;
   /** Layout algorithm */
   layout?: LayoutAlgorithm;
@@ -259,6 +263,13 @@ export interface FlowDiagramConfig {
   isDragMode?: boolean;
 }
 
+export interface NodeSelectionModifiers {
+  shiftKey: boolean;
+  ctrlKey: boolean;
+  metaKey: boolean;
+  altKey: boolean;
+}
+
 /** Event callbacks for the flow diagram */
 export interface FlowDiagramCallbacks {
   onFormSchemaChange?: (
@@ -277,11 +288,14 @@ export interface FlowDiagramCallbacks {
   onBackgroundVariantChange?: (variant: BackgroundVariant) => void;
   // ── Node events ──
   /** Fires when a node is clicked/selected */
-  onNodeSelect?: (nodeId: string, nodeData: any) => void;
+  onNodeSelect?: (nodeId: string, nodeData: any, modifiers?: NodeSelectionModifiers) => void;
+  onBackgroundClick?: () => void;
   /** Fires when selection is cleared */
   onNodeDeselect?: () => void;
   /** Fires on double-click of a node */
   onNodeDoubleClick?: (nodeId: string, nodeData: any) => void;
+  onNodeViewModeChange?: (nodeId: string, mode: NodeViewMode) => void;
+  onNodeViewToggle?: (nodeId: string) => void;
   /** Fires when a node is created via edge drawing into empty space */
   onNodeCreate?: (params: {
     type: string;

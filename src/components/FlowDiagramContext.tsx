@@ -6,6 +6,7 @@ import type {
   FlowDiagramEdge,
   FlowDiagramNode,
   NodeAlignment,
+    NodeViewMode,
   EdgeMode,
   ParentNodeStyle,
   NodeSpacing,
@@ -13,6 +14,8 @@ import type {
 } from "../types";
 
 export interface FlowDiagramContextValue {
+    nodeViewModes: Record<string, NodeViewMode>;
+    setNodeViewMode: (nodeId: string, mode: NodeViewMode) => void;
   spacing: number;
   edgeRadius: number | undefined;
   setEdgeRadius: (radius: number) => void;
@@ -115,7 +118,9 @@ export function FlowDiagramProvider({
   const [isArrayNodeMode, setIsArrayNodeMode] = useState(false);
   const [isPinned, setIsPinned] = useState(true);
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
-  const [localEdgeMode, setEdgeMode] = useState<EdgeMode>("nodes");
+  const [localEdgeMode, setEdgeMode] = useState<EdgeMode>("auto");
+    const [localNodeViewModes, setLocalNodeViewModes] = useState<Record<string, NodeViewMode>>({});
+    const nodeViewModes = config.nodeViewModes ?? localNodeViewModes;
   const [localSpacing, setSpacing] = useState<NodeSpacing>("normal");
   const [localEdgeRadius, setEdgeRadius] = useState<number>();
   const requestedEdgeRadius = config.edgeRadius ?? localEdgeRadius;
@@ -164,8 +169,10 @@ export function FlowDiagramProvider({
     return {
       // Node events
       onNodeSelect: wrap("onNodeSelect"),
+      onBackgroundClick: wrap("onBackgroundClick"),
       onNodeDeselect: wrap("onNodeDeselect"),
       onNodeDoubleClick: wrap("onNodeDoubleClick"),
+      onNodeViewToggle: wrap("onNodeViewToggle"),
       onNodeCreate: wrap("onNodeCreate"),
       onNodeDelete: wrap("onNodeDelete"),
       onNodeLabelChange: wrap("onNodeLabelChange"),
@@ -252,6 +259,9 @@ export function FlowDiagramProvider({
         get edgeMode() {
           return configRef.current.edgeMode;
         },
+        get compactPropertyLayout() {
+          return configRef.current.compactPropertyLayout;
+        },
         get edgeType() {
           return configRef.current.edgeType;
         },
@@ -309,6 +319,9 @@ export function FlowDiagramProvider({
         get renderBottomBar() {
           return configRef.current.renderBottomBar;
         },
+        get bottomBarExtra() {
+          return configRef.current.bottomBarExtra;
+        },
         get selectionToolbar() {
           return configRef.current.selectionToolbar;
         },
@@ -337,6 +350,12 @@ export function FlowDiagramProvider({
 
   const value: FlowDiagramContextValue = useMemo(
     () => ({
+      nodeViewModes,
+      setNodeViewMode: (nodeId, mode) => {
+        if (mode !== "default" && mode !== "properties") throw new Error("Unknown node view mode.");
+        setLocalNodeViewModes(current => current[nodeId] === mode ? current : { ...current, [nodeId]: mode });
+        callbacks.onNodeViewModeChange?.(nodeId, mode);
+      },
       spacing,
       setSpacing,
       edgeRadius,
@@ -380,6 +399,8 @@ export function FlowDiagramProvider({
       readOnly,
     }),
     [
+      nodeViewModes,
+      callbacks.onNodeViewModeChange,
       themeColor,
       spacing,
       backgroundVariant,
@@ -407,6 +428,8 @@ export function FlowDiagramProvider({
       config.edgeType,
       config.customEdgeTypes,
       config.selectionToolbar,
+      config.bottomBarExtra,
+      config.compactPropertyLayout,
       stableCallbacks,
       stableConfig,
     ],

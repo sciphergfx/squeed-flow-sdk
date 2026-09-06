@@ -15,6 +15,9 @@ export interface NodeHostProps {
   /** Register/unregister the host element for size observation */
   onMount: (id: string, el: HTMLDivElement | null) => void;
   drawHandles?: boolean;
+  drawMode?: boolean;
+  connectedPorts?: ReadonlySet<string>;
+  resolvedRows?: PropertyRow[];
   hasCollapseControl?: boolean;
   handleColor?: string;
   animated?: boolean;
@@ -38,6 +41,9 @@ function NodeHost({
   hidden,
   onMount,
   drawHandles,
+  drawMode,
+  connectedPorts,
+  resolvedRows,
   hasCollapseControl,
   handleColor,
   animated,
@@ -53,7 +59,8 @@ function NodeHost({
   children,
 }: NodeHostProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [rows, setRows] = useState<PropertyRow[]>([]);
+  const [measuredRows, setRows] = useState<PropertyRow[]>([]);
+  const rows = resolvedRows ?? measuredRows;
   const [surface, setSurface] = useState<NodeSurface>();
 
   useLayoutEffect(() => {
@@ -120,6 +127,7 @@ function NodeHost({
         "data-flow-port-role",
         "data-flow-port-side",
         "data-flow-port-position",
+        "data-flow-port-placement",
       ],
     });
     host.addEventListener("scroll", measure, true);
@@ -164,10 +172,11 @@ function NodeHost({
         </svg>
       )}
       {drawHandles &&
-        (propertyMode || rows.some((row) => row.anchor)) &&
+        propertyMode &&
         rows.map((row) =>
           (["source", "target"] as const)
             .filter((role) => !row.role || row.role === role)
+            .filter((role) => drawMode || connectedPorts?.has(`${role}:${row.property}`))
             .map((role) => (
               <button
                 key={`${row.property}:${role}`}
@@ -196,7 +205,7 @@ function NodeHost({
       {drawHandles &&
         !hasCollapseControl &&
         (!propertyMode || !rows.length) &&
-        !rows.some((row) => row.anchor) && (
+        (!propertyMode || !rows.some((row) => row.anchor)) && (
           <button
             type="button"
             className="flow-sdk-handle"

@@ -67,8 +67,9 @@ const NodeView = ({
     }
   })();
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback((event: React.MouseEvent) => {
     if (isEditing || config.readOnly) return;
+    const modifiers = { shiftKey: event.shiftKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey, altKey: event.altKey };
     // one selection toolbar at a time
     if (selectedEdgeId) {
       setSelectedEdgeId(null);
@@ -83,11 +84,11 @@ const NodeView = ({
       if (isAlreadySelected) {
         callbacks.onNodeDeselect?.();
       } else {
-        callbacks.onNodeSelect?.(id, nodeData);
+        callbacks.onNodeSelect?.(id, nodeData, modifiers);
       }
     } else {
       setSelectedNodeIds([id]);
-      callbacks.onNodeSelect?.(id, nodeData);
+      callbacks.onNodeSelect?.(id, nodeData, modifiers);
     }
   }, [
     id,
@@ -284,6 +285,7 @@ const NodeView = ({
           onEditEnd: () => setIsEditing(false),
         })}
         {hasChildren &&
+          !nodeData?.config?.parentContainer &&
           nodeData?.config?.collapsed !== undefined &&
           (() => {
             const pillVertical = direction === "TB" || direction === "BT";
@@ -438,6 +440,7 @@ const NodeView = ({
         )}
       <Box position="relative" display="flex" h="100%" w="100%">
         {hasChildren &&
+          !nodeData?.config?.parentContainer &&
           nodeData?.config?.collapsed !== undefined &&
           !isParent &&
           (() => {

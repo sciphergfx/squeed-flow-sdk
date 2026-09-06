@@ -26,6 +26,7 @@ import {
   PiSelectionPlus,
 } from "react-icons/pi";
 import { useCustomColors } from "../theme/useCustomColors";
+import { getInteractionShadow } from "../theme/interactionShadow";
 import type { FlowDirection } from "../types";
 import { FlowType } from "../types";
 import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
@@ -81,6 +82,7 @@ const BottomBar = () => {
     backgroundSelected,
     setBackgroundSelected,
     direction,
+    edgeMode,
     selectedNodeIds,
     setSelectedNodeIds,
     selectedEdgeId,
@@ -566,6 +568,19 @@ const BottomBar = () => {
                       </>
                     )}
 
+                    {config.bottomBarExtra && <>
+                      <Icon
+                        mx={-1}
+                        as={PiLineVerticalThin}
+                        boxSize={5}
+                        color={border}
+                        role="separator"
+                        aria-orientation="vertical"
+                      />
+                      {config.bottomBarExtra}
+                    </>}
+
+                    {edgeMode !== "properties" && <>
                     <Icon
                       mx={-1}
                       as={PiLineVerticalThin}
@@ -601,6 +616,7 @@ const BottomBar = () => {
                         }}
                       />
                     </ToolbarTooltip>
+                    </>}
                     {backgroundSelected && !readOnly && (
                       <>
                         <Icon
@@ -665,7 +681,7 @@ const BottomBar = () => {
                 borderColor={isDark ? border : "gray.300"}
                 borderRadius="30px"
                 h={50}
-                boxShadow={`0 0 0 8px color-mix(in srgb, var(--chakra-colors-${background.replace(".", "-")}) 60%, transparent)`}
+                {...getInteractionShadow(`var(--chakra-colors-${background.replace(".", "-")})`)}
                 px={3}
                 cursor="pointer"
                 onClick={() => setShowDirectionMenu(!showDirectionMenu)}

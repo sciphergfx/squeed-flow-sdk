@@ -7,7 +7,9 @@
                     "$subtitle": {
                               "$state": "root.trigger.event"
                     },
-                    "$target": "root.assistant"
+                    "$connections": [
+                              { "id": "trigger-assistant", "target": "root.assistant", "sourceProperty": "output:output", "targetProperty": "input:input" }
+                    ]
           },
           "assistant": {
                     "$label": {
@@ -15,7 +17,36 @@
                     },
                     "$icon": "PiRobot",
                     "$bgColor": "gray.700",
-                    "$target": "root.decision"
+                    "$connections": [
+                              { "id": "assistant-decision", "target": "root.decision", "sourceProperty": "output:output", "targetProperty": "input:input" }
+                    ]
+          },
+          "model": {
+                    "$view": "icon-label",
+                    "$label": { "$state": "root.models.example-model.name" },
+                    "$icon": "PiBrain",
+                    "$bgColor": "blue.700",
+                    "$borderRadius": 100,
+                    "$connections": [
+                              { "id": "model-assistant", "target": "root.assistant", "sourceProperty": "output:resource", "targetProperty": "config:model", "label": "Model", "style": "dashed" }
+                    ]
+          },
+          "knowledgeMemory": {
+                    "$view": "icon-label",
+                    "$label": { "$state": "root.memorySources.knowledge_entry.name" },
+                    "$icon": "PiDatabase",
+                    "$bgColor": "teal.700",
+                    "$borderRadius": 100,
+                    "$connections": [
+                              { "id": "memory-assistant", "target": "root.assistant", "sourceProperty": "output:resource", "targetProperty": "config:memory", "label": "Memory", "style": "dashed" }
+                    ]
+          },
+          "supportMemory": {
+                    "$view": "icon-label",
+                    "$label": { "$state": "root.memorySources.support_qa.name" },
+                    "$icon": "PiDatabase",
+                    "$bgColor": "teal.700",
+                    "$borderRadius": 100
           },
           "directoryTool": {
                     "$view": "icon-label",
@@ -24,7 +55,10 @@
                     },
                     "$icon": "PiIdentificationBadge",
                     "$bgColor": "teal.700",
-                    "$borderRadius": 100
+                    "$borderRadius": 100,
+                    "$connections": [
+                              { "id": "directory-assistant", "target": "root.assistant", "sourceProperty": "output:resource", "targetProperty": "config:tools", "label": "Directory Tool", "style": "dashed" }
+                    ]
           },
           "issueTool": {
                     "$view": "icon-label",
@@ -33,7 +67,10 @@
                     },
                     "$icon": "PiTicket",
                     "$bgColor": "blue.700",
-                    "$borderRadius": 100
+                    "$borderRadius": 100,
+                    "$connections": [
+                              { "id": "issues-assistant", "target": "root.assistant", "sourceProperty": "output:resource", "targetProperty": "config:tools", "label": "Issue Tool", "style": "dashed" }
+                    ]
           },
           "prompt": {
                     "$label": {
@@ -42,7 +79,10 @@
                     "$content": {
                               "$state": "root.texts.user_review.content"
                     },
-                    "$bgColor": "gray.700"
+                    "$bgColor": "gray.700",
+                    "$connections": [
+                              { "id": "prompt-assistant", "target": "root.assistant", "sourceProperty": "output:resource", "targetProperty": "config:promptId", "label": "Prompt", "style": "dashed" }
+                    ]
           },
           "instructions": {
                     "$label": {
@@ -51,7 +91,10 @@
                     "$content": {
                               "$state": "root.texts.directory_guidance.content"
                     },
-                    "$bgColor": "gray.700"
+                    "$bgColor": "gray.700",
+                    "$connections": [
+                              { "id": "instructions-assistant", "target": "root.assistant", "sourceProperty": "output:resource", "targetProperty": "config:instructionIds", "label": "Instructions", "style": "dashed" }
+                    ]
           },
           "decision": {
                     "$view": "icon-label",
@@ -63,10 +106,14 @@
                     "$connections": [
                               {
                                         "target": "root.addChannel",
+                                        "sourceProperty": "output:true",
+                                        "targetProperty": "input:input",
                                         "label": "True"
                               },
                               {
                                         "target": "root.updateProfile",
+                                        "sourceProperty": "output:false",
+                                        "targetProperty": "input:input",
                                         "label": "False"
                               }
                     ]

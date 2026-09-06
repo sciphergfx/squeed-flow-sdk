@@ -38,6 +38,12 @@ for (const width of [1440, 390]) {
       exact: true,
     });
     const content = dialog.locator("[data-form-scroll]");
+    await expect(dialog).toHaveCSS("font-size", "16px");
+    await expect(content.locator("label").first()).toHaveCSS("font-size", "15px");
+    const firstControl = content.locator('input:not([type="checkbox"]), textarea, select').first();
+    await expect(firstControl).toHaveCSS("font-size", "16px");
+    await expect(firstControl).toHaveCSS("padding-top", "10px");
+    await expect(firstControl).toHaveCSS("padding-left", "14px");
     await expect(content).toHaveCSS("mask-image", /linear-gradient.*32px/);
     await expect(content).toHaveCSS("padding-top", "32px");
     await expect(content).toHaveCSS("padding-bottom", "32px");

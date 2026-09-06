@@ -7,6 +7,7 @@ import ts from "typescript";
 
 const sourceRoot = process.argv[2];
 assert.ok(sourceRoot, "Pass the backflow-admin/src/pages/workflows directory");
+const check = process.argv.includes("--check");
 const output = dirname(fileURLToPath(import.meta.url));
 const typesText = await readFile(join(sourceRoot, "types.ts"), "utf8");
 const typesFile = ts.createSourceFile(
@@ -110,6 +111,9 @@ const fullFile = ts.createSourceFile(
   true,
 );
 const omitted = [];
+const projectionOverrides = {
+  "WorkflowForm.trigger": '"manual" | "schedule" | "webhook" | "event"',
+};
 const projectType = (node, path) => {
   if (
     [
@@ -144,7 +148,7 @@ const projectMembers = (members, owner) =>
     const path = `${owner}.${name}`;
     const type =
       ts.isPropertySignature(member) && member.type
-        ? projectType(member.type, path)
+        ? projectionOverrides[path] ?? projectType(member.type, path)
         : undefined;
     if (!type) {
       omitted.push({ path, original: member.getText(fullFile) });
@@ -194,7 +198,9 @@ const manifest = {
     "Conditionally required fields are optional in the merged interface; showWhen is preserved here, not enforced by structural validation.",
     "Dynamic tool params/custom step config cannot be enumerated without runtime schemas.",
     "Supported projection explicitly omits unsupported members; it is not full-form validation.",
+    "The supported WorkflowForm.trigger enum is a deliberate example-only refinement, not the full editor trigger contract.",
   ],
+  projectionOverrides,
   enabledStepTypes: STEP_TYPES,
   schemaCount: schemas.length,
   fieldCount: schemas.reduce((count, [, fields]) => count + fields.length, 0),
@@ -202,12 +208,46 @@ const manifest = {
   fields: STEP_CONFIG_SCHEMAS,
   omitted,
 };
-await writeFile(join(output, "full-interface.ts"), full);
-await writeFile(join(output, "supported-interface.ts"), supported);
-await writeFile(
-  join(output, "coverage.json"),
-  JSON.stringify(manifest, null, 2) + "\n",
-);
+const artifacts = {
+  "full-interface.ts": full,
+  "supported-interface.ts": supported,
+  "coverage.json": JSON.stringify(manifest, null, 2) + "\n",
+};
+const stale = [];
+const typeStructure = source => {
+  const file = ts.createSourceFile("interface.ts", source, ts.ScriptTarget.Latest, true);
+  const visit = node => {
+    if (ts.isPropertySignature(node)) return {
+      kind: node.kind,
+      name: node.name.text ?? node.name.getText(file),
+      optional: !!node.questionToken,
+      modifiers: node.modifiers?.map(modifier => modifier.kind),
+      type: node.type && visit(node.type),
+    };
+    if (ts.isIdentifier(node) || ts.isLiteralExpression(node)) return { kind: node.kind, text: node.text };
+    const children = [];
+    ts.forEachChild(node, child => { children.push(visit(child)); });
+    return { kind: node.kind, children };
+  };
+  return JSON.stringify(visit(file));
+};
+for (const [name, content] of Object.entries(artifacts)) {
+  const current = await readFile(join(output, name), "utf8").catch(error => {
+    if (error.code === "ENOENT") return undefined;
+    throw error;
+  });
+  const matches = current !== undefined && (name.endsWith(".ts")
+    ? typeStructure(current) === typeStructure(content)
+    : current === content);
+  if (check && !matches) stale.push(name);
+  else if (!check && !matches) {
+    await writeFile(join(output, name), content);
+  }
+}
+if (stale.length) {
+  console.error(`Workflow snapshots are stale: ${stale.join(", ")}`);
+  process.exitCode = 1;
+}
 console.log(
   JSON.stringify(
     {
@@ -215,6 +255,7 @@ console.log(
       fields: manifest.fieldCount,
       enabledStepTypes: STEP_TYPES.length,
       omittedMembers: omitted.length,
+      ...(check ? { upToDate: stale.length === 0 } : {}),
       output,
     },
     null,

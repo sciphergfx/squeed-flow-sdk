@@ -14,7 +14,7 @@ for (const width of [1440, 390]) {
     await expect(menu).toHaveCSS("border-radius", "30px");
     await expect(menu).toHaveCSS("box-shadow", /8px/);
     await expect(
-      menu.getByRole("option", { name: "Nodes", exact: true }),
+      menu.getByRole("option", { name: "Auto", exact: true }),
     ).toHaveAttribute("aria-selected", "true");
     await menu.getByRole("option", { name: "Properties", exact: true }).click();
     await expect(menu).toBeHidden();
@@ -41,7 +41,7 @@ for (const width of [1440, 390]) {
     await mode.press("ArrowDown");
     await page.keyboard.press("Home");
     await page.keyboard.press("Enter");
-    await expect(mode).toHaveAttribute("title", "Connections: Nodes");
+    await expect(mode).toHaveAttribute("title", "Connections: Auto");
     await page
       .locator('.flow-sdk-node[data-node-id="root.alpha"] p')
       .first()

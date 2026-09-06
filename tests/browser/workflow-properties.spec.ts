@@ -10,6 +10,27 @@ const formDocument = JSON.parse(
 );
 
 for (const width of [1440, 390]) {
+  test(`full interfaces replace limited form schemas at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 950 });
+    await page.goto("/?graph=json");
+    const node = page.locator('.flow-sdk-node[data-node-id="root.workflow"]');
+    await expect(node).toBeVisible();
+    await page.getByRole("button", { name: "Toggle toolbar collapse", exact: true }).click();
+    const file = page.getByLabel("Workflow interface file", { exact: true });
+    await file.setInputFiles("examples/workflow-form/supported-interface.ts");
+    await expect(node.locator('[aria-haspopup="dialog"]')).toHaveCount(1);
+    const original = await page.evaluate(() => window.__flowTest.document);
+    await node.getByText("Workflow", { exact: true }).dblclick();
+    const form = page.getByRole("dialog", { name: "Configure Workflow", exact: true });
+    await expect(form.getByRole("combobox", { name: "Trigger", exact: true })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await file.setInputFiles("examples/workflow-form/full-interface.ts");
+    await node.getByText("Workflow", { exact: true }).dblclick();
+    await expect(form.getByRole("textbox", { name: "Trigger", exact: true })).toBeVisible();
+    await expect(page.getByRole("alert")).toHaveCount(0);
+    expect(await page.evaluate(() => window.__flowTest.document)).toEqual(original);
+  });
+
   test(`generated workflow property mappings validate at ${width}px`, async ({
     page,
   }) => {
@@ -318,9 +339,8 @@ for (const width of [1440, 390]) {
     await page
       .getByLabel("Workflow interface file", { exact: true })
       .setInputFiles("examples/workflow-form/full-interface.ts");
-    await expect(page.getByRole("alert")).toContainText(
-      "Unsupported TypeScript type: any",
-    );
+    await expect(page.getByRole("status").filter({ hasText: "full-interface.ts" })).toBeVisible();
+    await expect(page.getByRole("alert")).toHaveCount(0);
     await expect(workflowNode.locator('[aria-haspopup="dialog"]')).toHaveCount(
       1,
     );
