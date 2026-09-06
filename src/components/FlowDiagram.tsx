@@ -4,22 +4,27 @@ import { resolveFormNode } from "../core/forms";
 import { isColorOnlyUpdate, recolorGraph } from "../core/recolorGraph";
 import { bindSqueedCallbacks } from "../core/squeedBinding";
 import { compileSqueed, getNode } from "../core/squeedEdits";
-import { NODE_BORDER_ANIMATION_STYLES } from "../engine/NodeBorderAnimation";
 import { EDGE_TRACE_ANIMATION_STYLES } from "../engine/EdgeTraceAnimation";
+import { NODE_BORDER_ANIMATION_STYLES } from "../engine/NodeBorderAnimation";
 import { FormDocumentContext } from "../nodes/NodeForm";
-import { emptyValue, projectStructuredForms, slotKey, structuredConnectionValue } from "../utils/structuredForms";
 import type {
   FlowDiagramEdge,
   FlowDiagramNode,
   FlowDiagramProps,
 } from "../types";
+import { NODE_TYPE_VIEWS, type NodeTypeView } from "../types";
 import {
   changeFormState,
   resolveStateForm,
   resolveStateView,
 } from "../utils/formState";
+import {
+  emptyValue,
+  projectStructuredForms,
+  slotKey,
+  structuredConnectionValue,
+} from "../utils/structuredForms";
 import BottomBar from "./BottomBar";
-import { NODE_TYPE_VIEWS, type NodeTypeView } from "../types";
 import { FlowDiagramProvider } from "./FlowDiagramContext";
 import FlowView from "./FlowView";
 
@@ -166,39 +171,101 @@ function FlowDiagramContent({
     [displayJson, compileDocument],
   );
 
-  const structured = useMemo(() => forms?.structured && formSchema
-    ? projectStructuredForms(forms.state, forms.bindings, formSchema, compiled?.nodes ?? nodes ?? [])
-    : undefined, [forms?.structured, forms?.state, forms?.bindings, formSchema, compiled, nodes]);
+  const structured = useMemo(
+    () =>
+      forms?.structured && formSchema
+        ? projectStructuredForms(
+            forms.state,
+            forms.bindings,
+            formSchema,
+            compiled?.nodes ?? nodes ?? [],
+          )
+        : undefined,
+    [
+      forms?.structured,
+      forms?.state,
+      forms?.bindings,
+      formSchema,
+      compiled,
+      nodes,
+    ],
+  );
   const activeSchema = structured?.schema ?? formSchema;
   const activeBindings = structured?.bindings ?? forms?.bindings;
 
   const resolvedNodes: FlowDiagramNode[] = useMemo(() => {
-    const source = [...(compiled?.nodes ?? nodes ?? []), ...(structured?.nodes ?? [])];
+    const source = [
+      ...(compiled?.nodes ?? nodes ?? []),
+      ...(structured?.nodes ?? []),
+    ];
     return source.map((node) => {
-      const requestedView = json ? getNode(json, node.data.id)?.$view : node.data.config?.typeView;
-      const typeView: NodeTypeView | undefined = requestedView && NODE_TYPE_VIEWS.includes(requestedView) ? requestedView : undefined;
-      const labelBelow = typeView ? typeView === "icon-label" : node.data.config?.labelBelow;
-      const renderedType = typeView === "object" ? "objectView" : typeView === "text" ? "text" : labelBelow ? "arrayView" : node.data.type;
+      const requestedView = json
+        ? getNode(json, node.data.id)?.$view
+        : node.data.config?.typeView;
+      const typeView: NodeTypeView | undefined =
+        requestedView && NODE_TYPE_VIEWS.includes(requestedView)
+          ? requestedView
+          : undefined;
+      const labelBelow = typeView
+        ? typeView === "icon-label"
+        : node.data.config?.labelBelow;
+      const renderedType =
+        typeView === "object"
+          ? "objectView"
+          : typeView === "text"
+            ? "text"
+            : labelBelow
+              ? "arrayView"
+              : node.data.type;
       const form =
         activeSchema &&
         (forms
           ? resolveStateForm(activeBindings!, node.data.id, activeSchema)
           : json && resolveFormNode(json, node.data.id, activeSchema));
-      const ports = (node.data.config?.ports ?? []).map(port => ({ ...port }));
+      const ports = (node.data.config?.ports ?? []).map((port) => ({
+        ...port,
+      }));
       if (structured && form) {
-        const sides = config.direction === "RL" ? { input: "right", output: "left", config: "bottom", error: "top" }
-          : config.direction === "TB" ? { input: "top", output: "bottom", config: "right", error: "left" }
-          : config.direction === "BT" ? { input: "bottom", output: "top", config: "left", error: "right" }
-          : { input: "left", output: "right", config: "top", error: "bottom" };
+        const sides =
+          config.direction === "RL"
+            ? { input: "right", output: "left", config: "bottom", error: "top" }
+            : config.direction === "TB"
+              ? {
+                  input: "top",
+                  output: "bottom",
+                  config: "right",
+                  error: "left",
+                }
+              : config.direction === "BT"
+                ? {
+                    input: "bottom",
+                    output: "top",
+                    config: "left",
+                    error: "right",
+                  }
+                : {
+                    input: "left",
+                    output: "right",
+                    config: "top",
+                    error: "bottom",
+                  };
         for (const [name, port] of Object.entries(form.type.ports ?? {})) {
           const id = `${port.kind}:${name}`;
-          if (!ports.some(existing => existing.id === id)) ports.push({
-            id, role: port.kind === "input" || port.kind === "config" ? "target" : "source",
-            side: sides[port.kind], ...(port.kind === "config" ? { placement: "config" } : {}),
-          });
+          if (!ports.some((existing) => existing.id === id))
+            ports.push({
+              id,
+              role:
+                port.kind === "input" || port.kind === "config"
+                  ? "target"
+                  : "source",
+              side: sides[port.kind],
+              ...(port.kind === "config" ? { placement: "config" } : {}),
+            });
         }
         for (const port of ports) {
-          const siblings = ports.filter(candidate => candidate.side === port.side);
+          const siblings = ports.filter(
+            (candidate) => candidate.side === port.side,
+          );
           port.position = (siblings.indexOf(port) + 1) / (siblings.length + 1);
         }
       }
@@ -212,7 +279,9 @@ function FlowDiagramContent({
                 ? {
                     description: Object.fromEntries(
                       Object.entries(node.data.description ?? {}).filter(
-                        ([key]) => !key.startsWith("$") && !structured?.slots.has(slotKey(node.data.id, key)),
+                        ([key]) =>
+                          !key.startsWith("$") &&
+                          !structured?.slots.has(slotKey(node.data.id, key)),
                       ),
                     ),
                   }
@@ -221,19 +290,34 @@ function FlowDiagramContent({
                 ...node.data.config,
                 ...(structured && form ? { ports } : {}),
                 ...(form ? { form: true } : {}),
-                ...(typeView ? { typeView, labelBelow: !!labelBelow } : labelBelow ? { labelBelow: true } : {}),
+                ...(typeView
+                  ? { typeView, labelBelow: !!labelBelow }
+                  : labelBelow
+                    ? { labelBelow: true }
+                    : {}),
               },
             },
           }
         : node;
     });
-  }, [compiled, nodes, json, activeSchema, activeBindings, structured, config.direction]);
-  const resolvedEdges: FlowDiagramEdge[] = [...(compiled?.edges ?? edges ?? []), ...(structured?.edges ?? [])];
+  }, [
+    compiled,
+    nodes,
+    json,
+    activeSchema,
+    activeBindings,
+    structured,
+    config.direction,
+  ]);
+  const resolvedEdges: FlowDiagramEdge[] = [
+    ...(compiled?.edges ?? edges ?? []),
+    ...(structured?.edges ?? []),
+  ];
 
   // Document mode: edits are applied to the JSON and surfaced via onJsonChange
-  const viewCallbacks = useMemo(
-    () => {
-      const bound = json && compiled
+  const viewCallbacks = useMemo(() => {
+    const bound =
+      json && compiled
         ? bindSqueedCallbacks(
             json,
             compiled.edges,
@@ -242,20 +326,21 @@ function FlowDiagramContent({
             formSchema,
           )
         : { ...callbacks };
-      if (structured) {
-        const generated = new Set([...structured.nodes.map(node => node.data.id), ...structured.edges.map(edge => edge.data.id)]);
-        for (const name of Object.keys(bound)) {
-          if (!/^on(?:Node|Edge).*(?:Change|Collapse)$/.test(name)) continue;
-          const handler = bound[name];
-          bound[name] = (id: string, ...args: unknown[]) => {
-            if (!generated.has(id)) return handler?.(id, ...args);
-          };
-        }
+    if (structured) {
+      const generated = new Set([
+        ...structured.nodes.map((node) => node.data.id),
+        ...structured.edges.map((edge) => edge.data.id),
+      ]);
+      for (const name of Object.keys(bound)) {
+        if (!/^on(?:Node|Edge).*(?:Change|Collapse)$/.test(name)) continue;
+        const handler = bound[name];
+        bound[name] = (id: string, ...args: unknown[]) => {
+          if (!generated.has(id)) return handler?.(id, ...args);
+        };
       }
-      return bound;
-    },
-    [json, compiled, callbacks, formSchema, structured],
-  );
+    }
+    return bound;
+  }, [json, compiled, callbacks, formSchema, structured]);
   const boundCallbacks = useMemo(() => {
     if (!forms) return viewCallbacks;
     let state = forms.state;
@@ -287,47 +372,118 @@ function FlowDiagramContent({
     return {
       ...viewCallbacks,
       onFormChange: applyChange,
-      onNodeCreateRequest: (request: import("../types").FlowNodeCreationRequest) => {
-        const field = request.sourceProperty?.startsWith("config:") ? request.sourceProperty.slice(7) : undefined;
-        const slot = field !== undefined && structured?.slots.get(slotKey(request.sourceNodeId, field));
+      onNodeCreateRequest: (
+        request: import("../types").FlowNodeCreationRequest,
+      ) => {
+        const field = request.sourceProperty?.startsWith("config:")
+          ? request.sourceProperty.slice(7)
+          : undefined;
+        const slot =
+          field !== undefined &&
+          structured?.slots.get(slotKey(request.sourceNodeId, field));
         if (!slot) return viewCallbacks.onNodeCreateRequest?.(request) ?? false;
-        if (!slot.present) applyChange({ data: state, nodeAddress: slot.address.split(".").slice(0, -1).join("."), address: slot.address, value: emptyValue(slot.type), previousValue: undefined });
+        if (!slot.present)
+          applyChange({
+            data: state,
+            nodeAddress: slot.address.split(".").slice(0, -1).join("."),
+            address: slot.address,
+            value: emptyValue(slot.type),
+            previousValue: undefined,
+          });
         return true;
       },
       onNodeDelete: (id: string, data: any) => {
-        if (!structured?.nodes.some(node => node.data.id === id)) return viewCallbacks.onNodeDelete?.(id, data);
-        const slot = structured && [...structured.slots.values()].find(slot => slot.nodeId === id);
+        if (!structured?.nodes.some((node) => node.data.id === id))
+          return viewCallbacks.onNodeDelete?.(id, data);
+        const slot =
+          structured &&
+          [...structured.slots.values()].find((slot) => slot.nodeId === id);
         if (!slot) return viewCallbacks.onNodeDelete?.(id, data);
         const parts = slot.address.split(".");
         const field = parts.pop()!;
         const parentAddress = parts.join(".");
         const parent = getNode(state, parentAddress);
-        applyChange(Array.isArray(parent)
-          ? { data: state, nodeAddress: parentAddress, address: parentAddress, previousValue: parent, value: parent.filter((_, index) => String(index) !== field) }
-          : { data: state, nodeAddress: parentAddress, address: slot.address, previousValue: getNode(state, slot.address), value: undefined });
+        applyChange(
+          Array.isArray(parent)
+            ? {
+                data: state,
+                nodeAddress: parentAddress,
+                address: parentAddress,
+                previousValue: parent,
+                value: parent.filter((_, index) => String(index) !== field),
+              }
+            : {
+                data: state,
+                nodeAddress: parentAddress,
+                address: slot.address,
+                previousValue: getNode(state, slot.address),
+                value: undefined,
+              },
+        );
       },
-      onEdgeCreate: (source: string, target: string, properties?: import("../types").FlowEdgeProperties) => {
-        const slot = properties?.targetProperty?.startsWith("config:") && structured?.slots.get(slotKey(target, properties.targetProperty.slice(7)));
+      onEdgeCreate: (
+        source: string,
+        target: string,
+        properties?: import("../types").FlowEdgeProperties,
+      ) => {
+        const slot =
+          properties?.targetProperty?.startsWith("config:") &&
+          structured?.slots.get(
+            slotKey(target, properties.targetProperty.slice(7)),
+          );
         const container = structured?.containers.get(source);
-        if (slot && container && properties?.sourceProperty === "output:resource") {
+        if (
+          slot &&
+          container &&
+          properties?.sourceProperty === "output:resource"
+        ) {
           const value = structuredConnectionValue(state, container, slot);
-          if (value !== undefined) applyChange({ data: state, nodeAddress: slot.address.split(".").slice(0, -1).join("."), address: slot.address, previousValue: getNode(state, slot.address), value });
+          if (value !== undefined)
+            applyChange({
+              data: state,
+              nodeAddress: slot.address.split(".").slice(0, -1).join("."),
+              address: slot.address,
+              previousValue: getNode(state, slot.address),
+              value,
+            });
           return;
         }
-        if (slot || structured?.nodes.some(node => node.data.id === source || node.data.id === target)) return;
+        if (
+          slot ||
+          structured?.nodes.some(
+            (node) => node.data.id === source || node.data.id === target,
+          )
+        )
+          return;
         viewCallbacks.onEdgeCreate?.(source, target, properties);
       },
       onEdgeDelete: (id: string, data: any) => {
-        const edge = structured?.edges.find(edge => edge.data.id === id);
+        const edge = structured?.edges.find((edge) => edge.data.id === id);
         if (!edge) return viewCallbacks.onEdgeDelete?.(id, data);
-        const slot = structured!.slots.get(slotKey(edge.data.target, edge.data.targetProperty!.slice(7)))!;
+        const slot = structured!.slots.get(
+          slotKey(edge.data.target, edge.data.targetProperty!.slice(7)),
+        )!;
         const parts = slot.address.split(".");
         const field = parts.pop()!;
         const parentAddress = parts.join(".");
         const parent = getNode(state, parentAddress);
-        applyChange(Array.isArray(parent)
-          ? { data: state, nodeAddress: parentAddress, address: parentAddress, previousValue: parent, value: parent.filter((_, index) => String(index) !== field) }
-          : { data: state, nodeAddress: parentAddress, address: slot.address, previousValue: getNode(state, slot.address), value: undefined });
+        applyChange(
+          Array.isArray(parent)
+            ? {
+                data: state,
+                nodeAddress: parentAddress,
+                address: parentAddress,
+                previousValue: parent,
+                value: parent.filter((_, index) => String(index) !== field),
+              }
+            : {
+                data: state,
+                nodeAddress: parentAddress,
+                address: slot.address,
+                previousValue: getNode(state, slot.address),
+                value: undefined,
+              },
+        );
       },
       onNodeContentChange: (id: string, content: string) => {
         if (referenceChange(id, "$content", content))
@@ -340,7 +496,15 @@ function FlowDiagramContent({
         else viewCallbacks.onNodeLabelChange?.(id, label);
       },
     };
-  }, [viewCallbacks, forms, json, callbacks, structured, config.readOnly, config.editable]);
+  }, [
+    viewCallbacks,
+    forms,
+    json,
+    callbacks,
+    structured,
+    config.readOnly,
+    config.editable,
+  ]);
 
   return (
     <FormDocumentContext.Provider

@@ -1,7 +1,12 @@
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 
 export function useNodeViewActions() {
-  const { nodeViewModes, setNodeViewMode, allNodesIconLabel, setAllNodesIconLabel } = useFlowDiagramContext();
+  const {
+    nodeViewModes,
+    setNodeViewMode,
+    allNodesIconLabel,
+    setAllNodesIconLabel,
+  } = useFlowDiagramContext();
   return {
     allNodesIconLabel,
     setAllNodesIconLabel,

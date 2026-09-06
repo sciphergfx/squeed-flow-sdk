@@ -2,8 +2,8 @@ import { Box, HStack, IconButton } from "@chakra-ui/react";
 import { memo, useCallback, useRef, useState } from "react";
 import { PiMinusBold, PiPlusBold } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
-import { NodeFormPopover } from "../components/NodeFormPopover";
 import { FlowPort, type FlowPortProps } from "../components/FlowPort";
+import { NodeFormPopover } from "../components/NodeFormPopover";
 import TooltipIconButton from "../components/TooltipIconButton";
 import { useNodeHasChildren } from "../hooks/useNodeHasChildren";
 import { getChakraColorHex } from "../theme/colorUtils";
@@ -467,11 +467,26 @@ const NodeView = ({
                       transform: "translateX(-50%)",
                     }
                   : {
-                      right: pillOnLeft ? undefined : iconHalfSize === undefined ? "-75px" : `calc(50% - ${iconHalfSize + 75}px)`,
-                      left: pillOnLeft ? iconHalfSize === undefined ? "-75px" : `calc(50% - ${iconHalfSize + 75}px)` : undefined,
-                      alignSelf: iconHalfSize === undefined ? "center" : undefined,
-                      top: iconHalfSize === undefined ? undefined : `${iconHalfSize}px`,
-                      transform: iconHalfSize === undefined ? undefined : "translateY(-50%)",
+                      right: pillOnLeft
+                        ? undefined
+                        : iconHalfSize === undefined
+                          ? "-75px"
+                          : `calc(50% - ${iconHalfSize + 75}px)`,
+                      left: pillOnLeft
+                        ? iconHalfSize === undefined
+                          ? "-75px"
+                          : `calc(50% - ${iconHalfSize + 75}px)`
+                        : undefined,
+                      alignSelf:
+                        iconHalfSize === undefined ? "center" : undefined,
+                      top:
+                        iconHalfSize === undefined
+                          ? undefined
+                          : `${iconHalfSize}px`,
+                      transform:
+                        iconHalfSize === undefined
+                          ? undefined
+                          : "translateY(-50%)",
                       zIndex: iconHalfSize === undefined ? undefined : 1,
                     })}
                 aria-label={nodeData.config.collapsed ? "Expand" : "Collapse"}

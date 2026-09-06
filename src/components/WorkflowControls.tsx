@@ -35,7 +35,13 @@ export function WorkflowControls({
     themeColor,
   } = useFlowDiagramContext();
   const { edgeById } = useFlowData();
-  const { data, schema: formSchema, setSchema, bindings: formBindings, structured } = useContext(FormDocumentContext);
+  const {
+    data,
+    schema: formSchema,
+    setSchema,
+    bindings: formBindings,
+    structured,
+  } = useContext(FormDocumentContext);
   const bindings = structured?.sourceBindings ?? formBindings;
   const schema = structured?.sourceSchema ?? formSchema;
   const { colorText } = useCustomColors();

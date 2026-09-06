@@ -155,7 +155,8 @@ function Field({
   value: unknown;
   disabled: boolean;
 }) {
-  const { callbacks, structured: structuredForms } = useContext(FormDocumentContext);
+  const { callbacks, structured: structuredForms } =
+    useContext(FormDocumentContext);
   const { themeColor } = useFlowDiagramContext();
   const { background } = useCustomColors();
   const id = useId();
@@ -242,14 +243,18 @@ function Field({
     : property.type.kind === "null"
       ? [{ label: "Null", value: null }]
       : property.type.kind === "boolean"
-      ? [
-          { label: "Yes", value: true },
-          { label: "No", value: false },
-        ]
-      : formOptions(property.type);
+        ? [
+            { label: "Yes", value: true },
+            { label: "No", value: false },
+          ]
+        : formOptions(property.type);
   const multiple = property.type.kind === "array";
   const control =
-    (structuredForms && structured ? "pills" : config.$control === "checkbox" ? "pills" : config.$control) ??
+    (structuredForms && structured
+      ? "pills"
+      : config.$control === "checkbox"
+        ? "pills"
+        : config.$control) ??
     (options
       ? multiple || property.type.kind === "boolean"
         ? "pills"
@@ -484,8 +489,15 @@ function Field({
 }
 
 export function NodeForm({ nodeAddress }: { nodeAddress: string }) {
-  const { data, schema, callbacks, bindings, editable, renderForm, structured } =
-    useContext(FormDocumentContext);
+  const {
+    data,
+    schema,
+    callbacks,
+    bindings,
+    editable,
+    renderForm,
+    structured,
+  } = useContext(FormDocumentContext);
   const { readOnly, config } = useFlowDiagramContext();
   const rendered = renderForm?.(nodeAddress);
   if (rendered !== undefined)

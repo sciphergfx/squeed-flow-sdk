@@ -1,18 +1,18 @@
 import { Flex } from "@chakra-ui/react";
 import { useNodeViewActions } from "../hooks/useNodeViewActions";
-import NodeView from "./NodeView";
 import { CompactNodeView } from "./CompactNodeView";
 import { EditableContent } from "./EditableContent";
 import { getNodeBorderProps } from "./nodeBorder";
-import {
-  getColorVars,
-  calculateUniformKeyWidth,
-  OBJECT_VALUE_WIDTH,
-  OBJECT_BORDER_WIDTH,
-} from "./objectViewTheme";
-import { useObjectInspection } from "./useObjectInspection";
+import NodeView from "./NodeView";
 import { ObjectNodeHeader } from "./ObjectNodeHeader";
 import { ObjectPropertyTable } from "./ObjectPropertyTable";
+import {
+  calculateUniformKeyWidth,
+  getColorVars,
+  OBJECT_BORDER_WIDTH,
+  OBJECT_VALUE_WIDTH,
+} from "./objectViewTheme";
+import { useObjectInspection } from "./useObjectInspection";
 
 export const ObjectNodeView = (props) => {
   const {
