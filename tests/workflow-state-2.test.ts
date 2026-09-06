@@ -37,7 +37,8 @@ test("cast session preserves the supplied workflow and connects its real depende
     0,
   );
   const tools = graph.nodes.find((node) => node.data.id === "root.tools")!;
-  assert.equal(tools.data.config?.labelBelow, true);
+  assert.ok(tools);
+  assert.equal(view.tools.$view, "icon-label");
   assert.equal(Object.keys(bindings["root.tools"].portResources!).length, 23);
   assert.equal(
     graph.edges.filter((edge) => edge.data.targetProperty === "config:tools")

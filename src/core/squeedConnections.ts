@@ -84,7 +84,9 @@ export function prepareConnections(document: SqueedJson): {
             typeof connection.color === "string" ? connection.color : undefined,
           isEdgeDashed: connection.style === "dashed",
           isEdgeAnimated: connection.style === "animated",
-          ...(["dashed", "traveling"].includes(connection.animationVariant) ? { edgeAnimationVariant: connection.animationVariant } : {}),
+          ...(["dashed", "traveling"].includes(connection.animationVariant)
+            ? { edgeAnimationVariant: connection.animationVariant }
+            : {}),
           connection: { address, key: entry.key },
         },
       });

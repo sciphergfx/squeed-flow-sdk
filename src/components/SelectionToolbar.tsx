@@ -282,9 +282,22 @@ export function EdgeTools({
               />
             </ToolbarTooltip>
           ))}
-          {style === "animated" && <AnimationVariantSelect label="Edge animation" value={data?.edgeAnimationVariant ?? "dashed"}
-            options={[{ value: "dashed", label: "Dash" }, { value: "traveling", label: "Trace" }] as const}
-            disabled={config.readOnly} onChange={variant => callbacks.onEdgeAnimationVariantChange?.(edgeId, variant)} />}
+          {style === "animated" && (
+            <AnimationVariantSelect
+              label="Edge animation"
+              value={data?.edgeAnimationVariant ?? "dashed"}
+              options={
+                [
+                  { value: "dashed", label: "Dash" },
+                  { value: "traveling", label: "Trace" },
+                ] as const
+              }
+              disabled={config.readOnly}
+              onChange={(variant) =>
+                callbacks.onEdgeAnimationVariantChange?.(edgeId, variant)
+              }
+            />
+          )}
           <ToolbarSelect
             aria-label="Edge shape"
             title={`Edge shape: ${data?.type ?? "Default"}`}
@@ -460,8 +473,14 @@ export function NodeTools({
     nodeById.get(id)?.data.isNodeAnimated === true;
   const animated = ids.every(isAnimated);
   const mixedAnimation = !animated && ids.some(isAnimated);
-  const animationVariants = ids.map(id => nodeById.get(id)?.data.nodeAnimationVariant ?? "traveling");
-  const animationVariant = animationVariants.every(variant => variant === animationVariants[0]) ? animationVariants[0] : "";
+  const animationVariants = ids.map(
+    (id) => nodeById.get(id)?.data.nodeAnimationVariant ?? "traveling",
+  );
+  const animationVariant = animationVariants.every(
+    (variant) => variant === animationVariants[0],
+  )
+    ? animationVariants[0]
+    : "";
   const each = (fn: (id: string) => void) => ids.forEach(fn);
   const [borderMode, setBorderMode] = useState(false);
   const editingBorder = borderMode && show("color") && show("borderColor");
@@ -633,9 +652,24 @@ export function NodeTools({
               }
             />
           </ToolbarTooltip>
-          {(animated || mixedAnimation) && <AnimationVariantSelect label="Node animation" value={animationVariant}
-            options={[{ value: "traveling", label: "Trace" }, { value: "pulse", label: "Pulse" }] as const}
-            disabled={config.readOnly} onChange={variant => each(id => callbacks.onNodeAnimationVariantChange?.(id, variant))} />}
+          {(animated || mixedAnimation) && (
+            <AnimationVariantSelect
+              label="Node animation"
+              value={animationVariant}
+              options={
+                [
+                  { value: "traveling", label: "Trace" },
+                  { value: "pulse", label: "Pulse" },
+                ] as const
+              }
+              disabled={config.readOnly}
+              onChange={(variant) =>
+                each((id) =>
+                  callbacks.onNodeAnimationVariantChange?.(id, variant),
+                )
+              }
+            />
+          )}
         </>
       )}
       {!editingBorder && show("textColor") && (

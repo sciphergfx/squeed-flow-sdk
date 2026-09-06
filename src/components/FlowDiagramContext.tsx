@@ -121,8 +121,10 @@ export function FlowDiagramProvider({
   const [isPinned, setIsPinned] = useState(true);
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
   const [localEdgeMode, setEdgeMode] = useState<EdgeMode>("auto");
-  const [localCompactPropertyLayout, setCompactPropertyLayout] = useState(false);
-  const compactPropertyLayout = config.compactPropertyLayout ?? localCompactPropertyLayout;
+  const [localCompactPropertyLayout, setCompactPropertyLayout] =
+    useState(false);
+  const compactPropertyLayout =
+    config.compactPropertyLayout ?? localCompactPropertyLayout;
   const [localNodeViewModes, setLocalNodeViewModes] = useState<
     Record<string, NodeViewMode>
   >({});

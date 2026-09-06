@@ -93,6 +93,35 @@ update index-based bindings if it reorders steps. Removing a visual node does
 not delete state. Drawing visual connections does not change execution logic.
 The host owns those operations; the SDK does not infer workflow semantics.
 
+## Declarative Configuration
+
+In **Workflow State 2**, open **Control examples > Forms > Diagram configuration**.
+Bindings controls select source collections, identities, property interfaces,
+labels, dependency fields/ports and resource registries. Design controls select
+views and groups. Apply validates the complete draft before updating the diagram.
+The existing reusable-field controls continue to configure shared property nodes.
+
+[../workflow-state-2/design.json](../workflow-state-2/design.json) and
+[../workflow-state-2/bindings.json](../workflow-state-2/bindings.json) are the
+declarative definitions. [../workflow-state-2/designs.json](../workflow-state-2/designs.json)
+contains five independent presets. The TypeScript example files are thin loaders
+for [../declarative/adapter.ts](../declarative/adapter.ts), not workflow-specific
+generators. The properties interface is parsed as data, never executed.
+
+The client maps execution-link additions/removals back to the configured dependency
+array (`dependsOn` here). Configuration and template links are excluded. Replacing
+source JSON regenerates nodes, bindings and dependency links using the same
+configuration; appearance remains design data. Registry ports come from resource
+identities rather than a fixed list in the interface.
+
+Files controls import/export design, bindings, source or a complete diagram package.
+A package contains the parsed interface schema, configuration and source data,
+not the internal SDK nodes/edges graph. Resolved workflow export omits generated
+registries and resolves reusable values. **Save diagram draft** and **Restore
+diagram draft** use browser-local storage scoped by design; saving is explicit,
+not automatic. Production hosts should supply their own tenant-aware storage key
+and persistence policy. Nothing is provisioned or executed on the backend.
+
 ## Scope
 
 This is an editing example, not an executable integration. HTTP endpoints are

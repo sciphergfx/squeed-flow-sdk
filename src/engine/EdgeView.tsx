@@ -21,7 +21,12 @@ import {
   type TaxiDir,
 } from "./geometry";
 import { EDGE_LABEL_FONT_FAMILY } from "./text";
-import { LABEL_FONT_SIZE, LABEL_PADDING, LABEL_MARGIN_X, measureEdgeLabel } from "./edgeLabel";
+import {
+  LABEL_FONT_SIZE,
+  LABEL_PADDING,
+  LABEL_MARGIN_X,
+  measureEdgeLabel,
+} from "./edgeLabel";
 import type { Box, PortAnchor } from "./types";
 
 // chartStyles.ts equivalents (model units)
@@ -102,9 +107,12 @@ function EdgeView({
   onSelect,
 }: EdgeViewProps) {
   const icon = edgeData?.icon;
-  const { lines, iconWidth, contentWidth: labelWidth, contentHeight: labelHeight } = useMemo(
-    () => measureEdgeLabel(label, icon), [label, icon],
-  );
+  const {
+    lines,
+    iconWidth,
+    contentWidth: labelWidth,
+    contentHeight: labelHeight,
+  } = useMemo(() => measureEdgeLabel(label, icon), [label, icon]);
   const geo = useMemo(() => {
     const opts: EdgeGeometryOptions = {
       srcDist: STANDOFF,
@@ -298,9 +306,10 @@ function EdgeView({
 
   const trace = animated && edgeData?.edgeAnimationVariant === "traveling";
   const dashArray = !trace && (dashed || animated) ? DASH_PATTERN : undefined;
-  const animClass = animated && !trace
-    ? `flow-sdk-edge-anim${inverted ? " flow-sdk-edge-anim-rev" : ""}`
-    : undefined;
+  const animClass =
+    animated && !trace
+      ? `flow-sdk-edge-anim${inverted ? " flow-sdk-edge-anim-rev" : ""}`
+      : undefined;
 
   let labelEl: React.ReactNode = null;
   if (lines.length || icon) {
@@ -395,7 +404,14 @@ function EdgeView({
         strokeDasharray={dashArray}
         className={animClass}
       />
-      {trace && <EdgeTraceAnimation path={geo.d} color={displayColor} width={EDGE_WIDTH * 1.6} reversed={inverted} />}
+      {trace && (
+        <EdgeTraceAnimation
+          path={geo.d}
+          color={displayColor}
+          width={EDGE_WIDTH * 1.6}
+          reversed={inverted}
+        />
+      )}
       {geo.arrow && <path d={geo.arrow} fill={displayColor} />}
       {labelLayer && labelEl ? createPortal(labelEl, labelLayer) : labelEl}
       {labelLayer && validationEl

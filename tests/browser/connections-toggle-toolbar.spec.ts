@@ -28,7 +28,10 @@ for (const width of [1440, 390]) {
       name: "Toggle draw mode",
       exact: true,
     });
-    const compact = toolbar.getByRole("button", { name: "Compact layout", exact: true });
+    const compact = toolbar.getByRole("button", {
+      name: "Compact layout",
+      exact: true,
+    });
     await expect(toggle).toHaveText("Connected nodes");
     await expect(compact).toHaveText("Compact layout");
     await expect(toggle.locator("svg")).toHaveCount(1);
@@ -42,8 +45,14 @@ for (const width of [1440, 390]) {
     expect(labels.indexOf("Connected nodes")).toBe(
       labels.indexOf("Toggle draw mode") + 1,
     );
-    expect(labels.indexOf("Compact layout")).toBe(labels.indexOf("Connected nodes") + 1);
-    expect(await compact.evaluate(button => button.previousElementSibling?.getAttribute("role"))).toBe("separator");
+    expect(labels.indexOf("Compact layout")).toBe(
+      labels.indexOf("Connected nodes") + 1,
+    );
+    expect(
+      await compact.evaluate((button) =>
+        button.previousElementSibling?.getAttribute("role"),
+      ),
+    ).toBe("separator");
     expect(
       await toggle.evaluate((button) =>
         button.previousElementSibling?.getAttribute("role"),
@@ -67,13 +76,25 @@ for (const width of [1440, 390]) {
         (element) => getComputedStyle(element).backgroundColor,
       );
       await expect.poll(color).toBe(expected);
-      await expect.poll(() => compact.evaluate(element => getComputedStyle(element).color)).toBe(expected);
+      await expect
+        .poll(() =>
+          compact.evaluate((element) => getComputedStyle(element).color),
+        )
+        .toBe(expected);
     }
-    await chooseToolbarOption(page.getByRole("combobox", { name: "Control examples", exact: true }), "Layout");
-    const pill = page.getByRole("region", { name: "SDK control examples", exact: true }).getByRole("button", { name: "Compact property layout", exact: true });
+    await chooseToolbarOption(
+      page.getByRole("combobox", { name: "Control examples", exact: true }),
+      "Layout",
+    );
+    const pill = page
+      .getByRole("region", { name: "SDK control examples", exact: true })
+      .getByRole("button", { name: "Compact property layout", exact: true });
     await expect(pill).toHaveAttribute("aria-pressed", "true");
     for (const mode of ["Properties", "Nodes", "Auto"]) {
-      await chooseToolbarOption(toolbar.getByRole("combobox", { name: "Edge mode", exact: true }), mode);
+      await chooseToolbarOption(
+        toolbar.getByRole("combobox", { name: "Edge mode", exact: true }),
+        mode,
+      );
       await expect(toggle).toBeVisible();
       await expect(compact).toBeVisible();
       await compact.click();

@@ -59,10 +59,12 @@ for (const width of [1440, 390]) {
       page.getByRole("combobox", { name: "Control examples", exact: true }),
       "Layout",
     );
-    const compact = page.getByRole("region", { name: "SDK control examples", exact: true }).getByRole("button", {
-      name: "Compact property layout",
-      exact: true,
-    });
+    const compact = page
+      .getByRole("region", { name: "SDK control examples", exact: true })
+      .getByRole("button", {
+        name: "Compact property layout",
+        exact: true,
+      });
     await expect(compact).toHaveAttribute("aria-pressed", "true");
     const alignment = page.getByRole("combobox", {
       name: "Node alignment",

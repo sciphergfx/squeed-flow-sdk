@@ -192,9 +192,17 @@ function Canvas(props: CanvasProps) {
     id: string;
     mode: "connections" | "branch";
   } | null>(null);
-  const isolatedIds = useMemo(() => isolation
-    ? (isolation.mode === "connections" ? connectedNodeIds : branchNodeIds)(isolation.id, nodes, edges)
-    : null, [isolation, nodes, edges]);
+  const isolatedIds = useMemo(
+    () =>
+      isolation
+        ? (isolation.mode === "connections" ? connectedNodeIds : branchNodeIds)(
+            isolation.id,
+            nodes,
+            edges,
+          )
+        : null,
+    [isolation, nodes, edges],
+  );
   const propertyMode = edgeMode === "auto" || edgeMode === "properties";
   const visibleEdges = useMemo(
     () =>
@@ -737,7 +745,8 @@ function Canvas(props: CanvasProps) {
       isolatedIdsRef.current = ids;
       if (propsRef.current.compactPropertyLayout) {
         pendingFitRef.current = false;
-        pendingLayoutAction.current = () => focus(isolatedIdsRef.current ?? ids, padding, animate);
+        pendingLayoutAction.current = () =>
+          focus(isolatedIdsRef.current ?? ids, padding, animate);
       }
       setIsolation({ id, mode });
       if (!propsRef.current.compactPropertyLayout) focus(ids, padding, animate);
@@ -1474,7 +1483,7 @@ function Canvas(props: CanvasProps) {
           <g
             ref={setLabelLayer}
             className="flow-sdk-labels"
-            style={{ pointerEvents: drawMode ? "none" : "visiblePainted" }}
+            style={{ pointerEvents: drawMode ? "none" : "visiblePainted", outline: "none" }}
           />
         </g>
       </svg>

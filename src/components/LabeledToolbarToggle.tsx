@@ -4,7 +4,13 @@ import { useCustomColors } from "../theme/useCustomColors";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
 import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
 
-export function LabeledToolbarToggle({ label, icon, checked, onChange, disabled }: {
+export function LabeledToolbarToggle({
+  label,
+  icon,
+  checked,
+  onChange,
+  disabled,
+}: {
   label: string;
   icon: ReactElement;
   checked: boolean;
@@ -13,11 +19,33 @@ export function LabeledToolbarToggle({ label, icon, checked, onChange, disabled 
 }) {
   const { themeColor, readOnly } = useFlowDiagramContext();
   const { colorInactive } = useCustomColors();
-  return <ToolbarTooltip label={label}>
-    <ToolbarIconButton aria-label={label} aria-pressed={checked}
-      icon={<>{icon}<Text as="span" fontSize="xs" fontWeight="normal" whiteSpace="nowrap">{label}</Text></>}
-      size="sm" variant="ghost" width="auto" px={2} gap={2}
-      color={checked ? themeColor : colorInactive} disabled={disabled || readOnly}
-      onClick={() => onChange(!checked)} />
-  </ToolbarTooltip>;
+  return (
+    <ToolbarTooltip label={label}>
+      <ToolbarIconButton
+        aria-label={label}
+        aria-pressed={checked}
+        icon={
+          <>
+            {icon}
+            <Text
+              as="span"
+              fontSize="xs"
+              fontWeight="normal"
+              whiteSpace="nowrap"
+            >
+              {label}
+            </Text>
+          </>
+        }
+        size="sm"
+        variant="ghost"
+        width="auto"
+        px={2}
+        gap={2}
+        color={checked ? themeColor : colorInactive}
+        disabled={disabled || readOnly}
+        onClick={() => onChange(!checked)}
+      />
+    </ToolbarTooltip>
+  );
 }

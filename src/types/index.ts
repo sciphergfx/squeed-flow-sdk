@@ -337,8 +337,14 @@ export interface FlowDiagramCallbacks {
     radius: number | undefined,
   ) => void;
   onNodeAnimationChange?: (nodeId: string, animated: boolean) => void;
-  onNodeAnimationVariantChange?: (nodeId: string, variant: NodeAnimationVariant) => void;
-  onEdgeAnimationVariantChange?: (edgeId: string, variant: EdgeAnimationVariant) => void;
+  onNodeAnimationVariantChange?: (
+    nodeId: string,
+    variant: NodeAnimationVariant,
+  ) => void;
+  onEdgeAnimationVariantChange?: (
+    edgeId: string,
+    variant: EdgeAnimationVariant,
+  ) => void;
   /** Fires when a hover overlay action is clicked */
   onNodeHoverAction?: (actionId: string, nodeId: string, nodeData: any) => void;
 

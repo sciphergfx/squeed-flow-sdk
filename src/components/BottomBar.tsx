@@ -583,8 +583,14 @@ const BottomBar = () => {
                       </>
                     )}
 
-                    <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border}
-                      role="separator" aria-orientation="vertical" />
+                    <Icon
+                      mx={-1}
+                      as={PiLineVerticalThin}
+                      boxSize={5}
+                      color={border}
+                      role="separator"
+                      aria-orientation="vertical"
+                    />
                     <CompactPropertyLayoutToggle />
 
                     {edgeMode !== "properties" && (

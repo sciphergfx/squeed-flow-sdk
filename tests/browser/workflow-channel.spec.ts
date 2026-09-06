@@ -24,7 +24,9 @@ test("workflow channel drives mapped SDK actions and ignores unrelated execution
   await page.goto(process.env.SDK_TEST_URL!);
   const indicator = page.getByTestId("mcp-indicator");
   await expect(indicator).toHaveAttribute("data-connected", "false");
-  const disconnectedColor = await indicator.evaluate(element => getComputedStyle(element).color);
+  const disconnectedColor = await indicator.evaluate(
+    (element) => getComputedStyle(element).color,
+  );
   const pick = async (name: string, value: string) => {
     await page.getByRole("combobox", { name, exact: true }).click();
     await page
@@ -44,14 +46,28 @@ test("workflow channel drives mapped SDK actions and ignores unrelated execution
     page.getByRole("status", { name: "Workflow channel status", exact: true }),
   ).toHaveText("subscribed");
   expect(rooms).toContain("workflow:sdk-execution-test");
-  await expect(page.getByTestId("workflow-channel")).toHaveText("workflow:sdk-execution-test");
+  await expect(page.getByTestId("workflow-channel")).toHaveText(
+    "workflow:sdk-execution-test",
+  );
   await expect(indicator).toHaveAttribute("data-connected", "true");
-  await expect.poll(() => indicator.evaluate(element => getComputedStyle(element).color)).not.toBe(disconnectedColor);
+  await expect
+    .poll(() =>
+      indicator.evaluate((element) => getComputedStyle(element).color),
+    )
+    .not.toBe(disconnectedColor);
   await page.mouse.click(8, 475);
-  const swatch = page.getByRole("toolbar", { name: "Diagram controls", exact: true }).getByRole("button", { name: "Graph theme green.500", exact: true });
+  const swatch = page
+    .getByRole("toolbar", { name: "Diagram controls", exact: true })
+    .getByRole("button", { name: "Graph theme green.500", exact: true });
   await swatch.click();
-  const graphColor = await swatch.evaluate(element => getComputedStyle(element).backgroundColor);
-  await expect.poll(() => indicator.evaluate(element => getComputedStyle(element).color)).toBe(graphColor);
+  const graphColor = await swatch.evaluate(
+    (element) => getComputedStyle(element).backgroundColor,
+  );
+  await expect
+    .poll(() =>
+      indicator.evaluate((element) => getComputedStyle(element).color),
+    )
+    .toBe(graphColor);
   const normalize = page.locator(
     '.flow-sdk-node[data-node-id="root.step_normalize_status"]',
   );
@@ -79,11 +95,40 @@ test("workflow channel drives mapped SDK actions and ignores unrelated execution
   await expect(normalize.locator(".flow-sdk-node-animation")).toHaveCount(1);
   send({ type: "workflow_completed" });
   await expect(page.locator(".flow-sdk-node-animation")).toHaveCount(0);
-  channel!.send(JSON.stringify({ type: "mcp_node_view", data: { executionId: "sdk-execution-test", node: "normalize_status", mode: "properties" } }));
-  await expect(normalize.locator('[data-flow-inspection-row][data-flow-property="value"]')).toHaveCount(1);
-  channel!.send(JSON.stringify({ type: "mcp_node_animation", data: { executionId: "sdk-execution-test", node: "normalize_status", animated: true } }));
+  channel!.send(
+    JSON.stringify({
+      type: "mcp_node_view",
+      data: {
+        executionId: "sdk-execution-test",
+        node: "normalize_status",
+        mode: "properties",
+      },
+    }),
+  );
+  await expect(
+    normalize.locator('[data-flow-inspection-row][data-flow-property="value"]'),
+  ).toHaveCount(1);
+  channel!.send(
+    JSON.stringify({
+      type: "mcp_node_animation",
+      data: {
+        executionId: "sdk-execution-test",
+        node: "normalize_status",
+        animated: true,
+      },
+    }),
+  );
   await expect(normalize.locator(".flow-sdk-node-animation")).toHaveCount(1);
-  channel!.send(JSON.stringify({ type: "mcp_node_animation", data: { executionId: "sdk-execution-test", node: "normalize_status", animated: false } }));
+  channel!.send(
+    JSON.stringify({
+      type: "mcp_node_animation",
+      data: {
+        executionId: "sdk-execution-test",
+        node: "normalize_status",
+        animated: false,
+      },
+    }),
+  );
   await expect(normalize.locator(".flow-sdk-node-animation")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Disconnect workflow channel", exact: true })
@@ -93,5 +138,9 @@ test("workflow channel drives mapped SDK actions and ignores unrelated execution
   ).toHaveText("disconnected");
   await expect(page.getByTestId("workflow-channel")).toHaveCount(0);
   await expect(indicator).toHaveAttribute("data-connected", "false");
-  await expect.poll(() => indicator.evaluate(element => getComputedStyle(element).color)).toBe(disconnectedColor);
+  await expect
+    .poll(() =>
+      indicator.evaluate((element) => getComputedStyle(element).color),
+    )
+    .toBe(disconnectedColor);
 });

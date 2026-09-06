@@ -16,7 +16,12 @@ export function ConnectionsOnlyToggle({
   label = "Connected nodes",
 }: ConnectionsOnlyToggleProps) {
   return (
-    <LabeledToolbarToggle label={label} checked={checked} onChange={onChange}
-      disabled={disabled} icon={<Icon as={PiGraph} boxSize={5} />} />
+    <LabeledToolbarToggle
+      label={label}
+      checked={checked}
+      onChange={onChange}
+      disabled={disabled}
+      icon={<Icon as={PiGraph} boxSize={5} />}
+    />
   );
 }

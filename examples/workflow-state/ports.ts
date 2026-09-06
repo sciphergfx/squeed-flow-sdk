@@ -65,7 +65,14 @@ function declaredPorts(
   nodeBindings = workflowNodeBindings,
 ) {
   const binding = nodeBindings[address];
-  return binding ? (schema?.[binding.type]?.ports ?? {}) : {};
+  const ports = { ...(binding ? schema?.[binding.type]?.ports : {}) };
+  for (const id of Object.keys(binding?.portResources ?? {})) {
+    const separator = id.indexOf(":");
+    const kind = id.slice(0, separator);
+    const name = id.slice(separator + 1);
+    if (separator > 0 && name && (kind === "output" || kind === "error")) ports[name] = { kind };
+  }
+  return ports;
 }
 
 export function projectWorkflowPorts(

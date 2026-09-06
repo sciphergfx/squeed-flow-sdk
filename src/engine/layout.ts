@@ -64,11 +64,22 @@ export function runDagreLayout(
     const label = measureEdgeLabel(e.label, e.icon ?? e.data?.icon);
     const horizontal = opts.rankDir === "LR" || opts.rankDir === "RL";
     const length = label.width + 2 * LABEL_MARGIN_X;
-    g.setEdge(e.source, e.target, {
-      minlen: 1,
-      weight: 1,
-      ...(label.width ? { width: horizontal ? length : label.height, height: horizontal ? label.height : length, labelpos: "c" } : {}),
-    }, e.id);
+    g.setEdge(
+      e.source,
+      e.target,
+      {
+        minlen: 1,
+        weight: 1,
+        ...(label.width
+          ? {
+              width: horizontal ? length : label.height,
+              height: horizontal ? label.height : length,
+              labelpos: "c",
+            }
+          : {}),
+      },
+      e.id,
+    );
   }
 
   dagre.layout(g);
