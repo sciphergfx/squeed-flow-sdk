@@ -2,6 +2,7 @@ import type { FormSchema } from "../../src/core/forms";
 import {
   getNode,
   setNodeProp,
+  updateNode,
   type SqueedJson,
 } from "../../src/core/squeedEdits";
 import type { ContractPort } from "../../src/core/workflowContract";
@@ -13,7 +14,7 @@ import {
 import bindings from "./bindings.json";
 
 export const workflowNodeBindings: Record<string, StateFormBinding> = {
-  ...bindings,
+  ...(bindings as Record<string, StateFormBinding>),
   "root.prompt": { address: "root.texts.user_review", type: "TextConfig" },
   "root.instructions": {
     address: "root.texts.directory_guidance",
@@ -38,7 +39,7 @@ export function projectWorkflowView(
       const field = port.slice(port.indexOf(":") + 1);
       const label = value?.name ?? field;
       if (getNode(next, address)[field] !== label)
-        next = setNodeProp(next, address, field, label);
+        next = updateNode(next, address, node => ({ ...node, [field]: label }));
     }
   }
   const trigger = getNode(state, "root.trigger");

@@ -110,7 +110,7 @@ export async function readTemplateUses(
         )
           scan(value, target, field, false, `${binding.address}.${field}`);
   }
-  for (const [id, resource] of Object.entries(state.sdkResources ?? {}) as [
+  for (const [id, resource] of Object.entries(getNode(state, "root.sdkResources") ?? {}) as [
     string,
     { value?: unknown },
   ][]) {

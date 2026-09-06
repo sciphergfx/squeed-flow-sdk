@@ -32,6 +32,7 @@ export function WorkflowControls({
     setWorkflowContract,
     callbacks,
     readOnly,
+    themeColor,
   } = useFlowDiagramContext();
   const { edgeById } = useFlowData();
   const { data, schema, setSchema, bindings } = useContext(FormDocumentContext);
@@ -116,6 +117,7 @@ export function WorkflowControls({
           <ToolbarIconButton
             aria-label="Upload workflow interface"
             icon={<PiUploadSimple size={20} />}
+            color={getChakraColorHex(themeColor)}
             size="sm"
             variant="ghost"
             disabled={busy || readOnly}

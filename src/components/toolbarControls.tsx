@@ -12,7 +12,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from "react";
-import { PiCaretUp, PiCheck } from "react-icons/pi";
+import { PiCaretUp, PiCheck, PiXLight } from "react-icons/pi";
 import { useCustomColors } from "../theme/useCustomColors";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
 
@@ -352,5 +352,26 @@ export const ToolbarIconButton = forwardRef<
     >
       {icon}
     </IconButton>
+  );
+});
+
+export const ToolbarCloseButton = forwardRef<
+  HTMLButtonElement,
+  Omit<React.ComponentProps<typeof IconButton>, "children">
+>(function ToolbarCloseButton(props, ref) {
+  const { themeColor } = useFlowDiagramContext();
+  return (
+    <ToolbarTooltip label="Close">
+      <ToolbarIconButton
+        ref={ref}
+        size="sm"
+        variant="ghost"
+        color={themeColor}
+        focusRingColor={themeColor}
+        {...props}
+        aria-label={props["aria-label"] ?? "Close selection tools"}
+        icon={<PiXLight size={20} aria-hidden="true" />}
+      />
+    </ToolbarTooltip>
   );
 });

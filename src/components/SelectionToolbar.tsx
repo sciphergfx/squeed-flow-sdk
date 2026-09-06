@@ -1,5 +1,5 @@
-import { Box, HStack, Icon, Input, Text } from "@chakra-ui/react";
-import { useEffect, useRef, useState } from "react";
+import { Box, HStack, Icon, Input, Text, chakra } from "@chakra-ui/react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   PiArrowsInLineVertical,
   PiArrowsOutLineVertical,
@@ -15,24 +15,29 @@ import {
   PiSquare,
   PiSquareFill,
   PiTrash,
-  PiX,
 } from "react-icons/pi";
 import { TbBorderRadius } from "react-icons/tb";
 import { useNodeHasChildren } from "../hooks/useNodeHasChildren";
 import { getNodeBorderWidth } from "../nodes/nodeBorder";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
-import { NODE_TYPE_VIEWS, type NodeTypeView, type SelectionToolbarConfig } from "../types";
+import {
+  NODE_TYPE_VIEWS,
+  type NodeTypeView,
+  type SelectionToolbarConfig,
+} from "../types";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
 import { NodeIconPicker } from "./NodeIconPicker";
 import { AnimationVariantSelect } from "./AnimationVariantSelect";
 import {
+  ToolbarCloseButton as CloseButton,
   ToolbarIconButton,
   ToolbarSelect,
   ToolbarTooltip,
 } from "./toolbarControls";
 
 export const DEFAULT_PALETTE = [
+  "white",
   "blue.500",
   "teal.500",
   "green.500",
@@ -62,21 +67,7 @@ function Divider() {
   return <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border} />;
 }
 
-export function CloseButton({ onClick }: { onClick: () => void }) {
-  const { colorText } = useCustomColors();
-  return (
-    <ToolbarTooltip label="Close">
-      <ToolbarIconButton
-        aria-label="Close selection tools"
-        icon={<Icon as={PiX} boxSize={5} />}
-        size="sm"
-        variant="ghost"
-        color={colorText}
-        onClick={onClick}
-      />
-    </ToolbarTooltip>
-  );
-}
+export { CloseButton };
 
 export function CommitInput({
   value,
@@ -162,53 +153,111 @@ export function Swatches({
   includeTransparent?: boolean;
 }) {
   const { colorInactive, colorText } = useCustomColors();
+  const [expanded, setExpanded] = useState(false);
+  const paletteId = useId();
+  const toggle = useRef<HTMLButtonElement>(null);
+  const selected = value ?? colors[0] ?? "transparent";
   return (
-    <HStack gap={1} aria-label={label} role="group">
-      {[
-        ...new Set([...colors, ...(includeTransparent ? ["transparent"] : [])]),
-      ].map((c) => {
-        const active = value === c;
-        return (
-          <ToolbarTooltip key={c} label={`${label}: ${c}`}>
-            <Box
-              as="button"
-              aria-label={`${label} ${c}`}
-              aria-pressed={active}
-              w={4}
-              h={4}
-              borderRadius="full"
-              cursor="pointer"
-              style={{
-                backgroundColor: getChakraColorHex(c),
-                ...(c === "transparent"
-                  ? {
-                      backgroundImage:
-                        "conic-gradient(#fff 25%, #a0aec0 0 50%, #fff 0 75%, #a0aec0 0)",
-                      backgroundSize: "8px 8px",
-                    }
-                  : {}),
-              }}
-              outline={
-                active ? `2px solid ${getChakraColorHex(colorText)}` : "none"
-              }
-              outlineOffset="1px"
-              _hover={{ transform: "scale(1.15)" }}
-              onClick={() => onPick(c)}
-            />
-          </ToolbarTooltip>
-        );
-      })}
-      {onReset && (
-        <ToolbarTooltip label={`Reset ${label.toLowerCase()}`}>
-          <ToolbarIconButton
-            aria-label={`Reset ${label}`}
-            icon={<Icon as={PiEraser} boxSize={4} />}
-            size="xs"
-            variant="ghost"
-            color={colorInactive}
-            onClick={onReset}
-          />
-        </ToolbarTooltip>
+    <HStack
+      gap={1}
+      aria-label={label}
+      role="group"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          setExpanded(false);
+          toggle.current?.focus();
+        }
+      }}
+    >
+      <ToolbarTooltip label={`${label}: ${selected}`}>
+        <chakra.button
+          ref={toggle}
+          type="button"
+          aria-label={`${label} colors`}
+          aria-expanded={expanded}
+          aria-controls={paletteId}
+          w={4}
+          h={4}
+          flexShrink={0}
+          borderRadius="full"
+          cursor="pointer"
+          style={{
+            backgroundColor: getChakraColorHex(selected),
+            ...(selected === "transparent"
+              ? {
+                  backgroundImage:
+                    "conic-gradient(#fff 25%, #a0aec0 0 50%, #fff 0 75%, #a0aec0 0)",
+                  backgroundSize: "8px 8px",
+                }
+              : {}),
+          }}
+          outline={`2px solid ${getChakraColorHex(colorText)}`}
+          outlineOffset="1px"
+          onClick={() => setExpanded((open) => !open)}
+        />
+      </ToolbarTooltip>
+      {expanded && (
+        <HStack id={paletteId} gap={1}>
+          {[
+            ...new Set([
+              ...colors,
+              ...(includeTransparent ? ["transparent"] : []),
+            ]),
+          ].map((c) => {
+            const active = value === c;
+            return (
+              <ToolbarTooltip key={c} label={`${label}: ${c}`}>
+                <Box
+                  as="button"
+                  aria-label={`${label} ${c}`}
+                  aria-pressed={active}
+                  w={4}
+                  h={4}
+                  borderRadius="full"
+                  cursor="pointer"
+                  style={{
+                    backgroundColor: getChakraColorHex(c),
+                    ...(c === "transparent"
+                      ? {
+                          backgroundImage:
+                            "conic-gradient(#fff 25%, #a0aec0 0 50%, #fff 0 75%, #a0aec0 0)",
+                          backgroundSize: "8px 8px",
+                        }
+                      : {}),
+                  }}
+                  outline={
+                    active
+                      ? `2px solid ${getChakraColorHex(colorText)}`
+                      : "none"
+                  }
+                  outlineOffset="1px"
+                  _hover={{ transform: "scale(1.15)" }}
+                  onClick={() => {
+                    onPick(c);
+                    setExpanded(false);
+                    toggle.current?.focus();
+                  }}
+                />
+              </ToolbarTooltip>
+            );
+          })}
+          {onReset && (
+            <ToolbarTooltip label={`Reset ${label.toLowerCase()}`}>
+              <ToolbarIconButton
+                aria-label={`Reset ${label}`}
+                icon={<Icon as={PiEraser} boxSize={4} />}
+                size="xs"
+                variant="ghost"
+                color={colorInactive}
+                onClick={() => {
+                  onReset();
+                  setExpanded(false);
+                  toggle.current?.focus();
+                }}
+              />
+            </ToolbarTooltip>
+          )}
+        </HStack>
       )}
     </HStack>
   );
@@ -457,18 +506,29 @@ export function NodeTools({
   ids: string[];
   onClose: () => void;
 }) {
-  const { callbacks, colorMode, themeColor, config, setNodeViewMode } = useFlowDiagramContext();
+  const { callbacks, colorMode, themeColor, config, setNodeViewMode } =
+    useFlowDiagramContext();
   const { colorText, colorInactive } = useCustomColors();
   const { nodeById, parentIds } = useFlowData();
   const { palette, show } = useToolbarConfig();
   const single = ids.length === 1;
   const data = single ? nodeById.get(ids[0])?.data : undefined;
-  const typeViews = ids.map(id => nodeById.get(id)?.data.config?.typeView ?? "");
-  const mixedTypeView = typeViews.some(view => view !== typeViews[0]);
-  const typeView = mixedTypeView ? "mixed" : typeViews[0] ?? "";
-  const customTypeView = ids.some(id => {
+  const typeViews = ids.map(
+    (id) => nodeById.get(id)?.data.config?.typeView ?? "",
+  );
+  const mixedTypeView = typeViews.some((view) => view !== typeViews[0]);
+  const typeView = mixedTypeView ? "mixed" : (typeViews[0] ?? "");
+  const customTypeView = ids.some((id) => {
     const node = nodeById.get(id)?.data;
-    return node && (parentIds.has(id) || node.config?.parentContainer || Object.prototype.hasOwnProperty.call(config.customViews ?? {}, node.type));
+    return (
+      node &&
+      (parentIds.has(id) ||
+        node.config?.parentContainer ||
+        Object.prototype.hasOwnProperty.call(
+          config.customViews ?? {},
+          node.type,
+        ))
+    );
   });
   const collapsed = data?.config?.collapsed;
   const hasChildren = useNodeHasChildren(ids[0]);
@@ -535,22 +595,39 @@ export function NodeTools({
       {show("typeView") && (
         <ToolbarSelect
           aria-label="Type view"
-          title={customTypeView ? "Type view is managed by the custom renderer or container" : `Type view: ${typeView || "None (default)"}`}
+          title={
+            customTypeView
+              ? "Type view is managed by the custom renderer or container"
+              : `Type view: ${typeView || "None (default)"}`
+          }
           icon={<PiImage size={20} />}
           style={{ width: 36 }}
           value={typeView}
-          disabled={config.readOnly || config.editable === false || customTypeView}
-          onValueChange={value => {
+          disabled={
+            config.readOnly || config.editable === false || customTypeView
+          }
+          onValueChange={(value) => {
             if (!NODE_TYPE_VIEWS.includes(value as NodeTypeView)) return;
-            each(id => {
-              callbacks.onNodeTypeViewChange?.(id, (value || undefined) as NodeTypeView | undefined);
+            each((id) => {
+              callbacks.onNodeTypeViewChange?.(
+                id,
+                (value || undefined) as NodeTypeView | undefined,
+              );
               setNodeViewMode(id, "default");
               callbacks.onNodeViewToggle?.(id);
             });
           }}
         >
-          {mixedTypeView && <option value="mixed" disabled>Mixed</option>}
-          {NODE_TYPE_VIEWS.map(view => <option key={view} value={view}>{view || "None"}</option>)}
+          {mixedTypeView && (
+            <option value="mixed" disabled>
+              Mixed
+            </option>
+          )}
+          {NODE_TYPE_VIEWS.map((view) => (
+            <option key={view} value={view}>
+              {view || "None"}
+            </option>
+          ))}
         </ToolbarSelect>
       )}
       {show("style") && (
@@ -727,7 +804,7 @@ export function NodeTools({
           />
           <CommitInput
             ariaLabel="Node icon"
-            placeholder="Icon (e.g. PiGear)"
+            placeholder="(e.g. PiGear)"
             width="120px"
             value={data?.config?.icon || ""}
             onCommit={(v) => callbacks.onNodeIconChange?.(ids[0], v)}

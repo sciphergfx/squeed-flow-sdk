@@ -1,13 +1,12 @@
 import styled from "@emotion/styled";
 import { useContext, useEffect, useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { PiX } from "react-icons/pi";
 import { resolveFormNode } from "../core/forms";
 import { FormDocumentContext, NodeForm } from "../nodes/NodeForm";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
 import { resolveStateForm } from "../utils/formState";
-import { ToolbarIconButton } from "./toolbarControls";
+import { ToolbarCloseButton } from "./toolbarControls";
 
 const FormDialog = styled.dialog`
   &[open] {
@@ -141,12 +140,9 @@ export function NodeFormPopover({
                     style={{ margin: 0 }}
                     onSubmit={(event) => event.stopPropagation()}
                   >
-                    <ToolbarIconButton
+                    <ToolbarCloseButton
                       type="submit"
                       aria-label="Close node configuration"
-                      icon={<PiX size={18} />}
-                      size="sm"
-                      variant="ghost"
                     />
                   </form>
                 </div>

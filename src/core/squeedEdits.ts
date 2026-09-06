@@ -600,14 +600,28 @@ export function applyCollapsed(
     nodes.filter((n) => n.data?.config?.collapsed).map((n) => n.data.id),
   );
   if (!collapsed.size) return { nodes, edges };
+  const byId = new Map(nodes.map(node => [node.data.id, node]));
+  const parents = new Set(nodes.map(node => node.data.parent).filter(Boolean));
+  const endpoints = new Map(nodes.map(node => {
+    let endpoint = node.data.id;
+    let parent = node.data.parent;
+    const seen = new Set([endpoint]);
+    while (parent && !seen.has(parent)) {
+      if (collapsed.has(parent)) endpoint = parent;
+      seen.add(parent);
+      parent = byId.get(parent)?.data.parent;
+    }
+    return [node.data.id, endpoint];
+  }));
   const out = new Map<string, string[]>();
   for (const e of edges) {
     const s = e.data.isInverted ? e.data.target : e.data.source;
     const t = e.data.isInverted ? e.data.source : e.data.target;
     (out.get(s) ?? out.set(s, []).get(s)!).push(t);
   }
-  const hidden = new Set<string>();
+  const hidden = new Set(nodes.filter(node => endpoints.get(node.data.id) !== node.data.id).map(node => node.data.id));
   for (const root of collapsed) {
+    if (parents.has(root)) continue;
     const stack = [...(out.get(root) || [])];
     while (stack.length) {
       const id = stack.pop()!;
@@ -617,9 +631,19 @@ export function applyCollapsed(
     }
   }
   return {
-    nodes: nodes.filter((n) => !hidden.has(n.data.id)),
-    edges: edges.filter(
-      (e) => !hidden.has(e.data.source) && !hidden.has(e.data.target),
-    ),
+    nodes: nodes.filter(node => !hidden.has(node.data.id)).map(node =>
+      collapsed.has(node.data.id) && parents.has(node.data.id)
+        ? { ...node, data: { ...node.data, type: "arrayView", label: node.data.label ?? node.data.headerTitle,
+            config: { ...node.data.config, parentContainer: true, labelBelow: true, icon: node.data.config?.icon || "PiStack" } } }
+        : node),
+    edges: edges.flatMap(edge => {
+      const source = endpoints.get(edge.data.source) ?? edge.data.source;
+      const target = endpoints.get(edge.data.target) ?? edge.data.target;
+      if (hidden.has(source) || hidden.has(target)) return [];
+      if (source === edge.data.source && target === edge.data.target) return [edge];
+      if (source === target) return [];
+      return [{ ...edge, data: { ...edge.data, source, target,
+        collapsedEndpoints: edge.data.collapsedEndpoints ?? { source: edge.data.source, target: edge.data.target } } }];
+    }),
   };
 }

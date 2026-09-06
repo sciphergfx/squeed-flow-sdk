@@ -23,21 +23,15 @@ import {
 import { EDGE_LABEL_FONT_FAMILY } from "./text";
 import {
   LABEL_FONT_SIZE,
+  NODE_LABEL_FONT_SIZE,
   LABEL_PADDING,
   LABEL_MARGIN_X,
   measureEdgeLabel,
 } from "./edgeLabel";
 import type { Box, PortAnchor } from "./types";
 
-// chartStyles.ts equivalents (model units)
-export const EDGE_WIDTH = 6;
-const ARROW_SCALE = 3;
-/** cytoscape `getArrowWidth(width, scale)` */
-export const ARROW_SIZE =
-  Math.max(Math.pow(EDGE_WIDTH * 13.37, 0.9), 29) * ARROW_SCALE;
-/** cytoscape triangle `gap`: width × arrow-scale × 2 */
-const ARROW_GAP = EDGE_WIDTH * ARROW_SCALE * 2;
-const STANDOFF = 80;
+import { EDGE_WIDTH, ARROW_SIZE, ARROW_GAP, STANDOFF } from "./edgeMetrics";
+export { EDGE_WIDTH, ARROW_SIZE } from "./edgeMetrics";
 const TAXI_RADIUS = 500;
 export const DASH_PATTERN = "32 18";
 
@@ -107,12 +101,13 @@ function EdgeView({
   onSelect,
 }: EdgeViewProps) {
   const icon = edgeData?.icon;
+  const labelFontSize = propertyMode ? LABEL_FONT_SIZE : NODE_LABEL_FONT_SIZE;
   const {
     lines,
     iconWidth,
     contentWidth: labelWidth,
     contentHeight: labelHeight,
-  } = useMemo(() => measureEdgeLabel(label, icon), [label, icon]);
+  } = useMemo(() => measureEdgeLabel(label, icon, labelFontSize), [label, icon, labelFontSize]);
   const geo = useMemo(() => {
     const opts: EdgeGeometryOptions = {
       srcDist: STANDOFF,
@@ -281,6 +276,14 @@ function EdgeView({
 
   if (!geo) return null;
 
+  const horizontalLabel =
+    (dir === "rightward" || dir === "leftward") &&
+    !Object.prototype.hasOwnProperty.call(customEdgeTypes ?? {}, edgeType) &&
+    !(propertyMode && (sourceY !== undefined || targetY !== undefined || sourcePort || targetPort));
+  const labelTransform = horizontalLabel
+    ? `translate(${geo.label.x} ${geo.label.y - labelHeight / 2 - 2 * LABEL_PADDING})`
+    : `translate(${geo.label.x} ${geo.label.y}) rotate(${geo.label.angle}) translate(${labelAtTarget || Object.prototype.hasOwnProperty.call(customEdgeTypes ?? {}, edgeType) ? 0 : LABEL_MARGIN_X} 0)`;
+
   const validationColor = validationIssue?.startsWith("Unverified:")
     ? "#b45309"
     : "#dc2626";
@@ -290,7 +293,7 @@ function EdgeView({
       className="flow-sdk-edge-validation"
       role="img"
       aria-label={validationIssue}
-      transform={`translate(${geo.label.x} ${geo.label.y - (lines.length * LABEL_FONT_SIZE) / 2 - 55})`}
+      transform={`translate(${geo.label.x} ${geo.label.y - (lines.length * labelFontSize) / 2 - 55})`}
     >
       <title>{validationIssue}</title>
       <DynamicIcon
@@ -318,11 +321,12 @@ function EdgeView({
     labelEl = (
       <g
         className="flow-sdk-edge-label"
-        data-label-transform={`translate(${geo.label.x} ${geo.label.y}) rotate(${geo.label.angle}) translate(${labelAtTarget || Object.prototype.hasOwnProperty.call(customEdgeTypes ?? {}, edgeType) ? 0 : LABEL_MARGIN_X} 0)`}
+        data-label-transform={labelTransform}
+        data-label-horizontal={horizontalLabel || undefined}
         data-edge-id={id}
         data-source-property={sourceProperty}
         data-target-property={targetProperty}
-        transform={`translate(${geo.label.x} ${geo.label.y}) rotate(${geo.label.angle}) translate(${labelAtTarget || Object.prototype.hasOwnProperty.call(customEdgeTypes ?? {}, edgeType) ? 0 : LABEL_MARGIN_X} 0)`}
+        transform={labelTransform}
       >
         <rect
           x={-w / 2 - LABEL_PADDING}
@@ -333,7 +337,8 @@ function EdgeView({
         />
         <text
           fill={color}
-          fontSize={LABEL_FONT_SIZE}
+          fontSize={labelFontSize}
+          style={{ fontSize: labelFontSize, fontFamily: EDGE_LABEL_FONT_FAMILY }}
           fontFamily={EDGE_LABEL_FONT_FAMILY}
           textAnchor="middle"
           dominantBaseline="central"
@@ -342,7 +347,7 @@ function EdgeView({
             <tspan
               key={i}
               x={iconWidth / 2}
-              y={(i - (lines.length - 1) / 2) * LABEL_FONT_SIZE}
+              y={(i - (lines.length - 1) / 2) * labelFontSize}
             >
               {l}
             </tspan>

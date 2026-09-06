@@ -25,6 +25,8 @@ import { isEdgeVisible, isNodeVisible, visibleLayoutGraph } from "./edgeMode";
 import type { TaxiDir } from "./geometry";
 import { placeEdgeLabels } from "./labelPlacement";
 import { computeContainers, runDagreLayout } from "./layout";
+import { LABEL_FONT_SIZE, NODE_LABEL_FONT_SIZE } from "./edgeLabel";
+import { NODE_CONNECTOR_CLEARANCE, PROPERTY_CONNECTOR_CLEARANCE } from "./edgeMetrics";
 import NodeHost from "./NodeHost";
 import type { PropertyRow } from "./propertyRows";
 import { EDGE_LABEL_FONT_FAMILY, measureText } from "./text";
@@ -310,6 +312,8 @@ function Canvas(props: CanvasProps) {
   const [edgesVisible, setEdgesVisible] = useState(true);
   const isolatedIdsRef = useRef<Set<string> | null>(null);
   isolatedIdsRef.current = isolatedIds;
+  const connectionSpacingRef = useRef(1);
+  connectionSpacingRef.current = isolation?.mode === "connections" ? 1.25 : 1;
   const savedViewport = useRef<ViewportState | null>(null);
   const previousNodes = useRef(nodes);
   const revealedNodes = useRef<string[]>([]);
@@ -363,6 +367,7 @@ function Canvas(props: CanvasProps) {
 
   const runLayoutNow = () => {
     const p = propsRef.current;
+    const connectionSpacing = connectionSpacingRef.current;
     const graph = layoutGraphRef.current;
     const inputs = graph.nodes.map((n) => {
       const s = sizesRef.current.get(n.id) || DEFAULT_SIZE;
@@ -370,17 +375,26 @@ function Canvas(props: CanvasProps) {
     });
     let target: Map<string, Point>;
     try {
-      target = runDagreLayout(inputs, graph.edges, {
+      const compact = p.compactPropertyLayout && (p.edgeMode === "properties" || !!isolatedIdsRef.current);
+      const propertyMode = p.edgeMode !== "nodes" && p.edgeMode !== "workflow";
+      const layoutEdges = graph.edges.map(edge => ({
+        ...edge,
+        connectorClearance: !compact ? 0
+          : propertyMode && (edge.sourceProperty !== undefined || edge.targetProperty !== undefined)
+            ? PROPERTY_CONNECTOR_CLEARANCE
+            : NODE_CONNECTOR_CLEARANCE,
+      }));
+      target = runDagreLayout(inputs, layoutEdges, {
+        edgeLabelFontSize: p.edgeMode === "nodes" || p.edgeMode === "workflow" ? NODE_LABEL_FONT_SIZE : LABEL_FONT_SIZE,
         rankDir: p.direction,
-        compact:
-          p.compactPropertyLayout &&
-          (p.edgeMode === "properties" || !!isolatedIdsRef.current),
+        compact,
         nodeAlignment: p.nodeAlignment,
-        rankSep: p.rankSep,
-        edgeSep: p.edgeSep,
-        nodeSep: 5,
+        rankSep: p.rankSep * connectionSpacing,
+        edgeSep: p.edgeSep * connectionSpacing,
+        nodeSep: 5 * connectionSpacing,
         spacingFactor: p.spacingFactor ?? 1.3,
-        compactSpacingScale: p.compactSpacingScale,
+        compactSpacingScale:
+          (p.compactSpacingScale ?? (p.spacingFactor ?? 1.3) / 1.3) * connectionSpacing,
       });
     } catch (err) {
       console.warn("[flow-sdk] layout failed", err);

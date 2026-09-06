@@ -1,4 +1,4 @@
-import type { SqueedJson } from "../../src/core/squeedEdits";
+import { getNode, type SqueedJson } from "../../src/core/squeedEdits";
 import {
   materializeStepConfigs,
   type ConfigCatalogState,
@@ -34,7 +34,7 @@ export function projectSharedExample(
   return {
     ...view,
     resolved: {
-      ...view.resolved,
+      ...getNode(view, "root.resolved"),
       $content: `\`\`\`json\n${JSON.stringify(resolved, null, 2)}\n\`\`\``,
     },
   };

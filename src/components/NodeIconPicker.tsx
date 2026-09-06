@@ -3,10 +3,9 @@ import {
   PiArrowRight,
   PiCaretLeft,
   PiCaretRight,
-  PiImage,
+  PiShapes,
   PiTrash,
   PiUploadSimple,
-  PiX,
 } from "react-icons/pi";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
@@ -17,7 +16,7 @@ import {
   svgIconDataUrl,
 } from "../utils/iconSources";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
-import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
+import { ToolbarCloseButton, ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
 
 export function NodeIconPicker({
   nodeId,
@@ -105,9 +104,10 @@ export function NodeIconPicker({
       <ToolbarTooltip label={edgeId ? "Choose edge icon" : "Choose node icon"}>
         <ToolbarIconButton
           aria-label={edgeId ? "Choose edge icon" : "Choose node icon"}
-          icon={<PiImage size={20} />}
+          icon={<PiShapes size={20} />}
           size="sm"
           variant="ghost"
+          color={getChakraColorHex(themeColor)}
           disabled={readOnly}
           onClick={() => {
             setError("");
@@ -182,11 +182,8 @@ export function NodeIconPicker({
                     />
                   </ToolbarTooltip>
                 )}
-                <ToolbarIconButton
+                <ToolbarCloseButton
                   aria-label="Close icon picker"
-                  icon={<PiX size={20} />}
-                  size="sm"
-                  variant="ghost"
                   onClick={() => dialog.current?.close()}
                 />
               </div>

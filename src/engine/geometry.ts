@@ -328,7 +328,7 @@ function arrowPath(
   const len = Math.hypot(dx, dy) || 1;
   const ux = dx / len;
   const uy = dy / len;
-  const L = 0.3 * size;
+  const L = (shape === "square" ? 0.15 : 0.3) * size;
   const W = 0.15 * size;
   const bx = tip.x - ux * L;
   const by = tip.y - uy * L;

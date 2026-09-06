@@ -14,12 +14,14 @@ export interface LayoutEdgeInput {
   id: string;
   source: string;
   target: string;
+  connectorClearance?: number;
   label?: string;
   icon?: string;
   data?: { icon?: string };
 }
 
 export interface LayoutOptions {
+  edgeLabelFontSize?: number;
   rankDir: "LR" | "RL" | "TB" | "BT";
   compact?: boolean;
   compactSpacingScale?: number;
@@ -72,19 +74,19 @@ export function runDagreLayout(
   for (const e of edges) {
     if (!ids.has(e.source) || !ids.has(e.target)) continue;
     if (parents.has(e.source) || parents.has(e.target)) continue;
-    const label = measureEdgeLabel(e.label, e.icon ?? e.data?.icon);
+    const label = measureEdgeLabel(e.label, e.icon ?? e.data?.icon, opts.edgeLabelFontSize);
     const horizontal = opts.rankDir === "LR" || opts.rankDir === "RL";
-    const length = label.width + 2 * LABEL_MARGIN_X;
+    const length = (label.width ? label.width + 2 * LABEL_MARGIN_X : 0) + (e.connectorClearance ?? 0);
     g.setEdge(
       e.source,
       e.target,
       {
         minlen: 1,
         weight: 1,
-        ...(label.width
+        ...(length
           ? {
-              width: horizontal ? length : label.height,
-              height: horizontal ? label.height : length,
+              width: horizontal ? length : Math.max(1, label.height),
+              height: horizontal ? Math.max(1, label.height) : length,
               labelpos: "c",
             }
           : {}),

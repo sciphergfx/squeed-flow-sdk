@@ -121,6 +121,7 @@ function ContainerView({
               fontSize={style.fontSize}
               fontWeight="bold"
               fontFamily={EDGE_LABEL_FONT_FAMILY}
+              style={{ fontSize: style.fontSize, fontWeight: "bold", fontFamily: EDGE_LABEL_FONT_FAMILY }}
               textAnchor="middle"
               dominantBaseline="central"
             >

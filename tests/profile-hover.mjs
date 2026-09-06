@@ -5,7 +5,7 @@ try {
   const page = await browser.newPage({
     viewport: { width: 1440, height: 950 },
   });
-  await page.goto(process.env.SDK_TEST_URL ?? "http://localhost:5174/sdk-test");
+  await page.goto(process.env.SDK_TEST_URL ?? "http://127.0.0.1:5175/sdk-test");
   const surface = page.locator(
     '.flow-sdk-node[data-node-id="review"] [data-flow-node-surface]',
   );

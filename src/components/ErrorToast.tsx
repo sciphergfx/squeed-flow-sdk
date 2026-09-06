@@ -1,7 +1,8 @@
 import { createPortal } from "react-dom";
-import { PiWarningCircle, PiX } from "react-icons/pi";
+import { PiWarningCircle } from "react-icons/pi";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
+import { ToolbarCloseButton } from "./toolbarControls";
 
 export function ErrorToast({
   message,
@@ -48,27 +49,17 @@ export function ErrorToast({
         <strong>Interface upload failed</strong>
         <div>{message}</div>
       </div>
-      <button
+      <ToolbarCloseButton
         type="button"
         aria-label="Dismiss upload error"
         title="Dismiss upload error"
         onClick={onDismiss}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-          width: 24,
-          height: 24,
-          padding: 0,
-          border: 0,
-          background: "transparent",
-          color: "inherit",
-          cursor: "pointer",
-        }}
-      >
-        <PiX size={16} aria-hidden="true" />
-      </button>
+        flexShrink={0}
+        width="24px"
+        height="24px"
+        minWidth="24px"
+        padding={0}
+      />
     </div>,
     document.body,
   );

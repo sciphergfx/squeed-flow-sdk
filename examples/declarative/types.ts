@@ -51,10 +51,10 @@ export interface DiagramBindings {
 
 export interface DiagramDesign {
   version: 1;
-  root?: SqueedJson;
-  defaults: SqueedJson;
-  types: Record<string, SqueedJson>;
-  nodes: Record<string, SqueedJson>;
+  root?: Record<string, any>;
+  defaults: Record<string, any>;
+  types: Record<string, Record<string, any>>;
+  nodes: Record<string, Record<string, any>>;
   overrides?: Record<string, SqueedJson>;
   removedOverrides?: Record<string, string[]>;
   edgeOverrides?: Record<string, { set: SqueedJson; remove: string[] }>;
@@ -68,7 +68,7 @@ export interface DiagramDesign {
     edgeRadius?: number;
     edgeMode?: "auto" | "nodes" | "properties" | "workflow";
   };
-  groups?: { id: string; node: SqueedJson; members: string[] }[];
+  groups?: { id: string; node: Record<string, any>; members: string[] }[];
   hideParentEdges?: boolean;
   resourceMode?: "compact" | "split";
   mapping: ResourceMapping;
