@@ -318,7 +318,10 @@ export interface FlowDiagramCallbacks {
   onNodeDoubleClick?: (nodeId: string, nodeData: any) => void;
   onNodeViewModeChange?: (nodeId: string, mode: NodeViewMode) => void;
   onNodeViewToggle?: (nodeId: string) => void;
-  onNodeTypeViewChange?: (nodeId: string, view: NodeTypeView | undefined) => void;
+  onNodeTypeViewChange?: (
+    nodeId: string,
+    view: NodeTypeView | undefined,
+  ) => void;
   /** Fires when a node is created via edge drawing into empty space */
   onNodeCreate?: (params: {
     type: string;

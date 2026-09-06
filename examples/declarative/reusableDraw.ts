@@ -268,4 +268,3 @@ export function createReusableStep(
     };
   }
   return { configuration: { ...config, source, design }, address };
-}

@@ -1,19 +1,15 @@
 {
-          "$label": "My Properties",
-          "form": {
-                    "$view": "icon-label",
-                    "$label": {
-                              "$state": "root.step.name"
-                    },
-                    "$icon": "PiSlidersHorizontal",
-                    "$bgColor": "teal.500",
-                    "$target": "root.preview"
-          },
-          "preview": {
-                    "$label": "Current Values",
-                    "$icon": "PiBracketsCurly",
-                    "$content": {
-                              "$state": "root.step"
-                    }
-          }
+  "$label": "My Properties",
+  "form": {
+    "$view": "icon-label",
+    "$label": { "$state": "root.step.name" },
+    "$icon": "PiSlidersHorizontal",
+    "$bgColor": "teal.500",
+    "$target": "root.preview"
+  },
+  "preview": {
+    "$label": "Current Values",
+    "$icon": "PiBracketsCurly",
+    "$content": { "$state": "root.step" }
+  }
 }

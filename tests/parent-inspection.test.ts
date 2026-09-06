@@ -42,7 +42,7 @@ for (const nested of [false, true]) {
     assert.equal(collapsedExternal?.data.source, "root.group");
     assert.equal(collapsedExternal?.data.target, "root.outside");
     assert.deepEqual(resolveEdgeOwner(collapsedExternal!.data), resolveEdgeOwner(external.data));
-    const edited = setEdgeProp(view, collapsedExternal!.data, "$edgeLabel", "Updated");
+    const edited = setEdgeProp(view, collapsedExternal!.data, "$sourceLabel", "Updated");
     assert.equal(getNode(edited, external.data.source)?.$targetLabel, "Updated");
     const removed = removeEdge(view, collapsedExternal!.data);
     assert.equal(removed.removed, true);
@@ -94,7 +94,7 @@ test("collapsed parents preserve incoming and outgoing property links but hide i
       assert.equal(link.data.target, "root.outside");
       assert.equal(link.data.color, "red.500");
       assert.equal(link.data.isEdgeAnimated, true);
-      const edited = setEdgeProp(document, link.data, "$edgeLabel", "Updated");
+      const edited = setEdgeProp(document, link.data, "$sourceLabel", "Updated");
       assert.equal(getNode(edited, "root.first")?.$connections[0].label, "Updated");
       assert.equal(getNode(removeEdge(document, link.data).json, "root.first")?.$connections.length, 1);
     } else {

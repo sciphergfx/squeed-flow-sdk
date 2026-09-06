@@ -19,14 +19,20 @@ export function applyParentGroups(json: SqueedJson, graph: Graph): Graph {
     const seen = new Set<string>([node.data.id]);
     let parent = node.data.parent;
     while (parent && !seen.has(parent)) {
-      if (groupIds.has(parent) && byId.has(parent) && getNode(json, parent)?.$collapsed)
+      if (
+        groupIds.has(parent) &&
+        byId.has(parent) &&
+        getNode(json, parent)?.$collapsed
+      )
         endpoint = parent;
       seen.add(parent);
       parent = byId.get(parent)?.data.parent;
     }
     return endpoint;
   };
-  const endpoints = new Map(graph.nodes.map(node => [node.data.id, visibleEndpoint(node)]));
+  const endpoints = new Map(
+    graph.nodes.map((node) => [node.data.id, visibleEndpoint(node)]),
+  );
   const nodes = graph.nodes
     .filter((node) => endpoints.get(node.data.id) === node.data.id)
     .map((node) => {
@@ -52,24 +58,27 @@ export function applyParentGroups(json: SqueedJson, graph: Graph): Graph {
   const ids = new Set(nodes.map((node) => node.data.id));
   return {
     nodes,
-    edges: graph.edges.flatMap(edge => {
+    edges: graph.edges.flatMap((edge) => {
       const source = endpoints.get(edge.data.source);
       const target = endpoints.get(edge.data.target);
       if (!source || !target || !ids.has(source) || !ids.has(target)) return [];
-      if (source === edge.data.source && target === edge.data.target) return [edge];
+      if (source === edge.data.source && target === edge.data.target)
+        return [edge];
       if (source === target) return [];
-      return [{
-        ...edge,
-        data: {
-          ...edge.data,
-          source,
-          target,
-          collapsedEndpoints: edge.data.collapsedEndpoints ?? {
-            source: edge.data.source,
-            target: edge.data.target,
+      return [
+        {
+          ...edge,
+          data: {
+            ...edge.data,
+            source,
+            target,
+            collapsedEndpoints: edge.data.collapsedEndpoints ?? {
+              source: edge.data.source,
+              target: edge.data.target,
+            },
           },
         },
-      }];
+      ];
     }),
   };
 }
