@@ -211,6 +211,14 @@ Leaving Properties mode or restoring an isolated view restores the applicable
 full layout. Saved graph data is unchanged. Without the flag, isolation keeps
 the existing node positions.
 
+## Bind Your Own Data
+
+Start with the [minimal properties example](examples/form-connection/README.md):
+two nodes, plain state, one binding, and a three-field interface. Its
+[React component](examples/form-connection/MinimalExample.tsx) shows the complete
+setup, including form edits, display references, appearance, and connection modes.
+No workflow backend is required.
+
 ## Maintainer Guide
 
 The SDK Test **Form Connection** dataset loads
@@ -303,6 +311,26 @@ external dependency. Tests verify mapped paths and import/export arrows against
 the source tree. Edit this single JSON source to keep the guide current.
 
 ## Callbacks
+
+### Reusable Nodes From Property Draws
+
+SDK Test opens a reusable-node picker when a Properties-mode draw ends on empty
+canvas. It reuses `NodeFormPopover` with a top filter, a fixed-height scrolling
+list and the form vignette. Items use the current JSON bindings, interfaces and
+icons; incompatible ports are disabled and multiple compatible ports can be
+selected explicitly. Closing the modal makes no changes.
+
+`callbacks.onNodeCreateRequest(request)` lets a host defer creation by returning
+`true`. The request contains `sourceNodeId`, `sourceProperty`, `reverse` and the
+model-space `position`. A workflow template creates a new step through the
+configured collection/identity/dependency fields; an existing reusable retains
+its shared state and connection. Node-mode drawing is unchanged.
+
+After layout, `engine.setNodePosition(id, position)` places a measured node at
+the draw endpoint without changing viewport zoom or pan. This renderer-local
+placement is retained across relayouts while the node remains rendered; pass
+`undefined` to release it back to automatic layout. It is not serialized into
+the workflow document.
 
 ### Animated Viewport Actions
 

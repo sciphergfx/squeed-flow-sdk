@@ -19,6 +19,7 @@ export interface DiagramBindings {
     subtitleFields: string[];
     nodePrefix: string;
     types: Record<string, string>;
+    templates?: Record<string, { label?: string; icon?: string; defaults?: Record<string, unknown>; form?: string }>;
     fields?: StateFormBinding["fields"];
   };
   dependencies?: {

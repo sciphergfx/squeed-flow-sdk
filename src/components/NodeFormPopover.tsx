@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import { useContext, useEffect, useId, useRef } from "react";
+import { useContext, useEffect, useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { PiX } from "react-icons/pi";
 import { resolveFormNode } from "../core/forms";
@@ -50,18 +50,24 @@ export function NodeFormPopover({
   label,
   open = false,
   onClose,
+  children,
+  filter,
+  height,
 }: {
   nodeAddress: string;
   active: boolean;
   label: string;
   open?: boolean;
   onClose?: () => void;
+  children?: ReactNode;
+  filter?: ReactNode;
+  height?: number;
 }) {
   const { background, border, colorText } = useCustomColors();
   const dialog = useRef<HTMLDialogElement>(null);
   const id = useId();
   const { data, schema, bindings } = useContext(FormDocumentContext);
-  const available = !!(
+  const available = children !== undefined || !!(
     data &&
     schema &&
     (bindings
@@ -73,6 +79,7 @@ export function NodeFormPopover({
       dialog.current?.close();
     } else if (!dialog.current?.open) {
       dialog.current?.showModal();
+      dialog.current?.querySelector<HTMLInputElement>("[data-form-filter] input")?.focus();
     }
   }, [active, available, open]);
   const surface = getChakraColorHex(background);
@@ -100,6 +107,7 @@ export function NodeFormPopover({
               boxSizing: "border-box",
               maxWidth: "calc(100vw - 32px)",
               maxHeight: "calc(100dvh - 32px)",
+              height,
               overflow: "hidden",
               borderRadius: 30,
               border: `1px solid ${getChakraColorHex(border)}`,
@@ -138,8 +146,9 @@ export function NodeFormPopover({
                     />
                   </form>
                 </div>
-                <FormContent data-form-scroll="">
-                  <NodeForm nodeAddress={nodeAddress} />
+                {filter && <div data-form-filter="" style={{ flexShrink: 0 }}>{filter}</div>}
+                <FormContent data-form-scroll="" style={height ? { flex: 1 } : undefined}>
+                  {children ?? <NodeForm nodeAddress={nodeAddress} />}
                 </FormContent>
               </>
             )}

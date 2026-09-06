@@ -12,6 +12,7 @@ import {
 } from "@squeed/flow-sdk";
 import { StrictMode, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
+import MinimalExample from "../../../examples/form-connection/MinimalExample";
 import workflowDocument from "../../../examples/workflow-form/ui.json";
 import stateBindings from "../../../examples/workflow-state/bindings.json";
 import {
@@ -399,6 +400,8 @@ function Fixture() {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <Fixture />
+    {new URLSearchParams(location.search).get("example") === "minimal-properties" ? (
+      <ChakraProvider value={defaultSystem}><MinimalExample /></ChakraProvider>
+    ) : <Fixture />}
   </StrictMode>,
 );

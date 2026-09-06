@@ -140,6 +140,7 @@ export type {
   CustomEdgeGeometry,
   EdgeMode,
   FlowDiagramCallbacks,
+  FlowNodeCreationRequest,
   FlowDiagramConfig,
   FlowDiagramEdge,
   FlowDiagramNode,

@@ -69,7 +69,9 @@ test("Squeed MCP provision emits supported scoped node commands", () => {
     nodes: { external: "root.external" },
     rules: WORKFLOW_EVENT_RULES,
   };
-  for (const route of manifest.routes.filter(route => ["/squeed/node-view", "/squeed/node-animation"].includes(route.path))) {
+  for (const route of manifest.routes.filter((route) =>
+    ["/squeed/node-view", "/squeed/node-animation"].includes(route.path),
+  )) {
     assert.equal(route.requireAuth, true);
     assert.equal(route.mcpEnabled, true);
     assert.equal(route.cache.enabled, false);

@@ -608,7 +608,9 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   );
 
   const handleDrawIntoSpace = useCallback(
-    (sourceId: string, position: { x: number; y: number }) => {
+    (sourceId: string, position: { x: number; y: number }, sourceProperty?: string, reverse = false) => {
+      if (edgeMode === "properties" && callbacks.onNodeCreateRequest?.({ sourceNodeId: sourceId, position, sourceProperty, reverse }) === true) return;
+      if (sourceProperty !== undefined || reverse) return;
       callbacks.onNodeCreate?.({
         type: "text",
         sourceNodeId: sourceId,
@@ -616,7 +618,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         isArrayMode: isArrayNodeModeRef.current,
       });
     },
-    [callbacks],
+    [callbacks, edgeMode],
   );
 
   const drawMode =

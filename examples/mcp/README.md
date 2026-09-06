@@ -2,15 +2,15 @@
 
 The command catalog contains 72 actions. `provision.ts` generates the Squeed manifest: one authenticated, uncached POST route per command, two legacy workflows, and one shared `emit_event` workflow. No backend or SDK runtime changes are required.
 
-| Group | Commands |
-| --- | --- |
-| Nodes | view, label, content, collapse, colors, icon, outline, border style/width/radius, animation/variant, select/create/delete |
-| Edges | color, type, icon, label, style, animation variant, select/create/delete |
-| Diagram | theme, edge mode/radius/type, spacing, background, compact layout, direction, color mode, node alignment, selection and interaction modes |
-| Viewport | fit, center, center-fit, zoom, zoom-at, pan, focus/isolate node/branch/connections, restore, edge visibility, coordinate conversion |
-| Forms | validated field edit, options lookup, schema import/clear, connection contract import/clear |
-| Documents | JSON/state replacement, document/state export, SVG export, configuration package replacement/export |
-| Inspection | graph IDs/aliases/selection/viewport, node data/geometry, edge data |
+| Group      | Commands                                                                                                                                  |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Nodes      | view, label, content, collapse, colors, icon, outline, border style/width/radius, animation/variant, select/create/delete                 |
+| Edges      | color, type, icon, label, style, animation variant, select/create/delete                                                                  |
+| Diagram    | theme, edge mode/radius/type, spacing, background, compact layout, direction, color mode, node alignment, selection and interaction modes |
+| Viewport   | fit, center, center-fit, zoom, zoom-at, pan, focus/isolate node/branch/connections, restore, edge visibility, coordinate conversion       |
+| Forms      | validated field edit, options lookup, schema import/clear, connection contract import/clear                                               |
+| Documents  | JSON/state replacement, document/state export, SVG export, configuration package replacement/export                                       |
+| Inspection | graph IDs/aliases/selection/viewport, node data/geometry, edge data                                                                       |
 
 ## Delivery
 

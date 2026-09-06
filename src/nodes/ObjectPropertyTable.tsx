@@ -42,12 +42,26 @@ export function ObjectPropertyTable({
         const extraPort = extraPorts.some((port) => port.id === key);
         const labelOnly =
           value === "" &&
-          (extraPort || (role
-            ? connectedPorts.has(`${role}:${portId}`)
-            : sourceConnected || targetConnected));
-        const labelRole = role ?? (sourceConnected !== targetConnected ? sourceConnected ? "source" : "target" : undefined);
-        const labelSide = inspectionPort?.side ?? (labelRole ? ((labelRole === "source") !== (direction === "RL") ? "right" : "left") : undefined);
-        const labelAlign = labelOnly && labelSide === "right" ? "right" : "left";
+          (extraPort ||
+            (role
+              ? connectedPorts.has(`${role}:${portId}`)
+              : sourceConnected || targetConnected));
+        const labelRole =
+          role ??
+          (sourceConnected !== targetConnected
+            ? sourceConnected
+              ? "source"
+              : "target"
+            : undefined);
+        const labelSide =
+          inspectionPort?.side ??
+          (labelRole
+            ? (labelRole === "source") !== (direction === "RL")
+              ? "right"
+              : "left"
+            : undefined);
+        const labelAlign =
+          labelOnly && labelSide === "right" ? "right" : "left";
         const label = extraPort
           ? key.replace(/^(template|input|output|config|error):/, "")
           : key;

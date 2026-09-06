@@ -20,6 +20,7 @@ export interface StateForms {
   /** Controlled resource data. Replace immutably to update forms, summaries and view references. */
   state: SqueedJson;
   bindings: Record<string, StateFormBinding>;
+  renderForm?: (nodeAddress: string) => import("react").ReactNode | undefined;
   /** Receives user form edits after dependent edits. External state replacements do not echo here. */
   onStateChange?: (state: SqueedJson, change: FormChange) => void;
   /** Compatibility alias; onStateChange takes precedence when both are supplied. */

@@ -118,7 +118,7 @@ export interface CanvasProps {
     targetId: string,
     properties?: FlowEdgeProperties,
   ) => void;
-  onDrawIntoSpace?: (sourceId: string, modelPos: Point) => void;
+  onDrawIntoSpace?: (sourceId: string, modelPos: Point, sourceProperty?: string, reverse?: boolean) => void;
 }
 
 const TAXI_DIR: Record<CanvasProps["direction"], TaxiDir> = {
@@ -287,6 +287,7 @@ function Canvas(props: CanvasProps) {
   );
   const positionsRef = useRef(positions);
   positionsRef.current = positions;
+  const placedNodes = useRef(new Map<string, Point>());
   const hasLayoutRunRef = useRef(false);
   const [layoutRevision, setLayoutRevision] = useState(0);
   const layoutTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -364,7 +365,9 @@ function Canvas(props: CanvasProps) {
     try {
       target = runDagreLayout(inputs, graph.edges, {
         rankDir: p.direction,
-        compact: p.compactPropertyLayout && (p.edgeMode === "properties" || !!isolatedIdsRef.current),
+        compact:
+          p.compactPropertyLayout &&
+          (p.edgeMode === "properties" || !!isolatedIdsRef.current),
         nodeAlignment: p.nodeAlignment,
         rankSep: p.rankSep,
         edgeSep: p.edgeSep,
@@ -374,6 +377,10 @@ function Canvas(props: CanvasProps) {
     } catch (err) {
       console.warn("[flow-sdk] layout failed", err);
       return;
+    }
+    for (const [id, position] of placedNodes.current) {
+      if (target.has(id)) target.set(id, position);
+      else if (!p.nodes.some(node => node.id === id)) placedNodes.current.delete(id);
     }
     if (hasLayoutRunRef.current && !p.isPerformanceMode) animateTo(target);
     else {
@@ -825,6 +832,18 @@ function Canvas(props: CanvasProps) {
         return { x: v.x + (r?.left ?? 0), y: v.y + (r?.top ?? 0) };
       },
       getNodeBox: (id) => boxFor(id),
+      setNodePosition: (id, position) => {
+        if (!positionsRef.current.has(id)) return false;
+        if (position && (!Number.isFinite(position.x) || !Number.isFinite(position.y))) return false;
+        cancelAnim();
+        if (!position) { placedNodes.current.delete(id); scheduleLayout(); return true; }
+        const next = new Map(positionsRef.current);
+        next.set(id, { ...position });
+        placedNodes.current.set(id, { ...position });
+        positionsRef.current = next;
+        setPositions(next);
+        return true;
+      },
       onViewportChange: (fn) => viewport.onChange(fn),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1176,13 +1195,12 @@ function Canvas(props: CanvasProps) {
               : undefined,
           );
         else if (
-          g.sourceProperty === undefined &&
           Math.max(
             Math.abs(e.clientX - g.startClient.x),
             Math.abs(e.clientY - g.startClient.y),
           ) > DRAW_INTO_SPACE_THRESHOLD
         )
-          p.onDrawIntoSpace?.(g.source, model);
+          p.onDrawIntoSpace?.(g.source, model, g.sourceProperty, g.reverse);
         break;
       }
     }

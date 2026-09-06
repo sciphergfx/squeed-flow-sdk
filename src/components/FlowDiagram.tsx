@@ -265,6 +265,7 @@ function FlowDiagramContent({
         data: forms?.state ?? json,
         viewData: json,
         bindings: forms?.bindings,
+        renderForm: forms?.renderForm,
         editable: forms
           ? !!(forms.onStateChange ?? forms.onChange)
           : !!callbacks.onJsonChange,

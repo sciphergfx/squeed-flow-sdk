@@ -275,8 +275,16 @@ export interface NodeSelectionModifiers {
   altKey: boolean;
 }
 
+export interface FlowNodeCreationRequest {
+  sourceNodeId: string;
+  sourceProperty?: string;
+  reverse: boolean;
+  position: { x: number; y: number };
+}
+
 /** Event callbacks for the flow diagram */
 export interface FlowDiagramCallbacks {
+  onNodeCreateRequest?: (request: FlowNodeCreationRequest) => boolean;
   onFormSchemaChange?: (
     schema: import("../core/forms").FormSchema | undefined,
   ) => void;

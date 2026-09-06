@@ -35,6 +35,7 @@ export const FormDocumentContext = createContext<{
   bindings?: StateForms["bindings"];
   editable?: boolean;
   schema?: FormSchema;
+  renderForm?: StateForms["renderForm"];
   callbacks: FlowDiagramCallbacks;
 }>({ callbacks: {} });
 
@@ -478,9 +479,11 @@ function Field({
 }
 
 export function NodeForm({ nodeAddress }: { nodeAddress: string }) {
-  const { data, schema, callbacks, bindings, editable } =
+  const { data, schema, callbacks, bindings, editable, renderForm } =
     useContext(FormDocumentContext);
   const { readOnly, config } = useFlowDiagramContext();
+  const rendered = renderForm?.(nodeAddress);
+  if (rendered !== undefined) return <fieldset data-flow-form={nodeAddress} disabled={readOnly || config.editable === false || !editable} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>{rendered}</fieldset>;
   if (!data)
     return <Fields role="alert">Forms require a JSON document.</Fields>;
   const bound = bindings

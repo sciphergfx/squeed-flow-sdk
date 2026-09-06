@@ -49,8 +49,12 @@ export function runDagreLayout(
   g.setGraph({
     rankdir: opts.rankDir,
     nodesep: opts.nodeSep,
-    edgesep: opts.compact ? Math.min(opts.edgeSep, 24 * compactScale) : opts.edgeSep,
-    ranksep: opts.compact ? Math.min(opts.rankSep, 80 * compactScale) : opts.rankSep,
+    edgesep: opts.compact
+      ? Math.min(opts.edgeSep, 24 * compactScale)
+      : opts.edgeSep,
+    ranksep: opts.compact
+      ? Math.min(opts.rankSep, 80 * compactScale)
+      : opts.rankSep,
     ranker: "network-simplex",
   });
   g.setDefaultEdgeLabel(() => ({}));

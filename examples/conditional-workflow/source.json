@@ -1,12 +1,49 @@
 {
-  "workflow": {
-    "id": "conditional-workflow-example",
-    "name": "Conditional Workflow",
-    "trigger": "manual",
-    "steps": [
-      { "id": "check", "name": "If approved", "type": "conditional", "config": { "condition": "return input.approved === true;", "onTrue": "run", "onFalse": "skip" } },
-      { "id": "run", "name": "Execute workflow", "type": "spawn_workflow", "dependsOn": ["check"], "condition": "{{steps.check.result === true}}", "config": { "workflowId": "example-child-workflow", "input": { "approved": true } } },
-      { "id": "skip", "name": "Else: skip workflow", "type": "output", "dependsOn": ["check"], "condition": "{{steps.check.result === false}}", "config": { "mapping": { "status": "skipped", "reason": "Not approved" } } }
-    ]
-  }
+          "workflow": {
+                    "id": "conditional-workflow-example",
+                    "name": "Conditional Workflow",
+                    "trigger": "manual",
+                    "steps": [
+                              {
+                                        "id": "check",
+                                        "name": "If approved",
+                                        "type": "conditional",
+                                        "config": {
+                                                  "condition": "return input.approved === true;",
+                                                  "onTrue": "run",
+                                                  "onFalse": "skip"
+                                        }
+                              },
+                              {
+                                        "id": "run",
+                                        "name": "Execute workflow",
+                                        "type": "spawn_workflow",
+                                        "dependsOn": [
+                                                  "check"
+                                        ],
+                                        "condition": "{{steps.check.result === true}}",
+                                        "config": {
+                                                  "workflowId": "example-child-workflow",
+                                                  "input": {
+                                                            "approved": true
+                                                  }
+                                        }
+                              },
+                              {
+                                        "id": "skip",
+                                        "name": "Else: skip workflow",
+                                        "type": "output",
+                                        "dependsOn": [
+                                                  "check"
+                                        ],
+                                        "condition": "{{steps.check.result === false}}",
+                                        "config": {
+                                                  "mapping": {
+                                                            "status": "skipped",
+                                                            "reason": "Not approved"
+                                                  }
+                                        }
+                              }
+                    ]
+          }
 }
