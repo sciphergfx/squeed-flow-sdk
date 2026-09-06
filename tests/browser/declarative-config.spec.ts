@@ -174,7 +174,12 @@ for (const width of [1440, 390]) {
       .getByRole("region", { name: "SDK control examples", exact: true })
       .getByRole("button", { name: "Close selection tools", exact: true })
       .click();
-    await dependency.locator(".flow-sdk-edge-hit").click();
+    const midpoint = await dependency.locator(".flow-sdk-edge-hit").evaluate(element => {
+      const path = element as SVGPathElement;
+      const point = path.getPointAtLength(path.getTotalLength() / 2).matrixTransform(path.getScreenCTM()!);
+      return { x: point.x, y: point.y };
+    });
+    await page.mouse.click(midpoint.x, midpoint.y);
     await page
       .getByRole("button", { name: "Delete edge", exact: true })
       .click();

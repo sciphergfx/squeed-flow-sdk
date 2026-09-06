@@ -21,6 +21,7 @@ export interface LayoutEdgeInput {
 
 export interface LayoutOptions {
   rankDir: "LR" | "RL" | "TB" | "BT";
+  compact?: boolean;
   nodeAlignment?: NodeAlignment;
   rankSep: number;
   edgeSep: number;
@@ -44,11 +45,12 @@ export function runDagreLayout(
     if (n.parent && ids.has(n.parent)) parents.add(n.parent);
 
   const g = new dagre.graphlib.Graph({ multigraph: true, compound: true });
+  const compactScale = opts.spacingFactor > 0 ? opts.spacingFactor / 1.3 : 1;
   g.setGraph({
     rankdir: opts.rankDir,
     nodesep: opts.nodeSep,
-    edgesep: opts.edgeSep,
-    ranksep: opts.rankSep,
+    edgesep: opts.compact ? Math.min(opts.edgeSep, 24 * compactScale) : opts.edgeSep,
+    ranksep: opts.compact ? Math.min(opts.rankSep, 80 * compactScale) : opts.rankSep,
     ranker: "network-simplex",
   });
   g.setDefaultEdgeLabel(() => ({}));
@@ -92,7 +94,7 @@ export function runDagreLayout(
       out.set(n.id, { x: d.x, y: d.y });
   }
 
-  const sf = opts.spacingFactor;
+  const sf = opts.compact ? 1 : opts.spacingFactor;
   if (sf && sf !== 1 && out.size) {
     let x1 = Infinity,
       y1 = Infinity,

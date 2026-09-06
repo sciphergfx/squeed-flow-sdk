@@ -14,6 +14,7 @@ try {
     bundle: true,
     platform: "node",
     format: "cjs",
+    define: { "import.meta.env": "{}" },
     outdir: directory,
     outExtension: { ".js": ".cjs" },
     logLevel: "warning",

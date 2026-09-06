@@ -37,13 +37,18 @@ export function ObjectPropertyTable({
           (port) => port.id === portId,
         );
         const role = resourcePort ? "source" : inspectionPort?.role;
+        const sourceConnected = connectedPorts.has(`source:${portId}`);
+        const targetConnected = connectedPorts.has(`target:${portId}`);
+        const extraPort = extraPorts.some((port) => port.id === key);
         const labelOnly =
           value === "" &&
-          (role
+          (extraPort || (role
             ? connectedPorts.has(`${role}:${portId}`)
-            : connectedPorts.has(`source:${portId}`) ||
-              connectedPorts.has(`target:${portId}`));
-        const label = extraPorts.some((port) => port.id === key)
+            : sourceConnected || targetConnected));
+        const labelRole = role ?? (sourceConnected !== targetConnected ? sourceConnected ? "source" : "target" : undefined);
+        const labelSide = inspectionPort?.side ?? (labelRole ? ((labelRole === "source") !== (direction === "RL") ? "right" : "left") : undefined);
+        const labelAlign = labelOnly && labelSide === "right" ? "right" : "left";
+        const label = extraPort
           ? key.replace(/^(template|input|output|config|error):/, "")
           : key;
         const typeColor = contentObjTheme(colors.wordBeforeDot)[typeof value];
@@ -74,6 +79,7 @@ export function ObjectPropertyTable({
                   py={5}
                   px={10}
                   w="100%"
+                  textAlign={labelAlign}
                   whiteSpace="nowrap"
                   fontWeight="bold"
                   fontSize="4xl"

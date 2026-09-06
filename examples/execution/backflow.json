@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "sourcePath": "workflow",
+  "adapter": "backflow",
+  "stepsPath": "steps",
+  "stepIdPath": "id",
+  "subscription": { "order": "before", "channel": "workflow:{executionId}" },
+  "actions": {
+    "execute": { "method": "POST", "path": "/agent/workflow", "body": { "$path": "prepared" } },
+    "pause": { "method": "POST", "path": "/agent/workflow/{executionId}/pause", "body": {} },
+    "resume": { "method": "POST", "path": "/agent/workflow/resume", "body": { "executionId": { "$path": "executionId" }, "continue": true } },
+    "cancel": { "method": "POST", "path": "/agent/workflow/{executionId}/cancel" },
+    "stop": { "method": "POST", "path": "/agent/workflow/{executionId}/cancel" }
+  },
+  "response": {
+    "executionId": "result.executionId", "status": "result.status", "success": "success", "error": "error", "output": "result.output",
+    "steps": "result.steps", "stepId": "id", "stepStatus": "status", "stepOutput": "output", "stepError": "error",
+    "statuses": { "success": "completed", "completed": "completed", "running": "running", "paused": "paused", "failed": "failed", "error": "failed", "cancelled": "cancelled" }
+  },
+  "events": {
+    "type": "type", "executionId": "executionId", "stepId": "step", "output": "output", "error": "error",
+    "step": { "step_started": "running", "step_completed": "completed", "step_failed": "failed", "step_skipped": "skipped", "step_paused": "paused" },
+    "run": { "workflow_completed": "completed", "workflow_failed": "failed", "workflow_cancelled": "cancelled", "workflow_paused": "paused" }
+  }
+}

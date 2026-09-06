@@ -62,6 +62,7 @@ for (const width of [1440, 390]) {
       node.locator(`[data-flow-inspection-row][data-flow-property="${key}"]`);
     for (const key of ["true", "false", "incoming"]) {
       await expect(row(key).locator("p")).toHaveCount(1);
+      await expect(row(key).locator("p")).toHaveCSS("text-align", key === "incoming" ? "left" : "right");
       await expect(row(key)).toHaveText(key);
       const labelCell = row(key).locator("p").locator("..");
       await expect(labelCell).toHaveCSS("border-right-width", "0px");
@@ -74,8 +75,10 @@ for (const width of [1440, 390]) {
         )
         .toBeLessThan(1);
     }
-    for (const key of ["empty", "zero", "boolean", "condition"])
+    for (const key of ["empty", "zero", "boolean", "condition"]) {
       await expect(row(key).locator("p")).toHaveCount(2);
+      await expect(row(key).locator("p").first()).toHaveCSS("text-align", "left");
+    }
     await expect(row("zero")).toContainText("0");
     await expect(row("boolean")).toContainText("false");
     const labels = await node

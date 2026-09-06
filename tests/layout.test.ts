@@ -119,6 +119,26 @@ const alignmentEdges = [
 ];
 
 for (const rankDir of ["LR", "RL", "TB", "BT"] as const) {
+  test(`${rankDir} compact layout closes gaps without shrinking or overlapping mixed node sizes`, () => {
+    const options = { rankDir, rankSep: 220, edgeSep: 250, nodeSep: 5, spacingFactor: 1.3 };
+    const regular = runDagreLayout(alignmentNodes, alignmentEdges, options);
+    const compact = runDagreLayout(alignmentNodes, alignmentEdges, { ...options, compact: true });
+    const area = (positions: typeof compact) => {
+      const bounds = alignmentNodes.map(node => ({ ...positions.get(node.id)!, width: node.width, height: node.height }));
+      return (Math.max(...bounds.map(node => node.x + node.width / 2)) - Math.min(...bounds.map(node => node.x - node.width / 2))) *
+        (Math.max(...bounds.map(node => node.y + node.height / 2)) - Math.min(...bounds.map(node => node.y - node.height / 2)));
+    };
+    assert.ok(area(compact) < area(regular) * 0.8);
+    for (const first of alignmentNodes) for (const second of alignmentNodes) {
+      if (first.id === second.id) continue;
+      const firstPoint = compact.get(first.id)!, secondPoint = compact.get(second.id)!;
+      const separated = Math.abs(firstPoint.x - secondPoint.x) >= (first.width + second.width) / 2 || Math.abs(firstPoint.y - secondPoint.y) >= (first.height + second.height) / 2;
+      assert.ok(separated, `${first.id} overlaps ${second.id}`);
+    }
+  });
+}
+
+for (const rankDir of ["LR", "RL", "TB", "BT"] as const) {
   for (const nodeAlignment of ["leading", "center", "trailing"] as const) {
     test(`${rankDir} ${nodeAlignment} aligns unequal nodes within their rank after spacing`, () => {
       const options = {

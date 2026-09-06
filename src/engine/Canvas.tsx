@@ -364,6 +364,7 @@ function Canvas(props: CanvasProps) {
     try {
       target = runDagreLayout(inputs, graph.edges, {
         rankDir: p.direction,
+        compact: p.compactPropertyLayout && (p.edgeMode === "properties" || !!isolatedIdsRef.current),
         nodeAlignment: p.nodeAlignment,
         rankSep: p.rankSep,
         edgeSep: p.edgeSep,

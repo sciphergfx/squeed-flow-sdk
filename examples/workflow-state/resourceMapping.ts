@@ -324,7 +324,7 @@ export function resourceFormContext(
   return { schema, bindings };
 }
 
-export function projectResourceView(document: MappedConfiguration): SqueedJson {
+export function projectResourceView(document: MappedConfiguration, preserveNodeViews = false): SqueedJson {
   let view = document.view;
   for (const [id, resource] of Object.entries(
     document.state[registry] ?? {},
@@ -357,7 +357,7 @@ export function projectResourceView(document: MappedConfiguration): SqueedJson {
       [id]: {
         ...metadata,
         ...rows,
-        $view: structured ? "object" : "icon-label",
+        $view: preserveNodeViews && node.$view ? node.$view : structured ? "object" : "icon-label",
       },
     };
   }
