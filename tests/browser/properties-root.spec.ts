@@ -59,7 +59,7 @@ for (const width of [1440, 390]) {
       page.getByRole("combobox", { name: "Control examples", exact: true }),
       "Layout",
     );
-    const compact = page.getByRole("button", {
+    const compact = page.getByRole("region", { name: "SDK control examples", exact: true }).getByRole("button", {
       name: "Compact property layout",
       exact: true,
     });

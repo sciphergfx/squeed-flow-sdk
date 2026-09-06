@@ -190,6 +190,13 @@ export function bindSqueedCallbacks(
         value: animated,
       });
     },
+    onNodeAnimationVariantChange: (id, variant) => {
+      if (variant !== "traveling" && variant !== "pulse") return;
+      callbacks.onNodeAnimationVariantChange?.(id, variant);
+      emit(setNodeProp(json, id, "$nodeAnimationVariant", variant), {
+        type: "nodeAnimation", address: id, key: "$nodeAnimationVariant", value: variant,
+      });
+    },
     onNodeCollapse: (id, collapsed) => {
       callbacks.onNodeCollapse?.(id, collapsed);
       emit(setCollapsed(json, id, collapsed), {
@@ -268,6 +275,14 @@ export function bindSqueedCallbacks(
           edge: ref,
           value: style,
         });
+    },
+    onEdgeAnimationVariantChange: (edgeId, variant) => {
+      if (variant !== "dashed" && variant !== "traveling") return;
+      callbacks.onEdgeAnimationVariantChange?.(edgeId, variant);
+      const ref = edgeRef(edgeId);
+      if (ref) emit(setEdgeProp(json, ref, "$edgeAnimationVariant", variant), {
+        type: "edgeStyle", edge: ref, key: ref.connection ? "$connections" : "$edgeAnimationVariant", value: variant,
+      });
     },
     onEdgeTypeChange: (edgeId, type) => {
       callbacks.onEdgeTypeChange?.(edgeId, type);

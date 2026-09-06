@@ -62,6 +62,7 @@ export const ObjectNodeView = (props) => {
         const icon = props.data?.config?.icon;
         const content = props.data?.config?.content;
         const hasContent = typeof content === "string" && !props.onShowIcon;
+        const borderRadius = data?.viewProps?.borderRadius ?? "53px";
         const borderProps = getNodeBorderProps(
           data?.viewProps,
           colors.hexborderColor,
@@ -76,7 +77,7 @@ export const ObjectNodeView = (props) => {
             data-flow-node-surface=""
             direction="column"
             p={0}
-            borderRadius={data?.viewProps?.borderRadius}
+            borderRadius={borderRadius}
             overflow="hidden"
             alignItems="center"
             style={{
@@ -96,7 +97,7 @@ export const ObjectNodeView = (props) => {
             <Flex
               width="100%"
               direction="column"
-              borderRadius={data?.viewProps?.borderRadius}
+              borderRadius={borderRadius}
               borderColor={colors.hexborderColor}
               borderWidth={0}
               overflow="hidden"

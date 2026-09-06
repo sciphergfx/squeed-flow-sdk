@@ -51,7 +51,7 @@ for (const width of [1440, 390]) {
         "Toggle drag mode",
         "Toggle multi-select",
         "Toggle draw mode",
-        "Only connected nodes",
+        "Connected nodes",
         "Download SVG",
       ]) {
         await expect(

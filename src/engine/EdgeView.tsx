@@ -6,6 +6,7 @@ import type {
   FlowDirection,
 } from "../types";
 import DynamicIcon from "../utils/DynamicIcon";
+import { EdgeTraceAnimation } from "./EdgeTraceAnimation";
 import {
   bezierGeometry,
   connectorEndpoints,
@@ -19,7 +20,8 @@ import {
   type EdgeGeometryOptions,
   type TaxiDir,
 } from "./geometry";
-import { EDGE_LABEL_FONT_FAMILY, measureText, wrapText } from "./text";
+import { EDGE_LABEL_FONT_FAMILY } from "./text";
+import { LABEL_FONT_SIZE, LABEL_PADDING, LABEL_MARGIN_X, measureEdgeLabel } from "./edgeLabel";
 import type { Box, PortAnchor } from "./types";
 
 // chartStyles.ts equivalents (model units)
@@ -32,11 +34,6 @@ export const ARROW_SIZE =
 const ARROW_GAP = EDGE_WIDTH * ARROW_SCALE * 2;
 const STANDOFF = 80;
 const TAXI_RADIUS = 500;
-const LABEL_FONT_SIZE = 45;
-const LABEL_MAX_WIDTH = 200;
-const LABEL_PADDING = 15;
-const LABEL_MARGIN_X = 50;
-const LABEL_FONT = `${LABEL_FONT_SIZE}px ${EDGE_LABEL_FONT_FAMILY}`;
 export const DASH_PATTERN = "32 18";
 
 export interface EdgeViewProps {
@@ -104,15 +101,10 @@ function EdgeView({
   loopIndex = 0,
   onSelect,
 }: EdgeViewProps) {
-  const lines = useMemo(
-    () => (label ? wrapText(label, LABEL_FONT, LABEL_MAX_WIDTH) : []),
-    [label],
-  );
   const icon = edgeData?.icon;
-  const iconWidth = icon ? 48 + (lines.length ? 12 : 0) : 0;
-  const labelWidth =
-    iconWidth +
-    Math.max(0, ...lines.map((line) => measureText(line, LABEL_FONT)));
+  const { lines, iconWidth, contentWidth: labelWidth, contentHeight: labelHeight } = useMemo(
+    () => measureEdgeLabel(label, icon), [label, icon],
+  );
   const geo = useMemo(() => {
     const opts: EdgeGeometryOptions = {
       srcDist: STANDOFF,
@@ -304,15 +296,16 @@ function EdgeView({
     </g>
   ) : null;
 
-  const dashArray = dashed || animated ? DASH_PATTERN : undefined;
-  const animClass = animated
+  const trace = animated && edgeData?.edgeAnimationVariant === "traveling";
+  const dashArray = !trace && (dashed || animated) ? DASH_PATTERN : undefined;
+  const animClass = animated && !trace
     ? `flow-sdk-edge-anim${inverted ? " flow-sdk-edge-anim-rev" : ""}`
     : undefined;
 
   let labelEl: React.ReactNode = null;
   if (lines.length || icon) {
     const w = labelWidth;
-    const h = Math.max(lines.length * LABEL_FONT_SIZE, icon ? 48 : 0);
+    const h = labelHeight;
     labelEl = (
       <g
         className="flow-sdk-edge-label"
@@ -398,9 +391,11 @@ function EdgeView({
         fill="none"
         stroke={displayColor}
         strokeWidth={EDGE_WIDTH}
+        strokeOpacity={trace ? 0.35 : undefined}
         strokeDasharray={dashArray}
         className={animClass}
       />
+      {trace && <EdgeTraceAnimation path={geo.d} color={displayColor} width={EDGE_WIDTH * 1.6} reversed={inverted} />}
       {geo.arrow && <path d={geo.arrow} fill={displayColor} />}
       {labelLayer && labelEl ? createPortal(labelEl, labelLayer) : labelEl}
       {labelLayer && validationEl

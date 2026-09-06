@@ -236,11 +236,16 @@ export function perimeterGeometry(
   const targetHorizontal = target.side === "left" || target.side === "right";
   let bends: Point[];
   if (sourceHorizontal !== targetHorizontal) {
-    bends = [
-      sourceHorizontal
-        ? { x: targetLead.x, y: sourceLead.y }
-        : { x: sourceLead.x, y: targetLead.y },
-    ];
+    const corner = sourceHorizontal
+      ? { x: targetLead.x, y: sourceLead.y }
+      : { x: sourceLead.x, y: targetLead.y };
+    const sourceForward = (corner.x - sourceLead.x) * (sourceLead.x - start.x) +
+      (corner.y - sourceLead.y) * (sourceLead.y - start.y) >= 0;
+    const targetForward = (corner.x - targetLead.x) * (targetLead.x - end.x) +
+      (corner.y - targetLead.y) * (targetLead.y - end.y) >= 0;
+    bends = [sourceForward && targetForward ? corner : sourceHorizontal
+      ? { x: sourceLead.x, y: targetLead.y }
+      : { x: targetLead.x, y: sourceLead.y }];
   } else if (facingGap !== undefined && facingGap <= 0) {
     if (sourceHorizontal) {
       const lane = (sourceLead.y + targetLead.y) / 2;

@@ -35,7 +35,7 @@ export const nodeJsonObjectConfig: any = {
     viewProps: {
       width: "100%",
       borderWidth: 2,
-      borderRadius: 25,
+      borderRadius: 53,
       height: "100%",
       justifyContent: "space-between",
       flexDirection: "row",

@@ -23,6 +23,8 @@ export interface FlowDiagramContextValue {
   backgroundVariant: BackgroundVariant;
   setBackgroundVariant: (variant: BackgroundVariant) => void;
   setEdgeMode: (mode: EdgeMode) => void;
+  compactPropertyLayout: boolean;
+  setCompactPropertyLayout: (enabled: boolean) => void;
   workflowContract?: import("../core/workflowContract").WorkflowContract;
   setWorkflowContract: (
     contract: import("../core/workflowContract").WorkflowContract | undefined,
@@ -119,6 +121,8 @@ export function FlowDiagramProvider({
   const [isPinned, setIsPinned] = useState(true);
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
   const [localEdgeMode, setEdgeMode] = useState<EdgeMode>("auto");
+  const [localCompactPropertyLayout, setCompactPropertyLayout] = useState(false);
+  const compactPropertyLayout = config.compactPropertyLayout ?? localCompactPropertyLayout;
   const [localNodeViewModes, setLocalNodeViewModes] = useState<
     Record<string, NodeViewMode>
   >({});
@@ -188,6 +192,8 @@ export function FlowDiagramProvider({
       onNodeIconChange: wrap("onNodeIconChange"),
       onNodeOutlineChange: wrap("onNodeOutlineChange"),
       onNodeAnimationChange: wrap("onNodeAnimationChange"),
+      onNodeAnimationVariantChange: wrap("onNodeAnimationVariantChange"),
+      onEdgeAnimationVariantChange: wrap("onEdgeAnimationVariantChange"),
       onNodeHoverAction: wrap("onNodeHoverAction"),
       // Edge events
       onEdgeCreate: wrap("onEdgeCreate"),
@@ -208,6 +214,7 @@ export function FlowDiagramProvider({
       onEdgeRadiusChange: wrap("onEdgeRadiusChange"),
       onBackgroundVariantChange: wrap("onBackgroundVariantChange"),
       onEdgeModeChange: wrap("onEdgeModeChange"),
+      onCompactPropertyLayoutChange: wrap("onCompactPropertyLayoutChange"),
       onWorkflowContractChange: wrap("onWorkflowContractChange"),
       onArrayModeChange: wrap("onArrayModeChange"),
       onInit: wrap("onInit"),
@@ -377,6 +384,8 @@ export function FlowDiagramProvider({
       nodeAlignment,
       edgeMode,
       setEdgeMode,
+      compactPropertyLayout,
+      setCompactPropertyLayout,
       workflowContract,
       setWorkflowContract,
       parentNodeStyle,
@@ -435,6 +444,7 @@ export function FlowDiagramProvider({
       config.selectionToolbar,
       config.bottomBarExtra,
       config.compactPropertyLayout,
+      compactPropertyLayout,
       stableCallbacks,
       stableConfig,
     ],

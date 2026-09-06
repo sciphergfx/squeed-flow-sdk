@@ -44,7 +44,7 @@ for (const width of [1440, 390]) {
     const original = await boxes();
     const document = await page.evaluate(() => window.__flowTest.document);
     await page.evaluate(() =>
-      window.__flowTest.engine!.isolateConnections("root.alpha", 70, false),
+      window.__flowTest.engine!.isolateConnections("root.beta", 70, false),
     );
     await expect(
       page.locator('.flow-sdk-node[data-node-id="root.gamma"]'),

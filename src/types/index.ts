@@ -21,6 +21,8 @@ export enum FlowType {
 export type FlowDirection = "LR" | "RL" | "TB" | "BT" | "C";
 export type NodeAlignment = "leading" | "center" | "trailing";
 export type NodeViewMode = "default" | "properties";
+export type NodeAnimationVariant = "traveling" | "pulse";
+export type EdgeAnimationVariant = "dashed" | "traveling";
 export type EdgeMode = "auto" | "nodes" | "properties" | "workflow";
 export interface FlowEdgeProperties {
   sourceProperty?: string;
@@ -28,6 +30,7 @@ export interface FlowEdgeProperties {
 }
 
 export interface SqueedConnection extends FlowEdgeProperties {
+  animationVariant?: EdgeAnimationVariant;
   icon?: string;
   target: string;
   type?: string;
@@ -65,6 +68,7 @@ export interface FlowDiagramNode {
     viewProps?: any;
     config?: Record<string, any>;
     isNodeAnimated?: boolean;
+    nodeAnimationVariant?: NodeAnimationVariant;
   };
 }
 
@@ -83,6 +87,7 @@ export interface FlowDiagramEdge {
     color?: string;
     isInverted?: boolean;
     isEdgeAnimated?: boolean;
+    edgeAnimationVariant?: EdgeAnimationVariant;
     isEdgeDashed?: boolean;
   };
 }
@@ -285,6 +290,7 @@ export interface FlowDiagramCallbacks {
     | import("../core/forms").FormOption[];
   onSpacingChange?: (spacing: NodeSpacing) => void;
   onEdgeRadiusChange?: (radius: number) => void;
+  onCompactPropertyLayoutChange?: (enabled: boolean) => void;
   onBackgroundVariantChange?: (variant: BackgroundVariant) => void;
   // ── Node events ──
   /** Fires when a node is clicked/selected */
@@ -331,6 +337,8 @@ export interface FlowDiagramCallbacks {
     radius: number | undefined,
   ) => void;
   onNodeAnimationChange?: (nodeId: string, animated: boolean) => void;
+  onNodeAnimationVariantChange?: (nodeId: string, variant: NodeAnimationVariant) => void;
+  onEdgeAnimationVariantChange?: (edgeId: string, variant: EdgeAnimationVariant) => void;
   /** Fires when a hover overlay action is clicked */
   onNodeHoverAction?: (actionId: string, nodeId: string, nodeData: any) => void;
 

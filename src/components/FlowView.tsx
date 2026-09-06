@@ -53,6 +53,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     direction,
     nodeAlignment,
     edgeMode,
+    compactPropertyLayout,
     workflowContract,
     parentNodeStyle: parentDefaults,
     engineRef,
@@ -173,6 +174,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       const fill = getChakraColorHex(s.bgColor);
       return {
         animated: !!data?.isNodeAnimated && !isPerformanceMode,
+        animationVariant: data?.nodeAnimationVariant,
         animationColor: getChakraColorHex(s.borderColor || themeColor),
         bgColor: s.outline ? "transparent" : fill,
         bgOpacity: s.bgOpacity,
@@ -327,6 +329,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           parent: node.data.parent,
           label: nodeLabel,
           animated: !!node.data.isNodeAnimated,
+          animationVariant: node.data.nodeAnimationVariant,
           hasCollapseControl: node.data.config?.collapsed !== undefined,
           animationColor: getChakraColorHex(
             node.data.viewProps?.borderColor || themeColor,
@@ -645,7 +648,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           }}
           selectedNodeIds={selectedNodeIds}
           edgeMode={edgeMode}
-          compactPropertyLayout={config.compactPropertyLayout}
+          compactPropertyLayout={compactPropertyLayout}
           edgeType={config.edgeType}
           edgeRadius={edgeRadius}
           customEdgeTypes={config.customEdgeTypes}

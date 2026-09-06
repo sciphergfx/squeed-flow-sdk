@@ -10,7 +10,7 @@ for (const width of [1440, 390]) {
     await page.goto(process.env.SDK_TEST_URL!);
     const nodes = page.locator(".flow-sdk-node:visible");
     const start = page.locator('.flow-sdk-node[data-node-id="start"]');
-    const toggle = page.getByRole("button", { name: "Only connected nodes", exact: true });
+    const toggle = page.getByRole("button", { name: "Connected nodes", exact: true });
     await expect(nodes).toHaveCount(4);
     await page.getByRole("button", { name: "Toggle toolbar collapse", exact: true }).click();
     await expect(toggle).toHaveAttribute("aria-pressed", "false");

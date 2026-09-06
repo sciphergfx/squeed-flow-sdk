@@ -16,6 +16,7 @@ import type {
   NodeAlignment,
 } from "../types";
 import { branchRoutes } from "./branchRouting";
+import { branchNodeIds } from "./branchNodeIds";
 import { connectedNodeIds } from "./connectedNodeIds";
 import { resolveConfigPortRows } from "./configPortLayout";
 import ContainerView, { type ContainerStyle } from "./ContainerView";
@@ -52,6 +53,7 @@ export interface CanvasNode {
   animated?: boolean;
   animationColor?: string;
   animationWidth?: number;
+  animationVariant?: import("../types").NodeAnimationVariant;
   element: React.ReactNode;
 }
 
@@ -186,7 +188,13 @@ function Canvas(props: CanvasProps) {
     isPerformanceMode,
   } = props;
 
-  const [isolatedIds, setIsolatedIds] = useState<Set<string> | null>(null);
+  const [isolation, setIsolation] = useState<{
+    id: string;
+    mode: "connections" | "branch";
+  } | null>(null);
+  const isolatedIds = useMemo(() => isolation
+    ? (isolation.mode === "connections" ? connectedNodeIds : branchNodeIds)(isolation.id, nodes, edges)
+    : null, [isolation, nodes, edges]);
   const propertyMode = edgeMode === "auto" || edgeMode === "properties";
   const visibleEdges = useMemo(
     () =>
@@ -285,6 +293,7 @@ function Canvas(props: CanvasProps) {
   const previousCompactLayout = useRef(compactLayout);
   const [edgesVisible, setEdgesVisible] = useState(true);
   const isolatedIdsRef = useRef<Set<string> | null>(null);
+  isolatedIdsRef.current = isolatedIds;
   const savedViewport = useRef<ViewportState | null>(null);
   const previousNodes = useRef(nodes);
   const revealedNodes = useRef<string[]>([]);
@@ -690,29 +699,8 @@ function Canvas(props: CanvasProps) {
 
   // ── engine handle ──
   const engine = useMemo<FlowEngine>(() => {
-    const branchIds = (id: string) => {
-      const current = propsRef.current;
-      const ids = new Set([id]);
-      const pending = [id];
-      while (pending.length) {
-        const parent = pending.pop()!;
-        for (const node of current.nodes) {
-          const child =
-            node.parent === parent ||
-            node.id.startsWith(`${parent}.`) ||
-            current.edges.some(
-              (edge) =>
-                (edge.inverted ? edge.target : edge.source) === parent &&
-                (edge.inverted ? edge.source : edge.target) === node.id,
-            );
-          if (child && !ids.has(node.id)) {
-            ids.add(node.id);
-            pending.push(node.id);
-          }
-        }
-      }
-      return ids;
-    };
+    const branchIds = (id: string) =>
+      branchNodeIds(id, propsRef.current.nodes, propsRef.current.edges);
     const focus = (
       ids: Set<string>,
       padding = 50,
@@ -735,11 +723,12 @@ function Canvas(props: CanvasProps) {
     };
     const isolate = (
       id: string,
-      ids: Set<string>,
+      mode: "connections" | "branch",
       padding?: number,
       animate?: boolean,
     ) => {
       if (!boxFor(id)) return;
+      const ids = mode === "connections" ? connections(id) : branchIds(id);
       if (!savedViewport.current)
         savedViewport.current = {
           pan: { ...viewport.pan },
@@ -748,9 +737,9 @@ function Canvas(props: CanvasProps) {
       isolatedIdsRef.current = ids;
       if (propsRef.current.compactPropertyLayout) {
         pendingFitRef.current = false;
-        pendingLayoutAction.current = () => focus(ids, padding, animate);
+        pendingLayoutAction.current = () => focus(isolatedIdsRef.current ?? ids, padding, animate);
       }
-      setIsolatedIds(ids);
+      setIsolation({ id, mode });
       if (!propsRef.current.compactPropertyLayout) focus(ids, padding, animate);
     };
     const updateViewport = (action: () => void) => {
@@ -782,14 +771,14 @@ function Canvas(props: CanvasProps) {
       focusConnections: (id, padding, animate) =>
         updateViewport(() => focus(connections(id), padding, animate)),
       isolateConnections: (id, padding, animate) =>
-        isolate(id, connections(id), padding, animate),
+        isolate(id, "connections", padding, animate),
       isolateBranch: (id, padding, animate) =>
-        isolate(id, branchIds(id), padding, animate),
+        isolate(id, "branch", padding, animate),
       restoreView: (animate = propsRef.current.animateViewport) => {
         const needsLayout =
           propsRef.current.compactPropertyLayout && !!isolatedIdsRef.current;
         isolatedIdsRef.current = null;
-        setIsolatedIds(null);
+        setIsolation(null);
         const previous = savedViewport.current;
         savedViewport.current = null;
         if (needsLayout)
@@ -1448,6 +1437,7 @@ function Canvas(props: CanvasProps) {
               animated={n.animated && !c && !isPerformanceMode}
               animationColor={n.animationColor}
               animationWidth={n.animationWidth}
+              animationVariant={n.animationVariant}
               width={sizesRef.current.get(n.id)?.w}
               height={sizesRef.current.get(n.id)?.h}
               propertyMode={propertyMode}

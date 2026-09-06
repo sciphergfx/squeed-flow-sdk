@@ -5,6 +5,7 @@ import { isColorOnlyUpdate, recolorGraph } from "../core/recolorGraph";
 import { bindSqueedCallbacks } from "../core/squeedBinding";
 import { compileSqueed, getNode } from "../core/squeedEdits";
 import { NODE_BORDER_ANIMATION_STYLES } from "../engine/NodeBorderAnimation";
+import { EDGE_TRACE_ANIMATION_STYLES } from "../engine/EdgeTraceAnimation";
 import { FormDocumentContext } from "../nodes/NodeForm";
 import type {
   FlowDiagramEdge,
@@ -30,6 +31,7 @@ function injectStyles() {
   style.textContent =
     FLOW_SDK_STYLES +
     NODE_BORDER_ANIMATION_STYLES +
+    EDGE_TRACE_ANIMATION_STYLES +
     `.flow-sdk-handle{position:absolute;left:-36px;top:50%;transform:translateY(-50%);width:36px;height:36px;display:grid;place-items:center;border:2px solid currentColor;border-radius:50%;background:white;cursor:crosshair;opacity:0;pointer-events:none}.flow-sdk-node:hover>.flow-sdk-handle,.flow-sdk-handle:focus-visible{opacity:1;pointer-events:auto}.flow-sdk-draw .flow-sdk-node *,.flow-sdk-draw .flow-sdk-edge *,.flow-sdk-draw .flow-sdk-container *,.flow-sdk-ghost *{pointer-events:none}`;
   document.head.appendChild(style);
   style.textContent += `.flow-sdk-draw .flow-sdk-node{pointer-events:auto}.flow-sdk-draw .flow-sdk-node>.flow-sdk-handle{opacity:0;pointer-events:none}.flow-sdk-draw .flow-sdk-node:hover>.flow-sdk-handle,.flow-sdk-draw .flow-sdk-node>.flow-sdk-handle:focus-visible{opacity:1;pointer-events:auto}`;

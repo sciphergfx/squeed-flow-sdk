@@ -4,6 +4,7 @@
 export { default as BottomBar } from "./components/BottomBar";
 export { DiagramAppearanceControls } from "./components/DiagramAppearanceControls";
 export { ConnectionsOnlyToggle } from "./components/ConnectionsOnlyToggle";
+export { CompactPropertyLayoutToggle } from "./components/CompactPropertyLayoutToggle";
 export type { ConnectionsOnlyToggleProps } from "./components/ConnectionsOnlyToggle";
 export { ErrorToast } from "./components/ErrorToast";
 export { FlowDiagram } from "./components/FlowDiagram";
@@ -148,6 +149,8 @@ export type {
   FlowEngine,
   LayoutAlgorithm,
   NodeAlignment,
+  NodeAnimationVariant,
+  EdgeAnimationVariant,
   NodeOverlayAction,
   NodeOverlayProps,
   NodeSelectionModifiers,

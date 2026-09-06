@@ -40,6 +40,7 @@ export type SqueedNodeKey =
   | "$parent"
   | "$outline"
   | "$isNodeAnimated"
+  | "$nodeAnimationVariant"
   | "$connections"
   | "$ports";
 
@@ -49,6 +50,7 @@ export type SqueedEdgeKey =
   | "$edgeType"
   | "$sourceLabel"
   | "$isEdgeAnimated"
+  | "$edgeAnimationVariant"
   | "$isEdgeDashed"
   | "$edgeColor";
 
@@ -184,6 +186,7 @@ export function setEdgeProp(
       updateConnection(node, reference.key, (connection) => {
         if (key === "$edgeIcon") return withKey(connection, "icon", value);
         if (key === "$edgeType") return withKey(connection, "type", value);
+        if (key === "$edgeAnimationVariant") return withKey(connection, "animationVariant", value);
         if (key === "$sourceLabel" || key === "$edgeColor")
           return withKey(
             connection,
@@ -207,6 +210,8 @@ export function setEdgeProp(
         ? "$targetEdgeType"
         : kind === "target" && key === "$edgeIcon"
           ? "$targetIcon"
+          : kind === "target" && key === "$edgeAnimationVariant"
+            ? "$targetAnimationVariant"
           : key;
   return updateNode(json, address, (n) => withKey(n, k, value));
 }
@@ -478,6 +483,9 @@ export function compileSqueed(
     if (typeof src.$isNodeAnimated === "boolean") {
       data.isNodeAnimated = src.$isNodeAnimated;
     }
+    if (["traveling", "pulse"].includes(src.$nodeAnimationVariant)) {
+      data.nodeAnimationVariant = src.$nodeAnimationVariant;
+    }
     if (typeof src.$content === "string") {
       data.config = { ...data.config, content: src.$content };
       if (!src.$view) data.type = "objectView";
@@ -518,6 +526,8 @@ export function compileSqueed(
       if (typeof icon === "string") data.icon = icon;
       if (owner.$isEdgeAnimated !== undefined)
         data.isEdgeAnimated = !!owner.$isEdgeAnimated;
+      const animationVariant = owner[edgeOwner.kind === "target" ? "$targetAnimationVariant" : "$edgeAnimationVariant"];
+      if (["dashed", "traveling"].includes(animationVariant)) data.edgeAnimationVariant = animationVariant;
       if (owner.$isEdgeDashed !== undefined)
         data.isEdgeDashed = !!owner.$isEdgeDashed;
       if (owner.$edgeColor) data.color = owner.$edgeColor;

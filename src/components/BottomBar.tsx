@@ -30,6 +30,7 @@ import { getInteractionShadow } from "../theme/interactionShadow";
 import type { FlowDirection } from "../types";
 import { FlowType } from "../types";
 import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
+import { CompactPropertyLayoutToggle } from "./CompactPropertyLayoutToggle";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
 import {
   DEFAULT_PALETTE,
@@ -581,6 +582,10 @@ const BottomBar = () => {
                         {config.bottomBarExtra}
                       </>
                     )}
+
+                    <Icon mx={-1} as={PiLineVerticalThin} boxSize={5} color={border}
+                      role="separator" aria-orientation="vertical" />
+                    <CompactPropertyLayoutToggle />
 
                     {edgeMode !== "properties" && (
                       <>

@@ -23,6 +23,7 @@ export interface NodeHostProps {
   animated?: boolean;
   animationColor?: string;
   animationWidth?: number;
+  animationVariant?: import("../types").NodeAnimationVariant;
   width?: number;
   height?: number;
   propertyMode?: boolean;
@@ -49,6 +50,7 @@ function NodeHost({
   animated,
   animationColor,
   animationWidth = 8,
+  animationVariant,
   width = 0,
   height = 0,
   propertyMode,
@@ -156,6 +158,7 @@ function NodeHost({
           pointerEvents="none"
         >
           <NodeBorderAnimation
+            variant={animationVariant}
             x={(surface?.left ?? 0) + animationWidth / 2}
             y={(surface?.top ?? 0) + animationWidth / 2}
             width={(surface?.width ?? width) - animationWidth}

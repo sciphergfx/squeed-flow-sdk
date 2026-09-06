@@ -27,6 +27,7 @@ export interface ContainerStyle {
   labelMargin: number;
   labelBg: string;
   animated?: boolean;
+  animationVariant?: import("../types").NodeAnimationVariant;
   animationColor?: string;
 }
 
@@ -79,8 +80,8 @@ function ContainerView({
       <g className="flow-sdk-container-label" data-node-id={id}>
         {selected && onCollapse && (
           <foreignObject
-            x={label ? cx + labelWidth / 2 + padding : rect.x2 - 56}
-            y={label ? labelY - 24 : rect.y1 + 8}
+            x={cx + labelWidth / 2 + padding + 8}
+            y={labelY - 24}
             width={48}
             height={48}
             data-flow-content-toggle=""
@@ -173,6 +174,7 @@ function ContainerView({
       )}
       {style.animated && bw > 0 && (
         <NodeBorderAnimation
+          variant={style.animationVariant}
           x={rect.x1}
           y={rect.y1}
           width={w}
