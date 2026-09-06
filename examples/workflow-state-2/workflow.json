@@ -1,100 +1,553 @@
 {
-  "name": "Run Cast Session",
-  "description": "Runs a cast session: browser screencast via WS, saves a recording asset, links it to the session, push-notifies",
-  "trigger": "manual",
-  "steps": [
-    {
-      "id": "find", "action": "database", "name": "find", "type": "database",
-      "params": { "collection": "test_sessions", "operation": "select", "where": [{ "field": "url", "operator": "==", "value": "{{input.url}}" }, { "field": "status", "operator": "==", "value": "queued" }], "limit": 1, "orderBy": [{ "field": "created_at", "direction": "desc" }], "single": true, "provider": "database" },
-      "config": { "collection": "test_sessions", "operation": "select", "where": [{ "field": "url", "operator": "==", "value": "{{input.url}}" }, { "field": "status", "operator": "==", "value": "queued" }], "limit": 1, "orderBy": [{ "field": "created_at", "direction": "desc" }], "single": true, "provider": "database" }
-    },
-    {
-      "id": "mark_running", "action": "database", "name": "mark_running", "type": "database", "dependsOn": ["find"],
-      "params": { "collection": "test_sessions", "operation": "update", "id": "{{steps.find.result.id}}", "data": { "status": "running", "execution_id": "{{execution.id}}" }, "provider": "database" },
-      "input": { "status": "running", "execution_id": "{{execution.id}}" },
-      "config": { "collection": "test_sessions", "operation": "update", "id": "{{steps.find.result.id}}", "data": { "status": "running", "execution_id": "{{execution.id}}" }, "provider": "database" }
-    },
-    {
-      "id": "announce_running", "action": "emit_event", "name": "announce_running", "type": "emit_event", "dependsOn": ["mark_running"],
-      "params": { "event": "entity_changed", "payload": { "entity": "test_sessions", "operation": "updated", "id": "{{steps.find.result.id}}" } },
-      "config": { "event": "entity_changed", "payload": { "entity": "test_sessions", "operation": "updated", "id": "{{steps.find.result.id}}" }, "entity": "test_sessions", "operation": "updated", "id": "{{steps.find.result.id}}" }
-    },
-    {
-      "id": "launch", "action": "browser", "name": "launch", "type": "browser", "continueOnError": true,
-      "params": { "action": "launch" }, "config": { "action": "launch" }
-    },
-    {
-      "id": "navigate", "action": "browser", "name": "navigate", "type": "browser", "dependsOn": ["launch"], "continueOnError": true,
-      "params": { "action": "navigate", "url": "{{input.url}}", "mouseEnabled": "{{input.mouse_enabled}}" },
-      "config": { "action": "navigate", "url": "{{input.url}}", "mouseEnabled": "{{input.mouse_enabled}}" }
-    },
-    {
-      "id": "stream", "action": "browser", "name": "stream", "type": "browser", "dependsOn": ["navigate"], "continueOnError": true,
-      "params": { "action": "stream_shared", "streamPreview": true, "record": true, "fps": "{{input.cast_fps}}", "resolution": "{{input.cast_res}}" },
-      "config": { "action": "stream_shared", "streamPreview": true, "record": true, "fps": "{{input.cast_fps}}", "resolution": "{{input.cast_res}}" }
-    },
-    {
-      "id": "agent_act", "action": "llm", "type": "llm", "name": "agent_act", "dependsOn": ["stream"], "continueOnError": true,
-      "params": {
-        "prompt": "{{input.prompt}}\n\n - Drive the live browser with MCP tools. Before every browser_click, use browser_hover on the same element. Do a Smooth scroll to element if not in view before triggering clicks, wait 500ms before ending sessions. Verify meaningful actions with take_snapshot; do not repeat actions that had no effect. Only run 1 page. Return EXACTLY one JSON object, not Markdown: status must be passed or failed; summary must use ## Result, ## Actions Taken, ## Issues, and ## Conclusion. Include, retries, blockers, and final state in those sections, close page when done. Format: {\"status\":\"passed\",\"summary\":\"## Result\\n\\nPassed ...\\n\\n## Actions Taken\\n\\n1. ...\"}.",
-        "tools": ["browser_navigate_page", "browser_list_pages", "browser_select_page", "browser_close_page", "browser_wait_for", "browser_click", "browser_click_at", "browser_type_text", "browser_fill", "browser_fill_form", "browser_hover", "browser_drag", "browser_press_key", "browser_handle_dialog", "browser_evaluate_script", "browser_take_snapshot", "browser_take_screenshot", "browser_get_console_message", "browser_list_console_messages", "browser_list_network_requests", "browser_get_network_request", "browser_emulate", "browser_resize_page"],
-        "maxToolRounds": 20, "maxTokens": 10000, "temperature": 0.2, "timeout": "{{input.duration}}000"
-      },
-      "config": {
-        "prompt": "{{input.prompt}}\n\n - Drive the live browser with MCP tools. Before every browser_click, use browser_hover on the same element. Do a Smooth scroll to element if not in view before triggering clicks, wait 500ms before ending sessions. Verify meaningful actions with take_snapshot; do not repeat actions that had no effect. Only run 1 page. Return EXACTLY one JSON object, not Markdown: status must be passed or failed; summary must use ## Result, ## Actions Taken, ## Issues, and ## Conclusion. Include, retries, blockers, and final state in those sections, close page when done. Format: {\"status\":\"passed\",\"summary\":\"## Result\\n\\nPassed ...\\n\\n## Actions Taken\\n\\n1. ...\"}.",
-        "tools": ["browser_navigate_page", "browser_list_pages", "browser_select_page", "browser_close_page", "browser_wait_for", "browser_click", "browser_click_at", "browser_type_text", "browser_fill", "browser_fill_form", "browser_hover", "browser_drag", "browser_press_key", "browser_handle_dialog", "browser_evaluate_script", "browser_take_snapshot", "browser_take_screenshot", "browser_get_console_message", "browser_list_console_messages", "browser_list_network_requests", "browser_get_network_request", "browser_emulate", "browser_resize_page"],
-        "maxToolRounds": 20, "maxTokens": 10000, "temperature": 0.2, "timeout": "{{input.duration}}000", "webSearchProvider": "duckduckgo"
-      }
-    },
-    {
-      "id": "normalize_status", "action": "transform", "name": "normalize_status", "type": "transform", "dependsOn": ["agent_act"], "continueOnError": true,
-      "params": { "transform": "whitelist", "value": "{{steps.agent_act.result.status || steps.agent_act.output.status}}", "allow": ["passed", "failed"], "fallback": "failed" },
-      "config": { "transform": "whitelist", "value": "{{steps.agent_act.result.status || steps.agent_act.output.status}}", "allow": ["passed", "failed"], "fallback": "failed", "mode": "transform" }
-    },
-    {
-      "id": "announce", "action": "emit_event", "name": "announce", "type": "emit_event", "dependsOn": ["link"],
-      "params": { "event": "entity_changed", "payload": { "entity": "test_sessions", "operation": "updated", "id": "{{steps.find.result.id}}" } },
-      "config": { "event": "entity_changed", "payload": { "entity": "test_sessions", "operation": "updated", "id": "{{steps.find.result.id}}" }, "entity": "test_sessions", "operation": "updated", "id": "{{steps.find.result.id}}" }
-    },
-    {
-      "id": "link", "action": "database", "name": "link", "type": "database", "dependsOn": ["normalize_status"], "continueOnError": true,
-      "params": { "collection": "test_sessions", "operation": "update", "id": "{{steps.find.result.id}}", "data": { "status": "{{steps.normalize_status.result}}", "execution_id": "{{execution.id}}", "summary": "{{steps.agent_act.result.summary || input.summary || ''}}" }, "provider": "database" },
-      "input": { "status": "{{steps.normalize_status.result}}", "execution_id": "{{execution.id}}", "summary": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || input.summary || ''}}" },
-      "config": { "collection": "test_sessions", "operation": "update", "id": "{{steps.find.result.id}}", "data": { "status": "{{steps.normalize_status.result}}", "execution_id": "{{execution.id}}", "summary": "{{steps.agent_act.result.summary || input.summary || ''}}" }, "provider": "database" }
-    },
-    {
-      "id": "notify", "action": "notification", "name": "notify", "type": "notification", "dependsOn": ["link"], "continueOnError": true,
-      "params": { "channels": ["push notifications"], "userId": "{{input.user_id}}", "title": "Cast complete", "message": "Recording saved" },
-      "config": { "channels": ["push notifications"], "userId": "{{input.user_id}}", "title": "Cast complete", "message": "Recording saved" }
-    },
-    {
-      "id": "notify_passed", "action": "notification", "name": "notify_passed", "type": "notification", "dependsOn": ["link"], "continueOnError": true,
-      "condition": "{{steps.normalize_status.result}} == 'passed'",
-      "params": { "channels": ["email"], "to": "{{input.user_email}}", "title": "Test session passed", "message": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || ''}}", "template": "workflow-success", "templateData": { "userName": "{{input.user_id}}", "workflowName": "{{input.prompt}}", "url": "{{input.url}}", "summary": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || ''}}", "executionId": "{{execution.id}}", "dashboardUrl": "https://quehey.co" } },
-      "config": { "channels": ["email"], "to": "{{input.user_email}}", "title": "Test session passed", "message": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || ''}}", "template": "workflow-success", "templateData": { "userName": "{{input.user_id}}", "workflowName": "{{input.prompt}}", "url": "{{input.url}}", "summary": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || ''}}", "executionId": "{{execution.id}}", "dashboardUrl": "https://quehey.co" } }
-    },
-    {
-      "id": "notify_failed", "action": "notification", "name": "notify_failed", "type": "notification", "dependsOn": ["link"], "continueOnError": true,
-      "condition": "{{steps.normalize_status.result}} == 'failed'",
-      "params": { "channels": ["email"], "to": "{{input.user_email}}", "title": "Test session failed", "message": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || ''}}", "template": "workflow-error", "templateData": { "userName": "{{input.user_id}}", "workflowName": "{{input.prompt}}", "url": "{{input.url}}", "stepName": "agent_act", "error": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || 'Test session failed'}}", "executionId": "{{execution.id}}", "dashboardUrl": "https://quehey.co" } },
-      "config": { "channels": ["email"], "to": "{{input.user_email}}", "title": "Test session failed", "message": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || ''}}", "template": "workflow-error", "templateData": { "userName": "{{input.user_id}}", "workflowName": "{{input.prompt}}", "url": "{{input.url}}", "stepName": "agent_act", "error": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || 'Test session failed'}}", "executionId": "{{execution.id}}", "dashboardUrl": "https://quehey.co" } }
-    },
-    {
-      "id": "stop_cast", "action": "browser", "name": "stop_cast", "type": "browser", "dependsOn": ["agent_act"], "continueOnError": true,
-      "params": { "action": "screencast_stop", "entityType": "video", "entityId": "{{steps.find.result.id}}", "fps": "{{input.cast_fps}}", "captureSeconds": "{{input.duration}}" },
-      "config": { "action": "screencast_stop", "entityType": "video", "entityId": "{{steps.find.result.id}}", "fps": "{{input.cast_fps}}", "captureSeconds": "{{input.duration}}" }
-    },
-    {
-      "id": "link_cast", "action": "database", "name": "link_cast", "type": "database", "dependsOn": ["stop_cast"], "continueOnError": true,
-      "params": { "collection": "test_sessions", "operation": "update", "id": "{{steps.find.result.id}}", "data": { "asset_id": "{{steps.stop_cast.result.asset_id || ''}}", "execution_id": "{{execution.id}}" }, "provider": "database" },
-      "input": { "asset_id": "{{steps.stop_cast.result.asset_id || ''}}", "execution_id": "{{execution.id}}" },
-      "config": { "collection": "test_sessions", "operation": "update", "id": "{{steps.find.result.id}}", "data": { "asset_id": "{{steps.stop_cast.result.asset_id || ''}}", "execution_id": "{{execution.id}}" }, "provider": "database" }
-    },
-    {
-      "id": "route_output", "action": "transform", "type": "output", "name": "route_output", "dependsOn": ["link_cast"], "progressMessage": "Preparing recording response...",
-      "params": { "expression": "{\"id\":\"{{steps.find.result.id}}\",\"status\":\"{{steps.normalize_status.result}}\"}" },
-      "config": { "expression": "{\"id\":\"{{steps.find.result.id}}\",\"status\":\"{{steps.normalize_status.result}}\"}", "mapping": { "id": "{{steps.find.result.id}}", "status": "{{steps.normalize_status.result}}" } }
-    }
-  ],
-  "onError": { "notify": true, "retry": { "maxAttempts": 3, "delayMs": 5000 } }
+          "name": "Run Cast Session",
+          "description": "Runs a cast session: browser screencast via WS, saves a recording asset, links it to the session, push-notifies",
+          "trigger": "manual",
+          "steps": [
+                    {
+                              "id": "find",
+                              "action": "database",
+                              "name": "find",
+                              "type": "database",
+                              "params": {
+                                        "collection": "test_sessions",
+                                        "operation": "select",
+                                        "where": [
+                                                  {
+                                                            "field": "url",
+                                                            "operator": "==",
+                                                            "value": "{{input.url}}"
+                                                  },
+                                                  {
+                                                            "field": "status",
+                                                            "operator": "==",
+                                                            "value": "queued"
+                                                  }
+                                        ],
+                                        "limit": 1,
+                                        "orderBy": [
+                                                  {
+                                                            "field": "created_at",
+                                                            "direction": "desc"
+                                                  }
+                                        ],
+                                        "single": true,
+                                        "provider": "database"
+                              },
+                              "config": {
+                                        "collection": "test_sessions",
+                                        "operation": "select",
+                                        "where": [
+                                                  {
+                                                            "field": "url",
+                                                            "operator": "==",
+                                                            "value": "{{input.url}}"
+                                                  },
+                                                  {
+                                                            "field": "status",
+                                                            "operator": "==",
+                                                            "value": "queued"
+                                                  }
+                                        ],
+                                        "limit": 1,
+                                        "orderBy": [
+                                                  {
+                                                            "field": "created_at",
+                                                            "direction": "desc"
+                                                  }
+                                        ],
+                                        "single": true,
+                                        "provider": "database"
+                              }
+                    },
+                    {
+                              "id": "mark_running",
+                              "action": "database",
+                              "name": "mark_running",
+                              "type": "database",
+                              "dependsOn": [
+                                        "find"
+                              ],
+                              "params": {
+                                        "collection": "test_sessions",
+                                        "operation": "update",
+                                        "id": "{{steps.find.result.id}}",
+                                        "data": {
+                                                  "status": "running",
+                                                  "execution_id": "{{execution.id}}"
+                                        },
+                                        "provider": "database"
+                              },
+                              "input": {
+                                        "status": "running",
+                                        "execution_id": "{{execution.id}}"
+                              },
+                              "config": {
+                                        "collection": "test_sessions",
+                                        "operation": "update",
+                                        "id": "{{steps.find.result.id}}",
+                                        "data": {
+                                                  "status": "running",
+                                                  "execution_id": "{{execution.id}}"
+                                        },
+                                        "provider": "database"
+                              }
+                    },
+                    {
+                              "id": "announce_running",
+                              "action": "emit_event",
+                              "name": "announce_running",
+                              "type": "emit_event",
+                              "dependsOn": [
+                                        "mark_running"
+                              ],
+                              "params": {
+                                        "event": "entity_changed",
+                                        "payload": {
+                                                  "entity": "test_sessions",
+                                                  "operation": "updated",
+                                                  "id": "{{steps.find.result.id}}"
+                                        }
+                              },
+                              "config": {
+                                        "event": "entity_changed",
+                                        "payload": {
+                                                  "entity": "test_sessions",
+                                                  "operation": "updated",
+                                                  "id": "{{steps.find.result.id}}"
+                                        },
+                                        "entity": "test_sessions",
+                                        "operation": "updated",
+                                        "id": "{{steps.find.result.id}}"
+                              }
+                    },
+                    {
+                              "id": "launch",
+                              "action": "browser",
+                              "name": "launch",
+                              "type": "browser",
+                              "continueOnError": true,
+                              "params": {
+                                        "action": "launch"
+                              },
+                              "config": {
+                                        "action": "launch"
+                              }
+                    },
+                    {
+                              "id": "navigate",
+                              "action": "browser",
+                              "name": "navigate",
+                              "type": "browser",
+                              "dependsOn": [
+                                        "launch"
+                              ],
+                              "continueOnError": true,
+                              "params": {
+                                        "action": "navigate",
+                                        "url": "{{input.url}}",
+                                        "mouseEnabled": "{{input.mouse_enabled}}"
+                              },
+                              "config": {
+                                        "action": "navigate",
+                                        "url": "{{input.url}}",
+                                        "mouseEnabled": "{{input.mouse_enabled}}"
+                              }
+                    },
+                    {
+                              "id": "stream",
+                              "action": "browser",
+                              "name": "stream",
+                              "type": "browser",
+                              "dependsOn": [
+                                        "navigate"
+                              ],
+                              "continueOnError": true,
+                              "params": {
+                                        "action": "stream_shared",
+                                        "streamPreview": true,
+                                        "record": true,
+                                        "fps": "{{input.cast_fps}}",
+                                        "resolution": "{{input.cast_res}}"
+                              },
+                              "config": {
+                                        "action": "stream_shared",
+                                        "streamPreview": true,
+                                        "record": true,
+                                        "fps": "{{input.cast_fps}}",
+                                        "resolution": "{{input.cast_res}}"
+                              }
+                    },
+                    {
+                              "id": "agent_act",
+                              "action": "llm",
+                              "type": "llm",
+                              "name": "agent_act",
+                              "dependsOn": [
+                                        "stream"
+                              ],
+                              "continueOnError": true,
+                              "params": {
+                                        "prompt": "{{input.prompt}}\n\n - Drive the live browser with MCP tools. Before every browser_click, use browser_hover on the same element. Do a Smooth scroll to element if not in view before triggering clicks, wait 500ms before ending sessions. Verify meaningful actions with take_snapshot; do not repeat actions that had no effect. Only run 1 page. Return EXACTLY one JSON object, not Markdown: status must be passed or failed; summary must use ## Result, ## Actions Taken, ## Issues, and ## Conclusion. Include, retries, blockers, and final state in those sections, close page when done. Format: {\"status\":\"passed\",\"summary\":\"## Result\\n\\nPassed ...\\n\\n## Actions Taken\\n\\n1. ...\"}.",
+                                        "tools": [
+                                                  "browser_navigate_page",
+                                                  "browser_list_pages",
+                                                  "browser_select_page",
+                                                  "browser_close_page",
+                                                  "browser_wait_for",
+                                                  "browser_click",
+                                                  "browser_click_at",
+                                                  "browser_type_text",
+                                                  "browser_fill",
+                                                  "browser_fill_form",
+                                                  "browser_hover",
+                                                  "browser_drag",
+                                                  "browser_press_key",
+                                                  "browser_handle_dialog",
+                                                  "browser_evaluate_script",
+                                                  "browser_take_snapshot",
+                                                  "browser_take_screenshot",
+                                                  "browser_get_console_message",
+                                                  "browser_list_console_messages",
+                                                  "browser_list_network_requests",
+                                                  "browser_get_network_request",
+                                                  "browser_emulate",
+                                                  "browser_resize_page"
+                                        ],
+                                        "maxToolRounds": 20,
+                                        "maxTokens": 10000,
+                                        "temperature": 0.2,
+                                        "timeout": "{{input.duration}}000"
+                              },
+                              "config": {
+                                        "prompt": "{{input.prompt}}\n\n - Drive the live browser with MCP tools. Before every browser_click, use browser_hover on the same element. Do a Smooth scroll to element if not in view before triggering clicks, wait 500ms before ending sessions. Verify meaningful actions with take_snapshot; do not repeat actions that had no effect. Only run 1 page. Return EXACTLY one JSON object, not Markdown: status must be passed or failed; summary must use ## Result, ## Actions Taken, ## Issues, and ## Conclusion. Include, retries, blockers, and final state in those sections, close page when done. Format: {\"status\":\"passed\",\"summary\":\"## Result\\n\\nPassed ...\\n\\n## Actions Taken\\n\\n1. ...\"}.",
+                                        "tools": [
+                                                  "browser_navigate_page",
+                                                  "browser_list_pages",
+                                                  "browser_select_page",
+                                                  "browser_close_page",
+                                                  "browser_wait_for",
+                                                  "browser_click",
+                                                  "browser_click_at",
+                                                  "browser_type_text",
+                                                  "browser_fill",
+                                                  "browser_fill_form",
+                                                  "browser_hover",
+                                                  "browser_drag",
+                                                  "browser_press_key",
+                                                  "browser_handle_dialog",
+                                                  "browser_evaluate_script",
+                                                  "browser_take_snapshot",
+                                                  "browser_take_screenshot",
+                                                  "browser_get_console_message",
+                                                  "browser_list_console_messages",
+                                                  "browser_list_network_requests",
+                                                  "browser_get_network_request",
+                                                  "browser_emulate",
+                                                  "browser_resize_page"
+                                        ],
+                                        "maxToolRounds": 20,
+                                        "maxTokens": 10000,
+                                        "temperature": 0.2,
+                                        "timeout": "{{input.duration}}000",
+                                        "webSearchProvider": "duckduckgo"
+                              }
+                    },
+                    {
+                              "id": "normalize_status",
+                              "action": "transform",
+                              "name": "normalize_status",
+                              "type": "transform",
+                              "dependsOn": [
+                                        "agent_act"
+                              ],
+                              "continueOnError": true,
+                              "params": {
+                                        "transform": "whitelist",
+                                        "value": "{{steps.agent_act.result.status || steps.agent_act.output.status}}",
+                                        "allow": [
+                                                  "passed",
+                                                  "failed"
+                                        ],
+                                        "fallback": "failed"
+                              },
+                              "config": {
+                                        "transform": "whitelist",
+                                        "value": "{{steps.agent_act.result.status || steps.agent_act.output.status}}",
+                                        "allow": [
+                                                  "passed",
+                                                  "failed"
+                                        ],
+                                        "fallback": "failed",
+                                        "mode": "transform"
+                              }
+                    },
+                    {
+                              "id": "announce",
+                              "action": "emit_event",
+                              "name": "announce",
+                              "type": "emit_event",
+                              "dependsOn": [
+                                        "link"
+                              ],
+                              "params": {
+                                        "event": "entity_changed",
+                                        "payload": {
+                                                  "entity": "test_sessions",
+                                                  "operation": "updated",
+                                                  "id": "{{steps.find.result.id}}"
+                                        }
+                              },
+                              "config": {
+                                        "event": "entity_changed",
+                                        "payload": {
+                                                  "entity": "test_sessions",
+                                                  "operation": "updated",
+                                                  "id": "{{steps.find.result.id}}"
+                                        },
+                                        "entity": "test_sessions",
+                                        "operation": "updated",
+                                        "id": "{{steps.find.result.id}}"
+                              }
+                    },
+                    {
+                              "id": "link",
+                              "action": "database",
+                              "name": "link",
+                              "type": "database",
+                              "dependsOn": [
+                                        "normalize_status"
+                              ],
+                              "continueOnError": true,
+                              "params": {
+                                        "collection": "test_sessions",
+                                        "operation": "update",
+                                        "id": "{{steps.find.result.id}}",
+                                        "data": {
+                                                  "status": "{{steps.normalize_status.result}}",
+                                                  "execution_id": "{{execution.id}}",
+                                                  "summary": "{{steps.agent_act.result.summary || input.summary || ''}}"
+                                        },
+                                        "provider": "database"
+                              },
+                              "input": {
+                                        "status": "{{steps.normalize_status.result}}",
+                                        "execution_id": "{{execution.id}}",
+                                        "summary": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || input.summary || ''}}"
+                              },
+                              "config": {
+                                        "collection": "test_sessions",
+                                        "operation": "update",
+                                        "id": "{{steps.find.result.id}}",
+                                        "data": {
+                                                  "status": "{{steps.normalize_status.result}}",
+                                                  "execution_id": "{{execution.id}}",
+                                                  "summary": "{{steps.agent_act.result.summary || input.summary || ''}}"
+                                        },
+                                        "provider": "database"
+                              }
+                    },
+                    {
+                              "id": "notify",
+                              "action": "notification",
+                              "name": "notify",
+                              "type": "notification",
+                              "dependsOn": [
+                                        "link"
+                              ],
+                              "continueOnError": true,
+                              "params": {
+                                        "channels": [
+                                                  "push notifications"
+                                        ],
+                                        "userId": "{{input.user_id}}",
+                                        "title": "Cast complete",
+                                        "message": "Recording saved"
+                              },
+                              "config": {
+                                        "channels": [
+                                                  "push notifications"
+                                        ],
+                                        "userId": "{{input.user_id}}",
+                                        "title": "Cast complete",
+                                        "message": "Recording saved"
+                              }
+                    },
+                    {
+                              "id": "notify_passed",
+                              "action": "notification",
+                              "name": "notify_passed",
+                              "type": "notification",
+                              "dependsOn": [
+                                        "link"
+                              ],
+                              "continueOnError": true,
+                              "condition": "{{steps.normalize_status.result}} == 'passed'",
+                              "params": {
+                                        "channels": [
+                                                  "email"
+                                        ],
+                                        "to": "{{input.user_email}}",
+                                        "title": "Test session passed",
+                                        "message": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || ''}}",
+                                        "template": "workflow-success",
+                                        "templateData": {
+                                                  "userName": "{{input.user_id}}",
+                                                  "workflowName": "{{input.prompt}}",
+                                                  "url": "{{input.url}}",
+                                                  "summary": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || ''}}",
+                                                  "executionId": "{{execution.id}}",
+                                                  "dashboardUrl": "https://quehey.co"
+                                        }
+                              },
+                              "config": {
+                                        "channels": [
+                                                  "email"
+                                        ],
+                                        "to": "{{input.user_email}}",
+                                        "title": "Test session passed",
+                                        "message": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || ''}}",
+                                        "template": "workflow-success",
+                                        "templateData": {
+                                                  "userName": "{{input.user_id}}",
+                                                  "workflowName": "{{input.prompt}}",
+                                                  "url": "{{input.url}}",
+                                                  "summary": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || ''}}",
+                                                  "executionId": "{{execution.id}}",
+                                                  "dashboardUrl": "https://quehey.co"
+                                        }
+                              }
+                    },
+                    {
+                              "id": "notify_failed",
+                              "action": "notification",
+                              "name": "notify_failed",
+                              "type": "notification",
+                              "dependsOn": [
+                                        "link"
+                              ],
+                              "continueOnError": true,
+                              "condition": "{{steps.normalize_status.result}} == 'failed'",
+                              "params": {
+                                        "channels": [
+                                                  "email"
+                                        ],
+                                        "to": "{{input.user_email}}",
+                                        "title": "Test session failed",
+                                        "message": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || ''}}",
+                                        "template": "workflow-error",
+                                        "templateData": {
+                                                  "userName": "{{input.user_id}}",
+                                                  "workflowName": "{{input.prompt}}",
+                                                  "url": "{{input.url}}",
+                                                  "stepName": "agent_act",
+                                                  "error": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || 'Test session failed'}}",
+                                                  "executionId": "{{execution.id}}",
+                                                  "dashboardUrl": "https://quehey.co"
+                                        }
+                              },
+                              "config": {
+                                        "channels": [
+                                                  "email"
+                                        ],
+                                        "to": "{{input.user_email}}",
+                                        "title": "Test session failed",
+                                        "message": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || ''}}",
+                                        "template": "workflow-error",
+                                        "templateData": {
+                                                  "userName": "{{input.user_id}}",
+                                                  "workflowName": "{{input.prompt}}",
+                                                  "url": "{{input.url}}",
+                                                  "stepName": "agent_act",
+                                                  "error": "{{steps.agent_act.result.summary || steps.agent_act.output.summary || 'Test session failed'}}",
+                                                  "executionId": "{{execution.id}}",
+                                                  "dashboardUrl": "https://quehey.co"
+                                        }
+                              }
+                    },
+                    {
+                              "id": "stop_cast",
+                              "action": "browser",
+                              "name": "stop_cast",
+                              "type": "browser",
+                              "dependsOn": [
+                                        "agent_act"
+                              ],
+                              "continueOnError": true,
+                              "params": {
+                                        "action": "screencast_stop",
+                                        "entityType": "video",
+                                        "entityId": "{{steps.find.result.id}}",
+                                        "fps": "{{input.cast_fps}}",
+                                        "captureSeconds": "{{input.duration}}"
+                              },
+                              "config": {
+                                        "action": "screencast_stop",
+                                        "entityType": "video",
+                                        "entityId": "{{steps.find.result.id}}",
+                                        "fps": "{{input.cast_fps}}",
+                                        "captureSeconds": "{{input.duration}}"
+                              }
+                    },
+                    {
+                              "id": "link_cast",
+                              "action": "database",
+                              "name": "link_cast",
+                              "type": "database",
+                              "dependsOn": [
+                                        "stop_cast"
+                              ],
+                              "continueOnError": true,
+                              "params": {
+                                        "collection": "test_sessions",
+                                        "operation": "update",
+                                        "id": "{{steps.find.result.id}}",
+                                        "data": {
+                                                  "asset_id": "{{steps.stop_cast.result.asset_id || ''}}",
+                                                  "execution_id": "{{execution.id}}"
+                                        },
+                                        "provider": "database"
+                              },
+                              "input": {
+                                        "asset_id": "{{steps.stop_cast.result.asset_id || ''}}",
+                                        "execution_id": "{{execution.id}}"
+                              },
+                              "config": {
+                                        "collection": "test_sessions",
+                                        "operation": "update",
+                                        "id": "{{steps.find.result.id}}",
+                                        "data": {
+                                                  "asset_id": "{{steps.stop_cast.result.asset_id || ''}}",
+                                                  "execution_id": "{{execution.id}}"
+                                        },
+                                        "provider": "database"
+                              }
+                    },
+                    {
+                              "id": "route_output",
+                              "action": "transform",
+                              "type": "output",
+                              "name": "route_output",
+                              "dependsOn": [
+                                        "link_cast"
+                              ],
+                              "progressMessage": "Preparing recording response...",
+                              "params": {
+                                        "expression": "{\"id\":\"{{steps.find.result.id}}\",\"status\":\"{{steps.normalize_status.result}}\"}"
+                              },
+                              "config": {
+                                        "expression": "{\"id\":\"{{steps.find.result.id}}\",\"status\":\"{{steps.normalize_status.result}}\"}",
+                                        "mapping": {
+                                                  "id": "{{steps.find.result.id}}",
+                                                  "status": "{{steps.normalize_status.result}}"
+                                        }
+                              }
+                    }
+          ],
+          "onError": {
+                    "notify": true,
+                    "retry": {
+                              "maxAttempts": 3,
+                              "delayMs": 5000
+                    }
+          }
 }

@@ -7,7 +7,13 @@ import { useCustomColors } from "../theme/useCustomColors";
 import { resolveStateForm } from "../utils/formState";
 import { FormDocumentContext } from "./NodeForm";
 
-export function NodeConfigSummary({ nodeAddress, expanded = false }: { nodeAddress: string; expanded?: boolean }) {
+export function NodeConfigSummary({
+  nodeAddress,
+  expanded = false,
+}: {
+  nodeAddress: string;
+  expanded?: boolean;
+}) {
   const { data, schema, bindings } = useContext(FormDocumentContext);
   const { colorText, background } = useCustomColors();
   if (bindings?.[nodeAddress]?.portResources) return null;

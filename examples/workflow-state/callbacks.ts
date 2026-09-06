@@ -62,9 +62,14 @@ export function projectWorkflowStateView(
   state: SqueedJson,
   direction: FlowDirection | "C" = "LR",
 ): SqueedJson {
-  const [sourceSide, targetSide] = direction === "RL" ? ["left", "right"]
-    : direction === "TB" ? ["bottom", "top"]
-      : direction === "BT" ? ["top", "bottom"] : ["right", "left"];
+  const [sourceSide, targetSide] =
+    direction === "RL"
+      ? ["left", "right"]
+      : direction === "TB"
+        ? ["bottom", "top"]
+        : direction === "BT"
+          ? ["top", "bottom"]
+          : ["right", "left"];
   let next = view;
   const trigger = getNode(state, "root.trigger");
   if (getNode(view, "root.trigger") && trigger) {
@@ -89,7 +94,8 @@ export function projectWorkflowStateView(
     const existing = Array.isArray(node.$connections) ? node.$connections : [];
     const connections = existing.filter(
       (connection: { id?: string; sourceProperty?: string }) =>
-        !connection.id?.startsWith("resource:") && !connection.sourceProperty?.startsWith("resource:"),
+        !connection.id?.startsWith("resource:") &&
+        !connection.sourceProperty?.startsWith("resource:"),
     );
     const ports: {
       id: string;
@@ -105,16 +111,24 @@ export function projectWorkflowStateView(
           ? [value]
           : [];
       const targets: Record<string, string> = resource.targets;
-      const available = value !== undefined ||
-        ("fields" in binding && Object.prototype.hasOwnProperty.call(binding.fields, resource.field));
+      const available =
+        value !== undefined ||
+        ("fields" in binding &&
+          Object.prototype.hasOwnProperty.call(binding.fields, resource.field));
       if (!available) continue;
       for (const [id, target] of Object.entries(targets)) {
         if (
-          !getNode(state, `root.${resource.collection}.${id}`) || !getNode(view, target)
+          !getNode(state, `root.${resource.collection}.${id}`) ||
+          !getNode(view, target)
         )
           continue;
         const portId = `resource:${resource.field}:${id}`;
-        ports.push({ id: portId, role: "source", side: sourceSide, position: 0.5 });
+        ports.push({
+          id: portId,
+          role: "source",
+          side: sourceSide,
+          position: 0.5,
+        });
         next = setNodeProp(next, target, "$ports", [
           { id: "resource:input", role: "target", side: targetSide },
         ]);
@@ -151,26 +165,42 @@ export function projectWorkflowStateView(
 
 export function attachWorkflowResourceReference(
   state: SqueedJson,
-  edge: Pick<FlowDiagramEdge["data"], "source" | "target" | "sourceProperty" | "targetProperty">,
+  edge: Pick<
+    FlowDiagramEdge["data"],
+    "source" | "target" | "sourceProperty" | "targetProperty"
+  >,
 ): SqueedJson {
   if (edge.targetProperty !== "resource:input") return state;
-  const binding = Object.entries(bindings).find(([address]) => address === edge.source)?.[1];
+  const binding = Object.entries(bindings).find(
+    ([address]) => address === edge.source,
+  )?.[1];
   if (!binding?.address.startsWith("root.steps.")) return state;
   for (const resource of resourceFields) {
-    const reference = Object.entries(resource.targets).find(([id, target]) =>
-      edge.sourceProperty === `resource:${resource.field}:${id}` && edge.target === target,
+    const reference = Object.entries(resource.targets).find(
+      ([id, target]) =>
+        edge.sourceProperty === `resource:${resource.field}:${id}` &&
+        edge.target === target,
     );
     if (!reference) continue;
     const [id] = reference;
     if (!getNode(state, `root.${resource.collection}.${id}`)) return state;
     const address = `${binding.address}.${resource.field}`;
     const value = getNode(state, address);
-    if (value === undefined && !("fields" in binding && Object.prototype.hasOwnProperty.call(binding.fields, resource.field))) return state;
+    if (
+      value === undefined &&
+      !(
+        "fields" in binding &&
+        Object.prototype.hasOwnProperty.call(binding.fields, resource.field)
+      )
+    )
+      return state;
     if (["tools", "memory", "instructionIds"].includes(resource.field)) {
       if (value !== undefined && !Array.isArray(value)) return state;
       const values = value ?? [];
       if (values.includes(id)) return state;
-      return applyStateEdits(state, [{ op: "set", address, value: [...values, id] }]);
+      return applyStateEdits(state, [
+        { op: "set", address, value: [...values, id] },
+      ]);
     }
     if (value === id) return state;
     return applyStateEdits(state, [{ op: "set", address, value: id }]);
@@ -182,18 +212,24 @@ export function removeWorkflowResourceReference(
   state: SqueedJson,
   edge: Pick<FlowDiagramEdge["data"], "source" | "target" | "sourceProperty">,
 ): SqueedJson {
-  const binding = Object.entries(bindings).find(([address]) => address === edge.source)?.[1];
+  const binding = Object.entries(bindings).find(
+    ([address]) => address === edge.source,
+  )?.[1];
   if (!binding?.address.startsWith("root.steps.")) return state;
   for (const resource of resourceFields) {
-    const reference = Object.entries(resource.targets).find(([id, target]) =>
-      edge.sourceProperty === `resource:${resource.field}:${id}` && edge.target === target,
+    const reference = Object.entries(resource.targets).find(
+      ([id, target]) =>
+        edge.sourceProperty === `resource:${resource.field}:${id}` &&
+        edge.target === target,
     );
     if (!reference) continue;
     const [id] = reference;
     const address = `${binding.address}.${resource.field}`;
     const value = getNode(state, address);
     if (Array.isArray(value) && value.includes(id))
-      return applyStateEdits(state, [{ op: "set", address, value: value.filter(entry => entry !== id) }]);
+      return applyStateEdits(state, [
+        { op: "set", address, value: value.filter((entry) => entry !== id) },
+      ]);
     if (value === id)
       return applyStateEdits(state, [{ op: "remove", address }]);
   }

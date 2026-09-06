@@ -22,6 +22,11 @@ export function getNodeBorderProps(
     borderColor: color,
     borderWidth: getNodeBorderWidth(viewProps?.borderWidth, defaultWidth),
     borderStyle: viewProps?.borderStyle ?? "solid",
-    ...getInteractionShadow(color === "transparent" ? "currentColor" : color, isActive, ".flow-sdk-node:hover &", !isActive),
+    ...getInteractionShadow(
+      color === "transparent" ? "currentColor" : color,
+      isActive,
+      ".flow-sdk-node:hover &",
+      !isActive,
+    ),
   };
 }

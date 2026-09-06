@@ -20,7 +20,8 @@ export interface FormOption {
   value: FormValue;
 }
 export type FormCondition = { $address: string } & (
-  { $equals: FormValue } | { $in: FormValue[] }
+  | { $equals: FormValue }
+  | { $in: FormValue[] }
 );
 export interface FormFieldConfig {
   $label?: string;
@@ -142,8 +143,11 @@ export async function readFormSchema(
     const entries = [];
     const pending = new Set(typeNames);
     for (const name of pending) {
-      if (pending.size > 32) throw new Error("Choose between 1 and 32 form interface names.");
-      const schema = await parseTypeScriptForm(source, file.name, name, { allowJson: true });
+      if (pending.size > 32)
+        throw new Error("Choose between 1 and 32 form interface names.");
+      const schema = await parseTypeScriptForm(source, file.name, name, {
+        allowJson: true,
+      });
       entries.push([name, schema] as const);
       for (const port of Object.values(schema.ports ?? {}))
         if (port.resourceType) pending.add(port.resourceType);
@@ -165,9 +169,12 @@ export function conditionMatches(
   condition: FormCondition | undefined,
   data: SqueedJson,
 ): boolean {
-  return !condition || ("$in" in condition
-    ? condition.$in.includes(getNode(data, condition.$address))
-    : getNode(data, condition.$address) === condition.$equals);
+  return (
+    !condition ||
+    ("$in" in condition
+      ? condition.$in.includes(getNode(data, condition.$address))
+      : getNode(data, condition.$address) === condition.$equals)
+  );
 }
 
 export function formOptions(type: ContractType): FormOption[] | undefined {
@@ -190,10 +197,20 @@ export function formValueError(
   if (type.kind === "json") {
     const ancestors = new Set<object>();
     const valid = (entry: unknown): boolean => {
-      if (entry === null || typeof entry === "string" || typeof entry === "boolean") return true;
+      if (
+        entry === null ||
+        typeof entry === "string" ||
+        typeof entry === "boolean"
+      )
+        return true;
       if (typeof entry === "number") return Number.isFinite(entry);
-      if (!entry || typeof entry !== "object" || ancestors.has(entry)) return false;
-      if (!Array.isArray(entry) && ![Object.prototype, null].includes(Object.getPrototypeOf(entry))) return false;
+      if (!entry || typeof entry !== "object" || ancestors.has(entry))
+        return false;
+      if (
+        !Array.isArray(entry) &&
+        ![Object.prototype, null].includes(Object.getPrototypeOf(entry))
+      )
+        return false;
       ancestors.add(entry);
       const result = Object.values(entry).every(valid);
       ancestors.delete(entry);
@@ -215,8 +232,14 @@ export function formValueError(
   if (type.kind === "object") {
     if (!value || typeof value !== "object" || Array.isArray(value))
       return "Expected an object";
-    if (type.additionalProperties && Object.entries(value).some(([key, entry]) =>
-      !Object.prototype.hasOwnProperty.call(type.properties, key) && formValueError(type.additionalProperties!, entry, true)))
+    if (
+      type.additionalProperties &&
+      Object.entries(value).some(
+        ([key, entry]) =>
+          !Object.prototype.hasOwnProperty.call(type.properties, key) &&
+          formValueError(type.additionalProperties!, entry, true),
+      )
+    )
       return "Invalid dictionary value";
     return Object.entries(type.properties).some(([key, property]) =>
       formValueError(

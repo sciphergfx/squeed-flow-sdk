@@ -188,8 +188,27 @@ function Canvas(props: CanvasProps) {
 
   const [isolatedIds, setIsolatedIds] = useState<Set<string> | null>(null);
   const propertyMode = edgeMode === "auto" || edgeMode === "properties";
-  const visibleEdges = useMemo(() => edges.filter(edge => isEdgeVisible(edge, edgeMode) && (!isolatedIds || (isolatedIds.has(edge.source) && isolatedIds.has(edge.target)))), [edges, edgeMode, isolatedIds]);
-  const layoutGraph = useMemo(() => visibleLayoutGraph(nodes, edges, edgeMode, compactPropertyLayout, isolatedIds), [nodes, edges, edgeMode, compactPropertyLayout, isolatedIds]);
+  const visibleEdges = useMemo(
+    () =>
+      edges.filter(
+        (edge) =>
+          isEdgeVisible(edge, edgeMode) &&
+          (!isolatedIds ||
+            (isolatedIds.has(edge.source) && isolatedIds.has(edge.target))),
+      ),
+    [edges, edgeMode, isolatedIds],
+  );
+  const layoutGraph = useMemo(
+    () =>
+      visibleLayoutGraph(
+        nodes,
+        edges,
+        edgeMode,
+        compactPropertyLayout,
+        isolatedIds,
+      ),
+    [nodes, edges, edgeMode, compactPropertyLayout, isolatedIds],
+  );
   const layoutGraphRef = useRef(layoutGraph);
   layoutGraphRef.current = layoutGraph;
   const propsRef = useRef(props);
@@ -261,7 +280,8 @@ function Canvas(props: CanvasProps) {
   const pendingFitRef = useRef(false);
   const pendingLayoutAction = useRef<(() => void) | null>(null);
   const previousSpacingFactor = useRef(spacingFactor);
-  const compactLayout = compactPropertyLayout && (edgeMode === "properties" || !!isolatedIds);
+  const compactLayout =
+    compactPropertyLayout && (edgeMode === "properties" || !!isolatedIds);
   const previousCompactLayout = useRef(compactLayout);
   const [edgesVisible, setEdgesVisible] = useState(true);
   const isolatedIdsRef = useRef<Set<string> | null>(null);
@@ -378,7 +398,8 @@ function Canvas(props: CanvasProps) {
       clearTimeout(settleTimerRef.current);
     }
     previousSpacingFactor.current = spacingFactor;
-    if (previousCompactLayout.current !== compactLayout) pendingFitRef.current = !pendingLayoutAction.current;
+    if (previousCompactLayout.current !== compactLayout)
+      pendingFitRef.current = !pendingLayoutAction.current;
     previousCompactLayout.current = compactLayout;
     scheduleLayout();
   }, [
@@ -493,13 +514,30 @@ function Canvas(props: CanvasProps) {
       const box = boxFor(node.id);
       if (box) boxes.set(node.id, box);
     }
-    return resolveConfigPortRows(propertyRows, boxes, nodeSurfaces, edges, direction);
-  }, [propertyRows, nodes, positions, containers, nodeSurfaces, edges, direction, boxFor]);
+    return resolveConfigPortRows(
+      propertyRows,
+      boxes,
+      nodeSurfaces,
+      edges,
+      direction,
+    );
+  }, [
+    propertyRows,
+    nodes,
+    positions,
+    containers,
+    nodeSurfaces,
+    edges,
+    direction,
+    boxFor,
+  ]);
   propertyRowsRef.current = resolvedPropertyRows;
 
   const propertyY = (id: string, property?: string): number | undefined => {
     if (!propertyMode || property === undefined) return undefined;
-    const row = resolvedPropertyRows.get(id)?.find((row) => row.property === property);
+    const row = resolvedPropertyRows
+      .get(id)
+      ?.find((row) => row.property === property);
     const box = boxFor(id);
     return row && !row.anchor && box
       ? box.y - box.h / 2 + row.top + row.height / 2
@@ -695,9 +733,18 @@ function Canvas(props: CanvasProps) {
         );
       }
     };
-    const isolate = (id: string, ids: Set<string>, padding?: number, animate?: boolean) => {
+    const isolate = (
+      id: string,
+      ids: Set<string>,
+      padding?: number,
+      animate?: boolean,
+    ) => {
       if (!boxFor(id)) return;
-      if (!savedViewport.current) savedViewport.current = { pan: { ...viewport.pan }, zoom: viewport.zoom };
+      if (!savedViewport.current)
+        savedViewport.current = {
+          pan: { ...viewport.pan },
+          zoom: viewport.zoom,
+        };
       isolatedIdsRef.current = ids;
       if (propsRef.current.compactPropertyLayout) {
         pendingFitRef.current = false;
@@ -710,7 +757,8 @@ function Canvas(props: CanvasProps) {
       if (pendingLayoutAction.current) pendingLayoutAction.current = action;
       else action();
     };
-    const connections = (id: string) => connectedNodeIds(id, propsRef.current.nodes, propsRef.current.edges);
+    const connections = (id: string) =>
+      connectedNodeIds(id, propsRef.current.nodes, propsRef.current.edges);
     const zoom = ((level?: number) => {
       if (level === undefined) return viewport.zoom;
       viewport.set(undefined, level);
@@ -731,17 +779,25 @@ function Canvas(props: CanvasProps) {
         updateViewport(() => focus(new Set([id]), padding, animate)),
       focusBranch: (id, padding, animate) =>
         updateViewport(() => focus(branchIds(id), padding, animate)),
-      focusConnections: (id, padding, animate) => updateViewport(() => focus(connections(id), padding, animate)),
-      isolateConnections: (id, padding, animate) => isolate(id, connections(id), padding, animate),
-      isolateBranch: (id, padding, animate) => isolate(id, branchIds(id), padding, animate),
+      focusConnections: (id, padding, animate) =>
+        updateViewport(() => focus(connections(id), padding, animate)),
+      isolateConnections: (id, padding, animate) =>
+        isolate(id, connections(id), padding, animate),
+      isolateBranch: (id, padding, animate) =>
+        isolate(id, branchIds(id), padding, animate),
       restoreView: (animate = propsRef.current.animateViewport) => {
-        const needsLayout = propsRef.current.compactPropertyLayout && !!isolatedIdsRef.current;
+        const needsLayout =
+          propsRef.current.compactPropertyLayout && !!isolatedIdsRef.current;
         isolatedIdsRef.current = null;
         setIsolatedIds(null);
         const previous = savedViewport.current;
         savedViewport.current = null;
-        if (needsLayout) pendingLayoutAction.current = () => { if (previous) viewport.transition(previous, animate); };
-        else if (previous) updateViewport(() => viewport.transition(previous, animate));
+        if (needsLayout)
+          pendingLayoutAction.current = () => {
+            if (previous) viewport.transition(previous, animate);
+          };
+        else if (previous)
+          updateViewport(() => viewport.transition(previous, animate));
       },
       zoomAt: (level, pt) => viewport.zoomAt(level, pt),
       fit: (padding = 0, animate = propsRef.current.animateViewport) => {
@@ -810,14 +866,16 @@ function Canvas(props: CanvasProps) {
     const list = propsRef.current.nodes;
     for (let i = list.length - 1; i >= 0; i--) {
       const id = list[i].id;
-      if (!isNodeVisible(id, propsRef.current.edges, propsRef.current.edgeMode)) continue;
+      if (!isNodeVisible(id, propsRef.current.edges, propsRef.current.edgeMode))
+        continue;
       if (isolatedIdsRef.current && !isolatedIdsRef.current.has(id)) continue;
       if (id === exclude || containersRef.current.has(id)) continue;
       const b = boxFor(id);
       if (b && pointInRect(model, boxToRect(b))) return id;
     }
     for (const [id, r] of containersRef.current) {
-      if (!isNodeVisible(id, propsRef.current.edges, propsRef.current.edgeMode)) continue;
+      if (!isNodeVisible(id, propsRef.current.edges, propsRef.current.edgeMode))
+        continue;
       if (isolatedIdsRef.current && !isolatedIdsRef.current.has(id)) continue;
       if (id !== exclude && pointInRect(model, r)) return id;
     }
@@ -825,13 +883,24 @@ function Canvas(props: CanvasProps) {
   };
 
   const hitTestProperty = (model: Point, role: "source" | "target") => {
-    if (propsRef.current.edgeMode === "nodes" || propsRef.current.edgeMode === "workflow") return null;
+    if (
+      propsRef.current.edgeMode === "nodes" ||
+      propsRef.current.edgeMode === "workflow"
+    )
+      return null;
     const reverse = propsRef.current.direction === "RL";
     const radius = Math.max(16, 6 / viewport.zoom);
     let closest: { nodeId: string; property: string; distance: number } | null =
       null;
     for (const node of [...propsRef.current.nodes].reverse()) {
-      if (!isNodeVisible(node.id, propsRef.current.edges, propsRef.current.edgeMode)) continue;
+      if (
+        !isNodeVisible(
+          node.id,
+          propsRef.current.edges,
+          propsRef.current.edgeMode,
+        )
+      )
+        continue;
       if (isolatedIdsRef.current && !isolatedIdsRef.current.has(node.id))
         continue;
       const box = boxFor(node.id);
@@ -865,7 +934,11 @@ function Canvas(props: CanvasProps) {
     if (e.button !== 0 || propsRef.current.readOnly) return;
     if (!gestureRef.current) suppressClickRef.current = false;
     const target = e.target as Element;
-    if (target.closest('input, textarea, select, [contenteditable="true"], [data-flow-content-toggle]'))
+    if (
+      target.closest(
+        'input, textarea, select, [contenteditable="true"], [data-flow-content-toggle]',
+      )
+    )
       return;
     const p = propsRef.current;
     const rendered = toRendered(e);
@@ -890,8 +963,7 @@ function Canvas(props: CanvasProps) {
     if (gestureRef.current) return;
     const handle = p.drawHandles && target.closest(".flow-sdk-handle");
     const port =
-      p.drawHandles &&
-      target.closest<HTMLElement>(".flow-sdk-property-port");
+      p.drawHandles && target.closest<HTMLElement>(".flow-sdk-property-port");
     if (p.drawMode || handle || port) {
       const model = viewport.renderedToModel(rendered);
       const row = p.drawMode ? hitTestProperty(model, "source") : null;
@@ -1002,19 +1074,23 @@ function Canvas(props: CanvasProps) {
       case "draw": {
         const model = viewport.renderedToModel(rendered);
         const row = hitTestProperty(model, g.reverse ? "source" : "target");
-        setGhost(g.reverse && row ? {
-          source: row.nodeId,
-          sourceProperty: row.property,
-          point: model,
-          target: g.source,
-          targetProperty: g.sourceProperty,
-        } : {
-          source: g.source,
-          sourceProperty: g.sourceProperty,
-          point: model,
-          target: row?.nodeId ?? hitTestNode(model, g.source),
-          targetProperty: row?.property,
-        });
+        setGhost(
+          g.reverse && row
+            ? {
+                source: row.nodeId,
+                sourceProperty: row.property,
+                point: model,
+                target: g.source,
+                targetProperty: g.sourceProperty,
+              }
+            : {
+                source: g.source,
+                sourceProperty: g.sourceProperty,
+                point: model,
+                target: row?.nodeId ?? hitTestNode(model, g.source),
+                targetProperty: row?.property,
+              },
+        );
         break;
       }
     }
@@ -1236,7 +1312,9 @@ function Canvas(props: CanvasProps) {
                   labelLayer={labelLayer}
                   style={containerStyle(id)}
                   onSelect={onContainerSelect}
-                  onCollapse={props.readOnly ? undefined : props.onContainerCollapse}
+                  onCollapse={
+                    props.readOnly ? undefined : props.onContainerCollapse
+                  }
                   selected={props.selectedNodeIds?.includes(id)}
                 />
               ))}
@@ -1287,44 +1365,48 @@ function Canvas(props: CanvasProps) {
                 );
               })}
           </g>
-          {edgesVisible && ghost && isEdgeVisible(ghost, edgeMode) && ghostSource && ghostTarget && (
-            <g className="flow-sdk-ghost" pointerEvents="none">
-              <EdgeView
-                id="__flow-sdk-ghost"
-                edgeData={{
-                  id: "__flow-sdk-ghost",
-                  source: ghost.source,
-                  target: ghost.target ?? "",
-                  sourceProperty: ghost.sourceProperty,
-                  targetProperty: ghost.targetProperty,
-                }}
-                edgeType={props.edgeType}
-                edgeRadius={props.edgeRadius}
-                propertyMode={propertyMode}
-                customEdgeTypes={props.customEdgeTypes}
-                source={ghostSource}
-                target={ghostTarget}
-                sourceProperty={ghost.sourceProperty}
-                targetProperty={ghost.targetProperty}
-                sourceY={propertyY(ghost.source, ghost.sourceProperty)}
-                sourcePort={portFor(ghost.source, ghost.sourceProperty)}
-                targetPort={
-                  ghost.target
-                    ? portFor(ghost.target, ghost.targetProperty)
-                    : undefined
-                }
-                targetY={
-                  ghost.target
-                    ? propertyY(ghost.target, ghost.targetProperty)
-                    : undefined
-                }
-                dir={taxiDir}
-                turn={0.5}
-                color={lineColor}
-                labelBg={lineColor}
-              />
-            </g>
-          )}
+          {edgesVisible &&
+            ghost &&
+            isEdgeVisible(ghost, edgeMode) &&
+            ghostSource &&
+            ghostTarget && (
+              <g className="flow-sdk-ghost" pointerEvents="none">
+                <EdgeView
+                  id="__flow-sdk-ghost"
+                  edgeData={{
+                    id: "__flow-sdk-ghost",
+                    source: ghost.source,
+                    target: ghost.target ?? "",
+                    sourceProperty: ghost.sourceProperty,
+                    targetProperty: ghost.targetProperty,
+                  }}
+                  edgeType={props.edgeType}
+                  edgeRadius={props.edgeRadius}
+                  propertyMode={propertyMode}
+                  customEdgeTypes={props.customEdgeTypes}
+                  source={ghostSource}
+                  target={ghostTarget}
+                  sourceProperty={ghost.sourceProperty}
+                  targetProperty={ghost.targetProperty}
+                  sourceY={propertyY(ghost.source, ghost.sourceProperty)}
+                  sourcePort={portFor(ghost.source, ghost.sourceProperty)}
+                  targetPort={
+                    ghost.target
+                      ? portFor(ghost.target, ghost.targetProperty)
+                      : undefined
+                  }
+                  targetY={
+                    ghost.target
+                      ? propertyY(ghost.target, ghost.targetProperty)
+                      : undefined
+                  }
+                  dir={taxiDir}
+                  turn={0.5}
+                  color={lineColor}
+                  labelBg={lineColor}
+                />
+              </g>
+            )}
         </g>
       </svg>
       <div ref={nodesLayerRef} className="flow-sdk-nodes">
@@ -1340,14 +1422,27 @@ function Canvas(props: CanvasProps) {
               x={x}
               y={y}
               placed={!!p || !!c}
-              hidden={!isNodeVisible(n.id, edges, edgeMode) || (!!isolatedIds && !isolatedIds.has(n.id))}
+              hidden={
+                !isNodeVisible(n.id, edges, edgeMode) ||
+                (!!isolatedIds && !isolatedIds.has(n.id))
+              }
               onMount={onHostMount}
               drawHandles={props.drawHandles && !props.readOnly}
               drawMode={drawMode}
-              connectedPorts={new Set(visibleEdges.flatMap(edge => [
-                ...(edge.source === n.id && edge.sourceProperty !== undefined ? [`source:${edge.sourceProperty}`] : []),
-                ...(edge.target === n.id && edge.targetProperty !== undefined ? [`target:${edge.targetProperty}`] : []),
-              ]))}
+              connectedPorts={
+                new Set(
+                  visibleEdges.flatMap((edge) => [
+                    ...(edge.source === n.id &&
+                    edge.sourceProperty !== undefined
+                      ? [`source:${edge.sourceProperty}`]
+                      : []),
+                    ...(edge.target === n.id &&
+                    edge.targetProperty !== undefined
+                      ? [`target:${edge.targetProperty}`]
+                      : []),
+                  ]),
+                )
+              }
               hasCollapseControl={n.hasCollapseControl}
               handleColor={lineColor}
               animated={n.animated && !c && !isPerformanceMode}

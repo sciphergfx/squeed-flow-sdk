@@ -205,7 +205,7 @@ export interface FlowDiagramConfig {
   nodeAlignment?: NodeAlignment;
   edgeMode?: EdgeMode;
   compactPropertyLayout?: boolean;
-    nodeViewModes?: Record<string, NodeViewMode>;
+  nodeViewModes?: Record<string, NodeViewMode>;
   workflowContract?: import("../core/workflowContract").WorkflowContract;
   /** Layout algorithm */
   layout?: LayoutAlgorithm;
@@ -288,7 +288,11 @@ export interface FlowDiagramCallbacks {
   onBackgroundVariantChange?: (variant: BackgroundVariant) => void;
   // ── Node events ──
   /** Fires when a node is clicked/selected */
-  onNodeSelect?: (nodeId: string, nodeData: any, modifiers?: NodeSelectionModifiers) => void;
+  onNodeSelect?: (
+    nodeId: string,
+    nodeData: any,
+    modifiers?: NodeSelectionModifiers,
+  ) => void;
   onBackgroundClick?: () => void;
   /** Fires when selection is cleared */
   onNodeDeselect?: () => void;

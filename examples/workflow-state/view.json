@@ -8,7 +8,12 @@
                               "$state": "root.trigger.event"
                     },
                     "$connections": [
-                              { "id": "trigger-assistant", "target": "root.assistant", "sourceProperty": "output:output", "targetProperty": "input:input" }
+                              {
+                                        "id": "trigger-assistant",
+                                        "target": "root.assistant",
+                                        "sourceProperty": "output:output",
+                                        "targetProperty": "input:input"
+                              }
                     ]
           },
           "assistant": {
@@ -18,32 +23,57 @@
                     "$icon": "PiRobot",
                     "$bgColor": "gray.700",
                     "$connections": [
-                              { "id": "assistant-decision", "target": "root.decision", "sourceProperty": "output:output", "targetProperty": "input:input" }
+                              {
+                                        "id": "assistant-decision",
+                                        "target": "root.decision",
+                                        "sourceProperty": "output:output",
+                                        "targetProperty": "input:input"
+                              }
                     ]
           },
           "model": {
                     "$view": "icon-label",
-                    "$label": { "$state": "root.models.example-model.name" },
+                    "$label": {
+                              "$state": "root.models.example-model.name"
+                    },
                     "$icon": "PiBrain",
                     "$bgColor": "blue.700",
                     "$borderRadius": 100,
                     "$connections": [
-                              { "id": "model-assistant", "target": "root.assistant", "sourceProperty": "output:resource", "targetProperty": "config:model", "label": "Model", "style": "dashed" }
+                              {
+                                        "id": "model-assistant",
+                                        "target": "root.assistant",
+                                        "sourceProperty": "output:resource",
+                                        "targetProperty": "config:model",
+                                        "label": "Model",
+                                        "style": "dashed"
+                              }
                     ]
           },
           "knowledgeMemory": {
                     "$view": "icon-label",
-                    "$label": { "$state": "root.memorySources.knowledge_entry.name" },
+                    "$label": {
+                              "$state": "root.memorySources.knowledge_entry.name"
+                    },
                     "$icon": "PiDatabase",
                     "$bgColor": "teal.700",
                     "$borderRadius": 100,
                     "$connections": [
-                              { "id": "memory-assistant", "target": "root.assistant", "sourceProperty": "output:resource", "targetProperty": "config:memory", "label": "Memory", "style": "dashed" }
+                              {
+                                        "id": "memory-assistant",
+                                        "target": "root.assistant",
+                                        "sourceProperty": "output:resource",
+                                        "targetProperty": "config:memory",
+                                        "label": "Memory",
+                                        "style": "dashed"
+                              }
                     ]
           },
           "supportMemory": {
                     "$view": "icon-label",
-                    "$label": { "$state": "root.memorySources.support_qa.name" },
+                    "$label": {
+                              "$state": "root.memorySources.support_qa.name"
+                    },
                     "$icon": "PiDatabase",
                     "$bgColor": "teal.700",
                     "$borderRadius": 100
@@ -57,7 +87,14 @@
                     "$bgColor": "teal.700",
                     "$borderRadius": 100,
                     "$connections": [
-                              { "id": "directory-assistant", "target": "root.assistant", "sourceProperty": "output:resource", "targetProperty": "config:tools", "label": "Directory Tool", "style": "dashed" }
+                              {
+                                        "id": "directory-assistant",
+                                        "target": "root.assistant",
+                                        "sourceProperty": "output:resource",
+                                        "targetProperty": "config:tools",
+                                        "label": "Directory Tool",
+                                        "style": "dashed"
+                              }
                     ]
           },
           "issueTool": {
@@ -69,7 +106,14 @@
                     "$bgColor": "blue.700",
                     "$borderRadius": 100,
                     "$connections": [
-                              { "id": "issues-assistant", "target": "root.assistant", "sourceProperty": "output:resource", "targetProperty": "config:tools", "label": "Issue Tool", "style": "dashed" }
+                              {
+                                        "id": "issues-assistant",
+                                        "target": "root.assistant",
+                                        "sourceProperty": "output:resource",
+                                        "targetProperty": "config:tools",
+                                        "label": "Issue Tool",
+                                        "style": "dashed"
+                              }
                     ]
           },
           "prompt": {
@@ -81,7 +125,14 @@
                     },
                     "$bgColor": "gray.700",
                     "$connections": [
-                              { "id": "prompt-assistant", "target": "root.assistant", "sourceProperty": "output:resource", "targetProperty": "config:promptId", "label": "Prompt", "style": "dashed" }
+                              {
+                                        "id": "prompt-assistant",
+                                        "target": "root.assistant",
+                                        "sourceProperty": "output:resource",
+                                        "targetProperty": "config:promptId",
+                                        "label": "Prompt",
+                                        "style": "dashed"
+                              }
                     ]
           },
           "instructions": {
@@ -93,7 +144,14 @@
                     },
                     "$bgColor": "gray.700",
                     "$connections": [
-                              { "id": "instructions-assistant", "target": "root.assistant", "sourceProperty": "output:resource", "targetProperty": "config:instructionIds", "label": "Instructions", "style": "dashed" }
+                              {
+                                        "id": "instructions-assistant",
+                                        "target": "root.assistant",
+                                        "sourceProperty": "output:resource",
+                                        "targetProperty": "config:instructionIds",
+                                        "label": "Instructions",
+                                        "style": "dashed"
+                              }
                     ]
           },
           "decision": {

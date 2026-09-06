@@ -35,6 +35,7 @@ for (const width of [1440, 390]) {
     await page.mouse.click(8, 475);
     await expect(nodes).toHaveCount(4);
     await expect(page.locator(".flow-sdk-edge")).toHaveCount(3);
+    await expect.poll(() => page.locator(".flow-sdk-nodes").getAttribute("style")).toBe(before);
     await expect(toggle).toHaveAttribute("aria-pressed", "false");
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-pressed", "true");
@@ -45,6 +46,7 @@ for (const width of [1440, 390]) {
     await expect(toggle).toHaveAttribute("aria-pressed", "false");
     await expect(nodes).toHaveCount(4);
     await expect(page.locator(".flow-sdk-edge")).toHaveCount(3);
+    await expect.poll(() => page.locator(".flow-sdk-nodes").getAttribute("style")).toBe(before);
     await page.screenshot({ path: test.info().outputPath("focus-toolbar.png") });
     expect(errors).toEqual([]);
   });

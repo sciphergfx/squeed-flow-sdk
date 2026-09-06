@@ -68,7 +68,8 @@ test("separate workflow example compiles and loads its bound interfaces", async 
   for (const target of ["root.model", "root.knowledgeMemory"])
     assert.ok(
       compiled.edges.some(
-        (edge) => edge.data.source === "root.assistant" && edge.data.target === target,
+        (edge) =>
+          edge.data.source === "root.assistant" && edge.data.target === target,
       ),
     );
   shared.models["example-model"].name = "Shared Model";
@@ -127,13 +128,21 @@ test("separate workflow example compiles and loads its bound interfaces", async 
 });
 
 test("deleting resource attachments clears only the matching step reference", () => {
-  const state = JSON.parse(readFileSync("examples/workflow-state/state.json", "utf8"));
-  const view = JSON.parse(readFileSync("examples/workflow-state/view.json", "utf8"));
+  const state = JSON.parse(
+    readFileSync("examples/workflow-state/state.json", "utf8"),
+  );
+  const view = JSON.parse(
+    readFileSync("examples/workflow-state/view.json", "utf8"),
+  );
   state.steps[1].config.tools = ["directory_lookup"];
   const original = JSON.stringify(state);
   const projected = projectWorkflowStateView(view, state);
   const graph = compileSqueed(resolveStateView(projected, state));
-  const attachments = graph.edges.filter(edge => edge.data.source === "root.assistant" && edge.data.sourceProperty?.startsWith("resource:"));
+  const attachments = graph.edges.filter(
+    (edge) =>
+      edge.data.source === "root.assistant" &&
+      edge.data.sourceProperty?.startsWith("resource:"),
+  );
   assert.equal(attachments.length, 6);
   for (const { data } of attachments) {
     const next = removeWorkflowResourceReference(state, data);
@@ -142,27 +151,64 @@ test("deleting resource attachments clears only the matching step reference", ()
     for (const collection of ["tools", "texts", "models", "memorySources"])
       assert.equal(next[collection], state[collection]);
     assert.equal(next.steps[1], state.steps[1]);
-    const reprojected = compileSqueed(resolveStateView(projectWorkflowStateView(projected, next), next));
-    assert.equal(reprojected.edges.some(edge => edge.data.source === data.source && edge.data.sourceProperty === data.sourceProperty), false);
-    assert.ok(reprojected.nodes.some(node => node.data.id === data.target));
-    assert.equal(reprojected.edges.filter(edge => edge.data.source === "root.assistant" && edge.data.sourceProperty?.startsWith("resource:")).length, 5);
+    const reprojected = compileSqueed(
+      resolveStateView(projectWorkflowStateView(projected, next), next),
+    );
+    assert.equal(
+      reprojected.edges.some(
+        (edge) =>
+          edge.data.source === data.source &&
+          edge.data.sourceProperty === data.sourceProperty,
+      ),
+      false,
+    );
+    assert.ok(reprojected.nodes.some((node) => node.data.id === data.target));
+    assert.equal(
+      reprojected.edges.filter(
+        (edge) =>
+          edge.data.source === "root.assistant" &&
+          edge.data.sourceProperty?.startsWith("resource:"),
+      ).length,
+      5,
+    );
     assert.equal(removeWorkflowResourceReference(next, data), next);
   }
-  assert.equal(removeWorkflowResourceReference(state, { source: "root.assistant", target: "root.prompt" }), state);
-  assert.equal(removeWorkflowResourceReference(state, { source: "root.assistant", target: "root.issueTool", sourceProperty: "resource:tools:directory_lookup" }), state);
+  assert.equal(
+    removeWorkflowResourceReference(state, {
+      source: "root.assistant",
+      target: "root.prompt",
+    }),
+    state,
+  );
+  assert.equal(
+    removeWorkflowResourceReference(state, {
+      source: "root.assistant",
+      target: "root.issueTool",
+      sourceProperty: "resource:tools:directory_lookup",
+    }),
+    state,
+  );
 });
 
 test("legacy generated resource ports follow flow direction without changing references", () => {
-  const state = JSON.parse(readFileSync("examples/workflow-state/state.json", "utf8"));
-  const view = JSON.parse(readFileSync("examples/workflow-state/view.json", "utf8"));
+  const state = JSON.parse(
+    readFileSync("examples/workflow-state/state.json", "utf8"),
+  );
+  const view = JSON.parse(
+    readFileSync("examples/workflow-state/view.json", "utf8"),
+  );
   const original = JSON.stringify(state);
   let current = view;
   for (const [direction, sourceSide, targetSide] of [
-    ["LR", "right", "left"], ["RL", "left", "right"],
-    ["TB", "bottom", "top"], ["BT", "top", "bottom"], ["C", "right", "left"],
+    ["LR", "right", "left"],
+    ["RL", "left", "right"],
+    ["TB", "bottom", "top"],
+    ["BT", "top", "bottom"],
+    ["C", "right", "left"],
   ] as const) {
     current = projectWorkflowStateView(current, state, direction);
-    for (const port of current.assistant.$ports) assert.equal(port.side, sourceSide);
+    for (const port of current.assistant.$ports)
+      assert.equal(port.side, sourceSide);
     for (const connection of current.assistant.$connections) {
       if (!connection.id?.startsWith("resource:")) continue;
       const target = connection.target.slice("root.".length);

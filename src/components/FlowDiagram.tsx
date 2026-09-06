@@ -43,12 +43,20 @@ export function FlowDiagram({
   ...props
 }: FlowDiagramProps) {
   const [prepared, setPrepared] = useState<FlowDiagramProps | null>(null);
-  const colorOnly = useMemo(() => !!prepared?.json && !!props.json && isColorOnlyUpdate(prepared.json, props.json), [prepared?.json, props.json]);
-  const pending = prepared === null || (prepared.json !== props.json && !colorOnly);
+  const colorOnly = useMemo(
+    () =>
+      !!prepared?.json &&
+      !!props.json &&
+      isColorOnlyUpdate(prepared.json, props.json),
+    [prepared?.json, props.json],
+  );
+  const pending =
+    prepared === null || (prepared.json !== props.json && !colorOnly);
   const busy = loading || pending;
 
   useEffect(() => {
-    if (!loading && colorOnly && prepared?.json !== props.json) setPrepared(props);
+    if (!loading && colorOnly && prepared?.json !== props.json)
+      setPrepared(props);
   }, [loading, colorOnly, prepared?.json, props.json]);
 
   useEffect(() => {

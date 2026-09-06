@@ -349,7 +349,13 @@ export function removeEdge(
   const { address, kind } = resolveEdgeOwner(edge);
   if (kind === "hierarchy") {
     if (getNode(json, address) === undefined) return { json, removed: false };
-    return { json: updateNode(json, address, node => ({ ...node, $hideParentEdge: true })), removed: true };
+    return {
+      json: updateNode(json, address, (node) => ({
+        ...node,
+        $hideParentEdge: true,
+      })),
+      removed: true,
+    };
   }
   if (kind !== "target") return { json, removed: false };
   const next = updateNode(json, address, (n) => {
@@ -519,15 +525,19 @@ export function compileSqueed(
     return { data };
   });
   if (!Array.isArray(json) && json?.$hideRoot === true) {
-    const rootIndex = outNodes.findIndex(node => node.data.id === ROOT);
+    const rootIndex = outNodes.findIndex((node) => node.data.id === ROOT);
     if (rootIndex !== -1) outNodes.splice(rootIndex, 1);
   }
   const nodeIds = new Set(outNodes.map((node) => node.data.id));
   for (let index = outEdges.length - 1; index >= 0; index--) {
     const data = outEdges[index].data;
     const owner = resolveEdgeOwner(data);
-    if (!nodeIds.has(data.source) || !nodeIds.has(data.target) ||
-      (owner.kind === "hierarchy" && getNode(json, owner.address)?.$hideParentEdge === true))
+    if (
+      !nodeIds.has(data.source) ||
+      !nodeIds.has(data.target) ||
+      (owner.kind === "hierarchy" &&
+        getNode(json, owner.address)?.$hideParentEdge === true)
+    )
       outEdges.splice(index, 1);
   }
   outEdges.push(
@@ -538,7 +548,8 @@ export function compileSqueed(
   const collapsedPaths = outNodes
     .filter((node) => node.data.config?.collapsed)
     .map((node) => addressToPath(node.data.id));
-  if (!collapsedPaths.length) return applyParentGroups(json, { nodes: outNodes, edges: outEdges });
+  if (!collapsedPaths.length)
+    return applyParentGroups(json, { nodes: outNodes, edges: outEdges });
   const visibleNodes = outNodes.filter((node) => {
     const path = addressToPath(node.data.id);
     return !collapsedPaths.some(

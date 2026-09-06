@@ -5,7 +5,12 @@ const hoverPulse = keyframes`
   25%, 50% { box-shadow: var(--flow-hover-shadow); }
 `;
 
-export function getInteractionShadow(color: string, active = true, hoverSelector = "&:hover", animate = true) {
+export function getInteractionShadow(
+  color: string,
+  active = true,
+  hoverSelector = "&:hover",
+  animate = true,
+) {
   const tint = `color-mix(in srgb, ${color} 60%, transparent)`;
   const spread = active ? 8 : 0;
   const shadow = `0 0 0 ${spread}px ${tint}`;
@@ -19,7 +24,9 @@ export function getInteractionShadow(color: string, active = true, hoverSelector
         [hoverSelector]: {
           boxShadow: hoverShadow,
           "@media (prefers-reduced-motion: no-preference)": {
-            animation: animate ? `${hoverPulse} 1200ms steps(10, end) 600ms` : "none",
+            animation: animate
+              ? `${hoverPulse} 1200ms steps(10, end) 600ms`
+              : "none",
           },
         },
       },

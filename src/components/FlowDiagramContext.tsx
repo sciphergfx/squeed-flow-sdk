@@ -6,7 +6,7 @@ import type {
   FlowDiagramEdge,
   FlowDiagramNode,
   NodeAlignment,
-    NodeViewMode,
+  NodeViewMode,
   EdgeMode,
   ParentNodeStyle,
   NodeSpacing,
@@ -14,8 +14,8 @@ import type {
 } from "../types";
 
 export interface FlowDiagramContextValue {
-    nodeViewModes: Record<string, NodeViewMode>;
-    setNodeViewMode: (nodeId: string, mode: NodeViewMode) => void;
+  nodeViewModes: Record<string, NodeViewMode>;
+  setNodeViewMode: (nodeId: string, mode: NodeViewMode) => void;
   spacing: number;
   edgeRadius: number | undefined;
   setEdgeRadius: (radius: number) => void;
@@ -119,8 +119,10 @@ export function FlowDiagramProvider({
   const [isPinned, setIsPinned] = useState(true);
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
   const [localEdgeMode, setEdgeMode] = useState<EdgeMode>("auto");
-    const [localNodeViewModes, setLocalNodeViewModes] = useState<Record<string, NodeViewMode>>({});
-    const nodeViewModes = config.nodeViewModes ?? localNodeViewModes;
+  const [localNodeViewModes, setLocalNodeViewModes] = useState<
+    Record<string, NodeViewMode>
+  >({});
+  const nodeViewModes = config.nodeViewModes ?? localNodeViewModes;
   const [localSpacing, setSpacing] = useState<NodeSpacing>("normal");
   const [localEdgeRadius, setEdgeRadius] = useState<number>();
   const requestedEdgeRadius = config.edgeRadius ?? localEdgeRadius;
@@ -352,8 +354,11 @@ export function FlowDiagramProvider({
     () => ({
       nodeViewModes,
       setNodeViewMode: (nodeId, mode) => {
-        if (mode !== "default" && mode !== "properties") throw new Error("Unknown node view mode.");
-        setLocalNodeViewModes(current => current[nodeId] === mode ? current : { ...current, [nodeId]: mode });
+        if (mode !== "default" && mode !== "properties")
+          throw new Error("Unknown node view mode.");
+        setLocalNodeViewModes((current) =>
+          current[nodeId] === mode ? current : { ...current, [nodeId]: mode },
+        );
         callbacks.onNodeViewModeChange?.(nodeId, mode);
       },
       spacing,

@@ -3,7 +3,10 @@ interface CastWorkflow {
   name: string;
   description?: string;
   trigger: "manual" | "event" | "schedule" | "webhook";
-  onError?: { notify?: boolean; retry?: { maxAttempts?: number; delayMs?: number } };
+  onError?: {
+    notify?: boolean;
+    retry?: { maxAttempts?: number; delayMs?: number };
+  };
 }
 
 /**

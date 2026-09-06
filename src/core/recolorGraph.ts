@@ -12,9 +12,23 @@ function colorChanges(previous: SqueedJson, next: SqueedJson) {
   const changed = new Map<string, Record<string, string>>();
   const equal = (before: any, after: any): boolean => {
     if (Object.is(before, after)) return true;
-    if (!before || !after || typeof before !== "object" || typeof after !== "object" || Array.isArray(before) !== Array.isArray(after)) return false;
+    if (
+      !before ||
+      !after ||
+      typeof before !== "object" ||
+      typeof after !== "object" ||
+      Array.isArray(before) !== Array.isArray(after)
+    )
+      return false;
     const keys = Object.keys(before);
-    return keys.length === Object.keys(after).length && keys.every(key => Object.prototype.hasOwnProperty.call(after, key) && equal(before[key], after[key]));
+    return (
+      keys.length === Object.keys(after).length &&
+      keys.every(
+        (key) =>
+          Object.prototype.hasOwnProperty.call(after, key) &&
+          equal(before[key], after[key]),
+      )
+    );
   };
   const compare = (before: any, after: any, address: string): boolean => {
     if (before === after) return true;
@@ -51,7 +65,10 @@ function colorChanges(previous: SqueedJson, next: SqueedJson) {
   return changed;
 }
 
-export function isColorOnlyUpdate(previous: SqueedJson, next: SqueedJson): boolean {
+export function isColorOnlyUpdate(
+  previous: SqueedJson,
+  next: SqueedJson,
+): boolean {
   return colorChanges(previous, next) !== undefined;
 }
 

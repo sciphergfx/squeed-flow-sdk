@@ -568,55 +568,59 @@ const BottomBar = () => {
                       </>
                     )}
 
-                    {config.bottomBarExtra && <>
-                      <Icon
-                        mx={-1}
-                        as={PiLineVerticalThin}
-                        boxSize={5}
-                        color={border}
-                        role="separator"
-                        aria-orientation="vertical"
-                      />
-                      {config.bottomBarExtra}
-                    </>}
+                    {config.bottomBarExtra && (
+                      <>
+                        <Icon
+                          mx={-1}
+                          as={PiLineVerticalThin}
+                          boxSize={5}
+                          color={border}
+                          role="separator"
+                          aria-orientation="vertical"
+                        />
+                        {config.bottomBarExtra}
+                      </>
+                    )}
 
-                    {edgeMode !== "properties" && <>
-                    <Icon
-                      mx={-1}
-                      as={PiLineVerticalThin}
-                      boxSize={5}
-                      color={border}
-                    />
+                    {edgeMode !== "properties" && (
+                      <>
+                        <Icon
+                          mx={-1}
+                          as={PiLineVerticalThin}
+                          boxSize={5}
+                          color={border}
+                        />
 
-                    {/* Set / Array node mode */}
-                    <ToolbarTooltip
-                      label={
-                        isArrayNodeMode ? "Array Mode [ ]" : "Set Mode { }"
-                      }
-                    >
-                      <ToolbarIconButton
-                        aria-label="Toggle array mode"
-                        icon={
-                          <Icon
-                            as={
-                              isArrayNodeMode
-                                ? PiBracketsSquare
-                                : PiBracketsCurly
+                        {/* Set / Array node mode */}
+                        <ToolbarTooltip
+                          label={
+                            isArrayNodeMode ? "Array Mode [ ]" : "Set Mode { }"
+                          }
+                        >
+                          <ToolbarIconButton
+                            aria-label="Toggle array mode"
+                            icon={
+                              <Icon
+                                as={
+                                  isArrayNodeMode
+                                    ? PiBracketsSquare
+                                    : PiBracketsCurly
+                                }
+                                boxSize={5}
+                              />
                             }
-                            boxSize={5}
+                            size="sm"
+                            variant="ghost"
+                            color={isArrayNodeMode ? themeColor : colorInactive}
+                            onClick={() => {
+                              const next = !isArrayNodeMode;
+                              setIsArrayNodeMode(next);
+                              callbacks.onArrayModeChange?.(next);
+                            }}
                           />
-                        }
-                        size="sm"
-                        variant="ghost"
-                        color={isArrayNodeMode ? themeColor : colorInactive}
-                        onClick={() => {
-                          const next = !isArrayNodeMode;
-                          setIsArrayNodeMode(next);
-                          callbacks.onArrayModeChange?.(next);
-                        }}
-                      />
-                    </ToolbarTooltip>
-                    </>}
+                        </ToolbarTooltip>
+                      </>
+                    )}
                     {backgroundSelected && !readOnly && (
                       <>
                         <Icon
@@ -681,7 +685,9 @@ const BottomBar = () => {
                 borderColor={isDark ? border : "gray.300"}
                 borderRadius="30px"
                 h={50}
-                {...getInteractionShadow(`var(--chakra-colors-${background.replace(".", "-")})`)}
+                {...getInteractionShadow(
+                  `var(--chakra-colors-${background.replace(".", "-")})`,
+                )}
                 px={3}
                 cursor="pointer"
                 onClick={() => setShowDirectionMenu(!showDirectionMenu)}

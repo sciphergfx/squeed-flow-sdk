@@ -156,7 +156,9 @@ function Field({
   const { background } = useCustomColors();
   const id = useId();
   const structured =
-    property.type.kind === "object" || property.type.kind === "array" || property.type.kind === "json";
+    property.type.kind === "object" ||
+    property.type.kind === "array" ||
+    property.type.kind === "json";
   const formatted =
     value === undefined
       ? ""

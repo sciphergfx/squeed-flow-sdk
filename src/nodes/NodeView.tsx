@@ -67,41 +67,49 @@ const NodeView = ({
     }
   })();
 
-  const handleClick = useCallback((event: React.MouseEvent) => {
-    if (isEditing || config.readOnly) return;
-    const modifiers = { shiftKey: event.shiftKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey, altKey: event.altKey };
-    // one selection toolbar at a time
-    if (selectedEdgeId) {
-      setSelectedEdgeId(null);
-      callbacks.onEdgeDeselect?.();
-    }
-    if (isMultiSelectMode) {
-      const isAlreadySelected = selectedNodeIds.includes(id);
-      const newIds = isAlreadySelected
-        ? selectedNodeIds.filter((nid) => nid !== id)
-        : [...selectedNodeIds, id];
-      setSelectedNodeIds(newIds);
-      if (isAlreadySelected) {
-        callbacks.onNodeDeselect?.();
+  const handleClick = useCallback(
+    (event: React.MouseEvent) => {
+      if (isEditing || config.readOnly) return;
+      const modifiers = {
+        shiftKey: event.shiftKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        altKey: event.altKey,
+      };
+      // one selection toolbar at a time
+      if (selectedEdgeId) {
+        setSelectedEdgeId(null);
+        callbacks.onEdgeDeselect?.();
+      }
+      if (isMultiSelectMode) {
+        const isAlreadySelected = selectedNodeIds.includes(id);
+        const newIds = isAlreadySelected
+          ? selectedNodeIds.filter((nid) => nid !== id)
+          : [...selectedNodeIds, id];
+        setSelectedNodeIds(newIds);
+        if (isAlreadySelected) {
+          callbacks.onNodeDeselect?.();
+        } else {
+          callbacks.onNodeSelect?.(id, nodeData, modifiers);
+        }
       } else {
+        setSelectedNodeIds([id]);
         callbacks.onNodeSelect?.(id, nodeData, modifiers);
       }
-    } else {
-      setSelectedNodeIds([id]);
-      callbacks.onNodeSelect?.(id, nodeData, modifiers);
-    }
-  }, [
-    id,
-    nodeData,
-    selectedNodeIds,
-    selectedEdgeId,
-    isMultiSelectMode,
-    isEditing,
-    setSelectedNodeIds,
-    setSelectedEdgeId,
-    callbacks,
-    config,
-  ]);
+    },
+    [
+      id,
+      nodeData,
+      selectedNodeIds,
+      selectedEdgeId,
+      isMultiSelectMode,
+      isEditing,
+      setSelectedNodeIds,
+      setSelectedEdgeId,
+      callbacks,
+      config,
+    ],
+  );
 
   const handleDoubleClick = useCallback(() => {
     if (isEditing || config.readOnly) return;

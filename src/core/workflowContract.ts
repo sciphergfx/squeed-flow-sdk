@@ -6,7 +6,12 @@ export type ContractType =
   | { kind: "literal"; value: string | number | boolean | null }
   | { kind: "union"; types: ContractType[] }
   | { kind: "array"; items: ContractType }
-  | { kind: "object"; properties: Record<string, ContractProperty>; additionalProperties?: ContractType; ports?: Record<string, ContractPort> };
+  | {
+      kind: "object";
+      properties: Record<string, ContractProperty>;
+      additionalProperties?: ContractType;
+      ports?: Record<string, ContractPort>;
+    };
 export interface ContractPort {
   kind: "input" | "config" | "output" | "error";
   resourceType?: string;
@@ -269,45 +274,76 @@ export async function parseTypeScriptForm(
     trail: string[],
   ): ContractType => {
     const ports: Record<string, ContractPort> = {};
-    const index = members.find(member => ts.isIndexSignatureDeclaration(member));
+    const index = members.find((member) =>
+      ts.isIndexSignatureDeclaration(member),
+    );
     let additionalProperties: ContractType | undefined;
     if (index && options.allowJson && ts.isIndexSignatureDeclaration(index)) {
-      if (members.filter(member => ts.isIndexSignatureDeclaration(member)).length !== 1 ||
-        index.parameters.length !== 1 || index.parameters[0].type?.kind !== ts.SyntaxKind.StringKeyword || !index.type)
-        throw new Error("Only one string-keyed index signature is supported for forms.");
+      if (
+        members.filter((member) => ts.isIndexSignatureDeclaration(member))
+          .length !== 1 ||
+        index.parameters.length !== 1 ||
+        index.parameters[0].type?.kind !== ts.SyntaxKind.StringKeyword ||
+        !index.type
+      )
+        throw new Error(
+          "Only one string-keyed index signature is supported for forms.",
+        );
       additionalProperties = parse(index.type, trail);
     }
     const properties = Object.fromEntries(
-      members.filter(member => member !== index || !additionalProperties).map((member) => {
-        if (
-          !ts.isPropertySignature(member) ||
-          !member.type ||
-          !member.name ||
-          (!ts.isIdentifier(member.name) && !ts.isStringLiteral(member.name))
-        )
-          throw new Error(
-            "Only explicitly typed named properties are supported.",
-          );
-        const type = parse(member.type, trail);
-        const tags = options.allowJson ? ts.getJSDocTags(member).filter(tag => tag.tagName.text === "port") : [];
-        if (tags.length > 1) throw new Error(`Duplicate port declaration: ${member.name.text}`);
-        if (tags.length) {
-          const [kind, resourceType, extra] = String(tags[0].comment ?? "").trim().split(/\s+/);
-          if (kind !== "config" || !resourceType || extra || !declarations.has(resourceType))
-            throw new Error(`Config port ${member.name.text} requires @port config ResourceType`);
-          const multiple = type.kind === "array";
-          if ((type.kind === "array" ? type.items.kind : type.kind) !== "string")
-            throw new Error(`Config port ${member.name.text} must be a string or string array reference`);
-          ports[member.name.text] = { kind: "config", resourceType, multiple };
-        }
-        return [
-          member.name.text,
-          { type, optional: !!member.questionToken },
-        ];
-      }),
+      members
+        .filter((member) => member !== index || !additionalProperties)
+        .map((member) => {
+          if (
+            !ts.isPropertySignature(member) ||
+            !member.type ||
+            !member.name ||
+            (!ts.isIdentifier(member.name) && !ts.isStringLiteral(member.name))
+          )
+            throw new Error(
+              "Only explicitly typed named properties are supported.",
+            );
+          const type = parse(member.type, trail);
+          const tags = options.allowJson
+            ? ts
+                .getJSDocTags(member)
+                .filter((tag) => tag.tagName.text === "port")
+            : [];
+          if (tags.length > 1)
+            throw new Error(`Duplicate port declaration: ${member.name.text}`);
+          if (tags.length) {
+            const [kind, resourceType, extra] = String(tags[0].comment ?? "")
+              .trim()
+              .split(/\s+/);
+            if (
+              kind !== "config" ||
+              !resourceType ||
+              extra ||
+              !declarations.has(resourceType)
+            )
+              throw new Error(
+                `Config port ${member.name.text} requires @port config ResourceType`,
+              );
+            const multiple = type.kind === "array";
+            if (
+              (type.kind === "array" ? type.items.kind : type.kind) !== "string"
+            )
+              throw new Error(
+                `Config port ${member.name.text} must be a string or string array reference`,
+              );
+            ports[member.name.text] = {
+              kind: "config",
+              resourceType,
+              multiple,
+            };
+          }
+          return [member.name.text, { type, optional: !!member.questionToken }];
+        }),
     );
     return {
-      kind: "object", properties,
+      kind: "object",
+      properties,
       ...(additionalProperties ? { additionalProperties } : {}),
       ...(Object.keys(ports).length ? { ports } : {}),
     };
@@ -325,15 +361,27 @@ export async function parseTypeScriptForm(
         );
       resolved = parseMembers(declaration.members, [...trail, key]);
     } else resolved = parse(declaration.type, [...trail, key]);
-    const tags = options.allowJson ? ts.getJSDocTags(declaration).filter(tag => tag.tagName.text === "port") : [];
+    const tags = options.allowJson
+      ? ts
+          .getJSDocTags(declaration)
+          .filter((tag) => tag.tagName.text === "port")
+      : [];
     if (!tags.length) return resolved;
-    if (resolved.kind !== "object") throw new Error("Node ports require an object interface");
+    if (resolved.kind !== "object")
+      throw new Error("Node ports require an object interface");
     const ports = { ...resolved.ports };
     for (const tag of tags) {
-      const [kind, portName, extra] = String(tag.comment ?? "").trim().split(/\s+/);
-      if (!["input", "output", "error"].includes(kind) || !/^[A-Za-z][\w-]*$/.test(portName ?? "") || extra)
+      const [kind, portName, extra] = String(tag.comment ?? "")
+        .trim()
+        .split(/\s+/);
+      if (
+        !["input", "output", "error"].includes(kind) ||
+        !/^[A-Za-z][\w-]*$/.test(portName ?? "") ||
+        extra
+      )
         throw new Error("Node ports require @port input|output|error Name");
-      if (Object.prototype.hasOwnProperty.call(ports, portName)) throw new Error(`Duplicate port declaration: ${portName}`);
+      if (Object.prototype.hasOwnProperty.call(ports, portName))
+        throw new Error(`Duplicate port declaration: ${portName}`);
       ports[portName] = { kind: kind as ContractPort["kind"] };
     }
     return { ...resolved, ports };
@@ -347,7 +395,12 @@ export async function parseTypeScriptForm(
     if (node.kind === ts.SyntaxKind.StringKeyword) return { kind: "string" };
     if (node.kind === ts.SyntaxKind.NumberKeyword) return { kind: "number" };
     if (node.kind === ts.SyntaxKind.BooleanKeyword) return { kind: "boolean" };
-    if (options.allowJson && [ts.SyntaxKind.AnyKeyword, ts.SyntaxKind.UnknownKeyword].includes(node.kind))
+    if (
+      options.allowJson &&
+      [ts.SyntaxKind.AnyKeyword, ts.SyntaxKind.UnknownKeyword].includes(
+        node.kind,
+      )
+    )
       return { kind: "json" };
     if (ts.isParenthesizedTypeNode(node)) return parse(node.type, trail);
     if (ts.isUnionTypeNode(node))
@@ -375,9 +428,18 @@ export async function parseTypeScriptForm(
         };
     }
     if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName)) {
-      if (options.allowJson && node.typeName.text === "Record" && !declarations.has("Record") &&
-        node.typeArguments?.length === 2 && node.typeArguments[0].kind === ts.SyntaxKind.StringKeyword)
-        return { kind: "object", properties: {}, additionalProperties: parse(node.typeArguments[1], trail) };
+      if (
+        options.allowJson &&
+        node.typeName.text === "Record" &&
+        !declarations.has("Record") &&
+        node.typeArguments?.length === 2 &&
+        node.typeArguments[0].kind === ts.SyntaxKind.StringKeyword
+      )
+        return {
+          kind: "object",
+          properties: {},
+          additionalProperties: parse(node.typeArguments[1], trail),
+        };
       if (node.typeName.text === "Array" && node.typeArguments?.length === 1)
         return { kind: "array", items: parse(node.typeArguments[0], trail) };
       if (!node.typeArguments?.length)
@@ -418,7 +480,11 @@ export function isAssignable(
   target: ContractType,
 ): boolean {
   if (source.kind === "json" || target.kind === "json") return false;
-  if ((source.kind === "object" && source.additionalProperties) || (target.kind === "object" && target.additionalProperties)) return false;
+  if (
+    (source.kind === "object" && source.additionalProperties) ||
+    (target.kind === "object" && target.additionalProperties)
+  )
+    return false;
   if (source.kind === "union")
     return source.types.every((type) => isAssignable(type, target));
   if (target.kind === "union")
@@ -477,8 +543,13 @@ export function connectionIssue(
   const target = property(edge.target, edge.targetProperty);
   if (!source || !target)
     return "Unverified: source or target property is missing from the interface.";
-  const unverified = (type: ContractType): boolean => type.kind === "json" ||
-    (type.kind === "object" && (!!type.additionalProperties || Object.values(type.properties).some(property => unverified(property.type)))) ||
+  const unverified = (type: ContractType): boolean =>
+    type.kind === "json" ||
+    (type.kind === "object" &&
+      (!!type.additionalProperties ||
+        Object.values(type.properties).some((property) =>
+          unverified(property.type),
+        ))) ||
     (type.kind === "array" && unverified(type.items)) ||
     (type.kind === "union" && type.types.some(unverified));
   if (unverified(source.type) || unverified(target.type))

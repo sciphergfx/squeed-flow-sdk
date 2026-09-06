@@ -3,10 +3,14 @@ import { ready } from "./helpers";
 
 async function checkPulse(surface: Locator, trigger = surface) {
   await trigger.hover();
-  const frames = await surface.evaluate(element => {
-    const animation = element.getAnimations().find(entry =>
-      (entry.effect as KeyframeEffect).getKeyframes().some(frame => frame.boxShadow),
-    );
+  const frames = await surface.evaluate((element) => {
+    const animation = element
+      .getAnimations()
+      .find((entry) =>
+        (entry.effect as KeyframeEffect)
+          .getKeyframes()
+          .some((frame) => frame.boxShadow),
+      );
     if (!animation) throw new Error("Missing hover shadow animation");
     animation.pause();
     const delay = animation.effect!.getTiming().delay;
@@ -15,7 +19,14 @@ async function checkPulse(surface: Locator, trigger = surface) {
       animation.currentTime = time;
       const style = getComputedStyle(element);
       const bounds = element.getBoundingClientRect();
-      return { spread: Number.parseFloat(style.boxShadow.match(/-?\d+(?:\.\d+)?px/g)!.at(-1)!), width: bounds.width, height: bounds.height, border: style.borderColor };
+      return {
+        spread: Number.parseFloat(
+          style.boxShadow.match(/-?\d+(?:\.\d+)?px/g)!.at(-1)!,
+        ),
+        width: bounds.width,
+        height: bounds.height,
+        border: style.borderColor,
+      };
     };
     const start = sample(0);
     const waiting = sample(delay - 1);
@@ -41,11 +52,19 @@ async function checkPulse(surface: Locator, trigger = surface) {
 }
 
 for (const width of [1440, 390]) {
-  test(`hover pulses and selection stays static without resizing at ${width}px`, async ({ page }) => {
+  test(`hover pulses and selection stays static without resizing at ${width}px`, async ({
+    page,
+  }) => {
     await page.setViewportSize({ width, height: 950 });
     await ready(page, "?graph=json");
-    const node = page.locator('.flow-sdk-node[data-node-id="root.alpha"] [data-flow-node-surface]').first();
-    const border = await node.evaluate(element => getComputedStyle(element).borderColor);
+    const node = page
+      .locator(
+        '.flow-sdk-node[data-node-id="root.alpha"] [data-flow-node-surface]',
+      )
+      .first();
+    const border = await node.evaluate(
+      (element) => getComputedStyle(element).borderColor,
+    );
     await checkPulse(node);
     await page.mouse.move(5, 5);
     await expect(node).toHaveCSS("box-shadow", /0px$/);
@@ -62,7 +81,9 @@ for (const width of [1440, 390]) {
     await expect(node).toHaveCSS("animation-name", "none");
     const toolbar = page.locator("[data-flow-toolbar-scroll]").locator("..");
     await checkPulse(toolbar);
-    await page.screenshot({ path: test.info().outputPath("selected-shadow.png") });
+    await page.screenshot({
+      path: test.info().outputPath("selected-shadow.png"),
+    });
     await page.mouse.click(5, 5);
     await checkPulse(page.locator("[data-flow-direction-control]"));
     await page.emulateMedia({ reducedMotion: "reduce" });
@@ -73,11 +94,17 @@ for (const width of [1440, 390]) {
     await expect(toolbar).toHaveCSS("animation-name", "none");
   });
 
-  test(`icon captions trigger the node shadow at ${width}px`, async ({ page }) => {
+  test(`icon captions trigger the node shadow at ${width}px`, async ({
+    page,
+  }) => {
     await page.setViewportSize({ width, height: 950 });
     await page.goto("/?graph=state");
-    await page.waitForFunction(() => !!window.__flowTest?.engine?.getNodeBox("root.trigger"));
-    await page.evaluate(() => window.__flowTest.engine!.focusNode("root.trigger", 70));
+    await page.waitForFunction(
+      () => !!window.__flowTest?.engine?.getNodeBox("root.trigger"),
+    );
+    await page.evaluate(() =>
+      window.__flowTest.engine!.focusNode("root.trigger", 70),
+    );
     const node = page.locator('.flow-sdk-node[data-node-id="root.trigger"]');
     const surface = node.locator("[data-flow-node-surface]");
     const caption = node.locator("[data-flow-icon-caption]");
@@ -94,7 +121,9 @@ for (const width of [1440, 390]) {
     }
   });
 
-  test(`consumer hover persists and selection stops animation at ${width}px`, async ({ page }) => {
+  test(`consumer hover persists and selection stops animation at ${width}px`, async ({
+    page,
+  }) => {
     test.skip(!process.env.SDK_TEST_URL, "Requires SDK Test consumer");
     await page.setViewportSize({ width, height: 950 });
     await page.goto(process.env.SDK_TEST_URL!);
@@ -103,11 +132,18 @@ for (const width of [1440, 390]) {
     const caption = node.locator("[data-flow-icon-caption]");
     await expect(surface).toBeVisible();
     await expect(surface).toHaveCSS("box-shadow", /0px$/);
-    const toolbar = page.locator("[data-flow-toolbar-scroll]").first().locator("..");
-    for (const [target, trigger] of [[surface, caption], [surface, caption], [toolbar, toolbar]]) {
+    const toolbar = page
+      .locator("[data-flow-toolbar-scroll]")
+      .first()
+      .locator("..");
+    for (const [target, trigger] of [
+      [surface, caption],
+      [surface, caption],
+      [toolbar, toolbar],
+    ]) {
       await page.mouse.move(5, 100);
       await trigger.hover();
-      const timing = await target.evaluate(async element => {
+      const timing = await target.evaluate(async (element) => {
         const animation = element.getAnimations()[0];
         if (!animation) throw new Error("Missing hover pulse");
         const { delay, duration } = animation.effect!.getTiming();
@@ -116,10 +152,15 @@ for (const width of [1440, 390]) {
       });
       expect(timing).toEqual({ delay: 600, duration: 1200 });
       await expect(target).toHaveCSS("box-shadow", /8px$/);
-      await expect(page.getByRole("button", { name: "Delete selected nodes", exact: true })).toHaveCount(0);
+      await expect(
+        page.getByRole("button", {
+          name: "Delete selected nodes",
+          exact: true,
+        }),
+      ).toHaveCount(0);
     }
     await caption.hover();
-    await surface.evaluate(element => {
+    await surface.evaluate((element) => {
       const animation = element.getAnimations()[0];
       animation.pause();
       animation.currentTime = 1050;
@@ -132,6 +173,8 @@ for (const width of [1440, 390]) {
     await expect(surface).toHaveCSS("box-shadow", /8px$/);
     await caption.hover();
     await expect(surface).toHaveCSS("animation-name", "none");
-    await page.screenshot({ path: test.info().outputPath("selected-hover-shadow.png") });
+    await page.screenshot({
+      path: test.info().outputPath("selected-hover-shadow.png"),
+    });
   });
 }

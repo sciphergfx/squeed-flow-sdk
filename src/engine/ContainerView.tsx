@@ -1,6 +1,9 @@
 import { memo } from "react";
 import { PiCircleFill } from "react-icons/pi";
-import { ToolbarIconButton, ToolbarTooltip } from "../components/toolbarControls";
+import {
+  ToolbarIconButton,
+  ToolbarTooltip,
+} from "../components/toolbarControls";
 import { createPortal } from "react-dom";
 import { NodeBorderAnimation } from "./NodeBorderAnimation";
 import { EDGE_LABEL_FONT_FAMILY, measureText } from "./text";
@@ -71,35 +74,61 @@ function ContainerView({
     ? measureText(label, `bold ${style.fontSize}px ${EDGE_LABEL_FONT_FAMILY}`)
     : 0;
   const padding = style.fontSize / 5;
-  const labelElement = label || (selected && onCollapse) ? (
-    <g className="flow-sdk-container-label" data-node-id={id}>
-      {selected && onCollapse && <foreignObject x={label ? cx + labelWidth / 2 + padding : rect.x2 - 56} y={label ? labelY - 24 : rect.y1 + 8} width={48} height={48} data-flow-content-toggle="" style={{ pointerEvents: "auto" }}>
-        <ToolbarTooltip label="Show icon"><ToolbarIconButton aria-label="Show icon" icon={<PiCircleFill />} variant="ghost"
-          style={{ width: 48, height: 48, color: style.textColor }} onClick={event => { event.stopPropagation(); onCollapse(id); }} /></ToolbarTooltip>
-      </foreignObject>}
-      {label && <>
-      <rect
-        x={cx - labelWidth / 2 - padding}
-        y={labelY - style.fontSize / 2 - padding}
-        width={labelWidth + 2 * padding}
-        height={style.fontSize + 2 * padding}
-        fill={style.textColor === "transparent" ? "transparent" : style.labelBg}
-      />
-      <text
-        x={cx}
-        y={labelY}
-        fill={style.textColor}
-        fontSize={style.fontSize}
-        fontWeight="bold"
-        fontFamily={EDGE_LABEL_FONT_FAMILY}
-        textAnchor="middle"
-        dominantBaseline="central"
-      >
-        {label}
-      </text>
-      </>}
-    </g>
-  ) : null;
+  const labelElement =
+    label || (selected && onCollapse) ? (
+      <g className="flow-sdk-container-label" data-node-id={id}>
+        {selected && onCollapse && (
+          <foreignObject
+            x={label ? cx + labelWidth / 2 + padding : rect.x2 - 56}
+            y={label ? labelY - 24 : rect.y1 + 8}
+            width={48}
+            height={48}
+            data-flow-content-toggle=""
+            style={{ pointerEvents: "auto" }}
+          >
+            <ToolbarTooltip label="Show icon">
+              <ToolbarIconButton
+                aria-label="Show icon"
+                icon={<PiCircleFill />}
+                variant="ghost"
+                style={{ width: 48, height: 48, color: style.textColor }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onCollapse(id);
+                }}
+              />
+            </ToolbarTooltip>
+          </foreignObject>
+        )}
+        {label && (
+          <>
+            <rect
+              x={cx - labelWidth / 2 - padding}
+              y={labelY - style.fontSize / 2 - padding}
+              width={labelWidth + 2 * padding}
+              height={style.fontSize + 2 * padding}
+              fill={
+                style.textColor === "transparent"
+                  ? "transparent"
+                  : style.labelBg
+              }
+            />
+            <text
+              x={cx}
+              y={labelY}
+              fill={style.textColor}
+              fontSize={style.fontSize}
+              fontWeight="bold"
+              fontFamily={EDGE_LABEL_FONT_FAMILY}
+              textAnchor="middle"
+              dominantBaseline="central"
+            >
+              {label}
+            </text>
+          </>
+        )}
+      </g>
+    ) : null;
 
   return (
     <g
@@ -108,7 +137,12 @@ function ContainerView({
       onPointerDown={stop}
       onClick={(e) => {
         e.stopPropagation();
-        onSelect?.(id, { shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, altKey: e.altKey });
+        onSelect?.(id, {
+          shiftKey: e.shiftKey,
+          ctrlKey: e.ctrlKey,
+          metaKey: e.metaKey,
+          altKey: e.altKey,
+        });
       }}
     >
       <rect

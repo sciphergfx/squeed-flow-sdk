@@ -15,7 +15,10 @@ test("compiler defaults do not override ordinary nodes' legacy border widths", (
 });
 
 test("selection uses a shadow without replacing configured node borders", () => {
-  for (const viewProps of [undefined, { borderColor: "teal.500", borderStyle: "dashed" as const, borderWidth: 6 }]) {
+  for (const viewProps of [
+    undefined,
+    { borderColor: "teal.500", borderStyle: "dashed" as const, borderWidth: 6 },
+  ]) {
     const selected = getNodeBorderProps(viewProps, "#008080", true, 2);
     const idle = getNodeBorderProps(viewProps, "#008080", false, 2);
     assert.equal(selected.borderColor, idle.borderColor);
@@ -26,12 +29,23 @@ test("selection uses a shadow without replacing configured node borders", () => 
     assert.match(idle.boxShadow, /0 0 0 0px/);
     assert.match(selected.css["--flow-hover-shadow"], /0 0 0 18px/);
     assert.equal(idle.css["--flow-rest-shadow"], selected.boxShadow);
-    assert.equal(idle.css["--flow-hover-shadow"], selected.css["--flow-hover-shadow"]);
-    const selectedHover = selected.css["@media (hover: hover)"][".flow-sdk-node:hover &"];
-    const idleHover = idle.css["@media (hover: hover)"][".flow-sdk-node:hover &"];
+    assert.equal(
+      idle.css["--flow-hover-shadow"],
+      selected.css["--flow-hover-shadow"],
+    );
+    const selectedHover =
+      selected.css["@media (hover: hover)"][".flow-sdk-node:hover &"];
+    const idleHover =
+      idle.css["@media (hover: hover)"][".flow-sdk-node:hover &"];
     assert.equal(idleHover.boxShadow, selected.boxShadow);
-    assert.equal(selectedHover["@media (prefers-reduced-motion: no-preference)"].animation, "none");
-    assert.match(idleHover["@media (prefers-reduced-motion: no-preference)"].animation, /1200ms steps\(10, end\) 600ms/);
+    assert.equal(
+      selectedHover["@media (prefers-reduced-motion: no-preference)"].animation,
+      "none",
+    );
+    assert.match(
+      idleHover["@media (prefers-reduced-motion: no-preference)"].animation,
+      /1200ms steps\(10, end\) 600ms/,
+    );
   }
 });
 

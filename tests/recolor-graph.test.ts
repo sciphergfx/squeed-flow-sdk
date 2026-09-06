@@ -24,12 +24,40 @@ test("color-only updates preserve untouched nodes and edges and match compilatio
 });
 
 test("color detection permits cloned view metadata but rejects value and graph edits", () => {
-  const data = { alpha: { $label: { $state: "root.name" }, $ports: [{ id: "output", side: "right" }], $connections: [{ target: "root.beta" }] }, beta: { name: "B" } };
-  const next = { ...structuredClone(data), alpha: { ...structuredClone(data.alpha), $bgColor: "teal.500" } };
+  const data = {
+    alpha: {
+      $label: { $state: "root.name" },
+      $ports: [{ id: "output", side: "right" }],
+      $connections: [{ target: "root.beta" }],
+    },
+    beta: { name: "B" },
+  };
+  const next = {
+    ...structuredClone(data),
+    alpha: { ...structuredClone(data.alpha), $bgColor: "teal.500" },
+  };
   assert.equal(isColorOnlyUpdate(data, next), true);
-  const graph = compileSqueed({ ...data, alpha: { ...data.alpha, $label: "Alpha" } });
+  const graph = compileSqueed({
+    ...data,
+    alpha: { ...data.alpha, $label: "Alpha" },
+  });
   assert.equal(recolorGraph(data, next, graph)?.edges, graph.edges);
-  assert.equal(isColorOnlyUpdate(data, { ...next, beta: { name: "Changed" } }), false);
-  assert.equal(isColorOnlyUpdate(data, { ...next, alpha: { ...next.alpha, $ports: [{ id: "input", side: "left" }] } }), false);
-  assert.equal(isColorOnlyUpdate(data, { ...next, alpha: { ...next.alpha, $connections: [] } }), false);
+  assert.equal(
+    isColorOnlyUpdate(data, { ...next, beta: { name: "Changed" } }),
+    false,
+  );
+  assert.equal(
+    isColorOnlyUpdate(data, {
+      ...next,
+      alpha: { ...next.alpha, $ports: [{ id: "input", side: "left" }] },
+    }),
+    false,
+  );
+  assert.equal(
+    isColorOnlyUpdate(data, {
+      ...next,
+      alpha: { ...next.alpha, $connections: [] },
+    }),
+    false,
+  );
 });

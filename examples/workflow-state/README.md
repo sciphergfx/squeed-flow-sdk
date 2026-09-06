@@ -29,7 +29,8 @@ const displayView = useMemo(
     onFormChange: onExampleFormChange,
     resolveFormOptions: resolveExampleOptions,
     onEdgeDelete: (_id, edge) => {
-      if (edge) setState(current => removeWorkflowResourceReference(current, edge));
+      if (edge)
+        setState((current) => removeWorkflowResourceReference(current, edge));
     },
   }}
 />;

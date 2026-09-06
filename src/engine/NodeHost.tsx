@@ -176,7 +176,10 @@ function NodeHost({
         rows.map((row) =>
           (["source", "target"] as const)
             .filter((role) => !row.role || row.role === role)
-            .filter((role) => drawMode || connectedPorts?.has(`${role}:${row.property}`))
+            .filter(
+              (role) =>
+                drawMode || connectedPorts?.has(`${role}:${row.property}`),
+            )
             .map((role) => (
               <button
                 key={`${row.property}:${role}`}

@@ -13,8 +13,14 @@
                     }
           },
           "memorySources": {
-                    "knowledge_entry": { "name": "Knowledge Entries", "entityType": "knowledge_entry" },
-                    "support_qa": { "name": "Support Answers", "entityType": "support_qa" }
+                    "knowledge_entry": {
+                              "name": "Knowledge Entries",
+                              "entityType": "knowledge_entry"
+                    },
+                    "support_qa": {
+                              "name": "Support Answers",
+                              "entityType": "support_qa"
+                    }
           },
           "tools": {
                     "directory_lookup": {

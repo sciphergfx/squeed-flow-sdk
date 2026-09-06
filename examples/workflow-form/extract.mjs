@@ -148,7 +148,7 @@ const projectMembers = (members, owner) =>
     const path = `${owner}.${name}`;
     const type =
       ts.isPropertySignature(member) && member.type
-        ? projectionOverrides[path] ?? projectType(member.type, path)
+        ? (projectionOverrides[path] ?? projectType(member.type, path))
         : undefined;
     if (!type) {
       omitted.push({ path, original: member.getText(fullFile) });
@@ -214,31 +214,42 @@ const artifacts = {
   "coverage.json": JSON.stringify(manifest, null, 2) + "\n",
 };
 const stale = [];
-const typeStructure = source => {
-  const file = ts.createSourceFile("interface.ts", source, ts.ScriptTarget.Latest, true);
-  const visit = node => {
-    if (ts.isPropertySignature(node)) return {
-      kind: node.kind,
-      name: node.name.text ?? node.name.getText(file),
-      optional: !!node.questionToken,
-      modifiers: node.modifiers?.map(modifier => modifier.kind),
-      type: node.type && visit(node.type),
-    };
-    if (ts.isIdentifier(node) || ts.isLiteralExpression(node)) return { kind: node.kind, text: node.text };
+const typeStructure = (source) => {
+  const file = ts.createSourceFile(
+    "interface.ts",
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  const visit = (node) => {
+    if (ts.isPropertySignature(node))
+      return {
+        kind: node.kind,
+        name: node.name.text ?? node.name.getText(file),
+        optional: !!node.questionToken,
+        modifiers: node.modifiers?.map((modifier) => modifier.kind),
+        type: node.type && visit(node.type),
+      };
+    if (ts.isIdentifier(node) || ts.isLiteralExpression(node))
+      return { kind: node.kind, text: node.text };
     const children = [];
-    ts.forEachChild(node, child => { children.push(visit(child)); });
+    ts.forEachChild(node, (child) => {
+      children.push(visit(child));
+    });
     return { kind: node.kind, children };
   };
   return JSON.stringify(visit(file));
 };
 for (const [name, content] of Object.entries(artifacts)) {
-  const current = await readFile(join(output, name), "utf8").catch(error => {
+  const current = await readFile(join(output, name), "utf8").catch((error) => {
     if (error.code === "ENOENT") return undefined;
     throw error;
   });
-  const matches = current !== undefined && (name.endsWith(".ts")
-    ? typeStructure(current) === typeStructure(content)
-    : current === content);
+  const matches =
+    current !== undefined &&
+    (name.endsWith(".ts")
+      ? typeStructure(current) === typeStructure(content)
+      : current === content);
   if (check && !matches) stale.push(name);
   else if (!check && !matches) {
     await writeFile(join(output, name), content);

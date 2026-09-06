@@ -265,7 +265,9 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           label: data.label,
           validationIssue:
             (edgeMode === "auto" || edgeMode === "properties") &&
-            (data.sourceProperty !== undefined || data.targetProperty !== undefined) && workflowContract
+            (data.sourceProperty !== undefined ||
+              data.targetProperty !== undefined) &&
+            workflowContract
               ? connectionIssue(workflowContract, data)
               : undefined,
           color: data.color ? getChakraColorHex(data.color) : lineColor,
@@ -313,7 +315,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         const isParentContainer =
           parentIds.has(node.data.id) && !node.data.parent;
         const nodeLabel = isParentContainer
-          ? node.data.label ?? node.data.headerTitle ?? "Container"
+          ? (node.data.label ?? node.data.headerTitle ?? "Container")
           : undefined;
         const ViewComponent = isParentContainer
           ? Views.parentContainer
@@ -587,7 +589,11 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   const handleContainerSelect = useCallback(
     (id: string, modifiers?: import("../types").NodeSelectionModifiers) => {
       setSelectedNodeIds([id]);
-      callbacks.onNodeSelect?.(id, nodeByIdRef.current.get(id)?.data ?? { id }, modifiers);
+      callbacks.onNodeSelect?.(
+        id,
+        nodeByIdRef.current.get(id)?.data ?? { id },
+        modifiers,
+      );
     },
     [callbacks, setSelectedNodeIds],
   );
@@ -633,7 +639,10 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           edges={canvasEdges}
           direction={layoutDirection}
           nodeAlignment={nodeAlignment}
-          onContainerCollapse={id => { callbacks.onNodeCollapse?.(id, true); callbacks.onNodeViewToggle?.(id); }}
+          onContainerCollapse={(id) => {
+            callbacks.onNodeCollapse?.(id, true);
+            callbacks.onNodeViewToggle?.(id);
+          }}
           selectedNodeIds={selectedNodeIds}
           edgeMode={edgeMode}
           compactPropertyLayout={config.compactPropertyLayout}

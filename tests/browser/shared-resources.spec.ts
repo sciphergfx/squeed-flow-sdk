@@ -51,18 +51,51 @@ for (const width of [1440, 390]) {
     ).toEqual(["directory_lookup", "issue_lookup"]);
 
     for (const resource of [
-      { id: "model", name: "Example Model", next: "Shared Model", collection: "models", key: "example-model" },
-      { id: "knowledgeMemory", name: "Knowledge Entries", next: "Shared Knowledge", collection: "memorySources", key: "knowledge_entry" },
+      {
+        id: "model",
+        name: "Example Model",
+        next: "Shared Model",
+        collection: "models",
+        key: "example-model",
+      },
+      {
+        id: "knowledgeMemory",
+        name: "Knowledge Entries",
+        next: "Shared Knowledge",
+        collection: "memorySources",
+        key: "knowledge_entry",
+      },
     ]) {
-      await page.evaluate(id => window.__flowTest.engine!.focusNode(`root.${id}`, 70), resource.id);
-      await page.locator(`.flow-sdk-node[data-node-id="root.${resource.id}"]`)
-        .getByText(resource.name, { exact: true }).dblclick();
-      const resourceForm = page.getByRole("dialog", { name: `Configure ${resource.name}`, exact: true });
-      await resourceForm.getByRole("textbox", { name: "Name", exact: true }).fill(resource.next);
-      await resourceForm.getByRole("textbox", { name: "Name", exact: true }).press("Enter");
-      await page.getByRole("button", { name: "Close node configuration" }).click();
-      await expect.poll(() => page.evaluate(({ collection, key }) =>
-        window.__flowTest.formState[collection][key].name, resource)).toBe(resource.next);
+      await page.evaluate(
+        (id) => window.__flowTest.engine!.focusNode(`root.${id}`, 70),
+        resource.id,
+      );
+      await page
+        .locator(`.flow-sdk-node[data-node-id="root.${resource.id}"]`)
+        .getByText(resource.name, { exact: true })
+        .dblclick();
+      const resourceForm = page.getByRole("dialog", {
+        name: `Configure ${resource.name}`,
+        exact: true,
+      });
+      await resourceForm
+        .getByRole("textbox", { name: "Name", exact: true })
+        .fill(resource.next);
+      await resourceForm
+        .getByRole("textbox", { name: "Name", exact: true })
+        .press("Enter");
+      await page
+        .getByRole("button", { name: "Close node configuration" })
+        .click();
+      await expect
+        .poll(() =>
+          page.evaluate(
+            ({ collection, key }) =>
+              window.__flowTest.formState[collection][key].name,
+            resource,
+          ),
+        )
+        .toBe(resource.next);
     }
 
     const prompt = page.locator('.flow-sdk-node[data-node-id="root.prompt"]');
@@ -120,10 +153,14 @@ for (const width of [1440, 390]) {
       exact: true,
     });
     await expect(toolChoice).toHaveAttribute("aria-pressed", "true");
-    await expect(agent.getByRole("combobox", { name: "Model", exact: true })
-      .locator("option:checked")).toHaveText("Shared Model");
-    await expect(agent.getByRole("button", { name: "Shared Knowledge", exact: true }))
-      .toHaveAttribute("aria-pressed", "true");
+    await expect(
+      agent
+        .getByRole("combobox", { name: "Model", exact: true })
+        .locator("option:checked"),
+    ).toHaveText("Shared Model");
+    await expect(
+      agent.getByRole("button", { name: "Shared Knowledge", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
     await toolChoice.click();
     await expect
       .poll(() =>

@@ -4,19 +4,54 @@ import NodeView from "./NodeView";
 import { CompactNodeView } from "./CompactNodeView";
 import { EditableContent } from "./EditableContent";
 import { getNodeBorderProps } from "./nodeBorder";
-import { getColorVars, calculateUniformKeyWidth, OBJECT_VALUE_WIDTH, OBJECT_BORDER_WIDTH } from "./objectViewTheme";
+import {
+  getColorVars,
+  calculateUniformKeyWidth,
+  OBJECT_VALUE_WIDTH,
+  OBJECT_BORDER_WIDTH,
+} from "./objectViewTheme";
 import { useObjectInspection } from "./useObjectInspection";
 import { ObjectNodeHeader } from "./ObjectNodeHeader";
 import { ObjectPropertyTable } from "./ObjectPropertyTable";
 
 export const ObjectNodeView = (props) => {
-  const { themeColor, colorMode, direction, objVisible, setObjVisible, inspecting, resourcePorts, form, description, inspectionPorts, extraPorts } = useObjectInspection(props);
+  const {
+    themeColor,
+    colorMode,
+    direction,
+    objVisible,
+    setObjVisible,
+    inspecting,
+    resourcePorts,
+    form,
+    description,
+    inspectionPorts,
+    extraPorts,
+  } = useObjectInspection(props);
   const [iconVisible, setIconVisible] = useState(false);
-  const canShowNativeIcon = !props.onShowIcon && !props.data.config?.parentContainer && typeof props.data.config?.content !== "string";
-  const onShowNativeIcon = canShowNativeIcon ? () => setIconVisible(true) : undefined;
-  if (canShowNativeIcon && iconVisible) return <CompactNodeView {...props}
-    data={{ ...props.data, label: props.data.label ?? props.data.headerTitle, config: { ...props.data.config, labelBelow: true, icon: props.data.config?.icon || "PiBracketsCurly" } }}
-    onExpand={() => setIconVisible(false)} />;
+  const canShowNativeIcon =
+    !props.onShowIcon &&
+    !props.data.config?.parentContainer &&
+    typeof props.data.config?.content !== "string";
+  const onShowNativeIcon = canShowNativeIcon
+    ? () => setIconVisible(true)
+    : undefined;
+  if (canShowNativeIcon && iconVisible)
+    return (
+      <CompactNodeView
+        {...props}
+        data={{
+          ...props.data,
+          label: props.data.label ?? props.data.headerTitle,
+          config: {
+            ...props.data.config,
+            labelBelow: true,
+            icon: props.data.config?.icon || "PiBracketsCurly",
+          },
+        }}
+        onExpand={() => setIconVisible(false)}
+      />
+    );
   return (
     <NodeView {...props} data={{ ...props.data, description }}>
       {({ id, data, isActive, isEditing, onEditStart, onEditEnd }) => {
@@ -66,7 +101,25 @@ export const ObjectNodeView = (props) => {
               borderWidth={0}
               overflow="hidden"
             >
-              <ObjectNodeHeader {...{ headerTitle, hasContent, data, icon, colors, hasConfig, id, isActive, isEditing, onEditStart, onEditEnd, props, objVisible, setObjVisible, onShowNativeIcon }} />
+              <ObjectNodeHeader
+                {...{
+                  headerTitle,
+                  hasContent,
+                  data,
+                  icon,
+                  colors,
+                  hasConfig,
+                  id,
+                  isActive,
+                  isEditing,
+                  onEditStart,
+                  onEditEnd,
+                  props,
+                  objVisible,
+                  setObjVisible,
+                  onShowNativeIcon,
+                }}
+              />
               {hasContent && !objVisible ? (
                 <Flex
                   w="100%"
@@ -84,7 +137,19 @@ export const ObjectNodeView = (props) => {
                   />
                 </Flex>
               ) : (
-                <ObjectPropertyTable {...{ data, resourcePorts, inspecting, form, inspectionPorts, extraPorts, colors, direction, uniformKeyWidth }} />
+                <ObjectPropertyTable
+                  {...{
+                    data,
+                    resourcePorts,
+                    inspecting,
+                    form,
+                    inspectionPorts,
+                    extraPorts,
+                    colors,
+                    direction,
+                    uniformKeyWidth,
+                  }}
+                />
               )}
             </Flex>
           </Flex>
@@ -95,4 +160,3 @@ export const ObjectNodeView = (props) => {
 };
 
 ObjectNodeView.displayName = "NodeJsonObjectView";
-

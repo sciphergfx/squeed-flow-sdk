@@ -10,13 +10,25 @@ export interface ConnectionsOnlyToggleProps {
   disabled?: boolean;
 }
 
-export function ConnectionsOnlyToggle({ checked, onChange, disabled }: ConnectionsOnlyToggleProps) {
+export function ConnectionsOnlyToggle({
+  checked,
+  onChange,
+  disabled,
+}: ConnectionsOnlyToggleProps) {
   const { colorInactive } = useCustomColors();
   const { themeColor } = useFlowDiagramContext();
-  return <ToolbarTooltip label="Only connected nodes">
-    <ToolbarIconButton aria-label="Only connected nodes" aria-pressed={checked}
-      icon={<Icon as={PiGraph} boxSize={5} />} size="sm" variant="ghost"
-      color={checked ? themeColor : colorInactive} disabled={disabled}
-      onClick={() => onChange(!checked)} />
-  </ToolbarTooltip>;
+  return (
+    <ToolbarTooltip label="Only connected nodes">
+      <ToolbarIconButton
+        aria-label="Only connected nodes"
+        aria-pressed={checked}
+        icon={<Icon as={PiGraph} boxSize={5} />}
+        size="sm"
+        variant="ghost"
+        color={checked ? themeColor : colorInactive}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+      />
+    </ToolbarTooltip>
+  );
 }
