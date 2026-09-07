@@ -43,6 +43,7 @@ export interface FlowDiagramContextValue {
   backgroundSelected: boolean;
   setBackgroundSelected: (selected: boolean) => void;
   edgeColor: string;
+  setEdgeColor: (color: string) => void;
   colorMode: "light" | "dark";
   direction: string;
   nodeAlignment: NodeAlignment;
@@ -253,7 +254,8 @@ export function FlowDiagramProvider({
   }, []);
 
   const themeColor = config.themeColor || localThemeColor;
-  const edgeColor = config.edgeColor || "";
+  const [localEdgeColor, setLocalEdgeColor] = useState("");
+  const edgeColor = config.edgeColor ?? localEdgeColor;
   const colorMode = config.colorMode || "light";
   const direction = config.direction || "LR";
   const nodeAlignment = config.nodeAlignment ?? "center";
@@ -434,6 +436,10 @@ export function FlowDiagramProvider({
       backgroundSelected,
       setBackgroundSelected,
       edgeColor,
+      setEdgeColor: (color) => {
+        setLocalEdgeColor(color);
+        callbacks.onGraphEdgeColorChange?.(color);
+      },
       colorMode,
       direction,
       nodeAlignment,
@@ -473,6 +479,7 @@ export function FlowDiagramProvider({
       setNodeViewMode,
       callbacks.onNodeCollapse,
       callbacks.onAllNodesIconLabelChange,
+      callbacks.onGraphEdgeColorChange,
       nodeViewModes,
       callbacks.onNodeViewModeChange,
       themeColor,

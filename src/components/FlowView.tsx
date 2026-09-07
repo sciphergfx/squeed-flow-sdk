@@ -106,7 +106,6 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
   const getColorHex = useCallback(
     (color) => {
-      if (color?.includes("gray")) return "whitesmoke";
       if (!color) return getChakraColorHex(themeColor);
       switch (color) {
         case "dark":
@@ -121,11 +120,12 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   );
 
   const isDark = config.colorMode === "dark";
-  // light mode: "light" resolves to the dark border token
-  const autoLineColor = useMemo(
-    () => (!isDark ? getColorHex("light") : getColorHex(highlightColor)),
-    [isDark, highlightColor, getColorHex],
-  );
+  const autoLineColor = getChakraColorHex("gray.500");
+  const connectorColor = !isDark
+    ? getColorHex("light")
+    : highlightColor?.includes("gray")
+      ? "whitesmoke"
+      : getColorHex(highlightColor);
   const lineColor = edgeColor ? getColorHex(edgeColor) : autoLineColor;
 
   const initialViewport = useMemo(
@@ -273,7 +273,16 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
             workflowContract
               ? connectionIssue(workflowContract, data)
               : undefined,
-          color: data.color ? getChakraColorHex(data.color) : lineColor,
+          color: edgeColor
+            ? lineColor
+            : data.color
+              ? getChakraColorHex(data.color)
+              : lineColor,
+          connectorColor: edgeColor
+            ? lineColor
+            : data.color
+              ? getChakraColorHex(data.color)
+              : connectorColor,
           labelBg,
           dashed: !!data.isEdgeDashed,
           animated: !!data.isEdgeAnimated,
@@ -284,6 +293,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   }, [
     edges,
     lineColor,
+    connectorColor,
+    edgeColor,
     parallelTurns,
     config.edgeType,
     edgeMode,
@@ -693,7 +704,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           fitOnInit={!config.initialViewport}
           readOnly={!!config.readOnly}
           containerStyle={containerStyle}
-          lineColor={lineColor}
+          lineColor={edgeColor ? lineColor : connectorColor}
           drawMode={drawMode}
           drawHandles={!config.readOnly && config.edgeHandles !== false}
           dragMode={isDragMode}

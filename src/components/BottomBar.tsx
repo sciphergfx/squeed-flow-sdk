@@ -82,6 +82,8 @@ const BottomBar = () => {
     engineRef,
     themeColor,
     setThemeColor,
+    edgeColor,
+    setEdgeColor,
     backgroundSelected,
     setBackgroundSelected,
     direction,
@@ -644,6 +646,15 @@ const BottomBar = () => {
                       </>
                     )}
                     <WorkflowControls />
+                    {!readOnly && (
+                      <Swatches
+                        label="Graph edge color"
+                        colors={DEFAULT_PALETTE}
+                        value={edgeColor || "gray.500"}
+                        onPick={setEdgeColor}
+                        onReset={() => setEdgeColor("")}
+                      />
+                    )}
                     <DiagramAppearanceControls />
                   </>
                 )}

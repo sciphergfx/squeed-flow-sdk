@@ -86,7 +86,7 @@ export interface FlowDiagramEdge {
     collapsedEndpoints?: { source: string; target: string };
     label?: string;
     icon?: string;
-    /** Chakra token or hex; overrides the theme/edgeColor line color for this edge */
+    /** Chakra token or hex; overrides the default unless a graph-wide edgeColor is selected. */
     color?: string;
     isInverted?: boolean;
     isEdgeAnimated?: boolean;
@@ -289,6 +289,7 @@ export interface FlowNodeCreationRequest {
 
 /** Event callbacks for the flow diagram */
 export interface FlowDiagramCallbacks {
+  onGraphEdgeColorChange?: (color: string) => void;
   onAllNodesIconLabelChange?: (enabled: boolean) => void;
   onNodeCreateRequest?: (request: FlowNodeCreationRequest) => boolean;
   onFormSchemaChange?: (

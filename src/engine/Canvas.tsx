@@ -27,7 +27,6 @@ import {
 } from "./edgeMetrics";
 import { isEdgeVisible, isNodeVisible, visibleLayoutGraph } from "./edgeMode";
 import EdgeView from "./EdgeView";
-import { useEdgeRevealSequence } from "./useEdgeRevealSequence";
 import type { TaxiDir } from "./geometry";
 import { placeEdgeLabels } from "./labelPlacement";
 import { computeContainers, runDagreLayout } from "./layout";
@@ -47,6 +46,7 @@ import {
   type Rect,
   type ViewportState,
 } from "./types";
+import { useEdgeRevealSequence } from "./useEdgeRevealSequence";
 import { Viewport } from "./viewport";
 
 export interface CanvasNode {
@@ -73,6 +73,7 @@ export interface CanvasEdge extends FlowEdgeProperties {
   label?: string;
   /** hex */
   color: string;
+  connectorColor?: string;
   /** hex */
   labelBg: string;
   dashed: boolean;
@@ -1425,6 +1426,7 @@ function Canvas(props: CanvasProps) {
                     labelAtTarget={branches.get(e.id)?.labelAtTarget}
                     labelFraction={branches.get(e.id)?.labelFraction}
                     color={e.color}
+                    connectorColor={e.connectorColor}
                     labelBg={e.labelBg}
                     label={e.label}
                     labelLayer={labelLayer}

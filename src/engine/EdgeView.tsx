@@ -13,8 +13,8 @@ import {
   measureEdgeLabel,
   NODE_LABEL_FONT_SIZE,
 } from "./edgeLabel";
-import { EdgeTraceAnimation } from "./EdgeTraceAnimation";
 import { EdgeReveal } from "./EdgeReveal";
+import { EdgeTraceAnimation } from "./EdgeTraceAnimation";
 import {
   bezierGeometry,
   connectorEndpoints,
@@ -60,6 +60,7 @@ export interface EdgeViewProps {
   labelAtTarget?: boolean;
   labelFraction?: number;
   color: string;
+  connectorColor?: string;
   labelBg: string;
   labelLayer?: SVGGElement | null;
   label?: string;
@@ -96,6 +97,7 @@ function EdgeView({
   labelAtTarget,
   labelFraction,
   color,
+  connectorColor,
   labelBg,
   labelLayer,
   label,
@@ -463,7 +465,9 @@ function EdgeView({
         <path
           className={reveal ? "flow-sdk-edge-reveal-end" : undefined}
           d={geo.arrow}
-          fill={displayColor}
+          fill={
+            validationIssue ? validationColor : (connectorColor ?? displayColor)
+          }
         />
       )}
       {labelLayer && labelEl ? createPortal(labelEl, labelLayer) : labelEl}
