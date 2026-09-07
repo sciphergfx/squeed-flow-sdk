@@ -977,9 +977,9 @@ const hex = getChakraColorHex("blue.500"); // → "#3182ce"
 
 ## Development Checks
 
-See [CONTRIBUTING.md](https://github.com/sciphergfx/flow-sdk/blob/main/CONTRIBUTING.md)
+See [CONTRIBUTING.md](https://github.com/sciphergfx/squeed-flow-sdk/blob/main/CONTRIBUTING.md)
 for local setup and pull-request guidance, and
-[SECURITY.md](https://github.com/sciphergfx/flow-sdk/blob/main/SECURITY.md)
+[SECURITY.md](https://github.com/sciphergfx/squeed-flow-sdk/blob/main/SECURITY.md)
 for private vulnerability reporting.
 
 ```bash

@@ -1,3 +1,4 @@
+import { chakra } from "@chakra-ui/react";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   PiArrowRight,
@@ -8,6 +9,7 @@ import {
   PiUploadSimple,
 } from "react-icons/pi";
 import { getChakraColorHex } from "../theme/colorUtils";
+import { getInteractionSurface } from "../theme/interactionShadow";
 import { useCustomColors } from "../theme/useCustomColors";
 import DynamicIcon from "../utils/DynamicIcon";
 import {
@@ -126,9 +128,13 @@ export function NodeIconPicker({
           }}
         />
       </ToolbarTooltip>
-      <dialog
+      <chakra.dialog
         ref={dialog}
         aria-label={edgeId ? "Choose edge icon" : "Choose node icon"}
+        css={getInteractionSurface(
+          getChakraColorHex(background),
+          getChakraColorHex(border),
+        )}
         onClose={() => {
           setOpen(false);
           uploadVersion.current++;
@@ -146,9 +152,7 @@ export function NodeIconPicker({
           maxWidth: "calc(100vw - 32px)",
           maxHeight: "calc(100vh - 32px)",
           overflowY: "auto",
-          border: `1px solid ${getChakraColorHex(border)}`,
           borderRadius: 30,
-          boxShadow: `0 0 0 8px color-mix(in srgb, ${getChakraColorHex(background)} 60%, transparent)`,
           background: getChakraColorHex(background),
           color: getChakraColorHex(colorText),
         }}
@@ -446,7 +450,7 @@ export function NodeIconPicker({
             )}
           </div>
         )}
-      </dialog>
+      </chakra.dialog>
     </>
   );
 }

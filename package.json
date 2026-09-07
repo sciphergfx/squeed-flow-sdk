@@ -1,17 +1,17 @@
 {
   "name": "@squeed/flow-sdk",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Standalone React component for rendering interactive flow diagrams using JSON",
   "license": "AGPL-3.0",
   "author": "seyi ogunbowale",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sciphergfx/flow-sdk.git"
+    "url": "git+https://github.com/sciphergfx/squeed-flow-sdk.git"
   },
   "bugs": {
-    "url": "https://github.com/sciphergfx/flow-sdk/issues"
+    "url": "https://github.com/sciphergfx/squeed-flow-sdk/issues"
   },
-  "homepage": "https://github.com/sciphergfx/flow-sdk#readme",
+  "homepage": "https://github.com/sciphergfx/squeed-flow-sdk#readme",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

@@ -13,6 +13,7 @@ import {
   type ReactNode,
 } from "react";
 import { PiCaretUp, PiCheck, PiXLight } from "react-icons/pi";
+import { getInteractionSurface } from "../theme/interactionShadow";
 import { useCustomColors } from "../theme/useCustomColors";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
 
@@ -241,16 +242,17 @@ export function ToolbarSelect({
         minW="180px"
         maxW="calc(100vw - 24px)"
         overflowY="auto"
+        bg={background}
+        color={colorText}
+        borderRadius="30px"
         css={{
           scrollbarWidth: "none",
           "&::-webkit-scrollbar": { display: "none" },
+          ...getInteractionSurface(
+            surface,
+            `var(--chakra-colors-${(dark ? border : "gray.300").replace(".", "-")})`,
+          ),
         }}
-        bg={background}
-        color={colorText}
-        borderWidth={1}
-        borderColor={dark ? border : "gray.300"}
-        borderRadius="30px"
-        boxShadow={`0 0 0 8px color-mix(in srgb, ${surface} 40%, transparent), var(--chakra-shadows-lg)`}
         onKeyDown={(event) => {
           if (popupContent && !["Escape", "Tab"].includes(event.key)) return;
           const items = [

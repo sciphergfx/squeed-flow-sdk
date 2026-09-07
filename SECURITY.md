@@ -6,10 +6,10 @@ Do not post exploit details, credentials, private documents, or sensitive logs
 in public issues or pull requests.
 
 If GitHub private vulnerability reporting is enabled for this repository,
-use https://github.com/sciphergfx/flow-sdk/security/advisories/new.
+use https://github.com/sciphergfx/squeed-flow-sdk/security/advisories/new.
 
 If that option is unavailable, open an issue at
-https://github.com/sciphergfx/flow-sdk/issues requesting a private security
+https://github.com/sciphergfx/squeed-flow-sdk/issues requesting a private security
 contact, without including technical details. Wait for a private reporting
 channel before sharing the vulnerability.
 

@@ -4,11 +4,13 @@ import { createPortal } from "react-dom";
 import { resolveFormNode } from "../core/forms";
 import { FormDocumentContext, NodeForm } from "../nodes/NodeForm";
 import { getChakraColorHex } from "../theme/colorUtils";
+import { getInteractionSurface } from "../theme/interactionShadow";
 import { useCustomColors } from "../theme/useCustomColors";
 import { resolveStateForm } from "../utils/formState";
 import { ToolbarCloseButton } from "./toolbarControls";
 
-const FormDialog = styled.dialog`
+const FormDialog = styled.dialog<{ $surface: string; $border: string }>`
+  ${(props) => getInteractionSurface(props.$surface, props.$border)}
   &[open] {
     display: flex;
     flex-direction: column;
@@ -94,6 +96,8 @@ export function NodeFormPopover({
           <FormDialog
             ref={dialog}
             id={id}
+            $surface={surface}
+            $border={getChakraColorHex(border)}
             aria-label={`Configure ${label}`}
             onClose={onClose}
             onPointerDown={(event) => event.stopPropagation()}
@@ -113,10 +117,8 @@ export function NodeFormPopover({
               height,
               overflow: "hidden",
               borderRadius: 30,
-              border: `1px solid ${getChakraColorHex(border)}`,
               background: surface,
               color: getChakraColorHex(colorText),
-              boxShadow: `0 0 0 8px color-mix(in srgb, ${surface} 60%, transparent)`,
               fontSize: 16,
               textTransform: "none",
             }}

@@ -117,9 +117,11 @@ export {
   useCustomColors,
   useThemeContentColors,
 } from "./theme/useCustomColors";
+export { getInteractionSurface } from "./theme/interactionShadow";
 
 // Hooks (for consumers building custom editable node content)
 export { useStopPropagation } from "./hooks/useStopPropagation";
+export { useEdgeProximity } from "./hooks/useEdgeProximity";
 export { EditableLabel } from "./nodes/EditableLabel";
 export { default as NodeView } from "./nodes/NodeView";
 

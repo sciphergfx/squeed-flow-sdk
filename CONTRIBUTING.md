@@ -74,7 +74,7 @@ Include lockfile changes when changing dependencies.
 
 ## Issues And Pull Requests
 
-Report ordinary bugs at https://github.com/sciphergfx/flow-sdk/issues with a
+Report ordinary bugs at https://github.com/sciphergfx/squeed-flow-sdk/issues with a
 minimal reproduction, SDK and peer versions, browser/OS, expected behavior,
 and actual behavior. Remove private data from sample documents and logs.
 

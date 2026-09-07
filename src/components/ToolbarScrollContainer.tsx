@@ -1,6 +1,6 @@
 import { Box } from "@chakra-ui/react";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { getInteractionShadow } from "../theme/interactionShadow";
+import { getInteractionSurface } from "../theme/interactionShadow";
 
 export function ToolbarScrollContainer({
   children,
@@ -43,10 +43,11 @@ export function ToolbarScrollContainer({
       minW={0}
       maxW="100%"
       flex="0 1 auto"
-      borderColor={border}
-      borderWidth={1}
       borderRadius="30px"
-      {...getInteractionShadow(color)}
+      css={getInteractionSurface(
+        color,
+        `var(--chakra-colors-${border.replace(".", "-")})`,
+      )}
     >
       <Box
         ref={scrollRef}

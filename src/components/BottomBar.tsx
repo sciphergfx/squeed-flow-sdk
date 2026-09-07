@@ -1,5 +1,5 @@
-import { Box, Flex, HStack, Icon, Text, chakra } from "@chakra-ui/react";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { Box, Flex, HStack, Icon, Text } from "@chakra-ui/react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   PiAlignCenterHorizontal,
   PiArrowCounterClockwise,
@@ -15,7 +15,6 @@ import {
   PiCaretUp,
   PiCheck,
   PiHandGrabbing,
-  PiLineVerticalBold,
   PiLineVerticalThin,
   PiMagnifyingGlassPlus,
   PiMinus,
@@ -26,7 +25,8 @@ import {
   PiSelectionPlus,
 } from "react-icons/pi";
 import { useCustomColors } from "../theme/useCustomColors";
-import { getInteractionShadow } from "../theme/interactionShadow";
+import { getInteractionSurface } from "../theme/interactionShadow";
+import { useEdgeProximity } from "../hooks/useEdgeProximity";
 import type { FlowDirection } from "../types";
 import { FlowType } from "../types";
 import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
@@ -113,10 +113,18 @@ const BottomBar = () => {
     colorInactive,
     colorText,
     colorActive,
-    darkBackgroundSecondary,
   } = useCustomColors();
+  const surfaceColor = `var(--chakra-colors-${background.replace(".", "-")})`;
+  const borderColor = `var(--chakra-colors-${(isDark ? border : "gray.300").replace(".", "-")})`;
   const [showDirectionMenu, setShowDirectionMenu] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const bar = useRef<HTMLDivElement>(null);
+  const nearBottom = useEdgeProximity({
+    edge: "bottom",
+    enabled: !isPinned,
+    bounds: bar,
+    inside: [bar],
+  });
 
   const handleZoom = useCallback(
     (action: "increase" | "decrease" | "reset") => {
@@ -188,7 +196,8 @@ const BottomBar = () => {
     !renderSelectedNodeToolbar;
   const selectionActive = edgeToolsActive || nodeToolsActive;
 
-  const visible = isPinned || showDirectionMenu || selectionActive;
+  const visible =
+    isPinned || nearBottom || showDirectionMenu || selectionActive;
 
   useEffect(() => {
     if (selectedNodeIds.length || selectedEdgeId) {
@@ -313,39 +322,8 @@ const BottomBar = () => {
         </Box>
       )}
 
-      {!isPinned && (
-        <Box position="absolute" bottom={5} left={0} zIndex={101} w={3}>
-          <ToolbarTooltip label="Show Bottom Bar">
-            <chakra.button
-              type="button"
-              aria-label="Show Bottom Bar"
-              display="flex"
-              alignItems="center"
-              bg={background}
-              borderColor={border}
-              borderWidth={1}
-              py={6}
-              px={0}
-              w={4}
-              h={50}
-              borderRadius="15px"
-              borderLeftRadius={0}
-              onMouseEnter={() => setIsPinned(true)}
-              onClick={() => setIsPinned(true)}
-              _hover={{ bg: darkBackgroundSecondary }}
-            >
-              <Icon
-                ml={-1}
-                as={PiLineVerticalBold}
-                boxSize={5}
-                color={border}
-              />
-            </chakra.button>
-          </ToolbarTooltip>
-        </Box>
-      )}
-
       <Box
+        ref={bar}
         role="toolbar"
         aria-label="Diagram controls"
         position="absolute"
@@ -692,13 +670,9 @@ const BottomBar = () => {
               <Box
                 data-flow-direction-control=""
                 bg={background}
-                borderWidth={1}
-                borderColor={isDark ? border : "gray.300"}
                 borderRadius="30px"
                 h={50}
-                {...getInteractionShadow(
-                  `var(--chakra-colors-${background.replace(".", "-")})`,
-                )}
+                css={getInteractionSurface(surfaceColor, borderColor)}
                 px={3}
                 cursor="pointer"
                 onClick={() => setShowDirectionMenu(!showDirectionMenu)}
@@ -733,12 +707,10 @@ const BottomBar = () => {
                 >
                   <Box
                     bg={background}
-                    borderWidth={1}
-                    borderColor={isDark ? border : "gray.300"}
                     borderRadius="30px"
                     p={2}
                     minW="180px"
-                    boxShadow={`0 0 0 8px color-mix(in srgb, var(--chakra-colors-${background.replace(".", "-")}) 40%, transparent), var(--chakra-shadows-lg)`}
+                    css={getInteractionSurface(surfaceColor, borderColor)}
                   >
                     {DIRECTIONS.map((d) => (
                       <Flex

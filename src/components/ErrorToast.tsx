@@ -1,6 +1,8 @@
+import { chakra } from "@chakra-ui/react";
 import { createPortal } from "react-dom";
 import { PiWarningCircle } from "react-icons/pi";
 import { getChakraColorHex } from "../theme/colorUtils";
+import { getInteractionSurface } from "../theme/interactionShadow";
 import { useCustomColors } from "../theme/useCustomColors";
 import { ToolbarCloseButton } from "./toolbarControls";
 
@@ -14,9 +16,13 @@ export function ErrorToast({
   const { background, colorText, border } = useCustomColors();
   if (!message || typeof document === "undefined") return null;
   return createPortal(
-    <div
+    <chakra.div
       role="alert"
       aria-atomic="true"
+      css={getInteractionSurface(
+        getChakraColorHex(background),
+        getChakraColorHex(border),
+      )}
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
       style={{
@@ -32,10 +38,8 @@ export function ErrorToast({
         gap: 10,
         padding: 16,
         borderRadius: 8,
-        border: `1px solid ${getChakraColorHex(border)}`,
         background: getChakraColorHex(background),
         color: getChakraColorHex(colorText),
-        boxShadow: "0 4px 20px #0003",
         fontSize: 14,
         lineHeight: 1.5,
       }}
@@ -60,7 +64,7 @@ export function ErrorToast({
         minWidth="24px"
         padding={0}
       />
-    </div>,
+    </chakra.div>,
     document.body,
   );
 }
