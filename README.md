@@ -220,6 +220,11 @@ These ports work in Auto and Properties modes. Omitting
 
 Built-in views accept the same declarations in `data.config.ports` or JSON
 `$ports`, for example `[{ "id": "prompt", "role": "target", "side": "top" }]`.
+An optional `label` changes a port's display text without changing its `id`:
+`{ "id": "output:resource", "label": "output", "role": "source", "side": "right" }`.
+The same `label` prop is supported by `FlowPort`. Workflow interfaces can declare
+it with `/** @port output resource "output" */`; the optional label is a quoted
+JSON string. Connections continue to use `sourceProperty: "output:resource"`.
 Connections identify these ports using `sourceProperty` and `targetProperty`.
 Read-only mode and disabled edge handles continue to prevent dragging.
 

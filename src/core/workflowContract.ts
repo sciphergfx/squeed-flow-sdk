@@ -14,6 +14,7 @@ export type ContractType =
     };
 export interface ContractPort {
   kind: "input" | "config" | "output" | "error";
+  label?: string;
   resourceType?: string;
   multiple?: boolean;
 }
@@ -371,18 +372,25 @@ export async function parseTypeScriptForm(
       throw new Error("Node ports require an object interface");
     const ports = { ...resolved.ports };
     for (const tag of tags) {
-      const [kind, portName, extra] = String(tag.comment ?? "")
+      const [kind, portName, ...labelParts] = String(tag.comment ?? "")
         .trim()
         .split(/\s+/);
       if (
         !["input", "output", "error"].includes(kind) ||
-        !/^[A-Za-z][\w-]*$/.test(portName ?? "") ||
-        extra
+        !/^[A-Za-z][\w-]*$/.test(portName ?? "")
       )
         throw new Error("Node ports require @port input|output|error Name");
+      const label: unknown = labelParts.length
+        ? JSON.parse(labelParts.join(" "))
+        : undefined;
+      if (label !== undefined && typeof label !== "string")
+        throw new Error("Node port labels must be JSON strings");
       if (Object.prototype.hasOwnProperty.call(ports, portName))
         throw new Error(`Duplicate port declaration: ${portName}`);
-      ports[portName] = { kind: kind as ContractPort["kind"] };
+      ports[portName] = {
+        kind: kind as ContractPort["kind"],
+        ...(typeof label === "string" ? { label } : {}),
+      };
     }
     return { ...resolved, ports };
   };

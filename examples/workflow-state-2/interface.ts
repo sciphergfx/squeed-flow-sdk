@@ -25,20 +25,20 @@ interface CastDatabaseConfig {
   data?: CastDataConfig;
 }
 
-/** @port output resource */
+/** @port output resource "output" */
 interface CastFilterConfig {
   field: string;
   operator: "==" | "!=" | ">" | ">=" | "<" | "<=" | "in" | "contains";
   value: string | number | boolean;
 }
 
-/** @port output resource */
+/** @port output resource "output" */
 interface CastSortConfig {
   field: string;
   direction: "asc" | "desc";
 }
 
-/** @port output resource */
+/** @port output resource "output" */
 interface CastDataConfig {
   [key: string]: any;
   status?: string;
@@ -126,7 +126,7 @@ interface CastOutputConfig {
   mapping?: Record<string, any>;
 }
 
-/** @port output resource */
+/** @port output resource "output" */
 interface CastToolConfig {
   name: string;
 }

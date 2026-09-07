@@ -71,6 +71,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     isDragMode,
     setIsDragMode,
     isEdgeHandlesEnabled,
+    setIsEdgeHandlesEnabled,
     isArrayNodeMode,
   } = useFlowDiagramContext();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -486,6 +487,15 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       if (e.key === "m" || e.key === "M")
         setIsMultiSelectMode(!isMultiSelectMode);
       if (e.key === "d" || e.key === "D") setIsDragMode(!isDragMode);
+      if (
+        (e.key === "v" || e.key === "V") &&
+        !e.repeat &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        target.tagName !== "SELECT"
+      )
+        setIsEdgeHandlesEnabled(!isEdgeHandlesEnabled);
 
       if (
         (e.key === "Delete" || e.key === "Backspace") &&
@@ -520,6 +530,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   }, [
     isMultiSelectMode,
     isDragMode,
+    isEdgeHandlesEnabled,
+    setIsEdgeHandlesEnabled,
     setIsZoomMode,
     setIsMultiSelectMode,
     setIsDragMode,

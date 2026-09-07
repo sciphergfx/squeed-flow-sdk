@@ -309,8 +309,7 @@ function Canvas(props: CanvasProps) {
   const pendingFitRef = useRef(false);
   const pendingLayoutAction = useRef<(() => void) | null>(null);
   const previousSpacingFactor = useRef(spacingFactor);
-  const compactLayout =
-    compactPropertyLayout && (edgeMode === "properties" || !!isolatedIds);
+  const compactLayout = compactPropertyLayout;
   const previousCompactLayout = useRef(compactLayout);
   const [edgesVisible, setEdgesVisible] = useState(true);
   const isolatedIdsRef = useRef<Set<string> | null>(null);
@@ -378,9 +377,7 @@ function Canvas(props: CanvasProps) {
     });
     let target: Map<string, Point>;
     try {
-      const compact =
-        p.compactPropertyLayout &&
-        (p.edgeMode === "properties" || !!isolatedIdsRef.current);
+      const compact = p.compactPropertyLayout;
       const propertyMode = p.edgeMode !== "nodes" && p.edgeMode !== "workflow";
       const layoutEdges = graph.edges.map((edge) => ({
         ...edge,

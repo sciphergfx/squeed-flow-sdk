@@ -107,6 +107,7 @@ export function projectWorkflowPorts(
     ).filter(([name, port]) => !rowResources?.[`${port.kind}:${name}`]);
     const ports = declarations.map(([name, port]) => ({
       id: `${port.kind}:${name}`,
+      ...(port.label !== undefined ? { label: port.label } : {}),
       role:
         port.kind === "input" || port.kind === "config" ? "target" : "source",
       side: sides[port.kind],

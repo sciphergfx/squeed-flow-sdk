@@ -3,6 +3,7 @@ import type { PortSide } from "../engine/types";
 
 export interface FlowPortProps {
   id: string;
+  label?: string;
   role: "source" | "target";
   side?: PortSide;
   position?: number;
@@ -13,6 +14,7 @@ export interface FlowPortProps {
 
 export function FlowPort({
   id,
+  label,
   role,
   side,
   position = 0.5,
@@ -36,7 +38,7 @@ export function FlowPort({
         ...(side ? { display: "none" } : {}),
       }}
     >
-      {children ?? id}
+      {children ?? label ?? id}
     </div>
   );
 }

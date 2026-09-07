@@ -54,7 +54,7 @@ interface HttpConfig {
   body?: string;
 }
 
-/** @port output resource */
+/** @port output resource "output" */
 interface ToolConfig {
   name: string;
   description?: string;
@@ -62,20 +62,20 @@ interface ToolConfig {
   url: string;
 }
 
-/** @port output resource */
+/** @port output resource "output" */
 interface ModelConfig {
   name: string;
   provider: string;
   model: string;
 }
 
-/** @port output resource */
+/** @port output resource "output" */
 interface MemoryConfig {
   name: string;
   entityType: string;
 }
 
-/** @port output resource */
+/** @port output resource "output" */
 interface TextConfig {
   name: string;
   content: string;

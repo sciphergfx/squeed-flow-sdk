@@ -62,9 +62,11 @@ export function ObjectPropertyTable({
             : undefined);
         const labelAlign =
           labelOnly && labelSide === "right" ? "right" : "left";
-        const label = extraPort
-          ? key.replace(/^(template|input|output|config|error):/, "")
-          : key;
+        const label =
+          inspectionPort?.label ??
+          (extraPort
+            ? key.replace(/^(template|input|output|config|error):/, "")
+            : key);
         const typeColor = contentObjTheme(colors.wordBeforeDot)[typeof value];
         const keyColor = contentObjTheme(colors.wordBeforeDot)["property"];
 

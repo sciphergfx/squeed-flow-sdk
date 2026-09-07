@@ -277,7 +277,7 @@ export function resourceFormContext(
         name: { type: { kind: "string" }, optional: false },
         value: structuredClone(type),
       },
-      ports: { resource: { kind: "output" } },
+      ports: { resource: { kind: "output", label: "output" } },
     };
     schema[field.type].properties[field.field] = {
       ...type,
