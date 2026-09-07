@@ -232,8 +232,9 @@ export function Swatches({
                   }
                   outlineOffset="1px"
                   _hover={{ transform: "scale(1.15)" }}
-                  onClick={() => {
-                    onPick(c);
+                  onClick={() => onPick(c)}
+                  onDoubleClick={(event) => {
+                    event.stopPropagation();
                     setExpanded(false);
                     toggle.current?.focus();
                   }}

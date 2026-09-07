@@ -18,8 +18,35 @@ export function useEdgeProximity({
   threshold?: number;
 }) {
   const [near, setNear] = useState(false);
+  const [overlayOpen, setOverlayOpen] = useState(false);
   const insideRef = useRef(inside);
   insideRef.current = inside;
+  useEffect(() => {
+    if (!enabled) return;
+    const update = () => {
+      const overlays = document.querySelectorAll<HTMLElement>(
+        ':popover-open, dialog[open], [role="dialog"], [role="menu"], [role="listbox"]',
+      );
+      setOverlayOpen(Array.from(overlays).some((element) =>
+        element.getClientRects().length > 0 &&
+        !element.closest('[hidden], [aria-hidden="true"], [data-state="closed"]') &&
+        getComputedStyle(element).visibility === "visible",
+      ));
+    };
+    const observer = new MutationObserver(update);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["open", "hidden", "aria-hidden", "data-state"],
+    });
+    document.addEventListener("toggle", update, true);
+    update();
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("toggle", update, true);
+    };
+  }, [enabled]);
   useEffect(() => {
     const update = (event: PointerEvent) => {
       const rect = bounds.current?.getBoundingClientRect();
@@ -49,5 +76,5 @@ export function useEdgeProximity({
       document.documentElement.removeEventListener("pointerleave", leave);
     };
   }, [edge, bounds, threshold]);
-  return enabled && near;
+  return enabled && (near || overlayOpen);
 }
