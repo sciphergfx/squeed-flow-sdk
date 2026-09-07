@@ -87,7 +87,7 @@ test("all icon labels closes an expanded grouped Tools registry", async ({
     .getByRole("button", { name: "Toggle toolbar collapse", exact: true })
     .click();
   const toggle = toolbar.getByRole("button", {
-    name: "All icon labels",
+    name: "Collapse all",
     exact: true,
   });
   await toggle.click();
@@ -179,7 +179,7 @@ for (const width of [1440, 390]) {
       .getByRole("button", { name: "Toggle toolbar collapse", exact: true })
       .click();
     const toggle = toolbar.getByRole("button", {
-      name: "All icon labels",
+      name: "Collapse all",
       exact: true,
     });
     await toggle.scrollIntoViewIfNeeded();
@@ -190,7 +190,7 @@ for (const width of [1440, 390]) {
         buttons.map((button) => button.getAttribute("aria-label")),
       );
     expect(labels[labels.indexOf("Compact layout") + 1]).toBe(
-      "All icon labels",
+      "Collapse all",
     );
     await expect(toggle).toHaveAttribute("aria-pressed", "false");
     await toggle.click();

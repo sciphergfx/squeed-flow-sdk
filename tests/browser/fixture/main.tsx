@@ -197,6 +197,7 @@ function Fixture() {
     onViewportChange: (viewport) => record("viewport", viewport),
     onThemeColorChange: (color) => record("theme-color", color),
     onSpacingChange: (spacing) => record("spacing", spacing),
+    onAllNodesIconLabelChange: (enabled) => record("all-icon-labels", enabled),
     onEdgeRadiusChange: (radius) => record("edgeRadius", radius),
     onBackgroundVariantChange: (variant) =>
       record("background-variant", variant),

@@ -360,15 +360,22 @@ Inside a diagram, `useNodeViewActions()` (or `useFlowDiagramContext()`) exposes
 `allNodesIconLabel` and `setAllNodesIconLabel(boolean)`. The bulk action reuses
 `setNodeViewMode(id, "icon-label")` for objects/arrays and `onNodeCollapse` for
 parents. Disable it to restore default object views and reopen parents. Dots use
-the same per-node actions and remain interactive; there is no global view lock
-or separate override state. `allNodesIconLabel` reflects the current node modes.
+the same per-node actions and remain interactive; there is no global view lock.
+`allNodesIconLabel` reflects the current node modes.
+
+In `FlowDiagram`, enabling the bulk action also suspends `forms.structured`:
+generated detail nodes and structured form lists disappear without changing the
+workflow data. Disabling it restores the configured `forms.structured` setting
+and the generated nodes' default views. An initially false or omitted setting
+stays disabled. Individual node-view actions do not change this setting.
 
 `NodeViewMode` supports `"default"`, `"properties"` and `"icon-label"`; controlled
 consumers continue using `config.nodeViewModes` and `onNodeViewModeChange`.
 Parent changes follow the host's existing collapse persistence behavior. The
 name `collapsed` remains reserved for child-collapse behavior, not object view
-modes. `onAllNodesIconLabelChange` reports bulk actions. SDK Test exposes the
-action under Visibility as **All icon labels** and fits the resulting layout.
+modes. `onAllNodesIconLabelChange` reports bulk actions. The bottom toolbar exposes
+**Collapse all** immediately after **Compact layout**; SDK Test also exposes
+the action as **All icon labels** under Visibility and fits the resulting layout.
 
 ### Reusable Nodes From Property Draws
 

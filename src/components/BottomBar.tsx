@@ -7,6 +7,7 @@ import {
   PiArrowLeft,
   PiArrowRight,
   PiArrowUp,
+  PiArrowsInLineVertical,
   PiArrowsOutCardinal,
   PiBracketsCurly,
   PiBracketsSquare,
@@ -15,7 +16,6 @@ import {
   PiCaretUp,
   PiCheck,
   PiHandGrabbing,
-  PiImage,
   PiLineVerticalThin,
   PiMagnifyingGlassPlus,
   PiMinus,
@@ -570,9 +570,9 @@ const BottomBar = () => {
                     />
                     <CompactPropertyLayoutToggle />
                     <LabeledToolbarToggle
-                      label="All icon labels"
+                      label="Collapse all"
                       checked={allNodesIconLabel}
-                      icon={<Icon as={PiImage} boxSize={5} />}
+                      icon={<Icon as={PiArrowsInLineVertical} boxSize={5} />}
                       onChange={setAllNodesIconLabel}
                     />
 
