@@ -367,6 +367,13 @@ action under Visibility as **All icon labels** and fits the resulting layout.
 
 ### Reusable Nodes From Property Draws
 
+SDK Test's **Blank Workflow** starts with zero nodes, steps and resources. The
+canvas **Create node** button opens the existing reusable-node picker without a
+source port. It creates one standalone step with an empty configuration and no
+connection. Subsequent nodes can be created by dragging ports into empty canvas;
+these use the same picker and the existing typed-port and dependency mapping.
+Canceling the picker does not change the graph. No example workflow is imported.
+
 SDK Test opens a reusable-node picker when a Properties-mode draw ends on empty
 canvas. It reuses `NodeFormPopover` with a top filter, a fixed-height scrolling
 list and the form vignette. Items use the current JSON bindings, interfaces and

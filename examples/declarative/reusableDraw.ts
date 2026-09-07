@@ -49,9 +49,9 @@ export function reusableDrawItems(
   state: SqueedJson,
   schema: FormSchema,
   bindings: StateForms["bindings"],
-  request: FlowNodeCreationRequest,
+  request?: FlowNodeCreationRequest,
 ): ReusableDrawItem[] {
-  const endpoint = request.sourceProperty
+  const endpoint = request?.sourceProperty
     ? bindingPort(
         schema,
         bindings,
@@ -59,9 +59,9 @@ export function reusableDrawItems(
         request.sourceProperty,
       )
     : undefined;
-  const endpointType = bindings[request.sourceNodeId]?.type;
+  const endpointType = request && bindings[request.sourceNodeId]?.type;
   const portsFor = (type: string) =>
-    Object.entries(schema[type]?.ports ?? {})
+    !request ? [""] : Object.entries(schema[type]?.ports ?? {})
       .filter(([, port]) => {
         if (request.reverse) {
           if (port.kind !== "output" && port.kind !== "error") return false;
@@ -86,6 +86,7 @@ export function reusableDrawItems(
     kind,
     ports: portsFor(type),
   }));
+  if (!request) return items;
   for (const [address, binding] of Object.entries(bindings)) {
     if (address === request.sourceNodeId) continue;
     if (
@@ -164,7 +165,7 @@ export function connectReusable(
 export function createReusableStep(
   config: ReusableDrawPackage,
   item: ReusableDrawItem,
-  request: FlowNodeCreationRequest,
+  request: FlowNodeCreationRequest | undefined,
   port: string,
   id: string,
 ) {
@@ -213,6 +214,7 @@ export function createReusableStep(
   let source = applyStateEdits(config.source, [
     { op: "set", address: collection.address, value: nextRecords },
   ]);
+  if (!request) return { configuration: { ...config, source }, address };
   const dependencies = config.bindings.dependencies;
   const sourceProperty = request.reverse ? port : request.sourceProperty;
   const targetProperty = request.reverse ? request.sourceProperty : port;
