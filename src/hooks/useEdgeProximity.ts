@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 
 /**
  * True while the pointer is within `threshold` px of one edge of `bounds`, or over any `inside`
- * element. Used to reveal hidden edge toolbars; resets when disabled or the pointer leaves the page.
+ * element. Used to reveal hidden edge toolbars; inactive when disabled or the pointer leaves the page.
  */
 export function useEdgeProximity({
   edge,
@@ -21,10 +21,6 @@ export function useEdgeProximity({
   const insideRef = useRef(inside);
   insideRef.current = inside;
   useEffect(() => {
-    if (!enabled) {
-      setNear(false);
-      return;
-    }
     const update = (event: PointerEvent) => {
       const rect = bounds.current?.getBoundingClientRect();
       if (!rect) return;
@@ -44,14 +40,14 @@ export function useEdgeProximity({
       setNear(over || within);
     };
     const leave = () => setNear(false);
-    document.addEventListener("pointermove", update);
-    document.addEventListener("pointerdown", update);
+    document.addEventListener("pointermove", update, true);
+    document.addEventListener("pointerdown", update, true);
     document.documentElement.addEventListener("pointerleave", leave);
     return () => {
-      document.removeEventListener("pointermove", update);
-      document.removeEventListener("pointerdown", update);
+      document.removeEventListener("pointermove", update, true);
+      document.removeEventListener("pointerdown", update, true);
       document.documentElement.removeEventListener("pointerleave", leave);
     };
-  }, [edge, enabled, bounds, threshold]);
-  return near;
+  }, [edge, bounds, threshold]);
+  return enabled && near;
 }
