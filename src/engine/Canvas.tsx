@@ -756,6 +756,7 @@ function Canvas(props: CanvasProps) {
       ids: Set<string>,
       padding = 50,
       animate = propsRef.current.animateViewport,
+      zoomScale = 1,
     ) => {
       const bounds = unionRects(
         [...ids].flatMap((id) => {
@@ -769,6 +770,7 @@ function Canvas(props: CanvasProps) {
           bounds,
           Number.isFinite(padding) ? Math.max(0, padding) : 50,
           animate,
+          zoomScale,
         );
       }
     };
@@ -817,7 +819,7 @@ function Canvas(props: CanvasProps) {
       pan,
       setEdgesVisible,
       focusNode: (id, padding, animate) =>
-        updateViewport(() => focus(new Set([id]), padding, animate)),
+        updateViewport(() => focus(new Set([id]), padding, animate, 0.6)),
       focusBranch: (id, padding, animate) =>
         updateViewport(() => focus(branchIds(id), padding, animate)),
       focusConnections: (id, padding, animate) =>

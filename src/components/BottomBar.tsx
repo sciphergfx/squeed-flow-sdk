@@ -336,12 +336,20 @@ const BottomBar = () => {
         pointerEvents={visible ? "auto" : "none"}
         visibility={visible ? "visible" : "hidden"}
         opacity={visible ? 1 : 0}
+        css={{
+          "@media (hover: none)": {
+            visibility: "visible",
+            opacity: 1,
+            transform: "none",
+            pointerEvents: "auto",
+          },
+        }}
       >
         <Flex
           w="100%"
           px={5}
           position="absolute"
-          bottom={5}
+          bottom="calc(20px + env(safe-area-inset-bottom, 0px))"
           flexDirection="row"
           justifyContent="space-between"
           alignItems="center"

@@ -118,15 +118,17 @@ export class Viewport {
   }
 
   /** cytoscape `cy.fit(eles, padding)` */
-  fit(bb: Rect, padding = 0, animate = false) {
+  fit(bb: Rect, padding = 0, animate = false, zoomScale = 1) {
     const w = bb.x2 - bb.x1;
     const h = bb.y2 - bb.y1;
     if (!(w > 0) || !(h > 0) || !this.size.w || !this.size.h) return;
     const zoom = this.clamp(
-      Math.min(
-        (this.size.w - 2 * padding) / w,
-        (this.size.h - 2 * padding) / h,
-      ),
+      this.clamp(
+        Math.min(
+          (this.size.w - 2 * padding) / w,
+          (this.size.h - 2 * padding) / h,
+        ),
+      ) * zoomScale,
     );
     this.transition(
       {
