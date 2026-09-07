@@ -29,6 +29,7 @@ import type { FlowDiagramCallbacks } from "../types";
 import { resolveStateForm, type StateForms } from "../utils/formState";
 import type { StructuredForms } from "../utils/structuredForms";
 import { StructuredFieldControls } from "./StructuredFieldControls";
+import { RuntimeBindingEditor } from "./RuntimeBindingEditor";
 
 export const FormDocumentContext = createContext<{
   setSchema?: (schema: FormSchema | undefined) => void;
@@ -39,6 +40,7 @@ export const FormDocumentContext = createContext<{
   schema?: FormSchema;
   renderForm?: StateForms["renderForm"];
   structured?: StructuredForms;
+  references?: StateForms["references"];
   callbacks: FlowDiagramCallbacks;
 }>({ callbacks: {} });
 
@@ -155,7 +157,7 @@ function Field({
   value: unknown;
   disabled: boolean;
 }) {
-  const { callbacks, structured: structuredForms } =
+  const { callbacks, structured: structuredForms, references } =
     useContext(FormDocumentContext);
   const { themeColor } = useFlowDiagramContext();
   const { background } = useCustomColors();
@@ -267,10 +269,11 @@ function Field({
   const required =
     !property.optional ||
     (!!config.$requiredWhen && conditionMatches(config.$requiredWhen, data));
+  const runtimeBound = !!references?.length && typeof value === "string" && value.includes("{{");
   const issue =
     failure ||
     (dynamic && remote?.key === optionKey && remote.error) ||
-    formValueError(property.type, value, required);
+    (!runtimeBound && formValueError(property.type, value, required));
   const label = startCase(config.$label ?? address.split(".").pop()!);
   const commit = (next: unknown) => {
     if (disabled || Object.is(next, value)) return;
@@ -367,7 +370,8 @@ function Field({
           </button>
         )}
       </div>
-      {control === "select" ? (
+      {!!references?.length && !structured && <RuntimeBindingEditor label={label} value={value} references={references} disabled={disabled} onChange={commit} />}
+      {runtimeBound ? null : control === "select" ? (
         <div data-form-select="">
           <select
             {...props}

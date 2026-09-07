@@ -512,6 +512,7 @@ function FlowDiagramContent({
         data: forms?.state ?? json,
         viewData: json,
         bindings: activeBindings,
+        references: forms?.references,
         structured,
         renderForm: forms?.renderForm,
         editable: forms

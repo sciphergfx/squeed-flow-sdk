@@ -1,12 +1,12 @@
+import type { FormSchema } from "../../src/core/forms";
 import {
-  getNode,
   addConnection,
+  getNode,
   setCollapsed,
   type SqueedJson,
 } from "../../src/core/squeedEdits";
-import { applyStateEdits, type StateForms } from "../../src/utils/formState";
-import type { FormSchema } from "../../src/core/forms";
 import type { FlowNodeCreationRequest } from "../../src/types";
+import { applyStateEdits, type StateForms } from "../../src/utils/formState";
 import type { DiagramBindings, DiagramDesign } from "./types";
 
 export interface ReusableDrawPackage {
@@ -61,16 +61,20 @@ export function reusableDrawItems(
     : undefined;
   const endpointType = request && bindings[request.sourceNodeId]?.type;
   const portsFor = (type: string) =>
-    !request ? [""] : Object.entries(schema[type]?.ports ?? {})
-      .filter(([, port]) => {
-        if (request.reverse) {
-          if (port.kind !== "output" && port.kind !== "error") return false;
-          return endpoint?.kind !== "config" || endpoint.resourceType === type;
-        }
-        if (port.kind === "input") return endpoint?.kind !== "config";
-        return port.kind === "config" && port.resourceType === endpointType;
-      })
-      .map(([name, port]) => `${port.kind}:${name}`);
+    !request
+      ? [""]
+      : Object.entries(schema[type]?.ports ?? {})
+          .filter(([, port]) => {
+            if (request.reverse) {
+              if (port.kind !== "output" && port.kind !== "error") return false;
+              return (
+                endpoint?.kind !== "config" || endpoint.resourceType === type
+              );
+            }
+            if (port.kind === "input") return endpoint?.kind !== "config";
+            return port.kind === "config" && port.resourceType === endpointType;
+          })
+          .map(([name, port]) => `${port.kind}:${name}`);
   const items: ReusableDrawItem[] = Object.entries(
     config?.bindings.collection.types ?? {},
   ).map(([kind, type]) => ({

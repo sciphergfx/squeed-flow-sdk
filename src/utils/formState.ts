@@ -18,6 +18,7 @@ export interface StateFormBinding {
 
 export interface StateForms {
   structured?: boolean;
+  references?: import("./runtimeBindings").RuntimeReference[];
   /** Controlled resource data. Replace immutably to update forms, summaries and view references. */
   state: SqueedJson;
   bindings: Record<string, StateFormBinding>;
