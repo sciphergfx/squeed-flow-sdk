@@ -15,6 +15,7 @@ import {
   PiCaretUp,
   PiCheck,
   PiHandGrabbing,
+  PiImage,
   PiLineVerticalThin,
   PiMagnifyingGlassPlus,
   PiMinus,
@@ -32,6 +33,7 @@ import { FlowType } from "../types";
 import { CompactPropertyLayoutToggle } from "./CompactPropertyLayoutToggle";
 import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
+import { LabeledToolbarToggle } from "./LabeledToolbarToggle";
 import {
   DEFAULT_PALETTE,
   EdgeTools,
@@ -84,6 +86,8 @@ const BottomBar = () => {
     setBackgroundSelected,
     direction,
     edgeMode,
+    allNodesIconLabel,
+    setAllNodesIconLabel,
     selectedNodeIds,
     setSelectedNodeIds,
     selectedEdgeId,
@@ -565,6 +569,12 @@ const BottomBar = () => {
                       aria-orientation="vertical"
                     />
                     <CompactPropertyLayoutToggle />
+                    <LabeledToolbarToggle
+                      label="All icon labels"
+                      checked={allNodesIconLabel}
+                      icon={<Icon as={PiImage} boxSize={5} />}
+                      onChange={setAllNodesIconLabel}
+                    />
 
                     {edgeMode !== "properties" && (
                       <>

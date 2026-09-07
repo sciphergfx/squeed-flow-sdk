@@ -214,7 +214,15 @@ export function projectStructuredForms(
       properties: {},
       ports: {
         ...(type.kind === "object" ? type.ports : {}),
-        ...(generated ? { resource: { kind: "output" as const } } : {}),
+        ...(generated
+          ? {
+              resource: {
+                label: "output",
+                ...(type.kind === "object" ? type.ports?.resource : {}),
+                kind: "output" as const,
+              },
+            }
+          : {}),
       },
     };
     const entries =
@@ -352,6 +360,7 @@ export function projectStructuredForms(
   };
   for (const node of baseNodes) {
     const binding = baseBindings[node.data.id];
+    if (binding?.portResources) continue;
     const schema = binding && baseSchema[binding.type];
     if (!binding || !schema || getNode(state, binding.address) === undefined)
       continue;
@@ -366,7 +375,12 @@ export function projectStructuredForms(
   }
   for (const edge of result.edges) {
     const binding = result.bindings[edge.data.source];
-    result.schema[binding.type].ports!.resource = { kind: "output" };
+    const ports = result.schema[binding.type].ports!;
+    ports.resource = {
+      ...ports.resource,
+      kind: "output",
+      label: ports.resource?.label ?? "output",
+    };
   }
   return result;
 }

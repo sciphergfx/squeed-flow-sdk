@@ -1,13 +1,19 @@
 import { expect, test } from "@playwright/test";
 
-test("V toggles draw mode without intercepting typing or paste", async ({ page }) => {
+test("V toggles draw mode without intercepting typing or paste", async ({
+  page,
+}) => {
   await page.goto("/?consumerControls=1");
   const canvas = page.locator(".flow-sdk-canvas");
   await expect(canvas).toBeVisible();
   await expect(canvas).not.toHaveClass(/flow-sdk-draw/);
   await page.keyboard.press("v");
   await expect(canvas).toHaveClass(/flow-sdk-draw/);
-  await page.evaluate(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "v", repeat: true })));
+  await page.evaluate(() =>
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "v", repeat: true }),
+    ),
+  );
   await expect(canvas).toHaveClass(/flow-sdk-draw/);
   await page.keyboard.press("v");
   await expect(canvas).not.toHaveClass(/flow-sdk-draw/);
@@ -37,6 +43,8 @@ for (const config of [{ readOnly: true }, { disableKeyboardShortcuts: true }]) {
     await page.waitForFunction(() => window.__flowTest?.engine);
     await page.evaluate((next) => window.__flowTest.configure(next), config);
     await page.keyboard.press("v");
-    await expect(page.locator(".flow-sdk-canvas")).not.toHaveClass(/flow-sdk-draw/);
+    await expect(page.locator(".flow-sdk-canvas")).not.toHaveClass(
+      /flow-sdk-draw/,
+    );
   });
 }

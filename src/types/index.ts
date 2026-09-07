@@ -456,7 +456,7 @@ export interface SqueedChangeInfo {
 export interface FlowDiagramProps {
   /** Show the loader while the host fetches data; initial compilation waits until false. */
   loading?: boolean;
-  /** Custom loading content. Defaults to an accessible status message. Also shown while new JSON is prepared. */
+  /** Custom loading content while fetching or preparing JSON. Set null to hide the overlay; aria-busy and the interaction lock remain active. */
   loader?: React.ReactNode;
   /** Title shown on the root node */
   title?: string;

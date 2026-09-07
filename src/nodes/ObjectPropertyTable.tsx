@@ -64,6 +64,7 @@ export function ObjectPropertyTable({
           labelOnly && labelSide === "right" ? "right" : "left";
         const label =
           inspectionPort?.label ??
+          declaration?.label ??
           (extraPort
             ? key.replace(/^(template|input|output|config|error):/, "")
             : key);

@@ -39,8 +39,7 @@ export function visibleLayoutGraph<
   compactPropertyLayout = false,
   isolatedIds?: ReadonlySet<string> | null,
 ) {
-  if (!compactPropertyLayout)
-    return { nodes, edges };
+  if (!compactPropertyLayout) return { nodes, edges };
   const visibleNodes = nodes.filter(
     (node) =>
       isNodeVisible(node.id, edges, mode) &&

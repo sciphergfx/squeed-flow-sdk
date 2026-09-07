@@ -78,6 +78,7 @@ const control = {
   document: initialDocument as SqueedJson,
   formState: initialState as SqueedJson,
   replaceDocument: (_document: SqueedJson) => {},
+  replaceForms: (_forms: StateForms | undefined) => {},
   configure: (_config: FlowDiagramConfig) => {},
   mount: (_mounted: boolean) => {},
   resizeNode: (_width: number) => {},
@@ -133,6 +134,7 @@ function Fixture() {
     [independent, document, formState],
   );
   const [edges, setEdges] = useState(() => structuredClone(initialEdges));
+  const [formsOverride, setFormsOverride] = useState<StateForms>();
   const [mounted, setMounted] = useState(true);
   const [config, setConfig] = useState<FlowDiagramConfig>({
     colorMode: "light",
@@ -162,6 +164,7 @@ function Fixture() {
   control.document = document;
   control.formState = formState;
   control.replaceDocument = setDocument;
+  control.replaceForms = setFormsOverride;
   control.configure = (next) =>
     setConfig((current) => ({ ...current, ...next }));
   control.mount = setMounted;
@@ -375,7 +378,7 @@ function Fixture() {
           <FlowDiagram
             {...(raw ? graph : { json: displayDocument })}
             forms={
-              independent
+              formsOverride ?? (independent
                 ? {
                     state: formState,
                     bindings: stateBindings as StateForms["bindings"],
@@ -384,7 +387,7 @@ function Fixture() {
                       record("form-state", change);
                     },
                   }
-                : undefined
+                : undefined)
             }
             config={config}
             callbacks={callbacks}

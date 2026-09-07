@@ -402,6 +402,10 @@ export function FlowDiagramProvider({
     () => ({
       allNodesIconLabel,
       setAllNodesIconLabel: (enabled) => {
+        if (!enabled)
+          for (const [id, mode] of Object.entries(nodeViewModes))
+            if (mode === "icon-label" && !dataValue.nodeById.has(id))
+              setNodeViewMode(id, "default");
         for (const node of iconLabelNodes) {
           if (
             dataValue.parentIds.has(node.data.id) ||

@@ -104,7 +104,7 @@ export function FlowDiagram({
           />
         )}
       </div>
-      {busy && (
+      {busy && loader !== null && (
         <Box
           data-flow-loader=""
           role="status"
@@ -146,6 +146,7 @@ function FlowDiagramContent({
   injectStyles();
   const [localFormSchema, setLocalFormSchema] =
     useState<import("../core/forms").FormSchema>();
+  const [allNodesIconLabel, setAllNodesIconLabel] = useState(false);
   const formSchema = config.formSchema ?? localFormSchema;
   const displayJson = useMemo(
     () => (json && forms ? resolveStateView(json, forms.state) : json),
@@ -173,7 +174,7 @@ function FlowDiagramContent({
 
   const structured = useMemo(
     () =>
-      forms?.structured && formSchema
+      forms?.structured && !allNodesIconLabel && formSchema
         ? projectStructuredForms(
             forms.state,
             forms.bindings,
@@ -183,6 +184,7 @@ function FlowDiagramContent({
         : undefined,
     [
       forms?.structured,
+      allNodesIconLabel,
       forms?.state,
       forms?.bindings,
       formSchema,
@@ -251,9 +253,14 @@ function FlowDiagramContent({
                   };
         for (const [name, port] of Object.entries(form.type.ports ?? {})) {
           const id = `${port.kind}:${name}`;
-          if (!ports.some((existing) => existing.id === id))
+          const existing = ports.find((candidate) => candidate.id === id);
+          if (existing) {
+            if (existing.label === undefined && port.label !== undefined)
+              existing.label = port.label;
+          } else
             ports.push({
               id,
+              ...(port.label !== undefined ? { label: port.label } : {}),
               role:
                 port.kind === "input" || port.kind === "config"
                   ? "target"
@@ -339,7 +346,13 @@ function FlowDiagramContent({
         };
       }
     }
-    return bound;
+    return {
+      ...bound,
+      onAllNodesIconLabelChange: (enabled: boolean) => {
+        setAllNodesIconLabel(enabled);
+        bound.onAllNodesIconLabelChange?.(enabled);
+      },
+    };
   }, [json, compiled, callbacks, formSchema, structured]);
   const boundCallbacks = useMemo(() => {
     if (!forms) return viewCallbacks;
