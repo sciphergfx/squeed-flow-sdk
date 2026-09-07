@@ -7,14 +7,14 @@ import {
   PiLineSegments,
   PiBezierCurve,
 } from "react-icons/pi";
-import { useId } from "react";
+import { forwardRef, useId, type ComponentProps, type CSSProperties } from "react";
 import styled from "@emotion/styled";
 import type { BackgroundVariant } from "../types";
 import { useCustomColors } from "../theme/useCustomColors";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
 import { ToolbarSelect, ToolbarDivider } from "./toolbarControls";
 
-export const RangeInput = styled.input`
+const StyledRangeInput = styled.input`
   appearance: none;
   width: 100%;
   height: 24px;
@@ -23,19 +23,23 @@ export const RangeInput = styled.input`
   border: 0;
   box-shadow: none;
   background-color: transparent;
-  background-size: 100% 6px;
+  background-size: 0 0;
   background-position: center;
   background-repeat: no-repeat;
   cursor: pointer;
   &::-webkit-slider-runnable-track {
     height: 6px;
-    background: transparent;
+    background: var(--flow-range-track, transparent);
+    background-size: 100% 100%;
+    border-radius: 999px;
     border: 0;
     box-shadow: none;
   }
   &::-moz-range-track {
     height: 6px;
-    background: transparent;
+    background: var(--flow-range-track, transparent);
+    background-size: 100% 100%;
+    border-radius: 999px;
     border: 0;
     box-shadow: none;
   }
@@ -62,6 +66,16 @@ export const RangeInput = styled.input`
     opacity: 0.5;
   }
 `;
+
+export const RangeInput = forwardRef<HTMLInputElement, ComponentProps<"input">>(function RangeInput({ style, ...props }, ref) {
+  return (
+    <StyledRangeInput
+      {...props}
+      ref={ref}
+      style={{ ...style, backgroundImage: "none", "--flow-range-track": style?.backgroundImage ?? "none" } as CSSProperties}
+    />
+  );
+});
 
 function SliderContent({
   label,
