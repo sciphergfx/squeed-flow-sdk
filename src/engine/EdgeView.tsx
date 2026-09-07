@@ -329,10 +329,12 @@ function EdgeView({
       : undefined;
 
   let labelEl: React.ReactNode = null;
-  const revealStyle = reveal ? {
-    "--flow-edge-reveal-duration": `${reveal.durationMs ?? 600}ms`,
-    "--flow-edge-reveal-state": reveal.paused ? "paused" : "running",
-  } as React.CSSProperties : undefined;
+  const revealStyle = reveal
+    ? ({
+        "--flow-edge-reveal-duration": `${reveal.durationMs ?? 600}ms`,
+        "--flow-edge-reveal-state": reveal.paused ? "paused" : "running",
+      } as React.CSSProperties)
+    : undefined;
   if (lines.length || icon) {
     const w = labelWidth;
     const h = labelHeight;
@@ -445,8 +447,25 @@ function EdgeView({
         onSelect?.(id);
       }}
     >
-      {reveal ? <EdgeReveal path={geo.d} width={EDGE_WIDTH * 4} reversed={inverted} onComplete={() => onRevealComplete?.(id)}>{stroke}</EdgeReveal> : stroke}
-      {geo.arrow && <path className={reveal ? "flow-sdk-edge-reveal-end" : undefined} d={geo.arrow} fill={displayColor} />}
+      {reveal ? (
+        <EdgeReveal
+          path={geo.d}
+          width={EDGE_WIDTH * 4}
+          reversed={inverted}
+          onComplete={() => onRevealComplete?.(id)}
+        >
+          {stroke}
+        </EdgeReveal>
+      ) : (
+        stroke
+      )}
+      {geo.arrow && (
+        <path
+          className={reveal ? "flow-sdk-edge-reveal-end" : undefined}
+          d={geo.arrow}
+          fill={displayColor}
+        />
+      )}
       {labelLayer && labelEl ? createPortal(labelEl, labelLayer) : labelEl}
       {labelLayer && validationEl
         ? createPortal(validationEl, labelLayer)

@@ -1307,7 +1307,11 @@ function Canvas(props: CanvasProps) {
 
   const taxiDir = TAXI_DIR[direction];
   const [labelLayer, setLabelLayer] = useState<SVGGElement | null>(null);
-  const edgeSequence = useEdgeRevealSequence(nodes, visibleEdges, !!props.edgeReveal?.revealNodes);
+  const edgeSequence = useEdgeRevealSequence(
+    nodes,
+    visibleEdges,
+    !!props.edgeReveal?.revealNodes,
+  );
   useLayoutEffect(() => {
     if (rootRef.current && labelLayer) placeEdgeLabels(rootRef.current);
   });
