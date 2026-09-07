@@ -203,6 +203,7 @@ export interface FlowDiagramConfig {
   bottomBarExtra?: React.ReactNode;
   /** Animate fit/center/focus actions for 300ms by default. Per-action flags override this; reduced motion stays instant. */
   animateViewport?: boolean;
+  edgeReveal?: { durationMs?: number; paused?: boolean; revealNodes?: boolean };
   formSchema?: import("../core/forms").FormSchema;
   spacing?: NodeSpacing;
   edgeRadius?: number;

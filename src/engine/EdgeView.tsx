@@ -14,6 +14,7 @@ import {
   NODE_LABEL_FONT_SIZE,
 } from "./edgeLabel";
 import { EdgeTraceAnimation } from "./EdgeTraceAnimation";
+import { EdgeReveal } from "./EdgeReveal";
 import {
   bezierGeometry,
   connectorEndpoints,
@@ -36,6 +37,8 @@ const TAXI_RADIUS = 500;
 export const DASH_PATTERN = "32 18";
 
 export interface EdgeViewProps {
+  reveal?: FlowDiagramConfig["edgeReveal"];
+  onRevealComplete?: (id: string) => void;
   validationIssue?: string;
   id: string;
   edgeData?: FlowDiagramEdge["data"];
@@ -72,6 +75,8 @@ const stop = (e: { stopPropagation(): void }) => e.stopPropagation();
 
 function EdgeView({
   id,
+  reveal,
+  onRevealComplete,
   edgeData,
   validationIssue,
   edgeType = "rounded-orthogonal",
@@ -324,12 +329,17 @@ function EdgeView({
       : undefined;
 
   let labelEl: React.ReactNode = null;
+  const revealStyle = reveal ? {
+    "--flow-edge-reveal-duration": `${reveal.durationMs ?? 600}ms`,
+    "--flow-edge-reveal-state": reveal.paused ? "paused" : "running",
+  } as React.CSSProperties : undefined;
   if (lines.length || icon) {
     const w = labelWidth;
     const h = labelHeight;
     labelEl = (
       <g
-        className="flow-sdk-edge-label"
+        className={`flow-sdk-edge-label${reveal ? " flow-sdk-edge-reveal-end" : ""}`}
+        style={revealStyle}
         data-label-transform={labelTransform}
         data-label-horizontal={horizontalLabel || undefined}
         data-edge-id={id}
@@ -392,26 +402,8 @@ function EdgeView({
     );
   }
 
-  return (
-    <g
-      className="flow-sdk-edge"
-      data-edge-id={id}
-      data-source-property={sourceProperty}
-      data-target-property={targetProperty}
-      data-validation={
-        validationIssue
-          ? validationIssue.startsWith("Unverified:")
-            ? "unverified"
-            : "invalid"
-          : undefined
-      }
-      aria-label={validationIssue}
-      onPointerDown={stop}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect?.(id);
-      }}
-    >
+  const stroke = (
+    <>
       <path
         d={geo.d}
         fill="none"
@@ -429,7 +421,32 @@ function EdgeView({
           reversed={inverted}
         />
       )}
-      {geo.arrow && <path d={geo.arrow} fill={displayColor} />}
+    </>
+  );
+
+  return (
+    <g
+      className="flow-sdk-edge"
+      style={revealStyle}
+      data-edge-id={id}
+      data-source-property={sourceProperty}
+      data-target-property={targetProperty}
+      data-validation={
+        validationIssue
+          ? validationIssue.startsWith("Unverified:")
+            ? "unverified"
+            : "invalid"
+          : undefined
+      }
+      aria-label={validationIssue}
+      onPointerDown={stop}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect?.(id);
+      }}
+    >
+      {reveal ? <EdgeReveal path={geo.d} width={EDGE_WIDTH * 4} reversed={inverted} onComplete={() => onRevealComplete?.(id)}>{stroke}</EdgeReveal> : stroke}
+      {geo.arrow && <path className={reveal ? "flow-sdk-edge-reveal-end" : undefined} d={geo.arrow} fill={displayColor} />}
       {labelLayer && labelEl ? createPortal(labelEl, labelLayer) : labelEl}
       {labelLayer && validationEl
         ? createPortal(validationEl, labelLayer)

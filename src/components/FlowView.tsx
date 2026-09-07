@@ -680,6 +680,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           edgeType={config.edgeType}
           edgeRadius={edgeRadius}
           customEdgeTypes={config.customEdgeTypes}
+          edgeReveal={config.edgeReveal}
           rankSep={rankSep}
           edgeSep={edgeSep}
           spacingFactor={spacingFactor}

@@ -27,6 +27,7 @@ import {
 } from "./edgeMetrics";
 import { isEdgeVisible, isNodeVisible, visibleLayoutGraph } from "./edgeMode";
 import EdgeView from "./EdgeView";
+import { useEdgeRevealSequence } from "./useEdgeRevealSequence";
 import type { TaxiDir } from "./geometry";
 import { placeEdgeLabels } from "./labelPlacement";
 import { computeContainers, runDagreLayout } from "./layout";
@@ -91,6 +92,7 @@ export interface CanvasProps {
   edgeType?: FlowDiagramConfig["edgeType"];
   edgeRadius?: number;
   customEdgeTypes?: FlowDiagramConfig["customEdgeTypes"];
+  edgeReveal?: FlowDiagramConfig["edgeReveal"];
   rankSep: number;
   edgeSep: number;
   spacingFactor?: number;
@@ -1305,6 +1307,7 @@ function Canvas(props: CanvasProps) {
 
   const taxiDir = TAXI_DIR[direction];
   const [labelLayer, setLabelLayer] = useState<SVGGElement | null>(null);
+  const edgeSequence = useEdgeRevealSequence(nodes, visibleEdges, !!props.edgeReveal?.revealNodes);
   useLayoutEffect(() => {
     if (rootRef.current && labelLayer) placeEdgeLabels(rootRef.current);
   });
@@ -1382,6 +1385,7 @@ function Canvas(props: CanvasProps) {
           <g className="flow-sdk-edges">
             {edgesVisible &&
               visibleEdges.map((e) => {
+                if (!edgeSequence.ready.has(e.id)) return null;
                 if (
                   isolatedIds &&
                   (!isolatedIds.has(e.source) || !isolatedIds.has(e.target))
@@ -1400,6 +1404,8 @@ function Canvas(props: CanvasProps) {
                     edgeRadius={props.edgeRadius}
                     propertyMode={propertyMode}
                     customEdgeTypes={props.customEdgeTypes}
+                    reveal={props.edgeReveal}
+                    onRevealComplete={edgeSequence.complete}
                     source={s}
                     target={t}
                     sourceProperty={e.sourceProperty}
@@ -1483,6 +1489,7 @@ function Canvas(props: CanvasProps) {
               y={y}
               placed={!!p || !!c}
               hidden={
+                !edgeSequence.shown.has(n.id) ||
                 !isNodeVisible(n.id, edges, edgeMode) ||
                 (!!isolatedIds && !isolatedIds.has(n.id))
               }

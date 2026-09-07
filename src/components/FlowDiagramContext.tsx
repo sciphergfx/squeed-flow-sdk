@@ -303,6 +303,9 @@ export function FlowDiagramProvider({
         get edgeType() {
           return configRef.current.edgeType;
         },
+        get edgeReveal() {
+          return configRef.current.edgeReveal;
+        },
         get customEdgeTypes() {
           return configRef.current.customEdgeTypes;
         },
@@ -497,6 +500,7 @@ export function FlowDiagramProvider({
       readOnly,
       config.edgeHandles,
       config.edgeType,
+      config.edgeReveal,
       config.customEdgeTypes,
       config.selectionToolbar,
       config.bottomBarExtra,
