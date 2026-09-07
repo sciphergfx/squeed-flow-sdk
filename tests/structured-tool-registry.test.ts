@@ -21,16 +21,30 @@ const schema: FormSchema = {
     },
   },
 };
-const state = { tools: { lookup: { name: "Lookup" }, search: { name: "Search" } } };
-const nodes = [{ data: { id: "root.tools", type: "arrayView", config: { labelBelow: true } } }];
+const state = {
+  tools: { lookup: { name: "Lookup" }, search: { name: "Search" } },
+};
+const nodes = [
+  {
+    data: { id: "root.tools", type: "arrayView", config: { labelBelow: true } },
+  },
+];
 
 test("structured forms preserve an explicitly grouped resource registry", () => {
   const binding = {
     address: "root",
     type: "Registry",
-    portResources: { "output:lookup": "root.tools.lookup", "output:search": "root.tools.search" },
+    portResources: {
+      "output:lookup": "root.tools.lookup",
+      "output:search": "root.tools.search",
+    },
   };
-  const projected = projectStructuredForms(state, { "root.tools": binding }, schema, nodes);
+  const projected = projectStructuredForms(
+    state,
+    { "root.tools": binding },
+    schema,
+    nodes,
+  );
   assert.deepEqual(projected.nodes, []);
   assert.deepEqual(projected.edges, []);
   assert.equal(projected.bindings["root.tools"], binding);
@@ -39,9 +53,14 @@ test("structured forms preserve an explicitly grouped resource registry", () => 
 });
 
 test("ordinary structured forms still expand nested objects", () => {
-  const projected = projectStructuredForms(state, {
-    "root.tools": { address: "root", type: "Registry" },
-  }, schema, nodes);
+  const projected = projectStructuredForms(
+    state,
+    {
+      "root.tools": { address: "root", type: "Registry" },
+    },
+    schema,
+    nodes,
+  );
   assert.ok(projected.nodes.length > 0);
   assert.ok(projected.edges.length > 0);
 });

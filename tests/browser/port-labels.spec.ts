@@ -2,7 +2,9 @@ import { expect, test } from "@playwright/test";
 import { ready } from "./helpers";
 
 for (const width of [1440, 390]) {
-  test(`generated TemplateData and schema output labels render at ${width}px`, async ({ page }) => {
+  test(`generated TemplateData and schema output labels render at ${width}px`, async ({
+    page,
+  }) => {
     await page.setViewportSize({ width, height: 900 });
     await ready(page, "graph=basic-json");
     await page.evaluate(() => {
@@ -11,7 +13,15 @@ for (const width of [1440, 390]) {
           Workflow: {
             kind: "object",
             properties: {
-              templateData: { optional: false, type: { kind: "object", properties: { message: { type: { kind: "string" }, optional: false } } } },
+              templateData: {
+                optional: false,
+                type: {
+                  kind: "object",
+                  properties: {
+                    message: { type: { kind: "string" }, optional: false },
+                  },
+                },
+              },
             },
             ports: { resource: { kind: "output", label: "Schema output" } },
           },
@@ -28,25 +38,42 @@ for (const width of [1440, 390]) {
       window.__flowTest.replaceForms({
         structured: true,
         state: { workflow: { templateData: { message: "Complete" } } },
-        bindings: { "root.workflow": { address: "root.workflow", type: "Workflow" } },
+        bindings: {
+          "root.workflow": { address: "root.workflow", type: "Workflow" },
+        },
       });
     });
-    const generated = page.locator('.flow-sdk-node[data-node-id^="root.__form_"]');
+    const generated = page.locator(
+      '.flow-sdk-node[data-node-id^="root.__form_"]',
+    );
     const owner = page.locator('.flow-sdk-node[data-node-id="root.workflow"]');
     await expect(generated).toHaveCount(1);
     for (const direction of ["LR", "RL", "TB", "BT"] as const) {
-      await page.evaluate((next) => window.__flowTest.configure({ direction: next }), direction);
-      await expect(generated.locator('[data-flow-property="output:resource"]:visible')).toHaveText("output");
-      await expect(owner.locator('[data-flow-property="output:resource"]:visible')).toHaveText("Schema output");
-      await expect(generated.getByText("Complete", { exact: true })).toBeVisible();
+      await page.evaluate(
+        (next) => window.__flowTest.configure({ direction: next }),
+        direction,
+      );
+      await expect(
+        generated.locator('[data-flow-property="output:resource"]:visible'),
+      ).toHaveText("output");
+      await expect(
+        owner.locator('[data-flow-property="output:resource"]:visible'),
+      ).toHaveText("Schema output");
+      await expect(
+        generated.getByText("Complete", { exact: true }),
+      ).toBeVisible();
     }
-    await page.screenshot({ path: test.info().outputPath("generated-output.png") });
+    await page.screenshot({
+      path: test.info().outputPath("generated-output.png"),
+    });
     await page.evaluate(() => {
       const next = structuredClone(window.__flowTest.document);
       next.workflow.$ports[0].label = "Explicit output";
       window.__flowTest.replaceDocument(next);
     });
-    await expect(owner.locator('[data-flow-property="output:resource"]:visible')).toHaveText("Explicit output");
+    await expect(
+      owner.locator('[data-flow-property="output:resource"]:visible'),
+    ).toHaveText("Explicit output");
   });
 
   test(`resource output labels preserve connector identifiers at ${width}px`, async ({

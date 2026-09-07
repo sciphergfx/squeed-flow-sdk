@@ -15,7 +15,10 @@ for (const bound of [false, true]) {
         ...(label ? { ports: { resource: { kind: "output", label } } } : {}),
       };
       const schema: FormSchema = {
-        Workflow: { kind: "object", properties: { templateData: { type: childType, optional: false } } },
+        Workflow: {
+          kind: "object",
+          properties: { templateData: { type: childType, optional: false } },
+        },
         TemplateData: childType,
       };
       const before = structuredClone(schema);
@@ -23,18 +26,30 @@ for (const bound of [false, true]) {
         { workflow: { templateData: { message: "Complete" } } },
         {
           "root.workflow": { address: "root.workflow", type: "Workflow" },
-          ...(bound ? { "root.templateData": { address: "root.workflow.templateData", type: "TemplateData" } } : {}),
+          ...(bound
+            ? {
+                "root.templateData": {
+                  address: "root.workflow.templateData",
+                  type: "TemplateData",
+                },
+              }
+            : {}),
         },
         schema,
         [
           { data: { id: "root.workflow", type: "objectView" } },
-          ...(bound ? [{ data: { id: "root.templateData", type: "objectView" } }] : []),
+          ...(bound
+            ? [{ data: { id: "root.templateData", type: "objectView" } }]
+            : []),
         ],
       );
       assert.equal(projection.edges.length, 1);
       const edge = projection.edges[0].data;
       const binding = projection.bindings[edge.source];
-      assert.deepEqual(projection.schema[binding.type].ports?.resource, { kind: "output", label: label ?? "output" });
+      assert.deepEqual(projection.schema[binding.type].ports?.resource, {
+        kind: "output",
+        label: label ?? "output",
+      });
       assert.equal(edge.sourceProperty, "output:resource");
       assert.deepEqual(schema, before);
     }

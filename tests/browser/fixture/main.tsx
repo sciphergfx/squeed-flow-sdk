@@ -378,7 +378,8 @@ function Fixture() {
           <FlowDiagram
             {...(raw ? graph : { json: displayDocument })}
             forms={
-              formsOverride ?? (independent
+              formsOverride ??
+              (independent
                 ? {
                     state: formState,
                     bindings: stateBindings as StateForms["bindings"],
@@ -403,8 +404,13 @@ function Fixture() {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    {new URLSearchParams(location.search).get("example") === "minimal-properties" ? (
-      <ChakraProvider value={defaultSystem}><MinimalExample /></ChakraProvider>
-    ) : <Fixture />}
+    {new URLSearchParams(location.search).get("example") ===
+    "minimal-properties" ? (
+      <ChakraProvider value={defaultSystem}>
+        <MinimalExample />
+      </ChakraProvider>
+    ) : (
+      <Fixture />
+    )}
   </StrictMode>,
 );
