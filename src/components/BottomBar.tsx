@@ -24,13 +24,13 @@ import {
   PiPushPinFill,
   PiSelectionPlus,
 } from "react-icons/pi";
-import { useCustomColors } from "../theme/useCustomColors";
-import { getInteractionSurface } from "../theme/interactionShadow";
 import { useEdgeProximity } from "../hooks/useEdgeProximity";
+import { getInteractionSurface } from "../theme/interactionShadow";
+import { useCustomColors } from "../theme/useCustomColors";
 import type { FlowDirection } from "../types";
 import { FlowType } from "../types";
-import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
 import { CompactPropertyLayoutToggle } from "./CompactPropertyLayoutToggle";
+import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
 import {
   DEFAULT_PALETTE,
@@ -107,13 +107,8 @@ const BottomBar = () => {
   const { nodeById, edgeById, parentIds } = useFlowData();
 
   const isDark = config.colorMode === "dark";
-  const {
-    background,
-    border,
-    colorInactive,
-    colorText,
-    colorActive,
-  } = useCustomColors();
+  const { background, border, colorInactive, colorText, colorActive } =
+    useCustomColors();
   const surfaceColor = `var(--chakra-colors-${background.replace(".", "-")})`;
   const borderColor = `var(--chakra-colors-${(isDark ? border : "gray.300").replace(".", "-")})`;
   const [showDirectionMenu, setShowDirectionMenu] = useState(false);

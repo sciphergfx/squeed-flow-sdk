@@ -2,13 +2,13 @@
 
 // Main component
 export { default as BottomBar } from "./components/BottomBar";
+export { CompactPropertyLayoutToggle } from "./components/CompactPropertyLayoutToggle";
+export { ConnectionsOnlyToggle } from "./components/ConnectionsOnlyToggle";
+export type { ConnectionsOnlyToggleProps } from "./components/ConnectionsOnlyToggle";
 export {
   DiagramAppearanceControls,
   RangeInput as ToolbarRangeInput,
 } from "./components/DiagramAppearanceControls";
-export { ConnectionsOnlyToggle } from "./components/ConnectionsOnlyToggle";
-export { CompactPropertyLayoutToggle } from "./components/CompactPropertyLayoutToggle";
-export type { ConnectionsOnlyToggleProps } from "./components/ConnectionsOnlyToggle";
 export { ErrorToast } from "./components/ErrorToast";
 export { FlowDiagram } from "./components/FlowDiagram";
 export {
@@ -18,12 +18,9 @@ export {
 } from "./components/FlowDiagramContext";
 export type { FlowDiagramContextValue } from "./components/FlowDiagramContext";
 export { FlowPort } from "./components/FlowPort";
-export { useNodeViewActions } from "./hooks/useNodeViewActions";
 export type { FlowPortProps } from "./components/FlowPort";
 export { default as FlowView } from "./components/FlowView";
 export { NodeFormPopover } from "./components/NodeFormPopover";
-export { NODE_TYPE_VIEWS } from "./types";
-export type { NodeTypeView } from "./types";
 export { NodeIconPicker } from "./components/NodeIconPicker";
 export {
   DEFAULT_PALETTE,
@@ -46,15 +43,12 @@ export { ToolbarScrollContainer } from "./components/ToolbarScrollContainer";
 export { default as TooltipIconButton } from "./components/TooltipIconButton";
 export { WorkflowControls } from "./components/WorkflowControls";
 export { createFormNode } from "./core/createFormNode";
-export { createJsonStream, createJsonPlayback } from "./core/jsonStream";
-export { projectJsonPlaybackPreview } from "./core/jsonPlaybackPreview";
-export type { JsonStreamOptions, JsonPlaybackState } from "./core/jsonStream";
-export { applyFormChange, formValueError, readFormSchema } from "./core/forms";
 export {
   createFlowDocumentActions,
   parseFlowDocument,
 } from "./core/documentActions";
 export type { FlowDocumentActionOptions } from "./core/documentActions";
+export { applyFormChange, formValueError, readFormSchema } from "./core/forms";
 export type {
   FormBinding,
   FormChange,
@@ -68,11 +62,17 @@ export type {
   FormSchema,
   FormValue,
 } from "./core/forms";
+export { projectJsonPlaybackPreview } from "./core/jsonPlaybackPreview";
+export { createJsonPlayback, createJsonStream } from "./core/jsonStream";
+export type { JsonPlaybackState, JsonStreamOptions } from "./core/jsonStream";
 export { parseTypeScriptForm } from "./core/workflowContract";
+export { useNodeViewActions } from "./hooks/useNodeViewActions";
 export { NodeConfigSummary } from "./nodes/NodeConfigSummary";
 export { FormDocumentContext, NodeForm } from "./nodes/NodeForm";
+export { NODE_TYPE_VIEWS } from "./types";
+export type { NodeTypeView } from "./types";
 export { downloadSvg, exportSvg } from "./utils/exportSvg";
-export { resolveStateView, applyStateEdits } from "./utils/formState";
+export { applyStateEdits, resolveStateView } from "./utils/formState";
 export type { StateFormBinding, StateForms } from "./utils/formState";
 
 // Core diagram generation
@@ -113,15 +113,15 @@ export {
   getColorVariant,
   getDarkerHexColor,
 } from "./theme/colorUtils";
+export { getInteractionSurface } from "./theme/interactionShadow";
 export {
   useCustomColors,
   useThemeContentColors,
 } from "./theme/useCustomColors";
-export { getInteractionSurface } from "./theme/interactionShadow";
 
 // Hooks (for consumers building custom editable node content)
-export { useStopPropagation } from "./hooks/useStopPropagation";
 export { useEdgeProximity } from "./hooks/useEdgeProximity";
+export { useStopPropagation } from "./hooks/useStopPropagation";
 export { EditableLabel } from "./nodes/EditableLabel";
 export { default as NodeView } from "./nodes/NodeView";
 
@@ -148,9 +148,9 @@ export type {
   CustomEdgeContext,
   CustomEdgeFactory,
   CustomEdgeGeometry,
+  EdgeAnimationVariant,
   EdgeMode,
   FlowDiagramCallbacks,
-  FlowNodeCreationRequest,
   FlowDiagramConfig,
   FlowDiagramEdge,
   FlowDiagramNode,
@@ -158,10 +158,10 @@ export type {
   FlowDirection,
   FlowEdgeProperties,
   FlowEngine,
+  FlowNodeCreationRequest,
   LayoutAlgorithm,
   NodeAlignment,
   NodeAnimationVariant,
-  EdgeAnimationVariant,
   NodeOverlayAction,
   NodeOverlayProps,
   NodeSelectionModifiers,
