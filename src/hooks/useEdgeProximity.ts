@@ -27,11 +27,16 @@ export function useEdgeProximity({
       const overlays = document.querySelectorAll<HTMLElement>(
         ':popover-open, dialog[open], [role="dialog"], [role="menu"], [role="listbox"]',
       );
-      setOverlayOpen(Array.from(overlays).some((element) =>
-        element.getClientRects().length > 0 &&
-        !element.closest('[hidden], [aria-hidden="true"], [data-state="closed"]') &&
-        getComputedStyle(element).visibility === "visible",
-      ));
+      setOverlayOpen(
+        Array.from(overlays).some(
+          (element) =>
+            element.getClientRects().length > 0 &&
+            !element.closest(
+              '[hidden], [aria-hidden="true"], [data-state="closed"]',
+            ) &&
+            getComputedStyle(element).visibility === "visible",
+        ),
+      );
     };
     const observer = new MutationObserver(update);
     observer.observe(document.body, {
