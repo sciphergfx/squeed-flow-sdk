@@ -28,8 +28,8 @@ import { useCustomColors } from "../theme/useCustomColors";
 import type { FlowDiagramCallbacks } from "../types";
 import { resolveStateForm, type StateForms } from "../utils/formState";
 import type { StructuredForms } from "../utils/structuredForms";
-import { StructuredFieldControls } from "./StructuredFieldControls";
 import { RuntimeBindingEditor } from "./RuntimeBindingEditor";
+import { StructuredFieldControls } from "./StructuredFieldControls";
 
 export const FormDocumentContext = createContext<{
   setSchema?: (schema: FormSchema | undefined) => void;
@@ -157,8 +157,11 @@ function Field({
   value: unknown;
   disabled: boolean;
 }) {
-  const { callbacks, structured: structuredForms, references } =
-    useContext(FormDocumentContext);
+  const {
+    callbacks,
+    structured: structuredForms,
+    references,
+  } = useContext(FormDocumentContext);
   const { themeColor } = useFlowDiagramContext();
   const { background } = useCustomColors();
   const id = useId();
@@ -269,7 +272,8 @@ function Field({
   const required =
     !property.optional ||
     (!!config.$requiredWhen && conditionMatches(config.$requiredWhen, data));
-  const runtimeBound = !!references?.length && typeof value === "string" && value.includes("{{");
+  const runtimeBound =
+    !!references?.length && typeof value === "string" && value.includes("{{");
   const issue =
     failure ||
     (dynamic && remote?.key === optionKey && remote.error) ||
@@ -370,7 +374,15 @@ function Field({
           </button>
         )}
       </div>
-      {!!references?.length && !structured && <RuntimeBindingEditor label={label} value={value} references={references} disabled={disabled} onChange={commit} />}
+      {!!references?.length && !structured && (
+        <RuntimeBindingEditor
+          label={label}
+          value={value}
+          references={references}
+          disabled={disabled}
+          onChange={commit}
+        />
+      )}
       {runtimeBound ? null : control === "select" ? (
         <div data-form-select="">
           <select
