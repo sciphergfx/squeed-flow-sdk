@@ -838,12 +838,12 @@ function Canvas(props: CanvasProps) {
         isolate(id, "connections", padding, animate),
       isolateBranch: (id, padding, animate) =>
         isolate(id, "branch", padding, animate),
-      restoreView: (animate = propsRef.current.animateViewport) => {
+      restoreView: (animate = propsRef.current.animateViewport, state) => {
         const needsLayout =
           propsRef.current.compactPropertyLayout && !!isolatedIdsRef.current;
         isolatedIdsRef.current = null;
         setIsolation(null);
-        const previous = savedViewport.current;
+        const previous = state ?? savedViewport.current;
         savedViewport.current = null;
         if (needsLayout)
           pendingLayoutAction.current = () => {
