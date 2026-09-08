@@ -144,7 +144,7 @@ export function ToolbarSelect({
     const verticalAnchor = toolbar ?? anchor;
     panel.style.maxHeight = `${Math.max(60, Math.max(verticalAnchor.top - 40, window.innerHeight - verticalAnchor.bottom - 40))}px`;
     const bounds = panel.getBoundingClientRect();
-    panel.style.left = `${Math.max(12, Math.min(anchor.right - bounds.width, window.innerWidth - bounds.width - 12))}px`;
+    panel.style.left = `${Math.max(12, Math.min(Math.max(toolbar?.left ?? 12, anchor.right - bounds.width), (toolbar?.right ?? window.innerWidth - 12) - bounds.width, window.innerWidth - bounds.width - 12))}px`;
     panel.style.top = `${Math.max(12, verticalAnchor.top >= bounds.height + 36 ? verticalAnchor.top - bounds.height - 24 : Math.min(verticalAnchor.bottom + 24, window.innerHeight - bounds.height - 12))}px`;
   };
   const show = () => {

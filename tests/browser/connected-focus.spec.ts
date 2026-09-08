@@ -20,7 +20,7 @@ test("selecting the same connected group preserves the viewport", async ({
   await page.waitForFunction(() =>
     window.__flowTest.events.some((event) => event.name === "layout-complete"),
   );
-    const viewport = await page.evaluate(async () => {
+  const viewport = await page.evaluate(() => {
     const engine = window.__flowTest.engine!;
     engine.zoom(0.75);
     engine.pan({ x: 23, y: 41 });
