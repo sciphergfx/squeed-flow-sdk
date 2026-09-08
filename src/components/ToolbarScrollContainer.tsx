@@ -28,9 +28,21 @@ export function ToolbarScrollContainer({
       );
     };
     const onWheel = (event: WheelEvent) => {
-      if (event.defaultPrevented || event.ctrlKey || event.deltaX !== 0 || !event.deltaY || element.scrollWidth <= element.clientWidth) return;
+      if (
+        event.defaultPrevented ||
+        event.ctrlKey ||
+        event.deltaX !== 0 ||
+        !event.deltaY ||
+        element.scrollWidth <= element.clientWidth
+      )
+        return;
       event.preventDefault();
-      const unit = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? element.clientWidth : 1;
+      const unit =
+        event.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? 16
+          : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? element.clientWidth
+            : 1;
       element.scrollLeft += event.deltaY * unit;
     };
     const observer = new ResizeObserver(update);
