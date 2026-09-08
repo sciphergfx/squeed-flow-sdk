@@ -369,6 +369,7 @@ const BottomBar = () => {
           justifyContent="space-between"
           alignItems="center"
           gap="24px"
+          css={{ "@media (min-width: 1024px)": { "& > :first-of-type": { maxWidth: "50vw" } } }}
         >
           <ToolbarScrollContainer
             background={background}

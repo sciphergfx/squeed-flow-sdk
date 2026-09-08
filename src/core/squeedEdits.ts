@@ -437,10 +437,17 @@ export function compileSqueed(
       if (owner.kind === "hierarchy") {
         centerSides.set(canonicalAddress(owner.address), !!data.isInverted);
       } else if (!Array.isArray(json) && json.$hideRoot === true) {
-        const target = canonicalAddress(data.isInverted ? data.source : data.target);
+        const target = canonicalAddress(
+          data.isInverted ? data.source : data.target,
+        );
         if (addressToPath(target).length !== 1) continue;
         const side = !!data.isInverted;
-        incomingSides.set(target, incomingSides.has(target) && incomingSides.get(target) !== side ? null : side);
+        incomingSides.set(
+          target,
+          incomingSides.has(target) && incomingSides.get(target) !== side
+            ? null
+            : side,
+        );
       }
     }
     for (const [address] of centerSides) {
@@ -536,7 +543,11 @@ export function compileSqueed(
     let isInverted = e.data.isInverted;
     const originalOwner = resolveEdgeOwner(e.data);
     const side = centerSides.get(canonicalAddress(originalOwner.address));
-    if (originalOwner.kind === "hierarchy" && side !== undefined && side !== !!isInverted) {
+    if (
+      originalOwner.kind === "hierarchy" &&
+      side !== undefined &&
+      side !== !!isInverted
+    ) {
       [source, target] = [target, source];
       isInverted = side;
     }

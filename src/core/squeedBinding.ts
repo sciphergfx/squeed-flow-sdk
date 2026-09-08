@@ -1,4 +1,8 @@
-import { NODE_TYPE_VIEWS, type FlowDiagramCallbacks, type FlowDiagramEdge } from "../types";
+import {
+  NODE_TYPE_VIEWS,
+  type FlowDiagramCallbacks,
+  type FlowDiagramEdge,
+} from "../types";
 import { createFormNode } from "./createFormNode";
 import type { FormSchema } from "./forms";
 import { applyFormChange } from "./forms";
@@ -237,7 +241,9 @@ export function bindSqueedCallbacks(
       const parentNode = getNode(json, parent);
       // set mode → object child, array mode → array child; the compiler labels them by key
       const key = uniqueKey(parentNode, params.isArrayMode ? "list" : "node");
-      const child = params.isArrayMode ? { $bgColor: "gray.500", $: [] } : { $bgColor: "gray.500" };
+      const child = params.isArrayMode
+        ? { $bgColor: "gray.500", $: [] }
+        : { $bgColor: "gray.500" };
       const res = addChild(json, parent, child, key);
       emit(res.json, {
         type: "nodeCreate",
