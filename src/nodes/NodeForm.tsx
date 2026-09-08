@@ -272,6 +272,7 @@ function Field({
   const required =
     !property.optional ||
     (!!config.$requiredWhen && conditionMatches(config.$requiredWhen, data));
+  const placeholder = required ? "Required" : "Optional";
   const runtimeBound =
     !!references?.length && typeof value === "string" && value.includes("{{");
   const issue =
@@ -398,7 +399,7 @@ function Field({
             }}
           >
             <option value={-1} disabled>
-              {value !== undefined ? String(value) : ""}
+              {value !== undefined && value !== "" ? String(value) : placeholder}
             </option>
             {options?.map((option, index) => (
               <option
@@ -460,6 +461,7 @@ function Field({
       ) : control === "textarea" ? (
         <textarea
           {...props}
+          placeholder={placeholder}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           onBlur={commitDraft}
@@ -467,6 +469,7 @@ function Field({
       ) : (
         <input
           {...props}
+          placeholder={placeholder}
           type={
             property.type.kind === "number" || property.type.kind === "integer"
               ? "number"

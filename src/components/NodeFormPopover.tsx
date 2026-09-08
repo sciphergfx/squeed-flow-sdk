@@ -8,9 +8,21 @@ import { getInteractionSurface } from "../theme/interactionShadow";
 import { useCustomColors } from "../theme/useCustomColors";
 import { resolveStateForm } from "../utils/formState";
 import { ToolbarCloseButton } from "./toolbarControls";
+import { useFlowDiagramContext } from "./FlowDiagramContext";
 
 const FormDialog = styled.dialog<{ $surface: string; $border: string }>`
   ${(props) => getInteractionSurface(props.$surface, props.$border)}
+  &,
+  &:hover {
+    box-shadow: none !important;
+    animation: none !important;
+    border-color: transparent;
+  }
+  @media (hover: hover) {
+    &:has(:hover) {
+      border-color: ${(props) => props.$border};
+    }
+  }
   &[open] {
     display: flex;
     flex-direction: column;
@@ -25,8 +37,35 @@ const FormDialog = styled.dialog<{ $surface: string; $border: string }>`
   }
 `;
 
-const FormContent = styled.div`
+const FormContent = styled.div<{ $divider: string }>`
   min-height: 0;
+  container-type: inline-size;
+  @container (min-width: 520px) {
+    & [data-flow-form] {
+      position: relative;
+    }
+    & [data-flow-form]::after {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 50%;
+      width: 1px;
+      background: ${(props) => props.$divider};
+      pointer-events: none;
+    }
+    & [data-flow-form],
+    & [data-flow-form] > details {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 16px;
+    }
+    & [data-flow-form] > :not([data-form-field]),
+    & [data-flow-form] > details > summary {
+      grid-column: 1 / -1;
+    }
+    & [data-flow-form] > details:not([open]) > :not(summary) {
+      display: none;
+    }
+  }
   overflow: auto;
   padding: 32px 0;
   mask-image: linear-gradient(
@@ -65,6 +104,7 @@ export function NodeFormPopover({
   height?: number;
 }) {
   const { background, border, colorText } = useCustomColors();
+  const { colorMode } = useFlowDiagramContext();
   const dialog = useRef<HTMLDialogElement>(null);
   const id = useId();
   const { data, schema, bindings } = useContext(FormDocumentContext);
@@ -108,12 +148,14 @@ export function NodeFormPopover({
               if (event.target === event.currentTarget) dialog.current?.close();
             }}
             style={{
-              margin: "auto",
+              position: "fixed",
+              inset: "94px 20px auto auto",
+              margin: 0,
               padding: 20,
-              width: 380,
+              width: "var(--top-toolbar-width, 360px)",
               boxSizing: "border-box",
-              maxWidth: "calc(100vw - 32px)",
-              maxHeight: "calc(100dvh - 32px)",
+              maxWidth: "calc(100vw - 40px)",
+              maxHeight: "calc(100dvh - 114px)",
               height,
               overflow: "hidden",
               borderRadius: 30,
@@ -154,6 +196,7 @@ export function NodeFormPopover({
                   </div>
                 )}
                 <FormContent
+                  $divider={`var(--chakra-colors-gray-${colorMode === "dark" ? "700" : "200"})`}
                   data-form-scroll=""
                   style={height ? { flex: 1 } : undefined}
                 >

@@ -219,10 +219,11 @@ export function StructuredFieldControls({
           }}
         >
           {dictionary && (
-            <label style={{ flex: "1 1 120px", minWidth: 0 }}>
+            <label style={{ flex: "1 1 120px", minWidth: 0, display: "grid", gap: 8 }}>
               Property name
               <input
                 aria-label="Property name"
+                placeholder="Required"
                 value={key}
                 disabled={disabled}
                 onChange={(event) => setKey(event.target.value)}
@@ -230,7 +231,7 @@ export function StructuredFieldControls({
             </label>
           )}
           {entryOptions.length > 1 && (
-            <label style={{ flex: "1 1 100px" }}>
+            <label style={{ flex: "1 1 100px", minWidth: 0, display: "grid", gap: 8 }}>
               New value type
               <span data-form-select="" style={{ display: "block" }}>
                 <select
