@@ -201,6 +201,7 @@ export interface BottomBarRenderProps {
 /** Configuration for the flow diagram appearance and behavior */
 export interface FlowDiagramConfig {
   bottomBarExtra?: React.ReactNode;
+  bottomBarCollapsed?: boolean;
   /** Animate fit/center/focus actions for 300ms by default. Per-action flags override this; reduced motion stays instant. */
   animateViewport?: boolean;
   edgeReveal?: { durationMs?: number; paused?: boolean; revealNodes?: boolean };
@@ -318,6 +319,7 @@ export interface FlowDiagramCallbacks {
     modifiers?: NodeSelectionModifiers,
   ) => void;
   onBackgroundClick?: () => void;
+  onBottomBarCollapsedChange?: (collapsed: boolean) => void;
   /** Fires when selection is cleared */
   onNodeDeselect?: () => void;
   /** Fires on double-click of a node */

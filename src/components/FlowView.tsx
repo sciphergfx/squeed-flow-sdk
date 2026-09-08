@@ -52,6 +52,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     spacing,
     edgeRadius,
     backgroundVariant,
+    backgroundSelected,
     setBackgroundSelected,
     edgeColor,
     direction,
@@ -589,7 +590,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
   // Tap on empty canvas clears node and edge selection
   const handleBackgroundTap = useCallback(() => {
-    setBackgroundSelected(true);
+    setBackgroundSelected(config.bottomBarCollapsed ?? (selectedNodeIdsRef.current.length > 0 || !!selectedEdgeIdRef.current || !backgroundSelected));
     callbacks.onBackgroundClick?.();
     if (selectedNodeIdsRef.current.length) {
       setSelectedNodeIds([]);
@@ -599,7 +600,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       setSelectedEdgeId(null);
       callbacks.onEdgeDeselect?.();
     }
-  }, [callbacks, setSelectedNodeIds, setSelectedEdgeId, setBackgroundSelected]);
+  }, [callbacks, setSelectedNodeIds, setSelectedEdgeId, setBackgroundSelected, backgroundSelected, config.bottomBarCollapsed]);
 
   const handleBoxSelect = useCallback(
     (ids: string[]) => {

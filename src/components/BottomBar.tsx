@@ -124,7 +124,8 @@ const BottomBar = () => {
   const surfaceColor = `var(--chakra-colors-${background.replace(".", "-")})`;
   const borderColor = `var(--chakra-colors-${(isDark ? border : "gray.300").replace(".", "-")})`;
   const [showDirectionMenu, setShowDirectionMenu] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [localCollapsed, setLocalCollapsed] = useState(true);
+  const isCollapsed = config.bottomBarCollapsed ?? localCollapsed;
   const bar = useRef<HTMLDivElement>(null);
   const nearBottom = useEdgeProximity({
     edge: "bottom",
@@ -204,14 +205,14 @@ const BottomBar = () => {
   const selectionActive = edgeToolsActive || nodeToolsActive;
 
   const visible =
-    isPinned || nearBottom || showDirectionMenu || selectionActive;
+    isPinned || nearBottom || showDirectionMenu || selectionActive || config.bottomBarCollapsed === false;
 
   useEffect(() => {
     if (selectedNodeIds.length || selectedEdgeId) {
       setBackgroundSelected(false);
-    } else if (backgroundSelected && !readOnly) {
-      setIsPinned(true);
-      setIsCollapsed(false);
+    } else if (!readOnly) {
+      if (backgroundSelected) setIsPinned(true);
+      if (config.bottomBarCollapsed === undefined) setLocalCollapsed(!backgroundSelected);
     }
   }, [
     backgroundSelected,
@@ -220,6 +221,7 @@ const BottomBar = () => {
     readOnly,
     setBackgroundSelected,
     setIsPinned,
+    config.bottomBarCollapsed,
   ]);
 
   const customRenderBottomBar = config.renderBottomBar;
@@ -686,7 +688,11 @@ const BottomBar = () => {
                     size="sm"
                     variant="ghost"
                     color={colorInactive}
-                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    onClick={() => {
+                      if (config.bottomBarCollapsed === undefined) setLocalCollapsed(!isCollapsed);
+                      setBackgroundSelected(isCollapsed);
+                      callbacks.onBottomBarCollapsedChange?.(!isCollapsed);
+                    }}
                   />
                 </ToolbarTooltip>
                 {!isCollapsed && <SvgExportButton />}

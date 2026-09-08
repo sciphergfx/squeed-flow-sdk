@@ -204,6 +204,7 @@ export function FlowDiagramProvider({
       // Node events
       onNodeSelect: wrap("onNodeSelect"),
       onBackgroundClick: wrap("onBackgroundClick"),
+      onBottomBarCollapsedChange: wrap("onBottomBarCollapsedChange"),
       onNodeDeselect: wrap("onNodeDeselect"),
       onNodeDoubleClick: wrap("onNodeDoubleClick"),
       onNodeViewToggle: wrap("onNodeViewToggle"),
@@ -301,6 +302,9 @@ export function FlowDiagramProvider({
         },
         get compactPropertyLayout() {
           return configRef.current.compactPropertyLayout;
+        },
+        get bottomBarCollapsed() {
+          return configRef.current.bottomBarCollapsed;
         },
         get edgeType() {
           return configRef.current.edgeType;
@@ -522,6 +526,7 @@ export function FlowDiagramProvider({
       config.customEdgeTypes,
       config.selectionToolbar,
       config.bottomBarExtra,
+      config.bottomBarCollapsed,
       config.compactPropertyLayout,
       compactPropertyLayout,
       stableCallbacks,
