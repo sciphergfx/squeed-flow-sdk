@@ -6,9 +6,9 @@ import {
   PiArrowDown,
   PiArrowLeft,
   PiArrowRight,
-  PiArrowUp,
   PiArrowsInLineVertical,
   PiArrowsOutCardinal,
+  PiArrowUp,
   PiBracketsCurly,
   PiBracketsSquare,
   PiCaretLeft,
@@ -41,7 +41,11 @@ import {
   Swatches,
 } from "./SelectionToolbar";
 import { SvgExportButton } from "./SvgExportButton";
-import { menuItemCorners, ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
+import {
+  menuItemCorners,
+  ToolbarIconButton,
+  ToolbarTooltip,
+} from "./toolbarControls";
 import { ToolbarScrollContainer } from "./ToolbarScrollContainer";
 import { WorkflowControls } from "./WorkflowControls";
 
