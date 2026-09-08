@@ -81,6 +81,7 @@ const control = {
   replaceForms: (_forms: StateForms | undefined) => {},
   configure: (_config: FlowDiagramConfig) => {},
   uploadFormFile: undefined as FlowDiagramCallbacks["uploadFormFile"],
+  resolveFormOptions: undefined as FlowDiagramCallbacks["resolveFormOptions"],
   mount: (_mounted: boolean) => {},
   resizeNode: (_width: number) => {},
   replaceGraph: (_graph: {
@@ -195,6 +196,9 @@ function Fixture() {
           onFormChange: onExampleFormChange,
           resolveFormOptions: resolveExampleOptions,
         }
+      : {}),
+    ...(control.resolveFormOptions
+      ? { resolveFormOptions: control.resolveFormOptions }
       : {}),
     onInit: (engine) => {
       control.engine = engine;

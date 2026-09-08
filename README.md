@@ -484,7 +484,10 @@ const formSchema = {
     kind: "object",
     properties: {
       cover: { type: { kind: "string" }, optional: true },
-      files: { type: { kind: "array", items: { kind: "string" } }, optional: true },
+      files: {
+        type: { kind: "array", items: { kind: "string" } },
+        optional: true,
+      },
     },
   },
 } satisfies FormSchema;
@@ -499,7 +502,10 @@ const formSchema = {
         address: "root.record",
         type: "Attachments",
         fields: {
-          cover: { $control: "upload", $upload: { accept: "image/*", maxSizeBytes: 5_000_000 } },
+          cover: {
+            $control: "upload",
+            $upload: { accept: "image/*", maxSizeBytes: 5_000_000 },
+          },
           files: { $control: "upload", $upload: { accept: "image/*,.pdf" } },
         },
       },
@@ -510,7 +516,7 @@ const formSchema = {
     uploadFormFile: ({ file, address, nodeAddress, data, signal }) =>
       uploadToStorage(file, { address, nodeAddress, data, signal }),
   }}
-/>
+/>;
 ```
 
 `uploadToStorage` is your host's uploader, not an SDK service. The callback
@@ -532,6 +538,7 @@ changes form data only; it does not delete the server file. File type/size check
 are optional client checks and must also be enforced by the host/server.
 
 ### Compose Your Own Controls
+
 All reusable control components are exported from `@squeed/flow-sdk` through
 [src/index.ts](src/index.ts). Hide the default toolbar with `showBottomBar={false}`
 and mount your controls as children to share the diagram and form providers:

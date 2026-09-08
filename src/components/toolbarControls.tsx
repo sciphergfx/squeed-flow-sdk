@@ -88,6 +88,7 @@ export function ToolbarSelect({
   popupContent,
   labelCase = "title",
   "aria-label": label,
+  ...triggerProps
 }: {
   children: ReactNode;
   value: string;
@@ -99,7 +100,10 @@ export function ToolbarSelect({
   popupContent?: ReactNode;
   labelCase?: "title" | "preserve";
   "aria-label": string;
-}) {
+} & Pick<
+  React.ComponentProps<"button">,
+  "id" | "aria-required" | "aria-invalid" | "aria-describedby"
+>) {
   const { colorMode } = useFlowDiagramContext();
   const { background, border, colorText, colorActive, colorInactive } =
     useCustomColors();
@@ -183,6 +187,7 @@ export function ToolbarSelect({
     <>
       <ToolbarTooltip label={title ?? label}>
         <chakra.button
+          {...triggerProps}
           ref={trigger}
           type="button"
           role="combobox"

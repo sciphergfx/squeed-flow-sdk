@@ -17,7 +17,7 @@ import {
   PiUploadSimple,
 } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
-import { ToolbarIconButton } from "../components/toolbarControls";
+import { ToolbarIconButton, ToolbarSelect } from "../components/toolbarControls";
 import {
   conditionMatches,
   formOptions,
@@ -71,7 +71,7 @@ const Fields = styled.div`
   }
   & input:not([type="checkbox"]),
   & textarea,
-  & select {
+  & [data-form-select] > [role="combobox"] {
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
@@ -148,19 +148,8 @@ const Fields = styled.div`
   & [data-form-select] {
     position: relative;
   }
-  & [data-form-select] select {
-    appearance: none;
-    padding-right: 40px;
-  }
-  & [data-form-select] > svg {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-  }
-  & [data-form-select] select:disabled + svg {
-    opacity: 0.55;
+  & [data-form-select] > [role="combobox"] {
+    height: auto;
   }
   & details {
     border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
@@ -682,15 +671,16 @@ function Field({
         </div>
       ) : runtimeBound ? null : control === "select" ? (
         <div data-form-select="">
-          <select
+          <ToolbarSelect
             {...props}
             disabled={disabled || loading || !!remote?.error}
-            value={
+            labelCase="preserve"
+            value={String(
               options?.findIndex((option) => Object.is(option.value, value)) ??
-              -1
-            }
-            onChange={(event) => {
-              const option = options?.[Number(event.target.value)];
+                -1,
+            )}
+            onValueChange={(next) => {
+              const option = options?.[Number(next)];
               if (option) commit(option.value);
             }}
           >
@@ -700,16 +690,11 @@ function Field({
                 : placeholder}
             </option>
             {options?.map((option, index) => (
-              <option
-                key={index}
-                value={index}
-                style={{ background: getChakraColorHex(background) }}
-              >
+              <option key={index} value={index}>
                 {startCase(option.label) || option.label}
               </option>
             ))}
-          </select>
-          <PiCaretDown size={16} aria-hidden="true" />
+          </ToolbarSelect>
         </div>
       ) : control === "pills" ? (
         <div
