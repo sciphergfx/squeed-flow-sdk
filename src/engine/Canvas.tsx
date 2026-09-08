@@ -336,7 +336,7 @@ function Canvas(props: CanvasProps) {
       pendingFitRef.current = true;
     clearTimeout(settleTimerRef.current);
     settleTimerRef.current = setTimeout(() => {
-      hasLayoutRunRef.current = true;
+      hasLayoutRunRef.current = positionsRef.current.size > 0;
       setLayoutRevision((revision) => revision + 1);
     }, LAYOUT_SETTLE_MS);
   };
@@ -719,6 +719,10 @@ function Canvas(props: CanvasProps) {
         if (w) root.style.width = `${w}px`;
       }
       viewport.size = { w, h };
+      if (!hasLayoutRunRef.current && !positionsRef.current.size && propsRef.current.fitOnInit !== false) {
+        viewport.set({ x: w / 2, y: h / 2 });
+        applyTransform();
+      }
     };
     measure();
     if (typeof ResizeObserver === "undefined") return;
@@ -727,7 +731,7 @@ function Canvas(props: CanvasProps) {
     return () => ro.disconnect();
   }, [viewport]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (centerRevealed.current) {
       centerRevealed.current = false;
       const boxes = revealedNodes.current.flatMap((id) => {
@@ -745,7 +749,10 @@ function Canvas(props: CanvasProps) {
     if (!pendingFitRef.current) return;
     pendingFitRef.current = false;
     const bb = elementsBBox();
-    if (bb) viewport.fit(bb, 50, propsRef.current.animateViewport);
+    if (bb) {
+      viewport.fit(bb, 50, hasLayoutRunRef.current && propsRef.current.animateViewport);
+      if (!hasLayoutRunRef.current) applyTransform();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [positions]);
 

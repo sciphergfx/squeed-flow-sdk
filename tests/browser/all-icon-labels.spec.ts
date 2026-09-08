@@ -121,6 +121,72 @@ test("all icon labels closes an expanded grouped Tools registry", async ({
 });
 
 for (const width of [1440, 390]) {
+  test(`all icon labels expands icon-label defaults at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await ready(page, "graph=basic-json");
+    const document = {
+      $hideRoot: true,
+      agent: {
+        $label: "Agent",
+        $view: "icon-label",
+        $icon: "PiRobot",
+        $form: { $type: "Agent" },
+        status: "Ready",
+        $connections: [{ target: "root.next" }],
+      },
+      next: {
+        $label: "Next",
+        $view: "icon-label",
+        $form: { $type: "Agent" },
+        status: "Waiting",
+      },
+    };
+    await page.evaluate((next) => {
+      window.__flowTest.configure({
+        selectionToolbar: false,
+        formSchema: {
+          Agent: {
+            kind: "object",
+            properties: {
+              status: { type: { kind: "string" }, optional: false },
+            },
+          },
+        },
+      });
+      window.__flowTest.replaceDocument(next);
+    }, document);
+    const toolbar = page.getByRole("toolbar", {
+      name: "Diagram controls",
+      exact: true,
+    });
+    await toolbar
+      .getByRole("button", { name: "Toggle toolbar collapse", exact: true })
+      .click();
+    const toggle = toolbar.getByRole("button", {
+      name: "Collapse all",
+      exact: true,
+    });
+    const agent = page.locator('[data-node-id="root.agent"]');
+    const next = page.locator('[data-node-id="root.next"]');
+    for (let cycle = 0; cycle < 2; cycle++) {
+      await expect(toggle).toHaveAttribute("aria-pressed", "true");
+      await toggle.click();
+      await expect(toggle).toHaveAttribute("aria-pressed", "false");
+      await expect(agent.getByText("Ready", { exact: true })).toBeVisible();
+      await expect(next.getByText("Waiting", { exact: true })).toBeVisible();
+      await expect(agent.getByRole("textbox")).toHaveCount(0);
+      await toggle.click();
+      await expect(agent.locator("[data-flow-icon-label]")).toHaveCount(1);
+      await expect(next.locator("[data-flow-icon-label]")).toHaveCount(1);
+      await expect(agent.getByText("Ready", { exact: true })).toHaveCount(0);
+    }
+    expect(await page.evaluate(() => window.__flowTest.document)).toEqual(
+      document,
+    );
+  });
+
   test(`background click restores icon-label after editing at ${width}px`, async ({
     page,
   }) => {

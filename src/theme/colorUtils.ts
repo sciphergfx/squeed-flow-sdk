@@ -1,4 +1,4 @@
-export const LIGHT_BLACK = "#8c8c8d";
+export const LIGHT_BLACK = "#c6c6c6";
 
 export function getDarkerHexColor(hex: string, factor: number = 0.2): string {
   const normalizedHex = hex.replace(/^#/, "");

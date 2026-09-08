@@ -1,43 +1,124 @@
 import { expect, test, type Page } from "@playwright/test";
 import { ready } from "./helpers";
 
-test("graph edge swatches color strokes and labels and reset to dark gray", async ({ page }) => {
+test("graph edge swatches color strokes and labels and reset to theme defaults", async ({
+  page,
+}) => {
   await ready(page, "custom=1");
   await page.evaluate(() => {
     window.__flowTest.configure({ colorMode: "dark" });
     window.__flowTest.replaceGraph({
-      nodes: ["alpha", "beta", "gamma"].map((id) => ({ data: { id, type: "text" } })),
+      nodes: ["alpha", "beta", "gamma"].map((id) => ({
+        data: { id, type: "text" },
+      })),
       edges: [
-        { data: { id: "plain", source: "alpha", target: "beta", label: "Plain" } },
-        { data: { id: "colored", source: "beta", target: "gamma", label: "Colored", color: "#ff0000" } },
+        {
+          data: {
+            id: "plain",
+            source: "alpha",
+            target: "beta",
+            label: "Plain",
+          },
+        },
+        {
+          data: {
+            id: "colored",
+            source: "beta",
+            target: "gamma",
+            label: "Colored",
+            color: "#ff0000",
+          },
+        },
       ],
     });
   });
-  const stroke = (id: string) => page.locator(`.flow-sdk-edge[data-edge-id="${id}"] > path`).first();
-  const label = (id: string) => page.locator(`.flow-sdk-edge-label[data-edge-id="${id}"] text`);
+  const stroke = (id: string) =>
+    page.locator(`.flow-sdk-edge[data-edge-id="${id}"] > path`).first();
+  const label = (id: string) =>
+    page.locator(`.flow-sdk-edge-label[data-edge-id="${id}"] text`);
   await expect(stroke("plain")).toHaveAttribute("stroke", "#71717a");
   await expect(label("plain")).toHaveAttribute("fill", "#71717a");
   await expect(stroke("colored")).toHaveAttribute("stroke", "#ff0000");
-  const connector = (id: string) => page.locator(`.flow-sdk-edge[data-edge-id="${id}"] > path[fill]:not([fill="none"])`);
+  const connector = (id: string) =>
+    page.locator(
+      `.flow-sdk-edge[data-edge-id="${id}"] > path[fill]:not([fill="none"])`,
+    );
   const originalConnectorColor = await connector("plain").getAttribute("fill");
-  const toolbar = page.getByRole("toolbar", { name: "Diagram controls", exact: true });
-  await toolbar.getByRole("button", { name: "Toggle toolbar collapse", exact: true }).click();
-  await toolbar.getByRole("button", { name: "Graph edge color colors", exact: true }).click();
-  await toolbar.getByRole("button", { name: "Graph edge color blue.500", exact: true }).click();
+  const toolbar = page.getByRole("toolbar", {
+    name: "Diagram controls",
+    exact: true,
+  });
+  await toolbar
+    .getByRole("button", { name: "Toggle toolbar collapse", exact: true })
+    .click();
+  await toolbar
+    .getByRole("button", { name: "Graph edge color colors", exact: true })
+    .click();
+  await toolbar
+    .getByRole("button", { name: "Graph edge color blue.500", exact: true })
+    .click();
   for (const id of ["plain", "colored"]) {
     await expect(stroke(id)).toHaveAttribute("stroke", "#3b82f6");
     await expect(label(id)).toHaveAttribute("fill", "#3b82f6");
     await expect(connector(id)).toHaveAttribute("fill", "#3b82f6");
   }
-  await toolbar.getByRole("button", { name: "Reset Graph edge color", exact: true }).click();
-  await expect(connector("plain")).toHaveAttribute("fill", originalConnectorColor!);
+  await toolbar
+    .getByRole("button", { name: "Reset Graph edge color", exact: true })
+    .click();
+  await expect(connector("plain")).toHaveAttribute(
+    "fill",
+    originalConnectorColor!,
+  );
   await expect(connector("colored")).toHaveAttribute("fill", "#ff0000");
   await expect(stroke("plain")).toHaveAttribute("stroke", "#71717a");
   await expect(label("plain")).toHaveAttribute("fill", "#71717a");
   await expect(stroke("colored")).toHaveAttribute("stroke", "#ff0000");
-  await page.evaluate(() => window.__flowTest.configure({ colorMode: "light" }));
+  await page.evaluate(() =>
+    window.__flowTest.configure({ colorMode: "light" }),
+  );
+  await expect(stroke("plain")).toHaveAttribute("stroke", "#c6c6c6");
+  await expect(label("plain")).toHaveAttribute("fill", "#c6c6c6");
+  await expect(connector("plain")).toHaveAttribute("fill", "#c6c6c6");
+  await expect(stroke("colored")).toHaveAttribute("stroke", "#ff0000");
+  await expect(connector("colored")).toHaveAttribute("fill", "#ff0000");
+  await toolbar
+    .getByRole("button", { name: "Graph edge color colors", exact: true })
+    .click();
+  const lightBlack = toolbar.getByRole("button", {
+    name: "Graph edge color #c6c6c6",
+    exact: true,
+  });
+  await expect(lightBlack).toBeVisible();
+  await expect(lightBlack).toHaveCSS("background-color", "rgb(198, 198, 198)");
+  await expect(lightBlack).toHaveAttribute("aria-pressed", "true");
+  await lightBlack.click();
+  for (const id of ["plain", "colored"]) {
+    await expect(stroke(id)).toHaveAttribute("stroke", "#c6c6c6");
+    await expect(connector(id)).toHaveAttribute("fill", "#c6c6c6");
+  }
+  await page.screenshot({
+    path: test.info().outputPath("light-edge-color.png"),
+  });
+  await toolbar
+    .getByRole("button", { name: "Reset Graph edge color", exact: true })
+    .click();
+  await expect(stroke("plain")).toHaveAttribute("stroke", "#c6c6c6");
+  await expect(stroke("colored")).toHaveAttribute("stroke", "#ff0000");
+  await page.evaluate(() =>
+    window.__flowTest.configure({ edgeColor: "#00ff00" }),
+  );
+  for (const id of ["plain", "colored"]) {
+    await expect(stroke(id)).toHaveAttribute("stroke", "#00ff00");
+    await expect(connector(id)).toHaveAttribute("fill", "#00ff00");
+  }
+  await page.evaluate(() =>
+    window.__flowTest.configure({ edgeColor: "", colorMode: "dark" }),
+  );
   await expect(stroke("plain")).toHaveAttribute("stroke", "#71717a");
-  await expect(label("plain")).toHaveAttribute("fill", "#71717a");
+  await expect(connector("plain")).toHaveAttribute(
+    "fill",
+    originalConnectorColor!,
+  );
 });
 
 const setTime = (page: Page, time: number) =>
