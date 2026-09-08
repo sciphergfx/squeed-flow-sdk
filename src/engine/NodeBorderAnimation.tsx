@@ -37,7 +37,7 @@ export function NodeBorderAnimation({
           height: Math.max(0, height),
           rx: Math.max(0, Math.min(radius, width / 2, height / 2)),
         };
-    const extent = strokeWidth + 36;
+    const extent = strokeWidth + 12;
     const bounds = {
       x: x - extent,
       y: y - extent,
@@ -68,13 +68,13 @@ export function NodeBorderAnimation({
           className={className}
           data-animation-variant={variant}
           fill="none"
-          stroke={`color-mix(in srgb, ${color} 60%, transparent)`}
+          stroke={`color-mix(in srgb, ${color} 70%, transparent)`}
           strokeLinejoin="round"
           mask={`url(#${maskId})`}
           style={
             {
-              "--flow-pulse-rest-width": `${strokeWidth + 16}px`,
-              "--flow-pulse-expanded-width": `${strokeWidth + 36}px`,
+              "--flow-pulse-rest-width": `${strokeWidth + 4}px`,
+              "--flow-pulse-expanded-width": `${strokeWidth + 12}px`,
             } as CSSProperties
           }
         />

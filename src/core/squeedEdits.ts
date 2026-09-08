@@ -429,10 +429,33 @@ export function compileSqueed(
       node.data.parent ? [canonicalAddress(node.data.parent)] : [],
     ),
   );
+  const centerSides = new Map<string, boolean>();
+  if (opts.isCenter) {
+    const incomingSides = new Map<string, boolean | null>();
+    for (const { data } of edges) {
+      const owner = resolveEdgeOwner(data);
+      if (owner.kind === "hierarchy") {
+        centerSides.set(canonicalAddress(owner.address), !!data.isInverted);
+      } else if (!Array.isArray(json) && json.$hideRoot === true) {
+        const target = canonicalAddress(data.isInverted ? data.source : data.target);
+        if (addressToPath(target).length !== 1) continue;
+        const side = !!data.isInverted;
+        incomingSides.set(target, incomingSides.has(target) && incomingSides.get(target) !== side ? null : side);
+      }
+    }
+    for (const [address] of centerSides) {
+      const root = `${ROOT}.${addressToPath(address)[0]}`;
+      const incoming = incomingSides.get(root);
+      if (typeof incoming === "boolean") centerSides.set(address, incoming);
+    }
+  }
   const outNodes: FlowDiagramNode[] = nodes.map((n) => {
     const id = canonicalAddress(n.data.id);
     const src = getNode(json, id);
     const data = { ...n.data, id };
+    if (centerSides.has(id)) {
+      data.config = { ...data.config, isInverted: centerSides.get(id) };
+    }
     const childSource =
       src && typeof src === "object" && !Array.isArray(src) && "$" in src
         ? src.$
@@ -508,8 +531,15 @@ export function compileSqueed(
   });
   const seen = new Map<string, number>();
   const outEdges: FlowDiagramEdge[] = edges.map((e) => {
-    const source = canonicalAddress(e.data.source);
-    const target = canonicalAddress(e.data.target);
+    let source = canonicalAddress(e.data.source);
+    let target = canonicalAddress(e.data.target);
+    let isInverted = e.data.isInverted;
+    const originalOwner = resolveEdgeOwner(e.data);
+    const side = centerSides.get(canonicalAddress(originalOwner.address));
+    if (originalOwner.kind === "hierarchy" && side !== undefined && side !== !!isInverted) {
+      [source, target] = [target, source];
+      isInverted = side;
+    }
     const base = `${source}->${target}`;
     const n = seen.get(base) ?? 0;
     seen.set(base, n + 1);
@@ -518,6 +548,7 @@ export function compileSqueed(
       id: n ? `${base}#${n}` : base,
       source,
       target,
+      isInverted,
     };
     const edgeOwner = resolveEdgeOwner(data);
     const owner = getNode(json, edgeOwner.address);

@@ -20,7 +20,24 @@ export function ToolbarScrollContainer({
     let previousWidth = element.parentElement!.offsetWidth;
     const update = () => {
       const width = element.parentElement!.offsetWidth;
-      if (width > 0 && width !== previousWidth) { const scale = previousWidth / width; previousWidth = width; if (scale > 0 && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) element.parentElement!.animate({ transform: [`scaleX(${scale})`, "scaleX(1)"], transformOrigin: [endElement ? "right center" : "left center", endElement ? "right center" : "left center"] }, { duration: 180, easing: "ease-out", id: "flow-toolbar-grow" }); }
+      if (width > 0 && width !== previousWidth) {
+        const scale = previousWidth / width;
+        previousWidth = width;
+        if (
+          scale > 0 &&
+          !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        )
+          element.parentElement!.animate(
+            {
+              transform: [`scaleX(${scale})`, "scaleX(1)"],
+              transformOrigin: [
+                endElement ? "right center" : "left center",
+                endElement ? "right center" : "left center",
+              ],
+            },
+            { duration: 180, easing: "ease-out", id: "flow-toolbar-grow" },
+          );
+      }
       const left = element.scrollLeft > 1;
       const right =
         element.scrollWidth - element.clientWidth - element.scrollLeft > 1;

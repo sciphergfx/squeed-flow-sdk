@@ -205,14 +205,19 @@ const BottomBar = () => {
   const selectionActive = edgeToolsActive || nodeToolsActive;
 
   const visible =
-    isPinned || nearBottom || showDirectionMenu || selectionActive || config.bottomBarCollapsed === false;
+    isPinned ||
+    nearBottom ||
+    showDirectionMenu ||
+    selectionActive ||
+    config.bottomBarCollapsed === false;
 
   useEffect(() => {
     if (selectedNodeIds.length || selectedEdgeId) {
       setBackgroundSelected(false);
     } else if (!readOnly) {
       if (backgroundSelected) setIsPinned(true);
-      if (config.bottomBarCollapsed === undefined) setLocalCollapsed(!backgroundSelected);
+      if (config.bottomBarCollapsed === undefined)
+        setLocalCollapsed(!backgroundSelected);
     }
   }, [
     backgroundSelected,
@@ -689,7 +694,8 @@ const BottomBar = () => {
                     variant="ghost"
                     color={colorInactive}
                     onClick={() => {
-                      if (config.bottomBarCollapsed === undefined) setLocalCollapsed(!isCollapsed);
+                      if (config.bottomBarCollapsed === undefined)
+                        setLocalCollapsed(!isCollapsed);
                       setBackgroundSelected(isCollapsed);
                       callbacks.onBottomBarCollapsedChange?.(!isCollapsed);
                     }}

@@ -237,7 +237,8 @@ export function bindSqueedCallbacks(
       const parentNode = getNode(json, parent);
       // set mode → object child, array mode → array child; the compiler labels them by key
       const key = uniqueKey(parentNode, params.isArrayMode ? "list" : "node");
-      const res = addChild(json, parent, params.isArrayMode ? [] : {}, key);
+      const child = params.isArrayMode ? { $bgColor: "gray.500", $: [] } : { $bgColor: "gray.500" };
+      const res = addChild(json, parent, child, key);
       emit(res.json, {
         type: "nodeCreate",
         address: res.address,

@@ -1,0 +1,24 @@
+{
+  "$hideRoot": true,
+  "broker": {
+    "$view": "icon-label",
+    "$label": "Resume the Session",
+    "$icon": "PiBroadcast",
+    "$target": "root.processor"
+  },
+  "processor": {
+    "$view": "icon-label",
+    "$label": "Replay Is Not Exactly Once",
+    "$icon": "PiFunnel",
+    "checks": ["Check duplicates", "Check timestamps"],
+    "$connections": [
+      { "id": "alerts", "target": "root.alerts", "label": "Old events", "style": "dashed" }
+    ]
+  },
+  "alerts": {
+    "$view": "icon-label",
+    "$label": "Reject Stale State",
+    "$icon": "PiBell",
+    "rules": ["Compare timestamps"]
+  }
+}

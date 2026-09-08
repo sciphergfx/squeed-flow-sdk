@@ -319,9 +319,18 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
   const edgeBySource = useMemo(() => {
     const map = new Map<string, any>();
-    for (const e of edges) {
-      if (e.data?.source && !map.has(e.data.source))
-        map.set(e.data.source, e.data);
+    for (const edge of edges) {
+      const owner = edge.data.isInverted ? edge.data.target : edge.data.source;
+      if (owner && !map.has(owner)) map.set(owner, edge.data);
+    }
+    for (const edge of edges) {
+      if (edge.data.connection) continue;
+      const owner = edge.data.isInverted ? edge.data.target : edge.data.source;
+      const child = edge.data.isInverted ? edge.data.source : edge.data.target;
+      if (child.startsWith(`${owner}.`)) {
+        map.set(owner, edge.data);
+        map.set(child, edge.data);
+      }
     }
     return map;
   }, [edges]);
@@ -358,7 +367,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           element: (
             <ViewComponent
               {...node}
-              isInverted={edgeData?.isInverted}
+              isInverted={node.data.config?.isInverted ?? edgeData?.isInverted}
               isParent={isParentContainer}
               key={`${node.data.id}-${themeColor}`}
             />
@@ -590,7 +599,12 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
   // Tap on empty canvas clears node and edge selection
   const handleBackgroundTap = useCallback(() => {
-    setBackgroundSelected(config.bottomBarCollapsed ?? (selectedNodeIdsRef.current.length > 0 || !!selectedEdgeIdRef.current || !backgroundSelected));
+    setBackgroundSelected(
+      config.bottomBarCollapsed ??
+        (selectedNodeIdsRef.current.length > 0 ||
+          !!selectedEdgeIdRef.current ||
+          !backgroundSelected),
+    );
     callbacks.onBackgroundClick?.();
     if (selectedNodeIdsRef.current.length) {
       setSelectedNodeIds([]);
@@ -600,7 +614,14 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       setSelectedEdgeId(null);
       callbacks.onEdgeDeselect?.();
     }
-  }, [callbacks, setSelectedNodeIds, setSelectedEdgeId, setBackgroundSelected, backgroundSelected, config.bottomBarCollapsed]);
+  }, [
+    callbacks,
+    setSelectedNodeIds,
+    setSelectedEdgeId,
+    setBackgroundSelected,
+    backgroundSelected,
+    config.bottomBarCollapsed,
+  ]);
 
   const handleBoxSelect = useCallback(
     (ids: string[]) => {

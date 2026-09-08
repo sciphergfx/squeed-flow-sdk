@@ -39,6 +39,8 @@ export function createFlowDiagram(
 
   const orgJsnObjct = jsnObjct;
 
+  if (path === "root") invrtdRtPths.length = 0;
+
   if (!initalObjIds) {
     const { nodes: ids } = createFlowDiagramIds(jsnObjct);
     initalObjIds = { ids, jsnObjct };
