@@ -17,8 +17,8 @@ import workflowDocument from "../../../examples/workflow-form/ui.json";
 import stateBindings from "../../../examples/workflow-state/bindings.json";
 import {
   onExampleFormChange,
-  resolveExampleOptions,
   projectWorkflowStateView,
+  resolveExampleOptions,
 } from "../../../examples/workflow-state/callbacks";
 import initialState from "../../../examples/workflow-state/state.json";
 import stateView from "../../../examples/workflow-state/view.json";
@@ -186,7 +186,8 @@ function Fixture() {
     control.events.push({ name, value });
   const callbacks: FlowDiagramCallbacks = {
     uploadFormFile: (request) => {
-      if (!control.uploadFormFile) throw new Error("No test upload handler configured.");
+      if (!control.uploadFormFile)
+        throw new Error("No test upload handler configured.");
       return control.uploadFormFile(request);
     },
     ...(independent

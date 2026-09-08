@@ -470,6 +470,68 @@ property addressing. Custom `renderForm` implementations remain host-owned.
 
 ### Compose Your Own Controls
 
+### Upload Form Fields
+
+Set `$control: "upload"` in `forms.bindings[nodeAddress].fields` (or the
+document node's `$form.$fields`). A `string` property is a single-file field;
+an `array` of strings is a multiple-file field. Values are stored URLs, never
+`File` objects or temporary browser blob URLs. Upload arrays remain inline
+controls even with `forms.structured: true`.
+
+```tsx
+const formSchema = {
+  Attachments: {
+    kind: "object",
+    properties: {
+      cover: { type: { kind: "string" }, optional: true },
+      files: { type: { kind: "array", items: { kind: "string" } }, optional: true },
+    },
+  },
+} satisfies FormSchema;
+
+<FlowDiagram
+  json={{ attachments: { $label: "Attachments", $view: "object" } }}
+  config={{ formSchema, editable: true }}
+  forms={{
+    state,
+    bindings: {
+      "root.attachments": {
+        address: "root.record",
+        type: "Attachments",
+        fields: {
+          cover: { $control: "upload", $upload: { accept: "image/*", maxSizeBytes: 5_000_000 } },
+          files: { $control: "upload", $upload: { accept: "image/*,.pdf" } },
+        },
+      },
+    },
+    onStateChange: setState,
+  }}
+  callbacks={{
+    uploadFormFile: ({ file, address, nodeAddress, data, signal }) =>
+      uploadToStorage(file, { address, nodeAddress, data, signal }),
+  }}
+/>
+```
+
+`uploadToStorage` is your host's uploader, not an SDK service. The callback
+receives a `FormUploadRequest` (file, field/node addresses, optional node ID,
+read-only form data, and an abort signal) and must return an HTTP(S) file URL
+without embedded credentials, synchronously or as a promise. The app's
+`SDKTest` surface accepts the same optional `uploadFormFile` prop. No storage
+endpoint, credentials, or automatic upload service is supplied.
+
+Empty fields show a dashed rounded square with a centered plus; click or drop
+files to upload. Single-file fields replace that square with one preview and
+replace/remove controls. Multiple-file fields append previews in selection
+order and retain an add-more square. Non-image files have a file-link fallback.
+Uploading disables mutations on that field; failed batches preserve its prior
+value. Closing the form, changing the bound value, or disabling editing aborts
+pending work and ignores late results. Hosts should honor `signal` and handle
+cleanup of files already stored during a failed/cancelled batch. Removing a URL
+changes form data only; it does not delete the server file. File type/size checks
+are optional client checks and must also be enforced by the host/server.
+
+### Compose Your Own Controls
 All reusable control components are exported from `@squeed/flow-sdk` through
 [src/index.ts](src/index.ts). Hide the default toolbar with `showBottomBar={false}`
 and mount your controls as children to share the diagram and form providers:

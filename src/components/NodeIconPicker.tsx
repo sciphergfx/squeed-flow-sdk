@@ -90,8 +90,16 @@ export function NodeIconPicker({
     }
     if (dialog.current?.open) return;
     setError("");
-    setMode(value === "PiFileSvg" || (value && isIconImage(value)) ? "custom" : "icons");
-    setUrl(value && !value.startsWith(SVG_DATA_PREFIX) && isIconImage(value) ? value : "");
+    setMode(
+      value === "PiFileSvg" || (value && isIconImage(value))
+        ? "custom"
+        : "icons",
+    );
+    setUrl(
+      value && !value.startsWith(SVG_DATA_PREFIX) && isIconImage(value)
+        ? value
+        : "",
+    );
     setOpen(true);
     dialog.current?.showModal();
   }, [requestedOpen, readOnly, value]);
@@ -125,27 +133,33 @@ export function NodeIconPicker({
   };
   return (
     <>
-      {requestedOpen === undefined && <ToolbarTooltip label={edgeId ? "Choose edge icon" : "Choose node icon"}>
-        <ToolbarIconButton
-          aria-label={edgeId ? "Choose edge icon" : "Choose node icon"}
-          icon={<PiShapes size={20} />}
-          size="sm"
-          variant="ghost"
-          color={getChakraColorHex(themeColor)}
-          disabled={readOnly}
-          onClick={() => {
-            setError("");
-            setMode(value && isIconImage(value) ? "custom" : "icons");
-            setUrl(
-              value && !value.startsWith(SVG_DATA_PREFIX) && isIconImage(value)
-                ? value
-                : "",
-            );
-            setOpen(true);
-            dialog.current?.showModal();
-          }}
-        />
-      </ToolbarTooltip>}
+      {requestedOpen === undefined && (
+        <ToolbarTooltip
+          label={edgeId ? "Choose edge icon" : "Choose node icon"}
+        >
+          <ToolbarIconButton
+            aria-label={edgeId ? "Choose edge icon" : "Choose node icon"}
+            icon={<PiShapes size={20} />}
+            size="sm"
+            variant="ghost"
+            color={getChakraColorHex(themeColor)}
+            disabled={readOnly}
+            onClick={() => {
+              setError("");
+              setMode(value && isIconImage(value) ? "custom" : "icons");
+              setUrl(
+                value &&
+                  !value.startsWith(SVG_DATA_PREFIX) &&
+                  isIconImage(value)
+                  ? value
+                  : "",
+              );
+              setOpen(true);
+              dialog.current?.showModal();
+            }}
+          />
+        </ToolbarTooltip>
+      )}
       <chakra.dialog
         ref={dialog}
         aria-label={edgeId ? "Choose edge icon" : "Choose node icon"}

@@ -17,7 +17,14 @@ export const CompactObjectView = (props) => {
   const selected = selectedNodeIds.includes(props.data.id);
   const wasSelected = useRef(selected);
   useEffect(() => {
-    if (wasSelected.current && !selected && properties && props.data?.config?.labelBelow && !parent && !readOnly)
+    if (
+      wasSelected.current &&
+      !selected &&
+      properties &&
+      props.data?.config?.labelBelow &&
+      !parent &&
+      !readOnly
+    )
       setProperties(false);
     wasSelected.current = selected;
   }, [selected, properties, props.data?.config?.labelBelow, parent, readOnly]);
