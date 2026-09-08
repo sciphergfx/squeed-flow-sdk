@@ -27,14 +27,22 @@ export function ToolbarScrollContainer({
           : { left, right },
       );
     };
+    const onWheel = (event: WheelEvent) => {
+      if (event.defaultPrevented || event.ctrlKey || event.deltaX !== 0 || !event.deltaY || element.scrollWidth <= element.clientWidth) return;
+      event.preventDefault();
+      const unit = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? element.clientWidth : 1;
+      element.scrollLeft += event.deltaY * unit;
+    };
     const observer = new ResizeObserver(update);
     observer.observe(element);
     if (element.firstElementChild) observer.observe(element.firstElementChild);
     element.addEventListener("scroll", update, { passive: true });
+    element.addEventListener("wheel", onWheel, { passive: false });
     update();
     return () => {
       observer.disconnect();
       element.removeEventListener("scroll", update);
+      element.removeEventListener("wheel", onWheel);
     };
   }, []);
   const color = `var(--chakra-colors-${background.replace(".", "-")})`;
@@ -87,7 +95,16 @@ export function ToolbarScrollContainer({
         />
       ))}
       {endElement && (
-        <Box position="absolute" right="6px" top={0} h="50px" w="32px" display="flex" alignItems="center" justifyContent="center">
+        <Box
+          position="absolute"
+          right="6px"
+          top={0}
+          h="50px"
+          w="32px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
           {endElement}
         </Box>
       )}
