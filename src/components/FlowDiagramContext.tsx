@@ -347,6 +347,9 @@ export function FlowDiagramProvider({
         get initialViewport() {
           return configRef.current.initialViewport;
         },
+        get animateViewport() {
+          return configRef.current.animateViewport;
+        },
         get nodeOverlayActions() {
           return configRef.current.nodeOverlayActions;
         },
@@ -508,6 +511,7 @@ export function FlowDiagramProvider({
       config.edgeHandles,
       config.edgeType,
       config.edgeReveal,
+      config.animateViewport,
       config.customEdgeTypes,
       config.selectionToolbar,
       config.bottomBarExtra,

@@ -41,7 +41,7 @@ import {
   Swatches,
 } from "./SelectionToolbar";
 import { SvgExportButton } from "./SvgExportButton";
-import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
+import { menuItemCorners, ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
 import { ToolbarScrollContainer } from "./ToolbarScrollContainer";
 import { WorkflowControls } from "./WorkflowControls";
 
@@ -743,7 +743,7 @@ const BottomBar = () => {
                         gap={3}
                         px={3}
                         py={2}
-                        borderRadius="30px"
+                        css={menuItemCorners}
                         cursor="pointer"
                         _hover={{
                           bg: isDark ? "whiteAlpha.100" : "blackAlpha.50",
@@ -772,7 +772,7 @@ const BottomBar = () => {
                       gap={3}
                       px={3}
                       py={2}
-                      borderRadius="10px"
+                      css={menuItemCorners}
                       cursor="pointer"
                       _hover={{
                         bg: isDark ? "whiteAlpha.100" : "blackAlpha.50",

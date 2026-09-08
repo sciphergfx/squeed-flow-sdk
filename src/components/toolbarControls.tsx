@@ -248,6 +248,8 @@ export function ToolbarSelect({
         css={{
           scrollbarWidth: "none",
           "&::-webkit-scrollbar": { display: "none" },
+          '& [role="option"]': menuItemCorners,
+          '& details [role="option"]:first-child': { borderTopLeftRadius: "4px", borderTopRightRadius: "4px" },
           ...getInteractionSurface(
             surface,
             `var(--chakra-colors-${(dark ? border : "gray.300").replace(".", "-")})`,
@@ -310,7 +312,6 @@ export function ToolbarSelect({
               px={3}
               py={2}
               w="100%"
-              borderRadius="30px"
               fontSize="sm"
               textAlign="left"
               bg="transparent"
@@ -339,6 +340,12 @@ export function ToolbarSelect({
     </>
   );
 }
+
+export const menuItemCorners = {
+  borderRadius: "4px",
+  "&:first-child": { borderTopLeftRadius: "22px", borderTopRightRadius: "22px" },
+  "&:last-child": { borderBottomLeftRadius: "22px", borderBottomRightRadius: "22px" },
+};
 
 export const ToolbarIconButton = forwardRef<
   HTMLButtonElement,

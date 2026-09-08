@@ -36,12 +36,13 @@ export class Viewport {
     const from = this.state;
     const target = { pan: { ...state.pan }, zoom: this.clamp(state.zoom) };
     const start = performance.now();
+    const duration = 300 / 1.4;
     const finish = () => {
       this.cancelAnimation();
       this.set(target.pan, target.zoom);
     };
     const frame = (now: number) => {
-      const progress = Math.min(1, (now - start) / 300);
+      const progress = Math.min(1, (now - start) / duration);
       if (progress >= 1) {
         finish();
         return;
@@ -57,7 +58,7 @@ export class Viewport {
       this.animationFrame = requestAnimationFrame(frame);
     };
     this.animationFrame = requestAnimationFrame(frame);
-    this.animationTimer = setTimeout(finish, 400);
+    this.animationTimer = setTimeout(finish, duration + 100);
   }
 
   constructor(init: ViewportState, minZoom: number, maxZoom: number) {
