@@ -6,10 +6,12 @@ export function ToolbarScrollContainer({
   children,
   background,
   border,
+  endElement,
 }: {
   children: ReactNode;
   background: string;
   border: string;
+  endElement?: ReactNode;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hidden, setHidden] = useState({ left: false, right: false });
@@ -57,6 +59,7 @@ export function ToolbarScrollContainer({
         alignContent="center"
         overflowX="auto"
         overflowY="hidden"
+        mr={endElement ? "44px" : undefined}
         borderRadius="inherit"
         css={{
           scrollbarWidth: "none",
@@ -77,12 +80,17 @@ export function ToolbarScrollContainer({
           pointerEvents="none"
           borderRadius={side === "left" ? "30px 0 0 30px" : "0 30px 30px 0"}
           style={{
-            [side]: 0,
+            [side]: side === "right" && endElement ? 44 : 0,
             opacity: hidden[side] ? 1 : 0,
             background: `linear-gradient(to ${side === "left" ? "right" : "left"}, ${color}, transparent)`,
           }}
         />
       ))}
+      {endElement && (
+        <Box position="absolute" right="6px" top={0} h="50px" w="32px" display="flex" alignItems="center" justifyContent="center">
+          {endElement}
+        </Box>
+      )}
     </Box>
   );
 }

@@ -719,7 +719,11 @@ function Canvas(props: CanvasProps) {
         if (w) root.style.width = `${w}px`;
       }
       viewport.size = { w, h };
-      if (!hasLayoutRunRef.current && !positionsRef.current.size && propsRef.current.fitOnInit !== false) {
+      if (
+        !hasLayoutRunRef.current &&
+        !positionsRef.current.size &&
+        propsRef.current.fitOnInit !== false
+      ) {
         viewport.set({ x: w / 2, y: h / 2 });
         applyTransform();
       }
@@ -750,7 +754,11 @@ function Canvas(props: CanvasProps) {
     pendingFitRef.current = false;
     const bb = elementsBBox();
     if (bb) {
-      viewport.fit(bb, 50, hasLayoutRunRef.current && propsRef.current.animateViewport);
+      viewport.fit(
+        bb,
+        50,
+        hasLayoutRunRef.current && propsRef.current.animateViewport,
+      );
       if (!hasLayoutRunRef.current) applyTransform();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
