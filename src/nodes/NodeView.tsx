@@ -48,6 +48,7 @@ const NodeView = ({
     config,
     themeColor,
     direction,
+    nodeViewModes,
   } = useFlowDiagramContext();
   const { background, border, colorText } = useCustomColors();
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -462,9 +463,10 @@ const NodeView = ({
           (() => {
             const pillVertical = direction === "TB" || direction === "BT";
             const pillOnLeft = isInverted || direction === "RL";
-            const iconHalfSize = nodeData?.config?.labelBelow
-              ? ((nodeData?.viewProps?.fontSize || 1) * 100 + 100) / 2
-              : undefined;
+            const iconHalfSize =
+              nodeData?.config?.labelBelow && nodeViewModes[id] !== "properties"
+                ? ((nodeData?.viewProps?.fontSize || 1) * 100 + 100) / 2
+                : undefined;
             return (
               <IconButton
                 position="absolute"

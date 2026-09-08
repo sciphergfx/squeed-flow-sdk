@@ -4,14 +4,16 @@ import {
   PiArrowDown,
   PiArrowUp,
   PiBracketsCurly,
-  PiCaretDown,
   PiListNumbers,
   PiMagnifyingGlass,
   PiPlus,
   PiTrash,
 } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
-import { ToolbarIconButton } from "../components/toolbarControls";
+import {
+  ToolbarIconButton,
+  ToolbarSelect,
+} from "../components/toolbarControls";
 import { getNode } from "../core/squeedEdits";
 import type { ContractType } from "../core/workflowContract";
 import {
@@ -26,7 +28,7 @@ export function StructuredFieldControls({
 }: {
   nodeAddress: string;
 }) {
-  const { structured, data, callbacks, editable } =
+  const { structured, data, callbacks, editable, onFieldCreate } =
     useContext(FormDocumentContext);
   const diagram = useFlowDiagramContext();
   const [key, setKey] = useState("");
@@ -45,6 +47,10 @@ export function StructuredFieldControls({
         ? descriptor.type.additionalProperties
         : undefined;
   const entryOptions = entryType ? structuredTypeOptions(entryType) : [];
+  const uploadChoices =
+    !!onFieldCreate &&
+    descriptor.type.kind === "object" &&
+    entryType?.kind === "json";
   const typeLabel = (type: ContractType) =>
     type.kind === "literal"
       ? String(type.value)
@@ -94,7 +100,18 @@ export function StructuredFieldControls({
         setError("Property already exists.");
         return;
       }
-      change(`${descriptor.address}.${key}`, emptyValue(type));
+      if (uploadChoices && (kind === "file" || kind === "files")) {
+        onFieldCreate?.(
+          {
+            data,
+            nodeAddress: descriptor.address,
+            address: `${descriptor.address}.${key}`,
+            previousValue: undefined,
+            value: kind === "files" ? [] : "",
+          },
+          { $control: "upload" },
+        );
+      } else change(`${descriptor.address}.${key}`, emptyValue(type));
       setKey("");
       setError("");
     }
@@ -111,16 +128,19 @@ export function StructuredFieldControls({
         <label>
           Value type
           <span data-form-select="" style={{ display: "block" }}>
-            <select
+            <ToolbarSelect
               aria-label="Value type"
               disabled={disabled}
-              value={typeOptions.findIndex(
-                (type) => valueType(type, value).kind === descriptor.type.kind,
+              value={String(
+                typeOptions.findIndex(
+                  (type) =>
+                    valueType(type, value).kind === descriptor.type.kind,
+                ),
               )}
-              onChange={(event) =>
+              onValueChange={(next) =>
                 change(
                   descriptor.address,
-                  emptyValue(typeOptions[Number(event.target.value)]),
+                  emptyValue(typeOptions[Number(next)]),
                 )
               }
             >
@@ -129,8 +149,7 @@ export function StructuredFieldControls({
                   {typeLabel(type)}
                 </option>
               ))}
-            </select>
-            <PiCaretDown size={16} aria-hidden="true" />
+            </ToolbarSelect>
           </span>
         </label>
       )}
@@ -248,19 +267,20 @@ export function StructuredFieldControls({
             >
               New value type
               <span data-form-select="" style={{ display: "block" }}>
-                <select
+                <ToolbarSelect
                   aria-label="New value type"
                   value={kind}
                   disabled={disabled}
-                  onChange={(event) => setKind(event.target.value)}
+                  onValueChange={setKind}
                 >
                   {entryOptions.map((type, index) => (
                     <option key={index} value={index}>
                       {typeLabel(type)}
                     </option>
                   ))}
-                </select>
-                <PiCaretDown size={16} aria-hidden="true" />
+                  {uploadChoices && <option value="file">File</option>}
+                  {uploadChoices && <option value="files">Files</option>}
+                </ToolbarSelect>
               </span>
             </label>
           )}

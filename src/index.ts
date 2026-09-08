@@ -70,6 +70,7 @@ export { parseTypeScriptForm } from "./core/workflowContract";
 export { useNodeViewActions } from "./hooks/useNodeViewActions";
 export { NodeConfigSummary } from "./nodes/NodeConfigSummary";
 export { FormDocumentContext, NodeForm } from "./nodes/NodeForm";
+export { LIGHT_BLACK } from "./theme/colorUtils";
 export { NODE_TYPE_VIEWS } from "./types";
 export type { NodeTypeView } from "./types";
 export { downloadSvg, exportSvg } from "./utils/exportSvg";

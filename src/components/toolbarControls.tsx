@@ -63,6 +63,7 @@ export function ToolbarTooltip({
 
 export function ToolbarDivider() {
   const { border } = useCustomColors();
+  const { colorMode } = useFlowDiagramContext();
   return (
     <chakra.span
       role="separator"
@@ -72,7 +73,7 @@ export function ToolbarDivider() {
       w="1px"
       h="20px"
       mx="4px"
-      bg={border}
+      bg={colorMode === "dark" ? border : "gray.300"}
     />
   );
 }
@@ -105,8 +106,7 @@ export function ToolbarSelect({
   "id" | "aria-required" | "aria-invalid" | "aria-describedby"
 >) {
   const { colorMode } = useFlowDiagramContext();
-  const { background, border, colorText, colorActive, colorInactive } =
-    useCustomColors();
+  const { background, border, colorText, colorInactive } = useCustomColors();
   const dark = colorMode === "dark";
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
@@ -335,7 +335,7 @@ export function ToolbarSelect({
               <span style={{ flex: 1 }}>{option.label}</span>
               <PiCheck
                 size={16}
-                color={`var(--chakra-colors-${colorActive.replace(".", "-")})`}
+                color={`var(--chakra-colors-${colorText.replace(".", "-")})`}
                 aria-hidden="true"
                 style={{
                   flexShrink: 0,

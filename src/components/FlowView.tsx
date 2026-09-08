@@ -11,7 +11,11 @@ import {
 } from "../engine";
 import { getNodeBorderWidth } from "../nodes/nodeBorder";
 import DefaultViews from "../nodes/nodeViews";
-import { blendHexColors, getChakraColorHex } from "../theme/colorUtils";
+import {
+  blendHexColors,
+  getChakraColorHex,
+  LIGHT_BLACK,
+} from "../theme/colorUtils";
 import {
   useCustomColors,
   useThemeContentColors,
@@ -120,9 +124,9 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   );
 
   const isDark = config.colorMode === "dark";
-  const autoLineColor = getChakraColorHex("gray.500");
+  const autoLineColor = isDark ? getChakraColorHex("gray.500") : LIGHT_BLACK;
   const connectorColor = !isDark
-    ? getColorHex("light")
+    ? autoLineColor
     : highlightColor?.includes("gray")
       ? "whitesmoke"
       : getColorHex(highlightColor);

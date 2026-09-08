@@ -359,7 +359,8 @@ the source tree. Edit this single JSON source to keep the guide current.
 Inside a diagram, `useNodeViewActions()` (or `useFlowDiagramContext()`) exposes
 `allNodesIconLabel` and `setAllNodesIconLabel(boolean)`. The bulk action reuses
 `setNodeViewMode(id, "icon-label")` for objects/arrays and `onNodeCollapse` for
-parents. Disable it to restore default object views and reopen parents. Dots use
+parents. Disable it to expand icon-label defaults into property views, restore
+other default object views, and reopen parents. Dots use
 the same per-node actions and remain interactive; there is no global view lock.
 `allNodesIconLabel` reflects the current node modes.
 

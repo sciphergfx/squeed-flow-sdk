@@ -29,8 +29,8 @@ export function LabeledToolbarToggle({
             {icon}
             <Text
               as="span"
-              fontSize="xs"
-              fontWeight="normal"
+              fontSize="16px"
+              fontWeight={checked ? "bold" : "normal"}
               whiteSpace="nowrap"
             >
               {label}

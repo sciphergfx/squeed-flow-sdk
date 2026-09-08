@@ -422,7 +422,14 @@ export function FlowDiagramProvider({
             if (!readOnly && !!node.data.config?.collapsed !== enabled)
               callbacks.onNodeCollapse?.(node.data.id, enabled);
           } else
-            setNodeViewMode(node.data.id, enabled ? "icon-label" : "default");
+            setNodeViewMode(
+              node.data.id,
+              enabled
+                ? "icon-label"
+                : node.data.config?.labelBelow
+                  ? "properties"
+                  : "default",
+            );
         }
         callbacks.onAllNodesIconLabelChange?.(enabled);
       },

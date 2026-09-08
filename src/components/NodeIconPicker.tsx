@@ -1,5 +1,5 @@
-import { chakra } from "@chakra-ui/react";
-import { useEffect, useId, useRef, useState } from "react";
+import { chakra, Tabs } from "@chakra-ui/react";
+import { useEffect, useRef, useState } from "react";
 import {
   PiArrowRight,
   PiCaretLeft,
@@ -8,7 +8,7 @@ import {
   PiTrash,
   PiUploadSimple,
 } from "react-icons/pi";
-import { getChakraColorHex } from "../theme/colorUtils";
+import { getChakraColorHex, LIGHT_BLACK } from "../theme/colorUtils";
 import { getInteractionSurface } from "../theme/interactionShadow";
 import { useCustomColors } from "../theme/useCustomColors";
 import DynamicIcon from "../utils/DynamicIcon";
@@ -37,11 +37,13 @@ export function NodeIconPicker({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
-  const { callbacks, readOnly, themeColor } = useFlowDiagramContext();
-  const { background, backgroundSecondary, border, colorText } =
+  const { callbacks, readOnly, themeColor, colorMode } =
+    useFlowDiagramContext();
+  const { background, backgroundSecondary, border, colorText, colorInactive } =
     useCustomColors();
+  const indicatorColor =
+    colorMode === "dark" ? LIGHT_BLACK : getChakraColorHex(colorInactive);
   const dialog = useRef<HTMLDialogElement>(null);
-  const tabId = useId();
   const upload = useRef<HTMLInputElement>(null);
   const uploadVersion = useRef(0);
   const [open, setOpen] = useState(false);
@@ -229,253 +231,228 @@ export function NodeIconPicker({
                 />
               </div>
             </div>
-            <div
-              role="tablist"
-              aria-label="Icon source"
-              style={{
-                display: "flex",
-                borderBottom: `1px solid ${getChakraColorHex(border)}`,
-              }}
-            >
-              {(["icons", "custom"] as const).map((source) => (
-                <button
-                  key={source}
-                  id={`${tabId}-${source}`}
-                  type="button"
-                  role="tab"
-                  aria-selected={mode === source}
-                  aria-controls={`${tabId}-panel`}
-                  tabIndex={mode === source ? 0 : -1}
-                  onClick={() => {
-                    setMode(source);
-                    setError("");
-                  }}
-                  onKeyDown={(event) => {
-                    if (
-                      !["ArrowLeft", "ArrowRight", "Home", "End"].includes(
-                        event.key,
-                      )
-                    )
-                      return;
-                    event.preventDefault();
-                    const next =
-                      event.key === "Home"
-                        ? "icons"
-                        : event.key === "End"
-                          ? "custom"
-                          : source === "icons"
-                            ? "custom"
-                            : "icons";
-                    setMode(next);
-                    setError("");
-                    document.getElementById(`${tabId}-${next}`)?.focus();
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: "8px 12px",
-                    background: "transparent",
-                    border: 0,
-                    borderBottom: `2px solid ${mode === source ? getChakraColorHex(themeColor) : "transparent"}`,
-                    color:
-                      mode === source
-                        ? getChakraColorHex(themeColor)
-                        : "inherit",
-                    cursor: "pointer",
-                    fontSize: 13,
-                  }}
-                >
-                  {source === "icons" ? "React icons" : "Custom SVG"}
-                </button>
-              ))}
-            </div>
-            <input
-              ref={upload}
-              type="file"
-              accept=".svg,image/svg+xml"
-              aria-label="Upload SVG icon"
-              hidden
-              disabled={busy || readOnly}
-              onChange={async (event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                if (!file) return;
-                const version = ++uploadVersion.current;
-                setBusy(true);
+            <Tabs.Root
+              value={mode}
+              onValueChange={({ value }) => {
+                setMode(value);
                 setError("");
-                try {
-                  const source = await svgIconDataUrl(file);
-                  if (version === uploadVersion.current) pick(source);
-                } catch (failure) {
-                  if (version === uploadVersion.current)
-                    setError(
-                      failure instanceof Error
-                        ? failure.message
-                        : "Unable to read SVG.",
-                    );
-                } finally {
-                  if (version === uploadVersion.current) setBusy(false);
-                }
               }}
-            />
-            <div
-              id={`${tabId}-panel`}
-              role="tabpanel"
-              aria-labelledby={`${tabId}-${mode}`}
-              style={{ display: "grid", gap: 8 }}
+              display="contents"
+              css={{ "--indicator-thickness": "1px" }}
             >
-              {mode === "icons" ? (
-                <>
-                  <input
-                    aria-label="Search icons"
-                    placeholder="Search icons..."
-                    value={search}
-                    onChange={(event) => {
-                      setSearch(event.target.value);
-                      setPage(0);
-                    }}
-                    style={inputStyle}
-                  />
-                  <div
-                    style={{
-                      height: 244,
-                      overflowY: "auto",
-                      display: "grid",
-                      gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
-                      gridAutoRows: 36,
-                      gap: 4,
-                    }}
-                  >
-                    {filtered.map((name) => (
-                      <button
-                        key={name}
-                        type="button"
-                        aria-label={`Choose ${name}`}
-                        aria-pressed={value === name}
-                        title={name}
-                        onClick={() => pick(name)}
-                        style={{
-                          display: "grid",
-                          placeItems: "center",
-                          borderRadius: 5,
-                          border: `${value === name ? 2 : 1}px solid ${getChakraColorHex(value === name ? themeColor : border)}`,
-                          background: getChakraColorHex(
-                            value === name ? background : backgroundSecondary,
-                          ),
-                          color: "inherit",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <DynamicIcon name={name} size={24} />
-                      </button>
-                    ))}
-                    {filtered.length === 0 && (
-                      <span role="status" style={{ gridColumn: "1 / -1" }}>
-                        {catalogState === "loading"
-                          ? "Loading icons..."
-                          : catalogState === "unavailable"
-                            ? "React icons unavailable"
-                            : "No icons found"}
-                      </span>
-                    )}
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 8,
+              <Tabs.List
+                aria-label="Icon source"
+                width="100%"
+                borderBottomWidth={0}
+              >
+                {(["icons", "custom"] as const).map((source) => (
+                  <Tabs.Trigger
+                    key={source}
+                    value={source}
+                    flex={1}
+                    minW={0}
+                    justifyContent="center"
+                    px={3}
+                    py={2}
+                    fontSize="13px"
+                    _selected={{
+                      color: themeColor,
+                      borderColor: indicatorColor,
+                      "--indicator-color": indicatorColor,
                     }}
                   >
-                    <span role="status" style={{ fontSize: 12 }}>
-                      {matches.length} icons · {currentPage + 1} / {pageCount}
-                    </span>
-                    <div style={{ display: "flex", gap: 4 }}>
-                      <ToolbarTooltip label="Previous icons">
-                        <ToolbarIconButton
-                          aria-label="Previous icons"
-                          icon={<PiCaretLeft size={18} />}
-                          size="sm"
-                          variant="ghost"
-                          disabled={currentPage === 0}
-                          onClick={() => setPage(currentPage - 1)}
-                        />
-                      </ToolbarTooltip>
-                      <ToolbarTooltip label="Next icons">
-                        <ToolbarIconButton
-                          aria-label="Next icons"
-                          icon={<PiCaretRight size={18} />}
-                          size="sm"
-                          variant="ghost"
-                          disabled={currentPage + 1 >= pageCount}
-                          onClick={() => setPage(currentPage + 1)}
-                        />
-                      </ToolbarTooltip>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {value && isIconImage(value) && (
-                    <DynamicIcon name={value} size={64} />
-                  )}
-                  <button
-                    type="button"
-                    disabled={busy || readOnly}
-                    onClick={() => upload.current?.click()}
-                    style={{
-                      ...inputStyle,
-                      display: "flex",
-                      justifyContent: "center",
-                      gap: 8,
-                      alignItems: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <PiUploadSimple />
-                    {busy ? "Uploading..." : "Upload SVG"}
-                  </button>
-                  <form
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      minWidth: 0,
-                    }}
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      if (busy || readOnly) return;
-                      if (
-                        !isIconImage(url.trim()) ||
-                        url.trim().startsWith(SVG_DATA_PREFIX)
-                      )
-                        setError("Enter an HTTP or HTTPS image URL.");
-                      else pick(url.trim());
-                    }}
-                  >
+                    {source === "icons" ? "React icons" : "Custom SVG"}
+                  </Tabs.Trigger>
+                ))}
+              </Tabs.List>
+              <input
+                ref={upload}
+                type="file"
+                accept=".svg,image/svg+xml"
+                aria-label="Upload SVG icon"
+                hidden
+                disabled={busy || readOnly}
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (!file) return;
+                  const version = ++uploadVersion.current;
+                  setBusy(true);
+                  setError("");
+                  try {
+                    const source = await svgIconDataUrl(file);
+                    if (version === uploadVersion.current) pick(source);
+                  } catch (failure) {
+                    if (version === uploadVersion.current)
+                      setError(
+                        failure instanceof Error
+                          ? failure.message
+                          : "Unable to read SVG.",
+                      );
+                  } finally {
+                    if (version === uploadVersion.current) setBusy(false);
+                  }
+                }}
+              />
+              <Tabs.Content
+                value={mode}
+                p={0}
+                style={{ display: "grid", gap: 8 }}
+              >
+                {mode === "icons" ? (
+                  <>
                     <input
-                      type="url"
-                      aria-label="SVG URL"
-                      placeholder="https://example.com/icon.svg"
-                      value={url}
-                      disabled={busy || readOnly}
-                      onChange={(event) => setUrl(event.target.value)}
-                      style={{ ...inputStyle, flex: 1, minWidth: 0 }}
+                      aria-label="Search icons"
+                      placeholder="Search icons..."
+                      value={search}
+                      onChange={(event) => {
+                        setSearch(event.target.value);
+                        setPage(0);
+                      }}
+                      style={inputStyle}
                     />
-                    <ToolbarTooltip label="Apply URL">
-                      <ToolbarIconButton
-                        type="submit"
-                        aria-label="Apply URL"
-                        icon={<PiArrowRight size={20} />}
-                        size="sm"
-                        variant="ghost"
-                        disabled={busy || readOnly || !url.trim()}
-                        style={{ flexShrink: 0 }}
+                    <div
+                      style={{
+                        height: 244,
+                        overflowY: "auto",
+                        display: "grid",
+                        gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
+                        gridAutoRows: 36,
+                        gap: 4,
+                      }}
+                    >
+                      {filtered.map((name) => (
+                        <button
+                          key={name}
+                          type="button"
+                          aria-label={`Choose ${name}`}
+                          aria-pressed={value === name}
+                          title={name}
+                          onClick={() => pick(name)}
+                          style={{
+                            display: "grid",
+                            placeItems: "center",
+                            borderRadius: 5,
+                            border: `${value === name ? 2 : 1}px solid ${getChakraColorHex(value === name ? themeColor : border)}`,
+                            background: getChakraColorHex(
+                              value === name ? background : backgroundSecondary,
+                            ),
+                            color: "inherit",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <DynamicIcon name={name} size={24} />
+                        </button>
+                      ))}
+                      {filtered.length === 0 && (
+                        <span role="status" style={{ gridColumn: "1 / -1" }}>
+                          {catalogState === "loading"
+                            ? "Loading icons..."
+                            : catalogState === "unavailable"
+                              ? "React icons unavailable"
+                              : "No icons found"}
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 8,
+                      }}
+                    >
+                      <span role="status" style={{ fontSize: 12 }}>
+                        {matches.length} icons · {currentPage + 1} / {pageCount}
+                      </span>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        <ToolbarTooltip label="Previous icons">
+                          <ToolbarIconButton
+                            aria-label="Previous icons"
+                            icon={<PiCaretLeft size={18} />}
+                            size="sm"
+                            variant="ghost"
+                            disabled={currentPage === 0}
+                            onClick={() => setPage(currentPage - 1)}
+                          />
+                        </ToolbarTooltip>
+                        <ToolbarTooltip label="Next icons">
+                          <ToolbarIconButton
+                            aria-label="Next icons"
+                            icon={<PiCaretRight size={18} />}
+                            size="sm"
+                            variant="ghost"
+                            disabled={currentPage + 1 >= pageCount}
+                            onClick={() => setPage(currentPage + 1)}
+                          />
+                        </ToolbarTooltip>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {value && isIconImage(value) && (
+                      <DynamicIcon name={value} size={64} />
+                    )}
+                    <button
+                      type="button"
+                      disabled={busy || readOnly}
+                      onClick={() => upload.current?.click()}
+                      style={{
+                        ...inputStyle,
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: 8,
+                        alignItems: "center",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <PiUploadSimple />
+                      {busy ? "Uploading..." : "Upload SVG"}
+                    </button>
+                    <form
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        minWidth: 0,
+                      }}
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        if (busy || readOnly) return;
+                        if (
+                          !isIconImage(url.trim()) ||
+                          url.trim().startsWith(SVG_DATA_PREFIX)
+                        )
+                          setError("Enter an HTTP or HTTPS image URL.");
+                        else pick(url.trim());
+                      }}
+                    >
+                      <input
+                        type="url"
+                        aria-label="SVG URL"
+                        placeholder="https://example.com/icon.svg"
+                        value={url}
+                        disabled={busy || readOnly}
+                        onChange={(event) => setUrl(event.target.value)}
+                        style={{ ...inputStyle, flex: 1, minWidth: 0 }}
                       />
-                    </ToolbarTooltip>
-                  </form>
-                </>
-              )}
-            </div>
+                      <ToolbarTooltip label="Apply URL">
+                        <ToolbarIconButton
+                          type="submit"
+                          aria-label="Apply URL"
+                          icon={<PiArrowRight size={20} />}
+                          size="sm"
+                          variant="ghost"
+                          disabled={busy || readOnly || !url.trim()}
+                          style={{ flexShrink: 0 }}
+                        />
+                      </ToolbarTooltip>
+                    </form>
+                  </>
+                )}
+              </Tabs.Content>
+            </Tabs.Root>
             {error && (
               <div role="alert" style={{ fontSize: 13 }}>
                 {error}

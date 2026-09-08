@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -17,13 +18,17 @@ import {
   PiUploadSimple,
 } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
-import { ToolbarIconButton, ToolbarSelect } from "../components/toolbarControls";
+import {
+  ToolbarIconButton,
+  ToolbarSelect,
+} from "../components/toolbarControls";
 import {
   conditionMatches,
   formOptions,
   formValueError,
   readOnlyFormData,
   resolveFormNode,
+  type FormChange,
   type FormFieldConfig,
   type FormOption,
   type FormRequest,
@@ -49,6 +54,7 @@ export const FormDocumentContext = createContext<{
   editable?: boolean;
   schema?: FormSchema;
   renderForm?: StateForms["renderForm"];
+  onFieldCreate?: (change: FormChange, config: FormFieldConfig) => void;
   structured?: StructuredForms;
   references?: StateForms["references"];
   callbacks: FlowDiagramCallbacks;
@@ -377,6 +383,10 @@ function Field({
       );
     }
   };
+  const latestCommit = useRef(commit);
+  useLayoutEffect(() => {
+    latestCommit.current = commit;
+  });
   const commitDraft = () => {
     if (structured) {
       try {
@@ -481,7 +491,7 @@ function Field({
         : urls[0];
       const error = formValueError(property.type, next, required);
       if (error) throw new Error(error);
-      commit(next);
+      latestCommit.current(next);
     } catch (error) {
       if (!controller.signal.aborted)
         setFailure(
@@ -647,7 +657,7 @@ function Field({
                       commit(
                         multiple && Array.isArray(value)
                           ? value.filter((_, position) => position !== index)
-                          : undefined,
+                          : "",
                       )
                     }
                   />

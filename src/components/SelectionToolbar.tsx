@@ -1,4 +1,4 @@
-import { Box, HStack, Icon, Input, Text, chakra } from "@chakra-ui/react";
+import { Box, chakra, HStack, Icon, Input, Text } from "@chakra-ui/react";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   PiArrowsInLineVertical,
@@ -19,7 +19,7 @@ import {
 import { TbBorderRadius } from "react-icons/tb";
 import { useNodeHasChildren } from "../hooks/useNodeHasChildren";
 import { getNodeBorderWidth } from "../nodes/nodeBorder";
-import { getChakraColorHex } from "../theme/colorUtils";
+import { getChakraColorHex, LIGHT_BLACK } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
 import {
   NODE_TYPE_VIEWS,
@@ -47,8 +47,15 @@ export const DEFAULT_PALETTE = [
   "purple.500",
   "pink.500",
   "gray.500",
+  LIGHT_BLACK,
 ];
-export const TEXT_PALETTE = ["gray.900", "gray.600", "gray.200", "white"];
+export const TEXT_PALETTE = [
+  "gray.900",
+  LIGHT_BLACK,
+  "gray.600",
+  "gray.200",
+  "white",
+];
 
 type Hide = NonNullable<SelectionToolbarConfig["hide"]>[number];
 
@@ -110,6 +117,7 @@ export function CommitInput({
       type={type}
       min={min}
       size="xs"
+      fontSize="16px"
       w={width}
       value={v}
       placeholder={placeholder}

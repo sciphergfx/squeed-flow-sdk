@@ -26,6 +26,7 @@ import {
   PiSelectionPlus,
 } from "react-icons/pi";
 import { useEdgeProximity } from "../hooks/useEdgeProximity";
+import { LIGHT_BLACK } from "../theme/colorUtils";
 import { getInteractionSurface } from "../theme/interactionShadow";
 import { useCustomColors } from "../theme/useCustomColors";
 import type { FlowDirection } from "../types";
@@ -119,6 +120,7 @@ const BottomBar = () => {
   const isDark = config.colorMode === "dark";
   const { background, border, colorInactive, colorText, colorActive } =
     useCustomColors();
+  const dividerColor = isDark ? border : "gray.300";
   const surfaceColor = `var(--chakra-colors-${background.replace(".", "-")})`;
   const borderColor = `var(--chakra-colors-${(isDark ? border : "gray.300").replace(".", "-")})`;
   const [showDirectionMenu, setShowDirectionMenu] = useState(false);
@@ -413,7 +415,7 @@ const BottomBar = () => {
                   mx={-1}
                   as={PiLineVerticalThin}
                   boxSize={5}
-                  color={border}
+                  color={dividerColor}
                 />
 
                 {/* Zoom controls */}
@@ -453,7 +455,7 @@ const BottomBar = () => {
                       mx={-1}
                       as={PiLineVerticalThin}
                       boxSize={5}
-                      color={border}
+                      color={dividerColor}
                     />
 
                     {/* Zoom/Pan mode */}
@@ -483,7 +485,7 @@ const BottomBar = () => {
                       mx={-1}
                       as={PiLineVerticalThin}
                       boxSize={5}
-                      color={border}
+                      color={dividerColor}
                     />
 
                     {/* Multi-select */}
@@ -508,7 +510,7 @@ const BottomBar = () => {
                       mx={-1}
                       as={PiLineVerticalThin}
                       boxSize={5}
-                      color={border}
+                      color={dividerColor}
                     />
 
                     {/* Drag mode */}
@@ -533,7 +535,7 @@ const BottomBar = () => {
                           mx={-1}
                           as={PiLineVerticalThin}
                           boxSize={5}
-                          color={border}
+                          color={dividerColor}
                         />
 
                         {/* Draw mode */}
@@ -566,7 +568,7 @@ const BottomBar = () => {
                           mx={-1}
                           as={PiLineVerticalThin}
                           boxSize={5}
-                          color={border}
+                          color={dividerColor}
                           role="separator"
                           aria-orientation="vertical"
                         />
@@ -578,7 +580,7 @@ const BottomBar = () => {
                       mx={-1}
                       as={PiLineVerticalThin}
                       boxSize={5}
-                      color={border}
+                      color={dividerColor}
                       role="separator"
                       aria-orientation="vertical"
                     />
@@ -596,7 +598,7 @@ const BottomBar = () => {
                           mx={-1}
                           as={PiLineVerticalThin}
                           boxSize={5}
-                          color={border}
+                          color={dividerColor}
                         />
 
                         {/* Set / Array node mode */}
@@ -635,7 +637,7 @@ const BottomBar = () => {
                           mx={-1}
                           as={PiLineVerticalThin}
                           boxSize={5}
-                          color={border}
+                          color={dividerColor}
                         />
                         <Swatches
                           label="Graph theme"
@@ -654,7 +656,7 @@ const BottomBar = () => {
                       <Swatches
                         label="Graph edge color"
                         colors={DEFAULT_PALETTE}
-                        value={edgeColor || "gray.500"}
+                        value={edgeColor || (isDark ? "gray.500" : LIGHT_BLACK)}
                         onPick={setEdgeColor}
                         onReset={() => setEdgeColor("")}
                       />
@@ -667,7 +669,7 @@ const BottomBar = () => {
                   mx={-1}
                   as={PiLineVerticalThin}
                   boxSize={5}
-                  color={border}
+                  color={dividerColor}
                 />
 
                 <ToolbarTooltip
