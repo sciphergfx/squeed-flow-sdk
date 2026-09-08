@@ -7,8 +7,8 @@ import { getChakraColorHex } from "../theme/colorUtils";
 import { getInteractionSurface } from "../theme/interactionShadow";
 import { useCustomColors } from "../theme/useCustomColors";
 import { resolveStateForm } from "../utils/formState";
-import { ToolbarCloseButton } from "./toolbarControls";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
+import { ToolbarCloseButton } from "./toolbarControls";
 
 const FormDialog = styled.dialog<{ $surface: string; $border: string }>`
   ${(props) => getInteractionSurface(props.$surface, props.$border)}

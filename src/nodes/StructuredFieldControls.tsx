@@ -219,7 +219,14 @@ export function StructuredFieldControls({
           }}
         >
           {dictionary && (
-            <label style={{ flex: "1 1 120px", minWidth: 0, display: "grid", gap: 8 }}>
+            <label
+              style={{
+                flex: "1 1 120px",
+                minWidth: 0,
+                display: "grid",
+                gap: 8,
+              }}
+            >
               Property name
               <input
                 aria-label="Property name"
@@ -231,7 +238,14 @@ export function StructuredFieldControls({
             </label>
           )}
           {entryOptions.length > 1 && (
-            <label style={{ flex: "1 1 100px", minWidth: 0, display: "grid", gap: 8 }}>
+            <label
+              style={{
+                flex: "1 1 100px",
+                minWidth: 0,
+                display: "grid",
+                gap: 8,
+              }}
+            >
               New value type
               <span data-form-select="" style={{ display: "block" }}>
                 <select

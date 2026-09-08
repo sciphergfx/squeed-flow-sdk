@@ -399,7 +399,9 @@ function Field({
             }}
           >
             <option value={-1} disabled>
-              {value !== undefined && value !== "" ? String(value) : placeholder}
+              {value !== undefined && value !== ""
+                ? String(value)
+                : placeholder}
             </option>
             {options?.map((option, index) => (
               <option

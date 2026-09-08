@@ -783,6 +783,15 @@ function Canvas(props: CanvasProps) {
     ) => {
       if (!boxFor(id)) return;
       const ids = mode === "connections" ? connections(id) : branchIds(id);
+      if (
+        mode === "connections" &&
+        connectionSpacingRef.current === 1.25 &&
+        isolatedIdsRef.current?.size === ids.size &&
+        [...ids].every((nodeId) => isolatedIdsRef.current!.has(nodeId))
+      ) {
+        setIsolation({ id, mode });
+        return;
+      }
       if (!savedViewport.current)
         savedViewport.current = {
           pan: { ...viewport.pan },
