@@ -28,10 +28,14 @@ export function NodeIconPicker({
   nodeId,
   edgeId,
   value,
+  open: requestedOpen,
+  onOpenChange,
 }: {
   nodeId?: string;
   edgeId?: string;
   value?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const { callbacks, readOnly, themeColor } = useFlowDiagramContext();
   const { background, backgroundSecondary, border, colorText } =
@@ -78,10 +82,24 @@ export function NodeIconPicker({
   useEffect(() => {
     if (readOnly) dialog.current?.close();
   }, [readOnly]);
+  useEffect(() => {
+    if (requestedOpen === undefined) return;
+    if (!requestedOpen || readOnly) {
+      dialog.current?.close();
+      return;
+    }
+    if (dialog.current?.open) return;
+    setError("");
+    setMode(value === "PiFileSvg" || (value && isIconImage(value)) ? "custom" : "icons");
+    setUrl(value && !value.startsWith(SVG_DATA_PREFIX) && isIconImage(value) ? value : "");
+    setOpen(true);
+    dialog.current?.showModal();
+  }, [requestedOpen, readOnly, value]);
   const pick = (icon: string) => {
     if (readOnly) return;
     if (edgeId) callbacks.onEdgeIconChange?.(edgeId, icon);
     else if (nodeId) callbacks.onNodeIconChange?.(nodeId, icon);
+    onOpenChange?.(false);
     dialog.current?.close();
   };
   const matches = icons.filter((name) =>
@@ -107,7 +125,7 @@ export function NodeIconPicker({
   };
   return (
     <>
-      <ToolbarTooltip label={edgeId ? "Choose edge icon" : "Choose node icon"}>
+      {requestedOpen === undefined && <ToolbarTooltip label={edgeId ? "Choose edge icon" : "Choose node icon"}>
         <ToolbarIconButton
           aria-label={edgeId ? "Choose edge icon" : "Choose node icon"}
           icon={<PiShapes size={20} />}
@@ -127,7 +145,7 @@ export function NodeIconPicker({
             dialog.current?.showModal();
           }}
         />
-      </ToolbarTooltip>
+      </ToolbarTooltip>}
       <chakra.dialog
         ref={dialog}
         aria-label={edgeId ? "Choose edge icon" : "Choose node icon"}
@@ -137,6 +155,7 @@ export function NodeIconPicker({
         )}
         onClose={() => {
           setOpen(false);
+          onOpenChange?.(false);
           uploadVersion.current++;
           setBusy(false);
         }}

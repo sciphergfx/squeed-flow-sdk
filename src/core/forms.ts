@@ -26,7 +26,8 @@ export type FormCondition = { $address: string } & (
 export interface FormFieldConfig {
   $label?: string;
   $section?: string;
-  $control?: "input" | "textarea" | "select" | "pills" | "checkbox";
+  $control?: "input" | "textarea" | "select" | "pills" | "checkbox" | "upload";
+  $upload?: { accept?: string; maxSizeBytes?: number };
   $visibleWhen?: FormCondition;
   $requiredWhen?: FormCondition;
   $options?: { $source: "callback"; $dependsOn?: string[] };
@@ -58,6 +59,11 @@ export type FormEdit =
   | { op: "set"; address: string; value: unknown }
   | { op: "remove"; address: string };
 export interface FormOptionsRequest extends FormRequest {
+  signal: AbortSignal;
+}
+
+export interface FormUploadRequest extends FormRequest {
+  file: File;
   signal: AbortSignal;
 }
 

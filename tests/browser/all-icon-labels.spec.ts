@@ -121,6 +121,41 @@ test("all icon labels closes an expanded grouped Tools registry", async ({
 });
 
 for (const width of [1440, 390]) {
+  test(`background click restores icon-label after editing at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await ready(page, "graph=basic-json");
+    await page.evaluate(() => {
+      window.__flowTest.configure({ selectionToolbar: false, formSchema: {
+        Agent: { kind: "object", properties: { status: { type: { kind: "string" }, optional: false } } },
+      } });
+      window.__flowTest.replaceDocument({ $hideRoot: true,
+        agent: { $label: "Agent", $view: "icon-label", $icon: "PiRobot", $form: { $type: "Agent" }, status: "Ready" },
+      });
+    });
+    const node = page.locator('[data-node-id="root.agent"]');
+    await node.getByText("Agent", { exact: true }).dblclick();
+    const input = node.getByRole("textbox");
+    await expect(input).toBeFocused();
+    await input.fill("Edited agent");
+    await page.locator(".flow-sdk-canvas").click({ position: { x: 10, y: 100 } });
+    await expect(input).toHaveCount(0);
+    await expect(node.locator("[data-flow-icon-label]")).toHaveCount(1);
+    await expect(node.getByText("Edited agent", { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => {
+      const document = window.__flowTest.document;
+      return !Array.isArray(document) && document.agent.$label;
+    })).toBe("Edited agent");
+    await node.getByText("Edited agent", { exact: true }).dblclick();
+    await expect(input).toBeFocused();
+    await input.press("Enter");
+    await node.getByText("Edited agent", { exact: true }).dblclick();
+    const form = page.getByRole("dialog", { name: "Configure Edited agent", exact: true });
+    await expect(form).toBeVisible();
+    await form.getByRole("button", { name: "Close node configuration", exact: true }).click();
+    await page.locator(".flow-sdk-canvas").click({ position: { x: 10, y: 100 } });
+    await expect(node.locator("[data-flow-icon-label]")).toHaveCount(1);
+  });
+
   test(`all icon labels compacts structured nodes and restores details at ${width}px`, async ({
     page,
   }) => {

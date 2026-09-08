@@ -273,6 +273,7 @@ export function projectStructuredForms(
         property.type.kind === "json" ||
         (property.type.kind === "union" && !formOptions(property.type));
       if (
+        fields[key]?.$control === "upload" ||
         (!composite && type.kind !== "array" && (!dynamic || scalar)) ||
         selectablePort
       ) {

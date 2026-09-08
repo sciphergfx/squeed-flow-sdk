@@ -80,6 +80,7 @@ const control = {
   replaceDocument: (_document: SqueedJson) => {},
   replaceForms: (_forms: StateForms | undefined) => {},
   configure: (_config: FlowDiagramConfig) => {},
+  uploadFormFile: undefined as FlowDiagramCallbacks["uploadFormFile"],
   mount: (_mounted: boolean) => {},
   resizeNode: (_width: number) => {},
   replaceGraph: (_graph: {
@@ -184,6 +185,10 @@ function Fixture() {
   const record = (name: string, value?: unknown) =>
     control.events.push({ name, value });
   const callbacks: FlowDiagramCallbacks = {
+    uploadFormFile: (request) => {
+      if (!control.uploadFormFile) throw new Error("No test upload handler configured.");
+      return control.uploadFormFile(request);
+    },
     ...(independent
       ? {
           onFormChange: onExampleFormChange,

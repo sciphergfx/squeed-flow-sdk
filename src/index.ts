@@ -60,6 +60,7 @@ export type {
   FormOptionsRequest,
   FormRequest,
   FormSchema,
+  FormUploadRequest,
   FormValue,
 } from "./core/forms";
 export { projectJsonPlaybackPreview } from "./core/jsonPlaybackPreview";

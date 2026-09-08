@@ -8,8 +8,16 @@ import {
   useRef,
   useState,
 } from "react";
-import { PiArrowCounterClockwise, PiCaretDown } from "react-icons/pi";
+import {
+  PiArrowCounterClockwise,
+  PiCaretDown,
+  PiFile,
+  PiPlus,
+  PiTrash,
+  PiUploadSimple,
+} from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
+import { ToolbarIconButton } from "../components/toolbarControls";
 import {
   conditionMatches,
   formOptions,
@@ -26,7 +34,9 @@ import type { ContractProperty } from "../core/workflowContract";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
 import type { FlowDiagramCallbacks } from "../types";
+import DynamicIcon from "../utils/DynamicIcon";
 import { resolveStateForm, type StateForms } from "../utils/formState";
+import { isIconImage } from "../utils/iconSources";
 import type { StructuredForms } from "../utils/structuredForms";
 import { RuntimeBindingEditor } from "./RuntimeBindingEditor";
 import { StructuredFieldControls } from "./StructuredFieldControls";
@@ -77,6 +87,63 @@ const Fields = styled.div`
   & textarea {
     min-height: 98px;
     resize: vertical;
+  }
+  & [data-upload-items] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: start;
+  }
+  & [data-upload-drop],
+  & [data-upload-preview] {
+    width: 120px;
+    max-width: 100%;
+    aspect-ratio: 1;
+    box-sizing: border-box;
+    border-radius: 8px;
+    position: relative;
+  }
+  & [data-upload-drop] {
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 2px dashed currentColor;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+  & [data-upload-drop]:focus-visible,
+  & [data-upload-preview]:focus-within {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+  & [data-upload-preview] {
+    border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+    background: color-mix(in srgb, currentColor 7%, transparent);
+    overflow: hidden;
+  }
+  & [data-upload-preview] > a {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    color: inherit;
+  }
+  & [data-upload-preview] img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  & [data-upload-actions] {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    display: flex;
+    gap: 4px;
+    background: var(--flow-upload-surface);
+    border-radius: 4px;
   }
   & [data-form-select] {
     position: relative;
@@ -178,6 +245,10 @@ function Field({
   const [draft, setDraft] = useState(formatted);
   const [failure, setFailure] = useState("");
   const [retry, setRetry] = useState(0);
+  const uploadInput = useRef<HTMLInputElement>(null);
+  const uploadController = useRef<AbortController>();
+  const [uploading, setUploading] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const [remote, setRemote] = useState<{
     key: string;
     options: FormOption[];
@@ -186,6 +257,23 @@ function Field({
   const dynamic = config.$options?.$source === "callback";
   const resolve = callbacks.resolveFormOptions;
   const { data, address, nodeAddress, nodeId } = request;
+  useEffect(() => {
+    setUploading(false);
+    setDragging(false);
+    return () => {
+      uploadController.current?.abort();
+      uploadController.current = undefined;
+    };
+  }, [
+    address,
+    nodeAddress,
+    nodeId,
+    disabled,
+    formatted,
+    config.$control,
+    config.$upload?.accept,
+    config.$upload?.maxSizeBytes,
+  ]);
   const latestData = useRef(data);
   latestData.current = data;
   const optionKey = JSON.stringify([
@@ -255,11 +343,13 @@ function Field({
         : formOptions(property.type);
   const multiple = property.type.kind === "array";
   const control =
-    (structuredForms && structured
-      ? "pills"
-      : config.$control === "checkbox"
+    (config.$control === "upload"
+      ? "upload"
+      : structuredForms && structured
         ? "pills"
-        : config.$control) ??
+        : config.$control === "checkbox"
+          ? "pills"
+          : config.$control) ??
     (options
       ? multiple || property.type.kind === "boolean"
         ? "pills"
@@ -274,7 +364,10 @@ function Field({
     (!!config.$requiredWhen && conditionMatches(config.$requiredWhen, data));
   const placeholder = required ? "Required" : "Optional";
   const runtimeBound =
-    !!references?.length && typeof value === "string" && value.includes("{{");
+    control !== "upload" &&
+    !!references?.length &&
+    typeof value === "string" &&
+    value.includes("{{");
   const issue =
     failure ||
     (dynamic && remote?.key === optionKey && remote.error) ||
@@ -326,6 +419,93 @@ function Field({
     }
     commit(next);
   };
+  const uploadFiles = async (files: File[]) => {
+    if (disabled || uploadController.current || !files.length) return;
+    const controller = new AbortController();
+    uploadController.current = controller;
+    setFailure("");
+    setUploading(true);
+    try {
+      if (
+        property.type.kind !== "string" &&
+        !(
+          property.type.kind === "array" &&
+          property.type.items.kind === "string"
+        )
+      )
+        throw new Error("Uploads require a string or string-array field.");
+      if (!multiple && files.length !== 1)
+        throw new Error("Choose one file for this field.");
+      if (!callbacks.uploadFormFile)
+        throw new Error("No file upload handler configured.");
+      const accept = config.$upload?.accept
+        ?.split(",")
+        .map((entry) => entry.trim().toLowerCase())
+        .filter(Boolean);
+      for (const file of files) {
+        if (
+          config.$upload?.maxSizeBytes !== undefined &&
+          file.size > config.$upload.maxSizeBytes
+        )
+          throw new Error(`${file.name} exceeds the file size limit.`);
+        if (
+          accept?.length &&
+          !accept.some((entry) =>
+            entry.startsWith(".")
+              ? file.name.toLowerCase().endsWith(entry)
+              : entry.endsWith("/*")
+                ? file.type.toLowerCase().startsWith(entry.slice(0, -1))
+                : file.type.toLowerCase() === entry,
+          )
+        )
+          throw new Error(`${file.name} is not an accepted file type.`);
+      }
+      const urls = await Promise.all(
+        files.map(async (file) => {
+          const result = await callbacks.uploadFormFile!({
+            ...request,
+            data: readOnlyFormData(data),
+            file,
+            signal: controller.signal,
+          });
+          if (typeof result !== "string")
+            throw new Error("Upload handler must return an HTTP or HTTPS URL.");
+          let url: URL;
+          try {
+            url = new URL(result);
+          } catch {
+            throw new Error("Upload handler must return an HTTP or HTTPS URL.");
+          }
+          if (
+            !["http:", "https:"].includes(url.protocol) ||
+            url.username ||
+            url.password
+          )
+            throw new Error("Upload handler must return an HTTP or HTTPS URL.");
+          return result;
+        }),
+      );
+      if (controller.signal.aborted || uploadController.current !== controller)
+        return;
+      const next = multiple
+        ? [...(Array.isArray(value) ? value : []), ...urls]
+        : urls[0];
+      const error = formValueError(property.type, next, required);
+      if (error) throw new Error(error);
+      commit(next);
+    } catch (error) {
+      if (!controller.signal.aborted)
+        setFailure(
+          error instanceof Error ? error.message : "Unable to upload file.",
+        );
+      controller.abort();
+    } finally {
+      if (uploadController.current === controller) {
+        uploadController.current = undefined;
+        setUploading(false);
+      }
+    }
+  };
   const props = {
     id,
     disabled,
@@ -356,7 +536,7 @@ function Field({
             type="button"
             aria-label={`Reset ${label}`}
             title={`Reset ${label}`}
-            disabled={disabled}
+            disabled={disabled || uploading}
             style={{
               width: 24,
               height: 24,
@@ -375,7 +555,7 @@ function Field({
           </button>
         )}
       </div>
-      {!!references?.length && !structured && (
+      {!!references?.length && !structured && control !== "upload" && (
         <RuntimeBindingEditor
           label={label}
           value={value}
@@ -384,7 +564,123 @@ function Field({
           onChange={commit}
         />
       )}
-      {runtimeBound ? null : control === "select" ? (
+      {control === "upload" ? (
+        <div
+          data-form-upload={multiple ? "multiple" : "single"}
+          aria-busy={uploading}
+          style={
+            {
+              "--flow-upload-surface": getChakraColorHex(background),
+              outline: dragging ? "2px dashed currentColor" : undefined,
+              borderRadius: 8,
+            } as React.CSSProperties
+          }
+          onDragOver={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!disabled && !uploading) {
+              event.dataTransfer.dropEffect = "copy";
+              setDragging(true);
+            }
+          }}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node))
+              setDragging(false);
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setDragging(false);
+            void uploadFiles(Array.from(event.dataTransfer.files));
+          }}
+        >
+          <input
+            ref={uploadInput}
+            type="file"
+            hidden
+            aria-label={`Upload ${label}`}
+            accept={config.$upload?.accept}
+            multiple={multiple}
+            disabled={disabled || uploading}
+            onChange={(event) => {
+              const files = Array.from(event.target.files ?? []);
+              event.target.value = "";
+              void uploadFiles(files);
+            }}
+          />
+          <div data-upload-items="">
+            {(multiple
+              ? Array.isArray(value)
+                ? value
+                : []
+              : value
+                ? [value]
+                : []
+            ).map((url: string, index: number) => (
+              <div data-upload-preview="" key={`${index}:${url}`}>
+                {typeof url === "string" && isIconImage(url) && (
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${label} file ${index + 1}`}
+                  >
+                    <PiFile size={32} aria-hidden="true" />
+                    <DynamicIcon
+                      name={url}
+                      size={120}
+                      onError={(event) => {
+                        event.currentTarget.style.visibility = "hidden";
+                      }}
+                    />
+                  </a>
+                )}
+                <div data-upload-actions="">
+                  {!multiple && (
+                    <ToolbarIconButton
+                      aria-label={`Replace ${label}`}
+                      title={`Replace ${label}`}
+                      icon={<PiUploadSimple />}
+                      size="xs"
+                      variant="ghost"
+                      disabled={disabled || uploading}
+                      onClick={() => uploadInput.current?.click()}
+                    />
+                  )}
+                  <ToolbarIconButton
+                    aria-label={`Remove ${label} file ${index + 1}`}
+                    title="Remove file"
+                    icon={<PiTrash />}
+                    size="xs"
+                    variant="ghost"
+                    disabled={disabled || uploading}
+                    onClick={() =>
+                      commit(
+                        multiple && Array.isArray(value)
+                          ? value.filter((_, position) => position !== index)
+                          : undefined,
+                      )
+                    }
+                  />
+                </div>
+              </div>
+            ))}
+            {(multiple || !value) && (
+              <button
+                {...props}
+                type="button"
+                data-upload-drop=""
+                title={`Upload ${label}`}
+                disabled={disabled || uploading}
+                onClick={() => uploadInput.current?.click()}
+              >
+                <PiPlus size={28} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          {uploading && <span role="status">Uploading...</span>}
+        </div>
+      ) : runtimeBound ? null : control === "select" ? (
         <div data-form-select="">
           <select
             {...props}

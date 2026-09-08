@@ -298,6 +298,9 @@ export interface FlowDiagramCallbacks {
   onFormChange?: (
     event: import("../core/forms").FormChange,
   ) => import("../core/forms").FormEdit[] | void;
+  uploadFormFile?: (
+    request: import("../core/forms").FormUploadRequest,
+  ) => Promise<string> | string;
   resolveFormOptions?: (
     request: import("../core/forms").FormOptionsRequest,
   ) =>

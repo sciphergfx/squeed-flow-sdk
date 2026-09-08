@@ -21,7 +21,7 @@ export const NodeText = ({
   const { colorText } = useCustomColors();
   const isTransparent = data?.viewProps?.bgColor === "transparent";
   const outline = data?.viewProps?.outline === true;
-  const { bgColor, borderColor, textColor } = useThemeContentColors(
+  const { highlightColor, borderColor, textColor } = useThemeContentColors(
     data?.viewProps?.bgColor || themeColor,
   );
   const hextextColor = getChakraColorHex(
@@ -38,7 +38,7 @@ export const NodeText = ({
     <Box
       data-flow-node-surface=""
       borderRadius={data?.viewProps?.borderRadius}
-      bgColor={outline ? "transparent" : bgColor}
+      bgColor={outline ? "transparent" : highlightColor}
       {...getNodeBorderProps(data?.viewProps, nodeBorderColor, isActive, 2)}
       py={14}
       px={20}

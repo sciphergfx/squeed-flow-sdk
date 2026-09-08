@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import { useNodeViewActions } from "../hooks/useNodeViewActions";
 import { CompactNodeView } from "./CompactNodeView";
@@ -12,8 +12,15 @@ export const CompactObjectView = (props) => {
     setEditOnOpen(value);
     actions.setNodeViewMode(props.data.id, value ? "properties" : "default");
   };
-  const { callbacks, readOnly } = useFlowDiagramContext();
+  const { callbacks, readOnly, selectedNodeIds } = useFlowDiagramContext();
   const parent = props.data?.config?.parentContainer;
+  const selected = selectedNodeIds.includes(props.data.id);
+  const wasSelected = useRef(selected);
+  useEffect(() => {
+    if (wasSelected.current && !selected && properties && props.data?.config?.labelBelow && !parent && !readOnly)
+      setProperties(false);
+    wasSelected.current = selected;
+  }, [selected, properties, props.data?.config?.labelBelow, parent, readOnly]);
   const toggleLabel = parent ? "Show parent" : "Show properties";
   const configurable =
     parent || props.data?.config?.form || props.data?.config?.ports?.length;
