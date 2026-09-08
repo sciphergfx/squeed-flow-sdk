@@ -13,6 +13,8 @@ interface NodeViewProps {
   data: any;
   isInverted?: boolean;
   isParent?: boolean;
+  onOpenView?: () => void;
+  editOnMount?: boolean;
   children: (args: NodeViewChildArgs) => React.ReactNode;
 }
 
@@ -31,6 +33,8 @@ const NodeView = ({
   children,
   isInverted,
   isParent,
+  onOpenView,
+  editOnMount = false,
 }: NodeViewProps) => {
   const {
     selectedNodeIds,
@@ -49,7 +53,7 @@ const NodeView = ({
   const nodeRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(editOnMount && !!config.editable && !config.readOnly);
   const [formOpen, setFormOpen] = useState(false);
 
   const id = nodeData?.id;
@@ -133,7 +137,7 @@ const NodeView = ({
     "aria-expanded": formAvailable ? formOpen : undefined,
     onDoubleClickCapture: (event: React.MouseEvent<HTMLDivElement>) => {
       if (
-        !formAvailable ||
+        (!formAvailable && !onOpenView) ||
         config.readOnly ||
         isEditing ||
         !event.currentTarget.contains(event.target as Node) ||
@@ -146,12 +150,13 @@ const NodeView = ({
       event.preventDefault();
       event.stopPropagation();
       setSelectedNodeIds([id]);
-      setFormOpen(true);
+      if (onOpenView) onOpenView();
+      else setFormOpen(true);
       callbacks.onNodeDoubleClick?.(id, nodeData);
     },
     onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => {
       if (
-        !formAvailable ||
+        (!formAvailable && !onOpenView) ||
         config.readOnly ||
         event.target !== event.currentTarget ||
         event.key !== "Enter"
@@ -160,7 +165,8 @@ const NodeView = ({
       event.preventDefault();
       event.stopPropagation();
       setSelectedNodeIds([id]);
-      setFormOpen(true);
+      if (onOpenView) onOpenView();
+      else setFormOpen(true);
     },
   };
   const formPopover = formAvailable && (
