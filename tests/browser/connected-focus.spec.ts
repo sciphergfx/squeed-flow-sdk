@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { ready } from "./helpers";
 
-test("selecting the same connected group preserves the viewport", async ({ page }) => {
+test("selecting the same connected group preserves the viewport", async ({
+  page,
+}) => {
   await ready(page, "custom=1");
   await page.evaluate(() => {
     window.__flowTest.configure({ compactPropertyLayout: true });
@@ -15,7 +17,9 @@ test("selecting the same connected group preserves the viewport", async ({ page 
     window.__flowTest.events.length = 0;
     window.__flowTest.engine!.isolateConnections("alpha", 60, false);
   });
-  await page.waitForFunction(() => window.__flowTest.events.some((event) => event.name === "layout-complete"));
+  await page.waitForFunction(() =>
+    window.__flowTest.events.some((event) => event.name === "layout-complete"),
+  );
   const viewport = await page.evaluate(() => {
     const engine = window.__flowTest.engine!;
     engine.zoom(0.75);
@@ -27,5 +31,10 @@ test("selecting the same connected group preserves the viewport", async ({ page 
     window.__flowTest.engine!.isolateConnections("beta", 60, false);
   });
   await page.waitForTimeout(1500);
-  expect(await page.evaluate(() => ({ zoom: window.__flowTest.engine!.zoom(), pan: window.__flowTest.engine!.pan() }))).toEqual(viewport);
+  expect(
+    await page.evaluate(() => ({
+      zoom: window.__flowTest.engine!.zoom(),
+      pan: window.__flowTest.engine!.pan(),
+    })),
+  ).toEqual(viewport);
 });
