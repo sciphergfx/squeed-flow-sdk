@@ -19,7 +19,11 @@ export const CompactObjectView = (props) => {
     parent || props.data?.config?.form || props.data?.config?.ports?.length;
   if (!parent && configurable && properties)
     return (
-      <ObjectNodeView {...props} editOnMount={editOnOpen} onShowIcon={() => setProperties(false)} />
+      <ObjectNodeView
+        {...props}
+        editOnMount={editOnOpen}
+        onShowIcon={() => setProperties(false)}
+      />
     );
   return (
     <CompactNodeView

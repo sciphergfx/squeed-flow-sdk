@@ -53,7 +53,9 @@ const NodeView = ({
   const nodeRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [isEditing, setIsEditing] = useState(editOnMount && !!config.editable && !config.readOnly);
+  const [isEditing, setIsEditing] = useState(
+    editOnMount && !!config.editable && !config.readOnly,
+  );
   const [formOpen, setFormOpen] = useState(false);
 
   const id = nodeData?.id;
