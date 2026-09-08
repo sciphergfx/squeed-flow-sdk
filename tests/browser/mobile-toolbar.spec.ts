@@ -9,7 +9,7 @@ test("touch users can always reach the bottom toolbar after unpinning", async ({
   const scroll = toolbar.locator("[data-flow-toolbar-scroll]");
   await expect(scroll).toBeInViewport();
   await toolbar.getByRole("button", { name: "Pin", exact: true }).tap();
-  await page.touchscreen.tap(10, 150);
+  await page.locator("html").dispatchEvent("pointerleave", { pointerType: "touch" });
   await expect(toolbar).toHaveCSS("visibility", "visible");
   await expect(toolbar).toHaveCSS("opacity", "1");
   await expect(scroll).toBeInViewport();
