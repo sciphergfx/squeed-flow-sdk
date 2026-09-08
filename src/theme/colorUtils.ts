@@ -244,6 +244,7 @@ const CHAKRA_COLOR_MAP: Record<string, Record<number, string>> = {
 export const getChakraColorHex = (color?, opacity?) => {
   if (color === "transparent") return color;
   if (color?.startsWith("#")) return color;
+  if (color?.startsWith("var(--")) return color;
   if (!color) return "whitesmoke";
 
   const formattedColor = color.replace(/\./g, "-");

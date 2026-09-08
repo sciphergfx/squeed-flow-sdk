@@ -25,8 +25,10 @@ import { FormDocumentContext } from "./NodeForm";
 
 export function StructuredFieldControls({
   nodeAddress,
+  onOpen,
 }: {
   nodeAddress: string;
+  onOpen?: (nodeAddress: string) => void;
 }) {
   const { structured, data, callbacks, editable, onFieldCreate } =
     useContext(FormDocumentContext);
@@ -168,8 +170,8 @@ export function StructuredFieldControls({
             {startCase(slot.label)}
           </span>
           <ToolbarIconButton
-            aria-label={`${slot.present ? "Focus" : "Create"} ${startCase(slot.label)}`}
-            title={`${slot.present ? "Focus" : "Create"} ${startCase(slot.label)}`}
+            aria-label={`${slot.present ? (onOpen ? "Edit" : "Focus") : "Create"} ${startCase(slot.label)}`}
+            title={`${slot.present ? (onOpen ? "Edit" : "Focus") : "Create"} ${startCase(slot.label)}`}
             icon={
               slot.present ? (
                 <PiMagnifyingGlass size={18} />
@@ -182,8 +184,11 @@ export function StructuredFieldControls({
             disabled={disabled && !slot.present}
             onClick={(event) => {
               if (slot.present) {
-                event.currentTarget.closest("dialog")?.close();
-                focus(slot.nodeId);
+                if (onOpen) onOpen(slot.nodeId);
+                else {
+                  event.currentTarget.closest("dialog")?.close();
+                  focus(slot.nodeId);
+                }
               } else change(slot.address, emptyValue(slot.type));
             }}
           />

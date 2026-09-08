@@ -6,10 +6,12 @@ import {
   useEffect,
   useId,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import {
+  PiArrowLeft,
   PiArrowCounterClockwise,
   PiCaretDown,
   PiFile,
@@ -42,7 +44,7 @@ import type { FlowDiagramCallbacks } from "../types";
 import DynamicIcon from "../utils/DynamicIcon";
 import { resolveStateForm, type StateForms } from "../utils/formState";
 import { isIconImage } from "../utils/iconSources";
-import type { StructuredForms } from "../utils/structuredForms";
+import { projectStructuredForms, type StructuredForms } from "../utils/structuredForms";
 import { RuntimeBindingEditor } from "./RuntimeBindingEditor";
 import { StructuredFieldControls } from "./StructuredFieldControls";
 
@@ -61,6 +63,8 @@ export const FormDocumentContext = createContext<{
 }>({ callbacks: {} });
 
 const Fields = styled.div`
+  --flow-form-input-radius: 16px;
+  --flow-form-input-background: color-mix(in srgb, currentColor 7%, transparent);
   padding: 0;
   font-size: 16px;
   line-height: 1.4;
@@ -85,8 +89,8 @@ const Fields = styled.div`
     color: inherit;
     padding: 10px 14px;
     border: 0;
-    border-radius: 16px;
-    background: color-mix(in srgb, currentColor 7%, transparent);
+    border-radius: var(--flow-form-input-radius);
+    background: var(--flow-form-input-background);
     outline: none;
     box-shadow: none;
   }
@@ -106,7 +110,7 @@ const Fields = styled.div`
     max-width: 100%;
     aspect-ratio: 1;
     box-sizing: border-box;
-    border-radius: 8px;
+    border-radius: var(--flow-form-input-radius);
     position: relative;
   }
   & [data-upload-drop] {
@@ -115,7 +119,7 @@ const Fields = styled.div`
     padding: 0;
     border: 2px dashed currentColor;
     background: transparent;
-    color: inherit;
+    color: var(--flow-form-input-background);
     cursor: pointer;
   }
   & [data-upload-drop]:focus-visible,
@@ -125,7 +129,7 @@ const Fields = styled.div`
   }
   & [data-upload-preview] {
     border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-    background: color-mix(in srgb, currentColor 7%, transparent);
+    background: var(--flow-form-input-background);
     overflow: hidden;
   }
   & [data-upload-preview] > a {
@@ -570,8 +574,8 @@ function Field({
           style={
             {
               "--flow-upload-surface": getChakraColorHex(background),
-              outline: dragging ? "2px dashed currentColor" : undefined,
-              borderRadius: 8,
+              outline: dragging ? "2px dashed var(--flow-form-input-background)" : undefined,
+              borderRadius: "var(--flow-form-input-radius)",
             } as React.CSSProperties
           }
           onDragOver={(event) => {
@@ -800,7 +804,56 @@ function Field({
   );
 }
 
-export function NodeForm({ nodeAddress }: { nodeAddress: string }) {
+export function NodeForm({ nodeAddress, structured = false }: { nodeAddress: string; structured?: boolean }) {
+  return structured
+    ? <StructuredNodeForm key={nodeAddress} nodeAddress={nodeAddress} />
+    : <NodeFormFields nodeAddress={nodeAddress} />;
+}
+
+function StructuredNodeForm({ nodeAddress }: { nodeAddress: string }) {
+  const context = useContext(FormDocumentContext);
+  const [path, setPath] = useState<string[]>([]);
+  const sourceSchema = context.structured?.sourceSchema ?? context.schema;
+  const sourceBindings = context.structured?.sourceBindings ?? context.bindings;
+  const projection = useMemo(() => {
+    if (!context.data || !sourceSchema || !sourceBindings) return;
+    return projectStructuredForms(context.data, sourceBindings, sourceSchema, [
+      { data: { id: nodeAddress, type: "objectView" } },
+    ]);
+  }, [context.data, sourceBindings, sourceSchema, nodeAddress]);
+  if (!projection) return <NodeFormFields nodeAddress={nodeAddress} />;
+  const invalid = path.findIndex((address) => !projection.containers.has(address));
+  const currentPath = invalid < 0 ? path : path.slice(0, invalid);
+  const current = currentPath.at(-1) ?? nodeAddress;
+  const label = [...projection.slots.values()].find((slot) => slot.nodeId === current)?.label;
+  return (
+    <FormDocumentContext.Provider value={{
+      ...context,
+      structured: projection,
+      schema: projection.schema,
+      bindings: projection.bindings,
+      renderForm: undefined,
+      onFieldCreate: current === nodeAddress ? context.onFieldCreate : undefined,
+    }}>
+      {!!currentPath.length && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <ToolbarIconButton
+            aria-label="Back to parent fields"
+            title="Back to parent fields"
+            icon={<PiArrowLeft size={18} />}
+            size="sm"
+            variant="ghost"
+            onClick={() => setPath(currentPath.slice(0, -1))}
+          />
+          <strong style={{ minWidth: 0, overflowWrap: "anywhere" }}>{startCase(label)}</strong>
+        </div>
+      )}
+      <NodeFormFields key={current} nodeAddress={current} onOpen={(address) => setPath([...currentPath, address])} />
+    </FormDocumentContext.Provider>
+  );
+}
+
+function NodeFormFields({ nodeAddress, onOpen }: { nodeAddress: string; onOpen?: (nodeAddress: string) => void }) {
   const {
     data,
     schema,
@@ -883,8 +936,8 @@ export function NodeForm({ nodeAddress }: { nodeAddress: string }) {
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
     >
-      {structured && <StructuredFieldControls nodeAddress={nodeAddress} />}
-      {bound && resolved.type.additionalProperties && entries.length === 0 && (
+      {structured && <StructuredFieldControls nodeAddress={nodeAddress} onOpen={onOpen} />}
+      {!structured && bound && resolved.type.additionalProperties && entries.length === 0 && (
         <Field
           request={{ data, address: stateAddress, nodeAddress: stateAddress }}
           property={{ type: resolved.type, optional: false }}
