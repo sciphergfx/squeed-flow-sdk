@@ -44,7 +44,10 @@ import type { FlowDiagramCallbacks } from "../types";
 import DynamicIcon from "../utils/DynamicIcon";
 import { resolveStateForm, type StateForms } from "../utils/formState";
 import { isIconImage } from "../utils/iconSources";
-import { projectStructuredForms, type StructuredForms } from "../utils/structuredForms";
+import {
+  projectStructuredForms,
+  type StructuredForms,
+} from "../utils/structuredForms";
 import { RuntimeBindingEditor } from "./RuntimeBindingEditor";
 import { StructuredFieldControls } from "./StructuredFieldControls";
 
@@ -64,7 +67,11 @@ export const FormDocumentContext = createContext<{
 
 const Fields = styled.div`
   --flow-form-input-radius: 16px;
-  --flow-form-input-background: color-mix(in srgb, currentColor 7%, transparent);
+  --flow-form-input-background: color-mix(
+    in srgb,
+    currentColor 7%,
+    transparent
+  );
   padding: 0;
   font-size: 16px;
   line-height: 1.4;
@@ -574,7 +581,9 @@ function Field({
           style={
             {
               "--flow-upload-surface": getChakraColorHex(background),
-              outline: dragging ? "2px dashed var(--flow-form-input-background)" : undefined,
+              outline: dragging
+                ? "2px dashed var(--flow-form-input-background)"
+                : undefined,
               borderRadius: "var(--flow-form-input-radius)",
             } as React.CSSProperties
           }
@@ -804,10 +813,18 @@ function Field({
   );
 }
 
-export function NodeForm({ nodeAddress, structured = false }: { nodeAddress: string; structured?: boolean }) {
-  return structured
-    ? <StructuredNodeForm key={nodeAddress} nodeAddress={nodeAddress} />
-    : <NodeFormFields nodeAddress={nodeAddress} />;
+export function NodeForm({
+  nodeAddress,
+  structured = false,
+}: {
+  nodeAddress: string;
+  structured?: boolean;
+}) {
+  return structured ? (
+    <StructuredNodeForm key={nodeAddress} nodeAddress={nodeAddress} />
+  ) : (
+    <NodeFormFields nodeAddress={nodeAddress} />
+  );
 }
 
 function StructuredNodeForm({ nodeAddress }: { nodeAddress: string }) {
@@ -822,21 +839,35 @@ function StructuredNodeForm({ nodeAddress }: { nodeAddress: string }) {
     ]);
   }, [context.data, sourceBindings, sourceSchema, nodeAddress]);
   if (!projection) return <NodeFormFields nodeAddress={nodeAddress} />;
-  const invalid = path.findIndex((address) => !projection.containers.has(address));
+  const invalid = path.findIndex(
+    (address) => !projection.containers.has(address),
+  );
   const currentPath = invalid < 0 ? path : path.slice(0, invalid);
   const current = currentPath.at(-1) ?? nodeAddress;
-  const label = [...projection.slots.values()].find((slot) => slot.nodeId === current)?.label;
+  const label = [...projection.slots.values()].find(
+    (slot) => slot.nodeId === current,
+  )?.label;
   return (
-    <FormDocumentContext.Provider value={{
-      ...context,
-      structured: projection,
-      schema: projection.schema,
-      bindings: projection.bindings,
-      renderForm: undefined,
-      onFieldCreate: current === nodeAddress ? context.onFieldCreate : undefined,
-    }}>
+    <FormDocumentContext.Provider
+      value={{
+        ...context,
+        structured: projection,
+        schema: projection.schema,
+        bindings: projection.bindings,
+        renderForm: undefined,
+        onFieldCreate:
+          current === nodeAddress ? context.onFieldCreate : undefined,
+      }}
+    >
       {!!currentPath.length && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginBottom: 8,
+          }}
+        >
           <ToolbarIconButton
             aria-label="Back to parent fields"
             title="Back to parent fields"
@@ -845,15 +876,27 @@ function StructuredNodeForm({ nodeAddress }: { nodeAddress: string }) {
             variant="ghost"
             onClick={() => setPath(currentPath.slice(0, -1))}
           />
-          <strong style={{ minWidth: 0, overflowWrap: "anywhere" }}>{startCase(label)}</strong>
+          <strong style={{ minWidth: 0, overflowWrap: "anywhere" }}>
+            {startCase(label)}
+          </strong>
         </div>
       )}
-      <NodeFormFields key={current} nodeAddress={current} onOpen={(address) => setPath([...currentPath, address])} />
+      <NodeFormFields
+        key={current}
+        nodeAddress={current}
+        onOpen={(address) => setPath([...currentPath, address])}
+      />
     </FormDocumentContext.Provider>
   );
 }
 
-function NodeFormFields({ nodeAddress, onOpen }: { nodeAddress: string; onOpen?: (nodeAddress: string) => void }) {
+function NodeFormFields({
+  nodeAddress,
+  onOpen,
+}: {
+  nodeAddress: string;
+  onOpen?: (nodeAddress: string) => void;
+}) {
   const {
     data,
     schema,
@@ -936,16 +979,21 @@ function NodeFormFields({ nodeAddress, onOpen }: { nodeAddress: string; onOpen?:
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
     >
-      {structured && <StructuredFieldControls nodeAddress={nodeAddress} onOpen={onOpen} />}
-      {!structured && bound && resolved.type.additionalProperties && entries.length === 0 && (
-        <Field
-          request={{ data, address: stateAddress, nodeAddress: stateAddress }}
-          property={{ type: resolved.type, optional: false }}
-          config={{ $label: "Configuration", $control: "textarea" }}
-          value={node}
-          disabled={readOnly || config.editable === false || !editable}
-        />
+      {structured && (
+        <StructuredFieldControls nodeAddress={nodeAddress} onOpen={onOpen} />
       )}
+      {!structured &&
+        bound &&
+        resolved.type.additionalProperties &&
+        entries.length === 0 && (
+          <Field
+            request={{ data, address: stateAddress, nodeAddress: stateAddress }}
+            property={{ type: resolved.type, optional: false }}
+            config={{ $label: "Configuration", $control: "textarea" }}
+            value={node}
+            disabled={readOnly || config.editable === false || !editable}
+          />
+        )}
       {[...sections].map(([section, fields]) =>
         sectioned && fields.length > 1 ? (
           <details key={section} open>
