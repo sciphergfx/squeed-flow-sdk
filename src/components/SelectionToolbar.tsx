@@ -9,9 +9,9 @@ import {
   PiArrowsOutLineVertical,
   PiBezierCurve,
   PiBoundingBox,
+  PiCards,
   PiEraser,
   PiFastForward,
-  PiImage,
   PiLineSegment,
   PiLineSegments,
   PiLineVerticalThin,
@@ -626,7 +626,7 @@ export function NodeTools({
               ? "Type view is managed by the custom renderer or container"
               : `Type view: ${typeView || "None (default)"}`
           }
-          icon={<PiImage size={20} />}
+          icon={<PiCards size={20} />}
           style={{ width: 36 }}
           value={typeView}
           disabled={
