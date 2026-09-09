@@ -65,7 +65,7 @@ export const FormDocumentContext = createContext<{
   callbacks: FlowDiagramCallbacks;
 }>({ callbacks: {} });
 
-const Fields = styled.div`
+const Fields = styled.div<{ $colorMode: "light" | "dark" }>`
   --flow-form-input-radius: 16px;
   --flow-form-input-background: color-mix(
     in srgb,
@@ -210,8 +210,10 @@ const Fields = styled.div`
     cursor: default;
     opacity: 0.55;
   }
+  &[role="alert"],
   & [role="alert"] {
-    color: #dc2626;
+    color: ${({ $colorMode }) =>
+      `var(--chakra-colors-red-${$colorMode === "dark" ? "300" : "500"})`};
     font-size: 14px;
     margin-top: 8px;
   }
@@ -906,7 +908,7 @@ function NodeFormFields({
     renderForm,
     structured,
   } = useContext(FormDocumentContext);
-  const { readOnly, config } = useFlowDiagramContext();
+  const { readOnly, config, colorMode } = useFlowDiagramContext();
   const rendered = renderForm?.(nodeAddress);
   if (rendered !== undefined)
     return (
@@ -919,19 +921,19 @@ function NodeFormFields({
       </fieldset>
     );
   if (!data)
-    return <Fields role="alert">Forms require a JSON document.</Fields>;
+    return <Fields $colorMode={colorMode} role="alert">Forms require a JSON document.</Fields>;
   const bound = bindings
     ? resolveStateForm(bindings, nodeAddress, schema)
     : undefined;
   const resolved = bindings
     ? bound
     : schema && resolveFormNode(data, nodeAddress, schema);
-  if (!resolved) return <Fields role="status">Form schema unavailable.</Fields>;
+  if (!resolved) return <Fields $colorMode={colorMode} role="status">Form schema unavailable.</Fields>;
   const stateAddress = bound?.address ?? nodeAddress;
   const node = getNode(data, stateAddress);
   const scalar = structured?.containers.get(nodeAddress)?.scalar;
   if (node === undefined || (typeof node !== "object" && !scalar))
-    return <Fields role="alert">Bound form state is unavailable.</Fields>;
+    return <Fields $colorMode={colorMode} role="alert">Bound form state is unavailable.</Fields>;
   const entries = Object.entries(resolved.type.properties).filter(([key]) =>
     conditionMatches(resolved.fields[key]?.$visibleWhen, data),
   );
@@ -975,6 +977,7 @@ function NodeFormFields({
   );
   return (
     <Fields
+      $colorMode={colorMode}
       data-flow-form={nodeAddress}
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}

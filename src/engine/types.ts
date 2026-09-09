@@ -39,9 +39,9 @@ export interface FlowEngine {
   /** Zoom keeping the model point under `renderedPoint` (container px) fixed */
   zoomAt(level: number, renderedPoint: Point): void;
   /** Fit all elements into the container with `padding` rendered px */
-  fit(padding?: number, animate?: boolean): void;
+  fit(padding?: number, animate?: boolean, afterViewChange?: boolean): void;
   /** Explicit alias for fit: fit and centre all elements with screen-pixel padding. */
-  centerAndFit(padding?: number, animate?: boolean): void;
+  centerAndFit(padding?: number, animate?: boolean, afterViewChange?: boolean): void;
   /** Centre all elements at the current zoom */
   center(animate?: boolean): void;
   /** Fit one node; afterViewChange waits for opening geometry. Padding is in screen pixels (default 50). */

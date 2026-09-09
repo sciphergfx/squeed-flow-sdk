@@ -804,7 +804,7 @@ function Canvas(props: CanvasProps) {
     const branchIds = (id: string) =>
       branchNodeIds(id, propsRef.current.nodes, propsRef.current.edges);
     const focus = (
-      ids: Set<string>,
+      ids: Set<string> | undefined,
       padding = 50,
       animate = propsRef.current.animateViewport,
       zoomScale = 1,
@@ -813,10 +813,11 @@ function Canvas(props: CanvasProps) {
       let previousBounds: Rect | null = null;
       const applyFocus = (positions?: Map<string, Point>) => {
         const graph = layoutGraphRef.current;
+        const targetIds = ids ?? new Set(graph.nodes.map((node) => node.id));
         const parents = new Set(
           graph.nodes.map((node) => node.parent).filter(Boolean),
         );
-        if (!positions && [...ids].some((id) => parents.has(id))) return;
+        if (!positions && (!ids || [...ids].some((id) => parents.has(id)))) return;
         const targetContainers =
           positions &&
           computeContainers(
@@ -842,7 +843,7 @@ function Canvas(props: CanvasProps) {
             },
           );
         const bounds = unionRects(
-          [...ids].flatMap((id) => {
+          [...targetIds].flatMap((id) => {
             const container = targetContainers?.get(id);
             if (container) return [container];
             const position = positions?.get(id);
@@ -921,6 +922,17 @@ function Canvas(props: CanvasProps) {
       const r = rootRef.current?.getBoundingClientRect();
       return { x: clientX - (r?.left ?? 0), y: clientY - (r?.top ?? 0) };
     };
+    const fit = (padding = 0, animate = propsRef.current.animateViewport, afterViewChange = false) => {
+      if (afterViewChange) {
+        focus(undefined, padding, animate, 1, true);
+        return;
+      }
+      geometryFocus.current = null;
+      updateViewport(() => {
+        const bounds = elementsBBox();
+        if (bounds) viewport.fit(bounds, padding, animate);
+      });
+    };
     return {
       zoom,
       pan,
@@ -958,23 +970,8 @@ function Canvas(props: CanvasProps) {
         geometryFocus.current = null;
         viewport.zoomAt(level, pt);
       },
-      fit: (padding = 0, animate = propsRef.current.animateViewport) => {
-        geometryFocus.current = null;
-        updateViewport(() => {
-          const bb = elementsBBox();
-          if (bb) viewport.fit(bb, padding, animate);
-        });
-      },
-      centerAndFit: (
-        padding = 0,
-        animate = propsRef.current.animateViewport,
-      ) => {
-        geometryFocus.current = null;
-        updateViewport(() => {
-          const bb = elementsBBox();
-          if (bb) viewport.fit(bb, padding, animate);
-        });
-      },
+      fit,
+      centerAndFit: fit,
       center: (animate = propsRef.current.animateViewport) => {
         geometryFocus.current = null;
         const bb = elementsBBox();
