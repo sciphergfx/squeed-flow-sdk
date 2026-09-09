@@ -24,7 +24,8 @@ export function ContentPreview({
     const changed = () => {
       const active = document.fullscreenElement === viewport.current;
       setFullscreen(active);
-      if (wasFullscreen.current && !active && !document.fullscreenElement) fullscreenButton.current?.focus({ preventScroll: true });
+      if (wasFullscreen.current && !active && !document.fullscreenElement)
+        fullscreenButton.current?.focus({ preventScroll: true });
       wasFullscreen.current = active;
     };
     document.addEventListener("fullscreenchange", changed);
@@ -33,11 +34,15 @@ export function ContentPreview({
   const toggleFullscreen = async () => {
     setFullscreenError("");
     try {
-      if (document.fullscreenElement === viewport.current) await document.exitFullscreen();
-      else if (viewport.current?.requestFullscreen) await viewport.current.requestFullscreen();
+      if (document.fullscreenElement === viewport.current)
+        await document.exitFullscreen();
+      else if (viewport.current?.requestFullscreen)
+        await viewport.current.requestFullscreen();
       else throw new Error("Fullscreen is not supported in this browser.");
     } catch (error) {
-      setFullscreenError(error instanceof Error ? error.message : "Unable to change fullscreen.");
+      setFullscreenError(
+        error instanceof Error ? error.message : "Unable to change fullscreen.",
+      );
     }
   };
   const [preview, setPreview] = useState<{
@@ -74,19 +79,31 @@ export function ContentPreview({
   useEffect(() => {
     if (!onEdit) return;
     const edit = async (event: MessageEvent) => {
-      if (!frame.current?.contentWindow || event.source !== frame.current.contentWindow || event.data?.type !== "squeed:content-edit") return;
+      if (
+        !frame.current?.contentWindow ||
+        event.source !== frame.current.contentWindow ||
+        event.data?.type !== "squeed:content-edit"
+      )
+        return;
       try {
-        if (document.fullscreenElement === viewport.current) await document.exitFullscreen();
+        if (document.fullscreenElement === viewport.current)
+          await document.exitFullscreen();
         onEdit();
       } catch (error) {
-        setFullscreenError(error instanceof Error ? error.message : "Unable to close fullscreen.");
+        setFullscreenError(
+          error instanceof Error
+            ? error.message
+            : "Unable to close fullscreen.",
+        );
       }
     };
     window.addEventListener("message", edit);
     return () => window.removeEventListener("message", edit);
   }, [onEdit]);
   const current =
-    preview?.content === content && preview.format === format && preview.editable === editable
+    preview?.content === content &&
+    preview.format === format &&
+    preview.editable === editable
       ? preview
       : undefined;
   return (
@@ -107,15 +124,28 @@ export function ContentPreview({
         h="100%"
         bg="white"
         onKeyDownCapture={(event) => {
-          if (event.key !== "Escape" || document.fullscreenElement !== viewport.current) return;
+          if (
+            event.key !== "Escape" ||
+            document.fullscreenElement !== viewport.current
+          )
+            return;
           event.preventDefault();
           event.stopPropagation();
           void toggleFullscreen();
         }}
         css={{
-          "&:fullscreen": { width: "100vw", height: "100dvh", maxWidth: "none", maxHeight: "none", padding: 0 },
-          "&:hover > [data-flow-fullscreen], &:focus-within > [data-flow-fullscreen]": { opacity: 1, pointerEvents: "auto" },
-          "@media (hover: none)": { "& > [data-flow-fullscreen]": { opacity: 1, pointerEvents: "auto" } },
+          "&:fullscreen": {
+            width: "100vw",
+            height: "100dvh",
+            maxWidth: "none",
+            maxHeight: "none",
+            padding: 0,
+          },
+          "&:hover > [data-flow-fullscreen], &:focus-within > [data-flow-fullscreen]":
+            { opacity: 1, pointerEvents: "auto" },
+          "@media (hover: none)": {
+            "& > [data-flow-fullscreen]": { opacity: 1, pointerEvents: "auto" },
+          },
         }}
       >
         <ToolbarIconButton
@@ -131,32 +161,47 @@ export function ContentPreview({
           zIndex={1}
           opacity={fullscreen ? 1 : 0}
           pointerEvents={fullscreen ? "auto" : "none"}
-          onClick={(event) => { event.stopPropagation(); void toggleFullscreen(); }}
-        />
-        {fullscreenError && <Box role="alert" position="absolute" bottom={0} insetInline={0} bg="white" color="red.700" fontSize="14px">{fullscreenError}</Box>}
-      {current?.error ? (
-        <pre role="alert" style={{ whiteSpace: "pre-wrap" }}>
-          {current.error}
-        </pre>
-      ) : current?.document ? (
-        <iframe
-          ref={frame}
-          title={`${format.toUpperCase()} content preview`}
-          sandbox={format === "jsx" || editable ? "allow-scripts" : ""}
-          allowFullScreen
-          referrerPolicy="no-referrer"
-          srcDoc={current.document}
-          style={{
-            width: "100%",
-            height: "100%",
-            border: 0,
-            display: "block",
-            background: "white",
+          onClick={(event) => {
+            event.stopPropagation();
+            void toggleFullscreen();
           }}
         />
-      ) : (
-        <span role="status">Loading preview...</span>
-      )}
+        {fullscreenError && (
+          <Box
+            role="alert"
+            position="absolute"
+            bottom={0}
+            insetInline={0}
+            bg="white"
+            color="red.700"
+            fontSize="14px"
+          >
+            {fullscreenError}
+          </Box>
+        )}
+        {current?.error ? (
+          <pre role="alert" style={{ whiteSpace: "pre-wrap" }}>
+            {current.error}
+          </pre>
+        ) : current?.document ? (
+          <iframe
+            ref={frame}
+            title={`${format.toUpperCase()} content preview`}
+            sandbox={format === "jsx" || editable ? "allow-scripts" : ""}
+            allowFullScreen
+            referrerPolicy="no-referrer"
+            srcDoc={current.document}
+            style={{
+              width: "100%",
+              height: "100%",
+              border: 0,
+              display: "block",
+              background: "white",
+            }}
+          />
+        ) : (
+          <span role="status">Loading preview...</span>
+        )}
       </Box>
     </div>
   );

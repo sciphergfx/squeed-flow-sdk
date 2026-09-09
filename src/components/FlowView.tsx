@@ -369,13 +369,22 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
               {...node}
               isInverted={node.data.config?.isInverted ?? edgeData?.isInverted}
               isParent={isParentContainer}
-              containerStyle={isParentContainer ? containerStyle(node.data.id) : undefined}
+              containerStyle={
+                isParentContainer ? containerStyle(node.data.id) : undefined
+              }
               key={`${node.data.id}-${themeColor}`}
             />
           ),
         };
       });
-  }, [nodes, parentIds, edgeBySource, themeColor, config.customViews, containerStyle]);
+  }, [
+    nodes,
+    parentIds,
+    edgeBySource,
+    themeColor,
+    config.customViews,
+    containerStyle,
+  ]);
 
   const layoutDebounce = useMemo(() => {
     if (isPerformanceMode) return 300;

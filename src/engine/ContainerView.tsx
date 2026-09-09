@@ -114,37 +114,39 @@ function ContainerView({
           >
             {labelContent}
           </foreignObject>
-        ) : label && (
-          <>
-            <rect
-              x={cx - labelWidth / 2 - padding}
-              y={labelY - style.fontSize / 2 - padding}
-              width={labelWidth + 2 * padding}
-              height={style.fontSize + 2 * padding}
-              fill={
-                style.textColor === "transparent"
-                  ? "transparent"
-                  : style.labelBg
-              }
-            />
-            <text
-              x={cx}
-              y={labelY}
-              fill={style.textColor}
-              fontSize={style.fontSize}
-              fontWeight="bold"
-              fontFamily={EDGE_LABEL_FONT_FAMILY}
-              style={{
-                fontSize: style.fontSize,
-                fontWeight: "bold",
-                fontFamily: EDGE_LABEL_FONT_FAMILY,
-              }}
-              textAnchor="middle"
-              dominantBaseline="central"
-            >
-              {label}
-            </text>
-          </>
+        ) : (
+          label && (
+            <>
+              <rect
+                x={cx - labelWidth / 2 - padding}
+                y={labelY - style.fontSize / 2 - padding}
+                width={labelWidth + 2 * padding}
+                height={style.fontSize + 2 * padding}
+                fill={
+                  style.textColor === "transparent"
+                    ? "transparent"
+                    : style.labelBg
+                }
+              />
+              <text
+                x={cx}
+                y={labelY}
+                fill={style.textColor}
+                fontSize={style.fontSize}
+                fontWeight="bold"
+                fontFamily={EDGE_LABEL_FONT_FAMILY}
+                style={{
+                  fontSize: style.fontSize,
+                  fontWeight: "bold",
+                  fontFamily: EDGE_LABEL_FONT_FAMILY,
+                }}
+                textAnchor="middle"
+                dominantBaseline="central"
+              >
+                {label}
+              </text>
+            </>
+          )
         )}
       </g>
     ) : null;

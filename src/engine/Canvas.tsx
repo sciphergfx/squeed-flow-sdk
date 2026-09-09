@@ -1409,8 +1409,13 @@ function Canvas(props: CanvasProps) {
       }}
       onClickCapture={(event) => {
         if (!event.currentTarget.contains(event.target as Node)) return;
-        const fullscreenControl = event.target instanceof Element && event.target.closest("button[data-flow-fullscreen]");
-        if (suppressClickRef.current || (props.readOnly && !fullscreenControl)) {
+        const fullscreenControl =
+          event.target instanceof Element &&
+          event.target.closest("button[data-flow-fullscreen]");
+        if (
+          suppressClickRef.current ||
+          (props.readOnly && !fullscreenControl)
+        ) {
           event.preventDefault();
           event.stopPropagation();
         }
@@ -1429,7 +1434,11 @@ function Canvas(props: CanvasProps) {
                   rect={rect}
                   label={labelById.get(id)}
                   labelLayer={labelLayer}
-                  labelContent={nodes.find((node) => node.id === id && node.label !== undefined)?.element}
+                  labelContent={
+                    nodes.find(
+                      (node) => node.id === id && node.label !== undefined,
+                    )?.element
+                  }
                   style={containerStyle(id)}
                   onSelect={onContainerSelect}
                   onCollapse={

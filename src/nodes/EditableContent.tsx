@@ -68,10 +68,11 @@ export function EditableContent({
           position="relative"
           data-flow-content=""
           css={{
-            "&:hover > [data-flow-content-edit], &:focus-within > [data-flow-content-edit]": {
-              opacity: 1,
-              pointerEvents: "auto",
-            },
+            "&:hover > [data-flow-content-edit], &:focus-within > [data-flow-content-edit]":
+              {
+                opacity: 1,
+                pointerEvents: "auto",
+              },
           }}
         >
           {editable && (
@@ -95,9 +96,13 @@ export function EditableContent({
           <ContentPreview
             content={content}
             format={format}
-            onEdit={editable ? () => {
-              if (wrapperRef.current) startEditing(wrapperRef.current);
-            } : undefined}
+            onEdit={
+              editable
+                ? () => {
+                    if (wrapperRef.current) startEditing(wrapperRef.current);
+                  }
+                : undefined
+            }
           />
         </Box>
       );

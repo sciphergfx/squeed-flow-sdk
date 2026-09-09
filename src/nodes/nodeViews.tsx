@@ -12,11 +12,20 @@ const text = (props) => (
   <CompactObjectView {...props} renderCompact={NodeText} />
 );
 const arrayView = (props) => <CompactObjectView {...props} />;
-const ParentContainerView = ({ containerStyle, ...props }: Omit<ComponentProps<typeof NodeView>, "children"> & { containerStyle: ContainerStyle }) => (
+const ParentContainerView = ({
+  containerStyle,
+  ...props
+}: Omit<ComponentProps<typeof NodeView>, "children"> & {
+  containerStyle: ContainerStyle;
+}) => (
   <NodeView {...props}>
     {(args) => (
       <Box
-        bg={containerStyle.textColor === "transparent" ? "transparent" : containerStyle.labelBg}
+        bg={
+          containerStyle.textColor === "transparent"
+            ? "transparent"
+            : containerStyle.labelBg
+        }
         p={`${containerStyle.fontSize / 5}px`}
         fontFamily={EDGE_LABEL_FONT_FAMILY}
         lineHeight={1}
