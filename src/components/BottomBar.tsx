@@ -153,12 +153,12 @@ const BottomBar = () => {
         case "increase":
           zoom = Math.min(maxZoom, zoom + zoomStep);
           engine.zoom(zoom);
-          engine.center();
+          engine.center(false);
           break;
         case "decrease":
           zoom = Math.max(minZoom, zoom - zoomStep);
           engine.zoom(zoom);
-          engine.center();
+          engine.center(false);
           break;
         case "reset":
           engine.fit(50);
