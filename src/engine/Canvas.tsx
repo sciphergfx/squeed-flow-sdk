@@ -303,6 +303,7 @@ function Canvas(props: CanvasProps) {
   const positionsRef = useRef(positions);
   positionsRef.current = positions;
   const placedNodes = useRef(new Map<string, Point>());
+  const resizeAnchor = useRef<{ id: string; position: Point } | null>(null);
   const hasLayoutRunRef = useRef(false);
   const [layoutRevision, setLayoutRevision] = useState(0);
   const layoutTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -412,6 +413,21 @@ function Canvas(props: CanvasProps) {
       console.warn("[flow-sdk] layout failed", err);
       return;
     }
+    const anchor = resizeAnchor.current;
+    resizeAnchor.current = null;
+    const anchorTarget = anchor && target.get(anchor.id);
+    if (anchor && anchorTarget) {
+      const offset = {
+        x: anchor.position.x - anchorTarget.x,
+        y: anchor.position.y - anchorTarget.y,
+      };
+      target = new Map(
+        [...target].map(([id, position]) => [
+          id,
+          { x: position.x + offset.x, y: position.y + offset.y },
+        ]),
+      );
+    }
     for (const [id, position] of placedNodes.current) {
       if (target.has(id)) target.set(id, position);
       else if (!p.nodes.some((node) => node.id === id))
@@ -500,6 +516,9 @@ function Canvas(props: CanvasProps) {
             if (!w && !h) continue;
             const prev = sizesRef.current.get(nid);
             if (prev && prev.w === w && prev.h === h) continue;
+            const position = positionsRef.current.get(nid);
+            if (prev && position && hasLayoutRunRef.current && !resizeAnchor.current)
+              resizeAnchor.current = { id: nid, position: { ...position } };
             sizesRef.current.set(nid, { w, h });
             changed = true;
           }

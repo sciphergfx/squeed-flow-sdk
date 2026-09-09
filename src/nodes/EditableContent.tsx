@@ -57,6 +57,7 @@ export function EditableContent({
       <Box
         data-flow-content=""
         color={color}
+        opacity={content ? undefined : 0.6}
         w="100%"
         minH="1.2em"
         whiteSpace="normal"
@@ -160,7 +161,7 @@ export function EditableContent({
             },
           }}
         >
-          {content}
+          {content || (editable ? "Write your content here" : "")}
         </Markdown>
       </Box>
     );
@@ -173,6 +174,7 @@ export function EditableContent({
       <Textarea
         ref={inputRef}
         aria-label="Node content"
+        placeholder="Write your content here"
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={commit}

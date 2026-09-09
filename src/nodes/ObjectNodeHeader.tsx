@@ -42,7 +42,7 @@ export function ObjectNodeHeader({
         <Flex
           justify="flex-start"
           direction="row"
-          p={Object.entries(data.description || {}).length ? 8 : 20}
+          p={hasContent || Object.entries(data.description || {}).length ? 8 : 20}
           borderBottomWidth={1}
           minWidth="max-content !important"
           width="100%"
