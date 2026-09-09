@@ -1,6 +1,6 @@
 # SDK Test MCP Map
 
-The command catalog contains 77 viewer actions plus a separate model-generation route. `provision.ts` generates 78 authenticated, uncached POST routes and four workflows: two legacy workflows, one shared `emit_event` workflow, and one Backflow model-generation workflow. No backend or SDK runtime changes are required.
+The command catalog contains 87 viewer actions plus a separate model-generation route. `provision.ts` generates 88 authenticated, uncached POST routes and four workflows: two legacy workflows, one shared `emit_event` workflow, and one Backflow model-generation workflow. Generated routes must be provisioned before external MCP clients can use the updated contract.
 
 | Group      | Commands                                                                                                                                  |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -20,6 +20,7 @@ POST `/squeed/collision-mode` to enter or leave the reversible grid mode:
 ```json
 {
   "executionId": "grid-demo",
+  "documentId": "platform",
   "requestId": "fill-1",
   "enabled": true,
   "fill": true,
@@ -64,11 +65,12 @@ New commands use `mcp_sdk_command` with `data: { executionId, command, payload }
 
 ## Document-Scoped Configuration
 
-`configuration-export` and `configuration-replace` require `documentId` in
-addition to `executionId`. The execution ID selects the transport channel; the
-document ID must match the document connected to that channel. Missing or
-mismatched IDs are rejected before either configuration handler runs. There is
-no fallback to the active document and no editing of unopened documents.
+Every viewer command except discovery (`inspect`, `document-list`) requires
+`documentId` in addition to `executionId`. The execution ID selects the transport
+channel. Node, edge, viewport and setting commands require the connected document
+ID. Configuration export, replacement and patch also accept known saved draft
+IDs returned by `document-list`. Unknown IDs are rejected; there is no fallback
+to the active document. A browser must remain connected for local draft access.
 
 `inspect` includes `result.documentId`. Saved tabs use their stable document UUID;
 built-in examples use their existing document key, such as `platform`. Inspection
@@ -84,22 +86,59 @@ For example, POST `/squeed/configuration-export` with:
 ```
 
 For replacement, add `configuration` containing the exported version 1 design
-or complete source/bindings/design/schema package. Export before editing: this
-is replacement, not a partial canvas patch. Configuration result events also
-include the connected `documentId`. Individual setting commands are not yet
-document-ID scoped. Document identity is a targeting check, not authorization;
+or complete source/bindings/design/schema package. Configured documents reuse
+their existing source, bindings and schema when importing a standalone design,
+including defaults, types, nodes and appearance overrides. Plain JSON/raw viewers
+use their existing appearance path; source-mapped type projection requires a
+configured document. Result events include the requested `documentId`.
+
+`configuration-patch` accepts `edits` with `op: "set" | "remove"`, a `path` array
+of literal design key segments, and `value` for set operations. Example:
+
+```json
+{
+  "executionId": "diagram-demo",
+  "documentId": "platform",
+  "requestId": "spacing-1",
+  "edits": [{ "op": "set", "path": ["canvas", "spacing"], "value": 1.5 }]
+}
+```
+
+Unmentioned fields remain unchanged; unsafe keys and invalid resulting
+configurations are rejected before application. Explicit appearance overrides
+and resets retain their precedence unless patched too. Inactive drafts are
+validated and saved locally; their cached projection, schema and canvas are
+invalidated before reopening. These are browser-local drafts, not a server or
+cross-device database. Document identity is a targeting check, not authorization;
 existing route authentication and browser read-only checks still apply.
 
-This is a breaking input change for the two configuration commands. Regenerate
-and provision those routes so `body.documentId` is forwarded in the command
-payload, then refresh MCP discovery. Local catalog changes do not update deployed
-routes. The route paths and their exact permission scopes are unchanged.
+Additional individual commands: `default-edge-color` (`color`), `node-type-view`
+(`node`, `view`: empty/default, text, icon-label, object), `all-nodes-icon-label`
+(`enabled`), `toolbar-collapsed` (`collapsed`), `connections-only` (`enabled`),
+`focus-padding` (`padding`), `grid-order` (`order`: node IDs/aliases), and
+`fill-radius-overrides` (`nodes`: node IDs/aliases; empty clears the temporary
+override set). `node-view` also accepts `icon-label`. Grid order does not toggle
+collision mode; Fill overrides do not overwrite saved node radii.
+
+This is a breaking input change. Regenerate and provision the routes and legacy
+node workflows to forward `documentId` and `requestId`, add new exact route
+scopes to the restricted client key, and refresh MCP discovery. Local catalog
+changes do not update deployed routes or keys.
 
 ## Results And Limits
 
 HTTP/MCP responses confirm publication only. They do not confirm browser delivery, and inspection/export data is **not returned synchronously to the MCP caller**. The browser emits `window` CustomEvents named `squeed:mcp-result` with `{ executionId, requestId, command, status, result?, error? }`; hosts can also consume the bridge `onResult` callback. These results are not persisted or broadcast back to the server.
 
-Document/configuration operations use SDK Test's existing validators and callbacks. Configuration accepts a standalone design or complete package; standalone appearance application currently handles root/overrides rather than rebuilding defaults/types/nodes. State and form operations require the corresponding dataset support. Read-only diagrams reject edits. Custom JavaScript/renderers, arbitrary callback invocation, authentication and lifecycle notifications are deliberately not executable commands. Local draft persistence is managed per document by the host, not by the MCP server or SDK.
+Document/configuration operations use SDK Test's existing validators and callbacks. State and form operations require the corresponding dataset support. Read-only diagrams reject edits. Custom JavaScript/renderers, arbitrary callback invocation, authentication and lifecycle notifications are deliberately not executable commands. Local draft persistence is managed per document by the host, not by the MCP server or SDK.
+
+The in-browser `runSqueedAgentLoop` now waits for correlated browser results using
+`mcpResultClient.ts`, not publication responses. It returns applied/rejected
+results (including export data) to the model, handles cancellation and a bounded
+timeout, and rejects unconfirmed delivery. Nonbrowser adapters must supply a
+result EventTarget. This does not make results available to external MCP clients:
+server-side authenticated result delivery/retrieval remains to be implemented
+and deployed against the Squeed backend. Retries with the same request ID replay
+cached results while the bridge remains mounted; this is not server durability.
 
 ## Form Suggestions
 
@@ -107,11 +146,13 @@ Document/configuration operations use SDK Test's existing validators and callbac
 
 For arbitrary source shapes, pass `formSuggestions` to SDK Test as `{ "root.custom.table": { action: "database", field: "collection" } }`. Lookups use the authenticated host API and a tenant-plus-URL React Query key with a 30-second freshness window. Existing resource selectors take precedence. Missing permissions and malformed responses remain errors; they do not become fabricated options.
 
-The optional `runSqueedAgentLoop` adapter in SDK Test's `squeedAgentLoop.ts` takes a connected MCP client and a `requestAgent` callback for `/agent/tool-call`. It supplies all 77 schemas using `squeedAgentTools(executionId)`, appends the assistant message and every tool reply, rejects cross-session/unknown calls, deduplicates repeated call IDs, and limits rounds (default 8, maximum 16). It is not automatically attached to a chat UI or an MCP connection. No live LLM request is made by the tests.
+The optional `runSqueedAgentLoop` adapter in SDK Test's `squeedAgentLoop.ts` takes a connected MCP client and a `requestAgent` callback for `/agent/tool-call`. It supplies all 87 schemas using `squeedAgentTools(executionId)`, appends the assistant message and every tool reply, rejects cross-session/unknown calls, deduplicates repeated call IDs, and limits rounds (default 8, maximum 16). It is not automatically attached to a chat UI or an MCP connection. No live LLM request is made by the tests.
 
 Restricted server MCP discovery currently returns tool names without their input fields. The adapter supplies the schemas from the same catalog instead of granting configuration-read permissions. Collection suggestions use the browser's existing authenticated API, not the route-only MCP key. Do not treat a Squeed publication response as browser state or an LLM answer.
 
-An `applied` browser event means the handler completed, not that asynchronous layout has settled. Use the SDK's `onLayoutComplete` callback before making geometry-dependent follow-up operations.
+Configuration replacement/patch waits for the restored canvas revision before
+emitting `applied`. Other commands report handler completion, not general layout
+settlement; use `onLayoutComplete` for geometry-dependent follow-up operations.
 
 ## Backflow Model Streaming
 

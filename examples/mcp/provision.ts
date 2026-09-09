@@ -17,6 +17,7 @@ export function createSqueedProvision() {
             data: {
               executionId: "{{input.executionId}}",
               documentId: "{{input.documentId}}",
+              requestId: "{{input.requestId}}",
               node: "{{input.node}}",
               [kind === "view" ? "mode" : "animated"]:
                 `{{input.${kind === "view" ? "mode" : "animated"}}}`,
@@ -54,6 +55,7 @@ export function createSqueedProvision() {
           [
             "executionId",
             "documentId",
+            "requestId",
             "node",
             ...Object.keys(command.fields),
           ].map((field) => [field, `{{body.${field}}}`]),

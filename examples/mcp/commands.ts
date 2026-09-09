@@ -556,7 +556,7 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
   ),
   command(
     "configuration-replace",
-    "Validate and apply a version 1 design or complete package to the specified connected document.",
+    "Validate and apply a version 1 design or complete package to the connected document or a known local draft.",
     "diagram",
     "host",
     "replaceConfiguration",
@@ -567,7 +567,7 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
   ),
   command(
     "configuration-export",
-    "Return configuration for the specified connected document through the browser result event.",
+    "Return configuration for the connected document or a known local draft through the browser result event.",
     "diagram",
     "host",
     "exportConfiguration",
