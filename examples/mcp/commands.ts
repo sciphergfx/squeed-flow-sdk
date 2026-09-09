@@ -43,12 +43,15 @@ const gridOptions = {
   columns: { type: "integer", minimum: 1, maximum: 10000, optional: true },
   fill: { ...boolean, optional: true },
   gaps: {
-    anyOf: [nonnegative, {
-      type: "object",
-      properties: { x: nonnegative, y: nonnegative },
-      required: ["x", "y"],
-      additionalProperties: false,
-    }],
+    anyOf: [
+      nonnegative,
+      {
+        type: "object",
+        properties: { x: nonnegative, y: nonnegative },
+        required: ["x", "y"],
+        additionalProperties: false,
+      },
+    ],
     optional: true,
   },
 };
@@ -108,11 +111,20 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
   ),
   node("label", "onNodeLabelChange", { label: text }),
   node("content", "onNodeContentChange", {
-    content: { anyOf: [text, {
-      type: "array",
-      maxItems: 10000,
-      items: { type: "object", properties: { type: token }, required: ["type"] },
-    }] },
+    content: {
+      anyOf: [
+        text,
+        {
+          type: "array",
+          maxItems: 10000,
+          items: {
+            type: "object",
+            properties: { type: token },
+            required: ["type"],
+          },
+        },
+      ],
+    },
   }),
   node("collapse", "onNodeCollapse", { collapsed: boolean }),
   node("color", "onNodeColorChange", {
@@ -193,15 +205,55 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
     variant: choice("dot", "steel", "grid", "none", "transparent"),
   }),
   diagram("compact-layout", "setCompactPropertyLayout", { enabled: boolean }),
-  command("collision-mode", "Enable or disable swappable collision grid mode; omitted options retain current settings.", "diagram", "host", "setNodeGridMode", { enabled: boolean, ...gridOptions }),
-  command("node-grid", "Arrange visible nodes in a grid without enabling swap mode.", "diagram", "host", "arrangeNodesInGrid", gridOptions),
-  command("grid-swap", "Swap two node slots in active collision grid mode.", "diagram", "host", "swapGridNodes", { source: token, target: token, animate: viewport.animate }),
-  command("collision-detect", "Return visible sibling node overlaps without changing the diagram.", "diagram", "host", "detectNodeCollisions", { margin: { ...nonnegative, optional: true } }),
-  command("collision-resolve", "Separate overlapping nodes while preserving pinned placements.", "diagram", "host", "resolveNodeCollisions", {
-    margin: { ...nonnegative, optional: true },
-    animate: viewport.animate,
-    maxIterations: { type: "integer", minimum: 0, maximum: 1000, optional: true },
-  }),
+  command(
+    "collision-mode",
+    "Enable or disable swappable collision grid mode; omitted options retain current settings.",
+    "diagram",
+    "host",
+    "setNodeGridMode",
+    { enabled: boolean, ...gridOptions },
+  ),
+  command(
+    "node-grid",
+    "Arrange visible nodes in a grid without enabling swap mode.",
+    "diagram",
+    "host",
+    "arrangeNodesInGrid",
+    gridOptions,
+  ),
+  command(
+    "grid-swap",
+    "Swap two node slots in active collision grid mode.",
+    "diagram",
+    "host",
+    "swapGridNodes",
+    { source: token, target: token, animate: viewport.animate },
+  ),
+  command(
+    "collision-detect",
+    "Return visible sibling node overlaps without changing the diagram.",
+    "diagram",
+    "host",
+    "detectNodeCollisions",
+    { margin: { ...nonnegative, optional: true } },
+  ),
+  command(
+    "collision-resolve",
+    "Separate overlapping nodes while preserving pinned placements.",
+    "diagram",
+    "host",
+    "resolveNodeCollisions",
+    {
+      margin: { ...nonnegative, optional: true },
+      animate: viewport.animate,
+      maxIterations: {
+        type: "integer",
+        minimum: 0,
+        maximum: 1000,
+        optional: true,
+      },
+    },
+  ),
   ...[
     ["zoom-mode", "setIsZoomMode"],
     ["multi-select-mode", "setIsMultiSelectMode"],

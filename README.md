@@ -534,8 +534,10 @@ stay synchronized with programmatic mode changes.
 `columns` defaults to `ceil(sqrt(siblingCount))` without fill; `gaps` accepts a
 number or `{ x, y }`, falling back to `margin` (15 model units). `animate` defaults
 to true; reduced motion and the animation kill switch are respected. Ordinary
-grid entry and swapping do not change zoom/pan. Hosts can call `centerAndFit` after
-placement if needed. For arrangement without hiding edges or enabling swaps,
+grid entry centers and fits the arranged graph with 80px viewport padding, coordinated
+with placement. Gap changes and swaps preserve zoom/pan; exiting restores the pre-grid
+viewport. Fill retains its separate tile padding and 1:1 viewport behavior.
+For arrangement without hiding edges or enabling swaps,
 use `engine.arrangeNodesInGrid(options)`, which returns `positions`, `movedNodeIds`,
 `skippedNodeIds` and remaining `collisions` without changing graph data.
 
@@ -989,6 +991,13 @@ parsed back into arrays, and `onNodeContentChange` receives `NodeContent`
 sanitized iframe preview. Host renderers are responsible for their components'
 behavior and external actions; the SDK's HTML iframe sandbox does not apply to
 a host-supplied JSX-content view.
+
+Document playback reveals completed entries of JSX `$content` arrays as chunks
+arrive, while unfinished entries remain hidden. Squeed's workflow channel also
+previews repaired streamed documents containing component arrays. Previews do
+not edit saved data: completion strictly parses the final JSON before committing,
+and failure or disconnect restores the saved document. The renderer stays in
+the host; this does not enable executable JSX or create a per-chunk MCP command.
 
 With `config.editable: true`, double-click the content body to edit the original Markdown source. Enter inserts a new line; Ctrl/Cmd+Enter or clicking away saves, and Escape cancels. Source whitespace is preserved. The node grows vertically as text is added; label editors grow horizontally within their width limit. Both keep their starting size as a minimum and omit input focus outlines. Clearing the body keeps an empty, editable content view; use `setNodeProp(json, address, "$content", undefined)` to remove the content property. Content nodes use the same minimum width as their object-property rows, and the right-aligned table/article button switches views without changing the document.
 

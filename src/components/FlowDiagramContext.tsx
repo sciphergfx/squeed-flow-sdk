@@ -70,6 +70,7 @@ export interface FlowDiagramContextValue {
   setIsPerformanceMode: (v: boolean) => void;
   nodeGridOptions: NodeGridOptions | null;
   setNodeGridOptions: (options: NodeGridOptions | null) => void;
+  fillRadiusEditedIds: ReadonlySet<string>;
   engineRef: React.MutableRefObject<FlowEngine | null>;
   callbacks: FlowDiagramCallbacks;
   config: FlowDiagramConfig;
@@ -133,7 +134,18 @@ export function FlowDiagramProvider({
   const [isArrayNodeMode, setIsArrayNodeMode] = useState(false);
   const [isPinned, setIsPinned] = useState(true);
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
-  const [nodeGridOptions, setNodeGridOptions] = useState<NodeGridOptions | null>(null);
+  const [nodeGridOptions, setLocalNodeGridOptions] =
+    useState<NodeGridOptions | null>(null);
+  const nodeGridOptionsRef = useRef(nodeGridOptions);
+  const [fillRadiusEditedIds, setFillRadiusEditedIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const setNodeGridOptions = useCallback((options: NodeGridOptions | null) => {
+    if (!!options?.fill !== !!nodeGridOptionsRef.current?.fill)
+      setFillRadiusEditedIds(new Set());
+    nodeGridOptionsRef.current = options;
+    setLocalNodeGridOptions(options);
+  }, []);
   const [localEdgeMode, setEdgeMode] = useState<EdgeMode>("auto");
   const [localCompactPropertyLayout, setCompactPropertyLayout] =
     useState(false);
@@ -223,7 +235,11 @@ export function FlowDiagramProvider({
       onNodeBorderColorChange: wrap("onNodeBorderColorChange"),
       onNodeBorderStyleChange: wrap("onNodeBorderStyleChange"),
       onNodeBorderWidthChange: wrap("onNodeBorderWidthChange"),
-      onNodeBorderRadiusChange: wrap("onNodeBorderRadiusChange"),
+      onNodeBorderRadiusChange: (id: string, radius: number | undefined) => {
+        if (nodeGridOptionsRef.current?.fill)
+          setFillRadiusEditedIds((previous) => new Set([...previous, id]));
+        callbacksRef.current.onNodeBorderRadiusChange?.(id, radius);
+      },
       onNodeIconChange: wrap("onNodeIconChange"),
       onNodeOutlineChange: wrap("onNodeOutlineChange"),
       onNodeAnimationChange: wrap("onNodeAnimationChange"),
@@ -494,6 +510,7 @@ export function FlowDiagramProvider({
       setIsPerformanceMode,
       nodeGridOptions,
       setNodeGridOptions,
+      fillRadiusEditedIds,
       engineRef,
       callbacks: stableCallbacks,
       config: stableConfig,
@@ -531,6 +548,7 @@ export function FlowDiagramProvider({
       isPinned,
       isPerformanceMode,
       nodeGridOptions,
+      fillRadiusEditedIds,
       readOnly,
       config.edgeHandles,
       config.edgeType,

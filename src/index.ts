@@ -152,7 +152,14 @@ export type {
 export { default as DynamicIcon } from "./utils/DynamicIcon";
 
 // Types
-export type { NodeCollision, NodeCollisionOptions, NodeCollisionResolution, NodeGridArrangement, NodeGridOptions, ResolveNodeCollisionsOptions } from "./engine/nodeCollisions";
+export type {
+  NodeCollision,
+  NodeCollisionOptions,
+  NodeCollisionResolution,
+  NodeGridArrangement,
+  NodeGridOptions,
+  ResolveNodeCollisionsOptions,
+} from "./engine/nodeCollisions";
 export type {
   BackgroundPattern,
   BackgroundVariant,

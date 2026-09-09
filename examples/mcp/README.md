@@ -11,7 +11,7 @@ The command catalog contains 77 viewer actions plus a separate model-generation 
 | Forms      | validated field edit, options lookup, schema import/clear, connection contract import/clear                                               |
 | Documents  | JSON/state replacement, document/state export, SVG export, configuration package replacement/export                                       |
 | Inspection | graph IDs/aliases/selection/viewport, node data/geometry, edge data                                                                       |
-| Grid       | collision-mode (Fill/gaps/columns/padding), node-grid, grid-swap, collision-detect, collision-resolve                                    |
+| Grid       | collision-mode (Fill/gaps/columns/padding), node-grid, grid-swap, collision-detect, collision-resolve                                     |
 
 ## Collision Grid
 
@@ -87,7 +87,7 @@ model generates the JSON and streams it to SDK Test. Third-party MCP clients do
 not need to stream partial tool arguments. This is a separate model-powered
 service and consumes model usage, not just the bridge request price.
 
-1. Select **AI Diagram** in SDK Test. Execution controls open automatically.
+1. Open a JSON diagram in SDK Test, then **Control examples > Execution**.
 2. Connect a fresh dedicated execution ID and wait for **subscribed**.
 3. Call the generation tool (or POST `/squeed/generate-diagram`):
 
@@ -111,8 +111,10 @@ with no API keys in the payload. It emits `squeed_generation_started`, then
 The viewer reuses `jsonrepair` (also used by AiAssistantPanel) for provisional
 previews, validates JSON and preflights diagram compilation, and updates at most
 once every 150ms. Invalid intermediate snapshots leave the last preview visible.
-Generated metadata is restricted to text labels/content/icons/colors/links,
-parent grouping, view mode, and collapse/root visibility. Invalid types and
+Generated metadata permits text labels/content/icons/colors/links, parent
+grouping, view mode, collapse/root visibility, and `$contentFormat: "jsx"` with
+an array of typed declarative components in `$content`. Markdown remains allowed;
+HTML generation and executable JSX remain rejected. Invalid types and
 unsupported metadata (including media, form bindings, or executable content)
 are rejected; nesting is limited to 32 levels. The final snapshot must parse
 strictly, without repair, before commit. Final
@@ -127,10 +129,14 @@ output tokens and a 120-second per-attempt model timeout; provider fallbacks may
 take longer. Disconnect stops the local preview, not backend model execution.
 Providers without streaming may deliver only a complete final snapshot.
 
-The AI Diagram listener is independent of the deferred diagram render. Other
-templates continue to use the existing viewer-command bridge. AI Diagram is a
-dedicated generation view, not the ordinary 77-command session. HTTP/MCP results
-report backend generation completion, not browser rendering acknowledgement.
+The existing viewer-command bridge consumes generation events on the selected
+execution channel for JSON diagrams. It remains mounted through deferred document
+previews; edits are blocked while streaming. Use a fresh execution ID for each
+generation, with `squeed_generation_started` before cumulative `llm_output_chunk`
+snapshots (`data.chunk`, matching `data.length`, and final `data.complete: true`),
+then `squeed_generation_completed` with the matching request ID. Disconnect,
+failure or changing documents discards the temporary preview. HTTP/MCP responses
+still report publication/backend completion, not browser rendering acknowledgement.
 
 Provision the updated manifest and add the exact `/squeed/generate-diagram` write
 scope to the client key before use; the generator does not modify deployed keys.

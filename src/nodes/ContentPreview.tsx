@@ -1,9 +1,11 @@
+import { Box, HStack } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
-import { Box } from "@chakra-ui/react";
-import { PiArrowsIn, PiArrowsOut } from "react-icons/pi";
-import { ToolbarIconButton } from "../components/toolbarControls";
-import type { ContentFormat, NodeContent } from "../types";
+import { PiArrowsIn, PiArrowsOut, PiCode } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
+import { ToolbarIconButton } from "../components/toolbarControls";
+import { ToolbarScrollContainer } from "../components/ToolbarScrollContainer";
+import { useCustomColors } from "../theme/useCustomColors";
+import type { ContentFormat, NodeContent } from "../types";
 
 export function ContentPreview({
   content,
@@ -15,18 +17,33 @@ export function ContentPreview({
   onEdit?: () => void;
 }) {
   const { config, colorMode } = useFlowDiagramContext();
+  const { background, border, colorInactive } = useCustomColors();
   const JsxContent = config.customViews?.jsxContent;
-  const source = typeof content === "string" ? content : JSON.stringify(content, null, 2);
+  const source =
+    typeof content === "string" ? content : JSON.stringify(content, null, 2);
   let components: Record<string, unknown>[] | undefined;
   let contentError: string | undefined;
   if (format === "jsx") {
     try {
-      const parsed = typeof content === "string" ? JSON.parse(content) : content;
-      if (!Array.isArray(parsed) || parsed.some((component) => !component || typeof component !== "object" || Array.isArray(component) || typeof component.type !== "string"))
-        throw new Error("JSX content must be an array of components with a type.");
+      const parsed =
+        typeof content === "string" ? JSON.parse(content) : content;
+      if (
+        !Array.isArray(parsed) ||
+        parsed.some(
+          (component) =>
+            !component ||
+            typeof component !== "object" ||
+            Array.isArray(component) ||
+            typeof component.type !== "string",
+        )
+      )
+        throw new Error(
+          "JSX content must be an array of components with a type.",
+        );
       components = parsed;
     } catch (error) {
-      contentError = error instanceof Error ? error.message : "Invalid components array.";
+      contentError =
+        error instanceof Error ? error.message : "Invalid components array.";
     }
   }
   const frame = useRef<HTMLIFrameElement>(null);
@@ -77,7 +94,8 @@ export function ContentPreview({
       )
       .then(
         (document) => {
-          if (!cancelled) setPreview({ content: source, format, editable, document });
+          if (!cancelled)
+            setPreview({ content: source, format, editable, document });
         },
         (error) => {
           if (!cancelled)
@@ -141,10 +159,19 @@ export function ContentPreview({
         h="100%"
         bg={format === "jsx" && colorMode === "dark" ? "gray.900" : "white"}
         onDoubleClick={(event) => {
-          if (format !== "jsx" || !onEdit || event.defaultPrevented || (event.target as Element).closest('button, a, input, textarea, select, [contenteditable], [role="button"], [role="textbox"]')) return;
+          if (
+            format !== "jsx" ||
+            !onEdit ||
+            event.defaultPrevented ||
+            (event.target as Element).closest(
+              'button, a, input, textarea, select, [contenteditable], [role="button"], [role="textbox"]',
+            )
+          )
+            return;
           event.stopPropagation();
           void (async () => {
-            if (document.fullscreenElement === viewport.current) await document.exitFullscreen();
+            if (document.fullscreenElement === viewport.current)
+              await document.exitFullscreen();
             onEdit();
           })().catch((error) => setFullscreenError(String(error)));
         }}
@@ -166,31 +193,103 @@ export function ContentPreview({
             maxHeight: "none",
             padding: 0,
           },
-          "&:hover > [data-flow-fullscreen], &:focus-within > [data-flow-fullscreen]":
+          "&:hover > [data-flow-content-toolbar], &:focus-within > [data-flow-content-toolbar]":
             { opacity: 1, pointerEvents: "auto" },
           "@media (hover: none)": {
-            "& > [data-flow-fullscreen]": { opacity: 1, pointerEvents: "auto" },
+            "& > [data-flow-content-toolbar]": {
+              opacity: 1,
+              pointerEvents: "auto",
+            },
           },
         }}
       >
-        <ToolbarIconButton
-          ref={fullscreenButton}
-          data-flow-fullscreen=""
-          aria-label={fullscreen ? "Exit fullscreen" : "Expand preview"}
-          title={fullscreen ? "Exit fullscreen" : "Expand preview"}
-          aria-expanded={fullscreen}
-          icon={fullscreen ? <PiArrowsIn /> : <PiArrowsOut />}
+        <Box
+          role="toolbar"
+          aria-label="Content controls"
+          data-flow-content-toolbar=""
           position="absolute"
           top="8px"
           right="8px"
           zIndex={1}
+          w="max-content"
+          maxW="calc(100% - 16px)"
           opacity={fullscreen ? 1 : 0}
           pointerEvents={fullscreen ? "auto" : "none"}
-          onClick={(event) => {
-            event.stopPropagation();
-            void toggleFullscreen();
-          }}
-        />
+        >
+          <ToolbarScrollContainer
+            background={background}
+            border={colorMode === "dark" ? border : "gray.300"}
+          >
+            <HStack
+              px="8px"
+              gap="8px"
+              h="100%"
+              w="max-content"
+              css={{
+                "& button > svg": {
+                  width: "20px",
+                  height: "20px",
+                  minWidth: "20px",
+                  minHeight: "20px",
+                  flexShrink: 0,
+                },
+              }}
+            >
+              {onEdit && (
+                <ToolbarIconButton
+                  data-flow-content-edit=""
+                  aria-label="Edit content source"
+                  title="Edit content source"
+                  icon={<PiCode size={20} />}
+                  size="sm"
+                  variant="plain"
+                  bg="transparent"
+                  color={colorInactive}
+                  borderRadius="30px"
+                  w="32px"
+                  h="32px"
+                  minW="32px"
+                  p={0}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void (async () => {
+                      if (document.fullscreenElement === viewport.current)
+                        await document.exitFullscreen();
+                      onEdit();
+                    })().catch((error) => setFullscreenError(String(error)));
+                  }}
+                />
+              )}
+              <ToolbarIconButton
+                ref={fullscreenButton}
+                data-flow-fullscreen=""
+                aria-label={fullscreen ? "Exit fullscreen" : "Expand preview"}
+                title={fullscreen ? "Exit fullscreen" : "Expand preview"}
+                aria-expanded={fullscreen}
+                icon={
+                  fullscreen ? (
+                    <PiArrowsIn size={20} />
+                  ) : (
+                    <PiArrowsOut size={20} />
+                  )
+                }
+                size="sm"
+                variant="plain"
+                bg="transparent"
+                color={colorInactive}
+                borderRadius="30px"
+                w="32px"
+                h="32px"
+                minW="32px"
+                p={0}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void toggleFullscreen();
+                }}
+              />
+            </HStack>
+          </ToolbarScrollContainer>
+        </Box>
         {fullscreenError && (
           <Box
             role="alert"
@@ -205,9 +304,21 @@ export function ContentPreview({
           </Box>
         )}
         {format === "jsx" ? (
-          contentError ? <pre role="alert" style={{ whiteSpace: "pre-wrap" }}>{contentError}</pre>
-            : JsxContent && components ? <JsxContent components={components} colorMode={colorMode} fillHeight />
-              : <Box role="status" fontSize="14px">JSX content renderer is not available.</Box>
+          contentError ? (
+            <pre role="alert" style={{ whiteSpace: "pre-wrap" }}>
+              {contentError}
+            </pre>
+          ) : JsxContent && components ? (
+            <JsxContent
+              components={components}
+              colorMode={colorMode}
+              fillHeight
+            />
+          ) : (
+            <Box role="status" fontSize="14px">
+              JSX content renderer is not available.
+            </Box>
+          )
         ) : current?.error ? (
           <pre role="alert" style={{ whiteSpace: "pre-wrap" }}>
             {current.error}

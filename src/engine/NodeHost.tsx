@@ -1,7 +1,13 @@
-import { memo, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  memo,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { PiPlusBold } from "react-icons/pi";
 import type { FlowDirection } from "../types";
-import { animateTransition } from "./animation";
 import { NodeBorderAnimation } from "./NodeBorderAnimation";
 import { measureNodeSurface, type NodeSurface } from "./nodeSurface";
 import { measurePropertyRows, type PropertyRow } from "./propertyRows";
@@ -17,7 +23,11 @@ export interface NodeHostProps {
   gridDragging?: boolean;
   gridDropTarget?: boolean;
   gridSize?: { w: number; h: number };
-  gridPreview?: { x: number; y: number; size?: { w: number; h: number }; animate?: boolean };
+  gridPreview?: {
+    x: number;
+    y: number;
+    size?: { w: number; h: number };
+  };
   /** Register/unregister the host element for size observation */
   onMount: (id: string, el: HTMLDivElement | null) => void;
   drawHandles?: boolean;
@@ -76,14 +86,12 @@ function NodeHost({
   const rows = resolvedRows ?? measuredRows;
   const [surface, setSurface] = useState<NodeSurface>();
   const previewId = useId();
-  const previewPositionRef = useRef<{ x: number; y: number; w: number; h: number }>();
+  const previewRef = useRef<HTMLDivElement>();
+  const hasGridPreview = !!gridPreview;
 
   useLayoutEffect(() => {
     const host = ref.current;
-    if (!host || !gridPreview) {
-      previewPositionRef.current = undefined;
-      return;
-    }
+    if (!host || !hasGridPreview) return;
     const preview = host.cloneNode(true) as HTMLDivElement;
     preview.removeAttribute("data-node-id");
     preview.removeAttribute("data-grid-dragging");
@@ -93,7 +101,11 @@ function NodeHost({
     preview.setAttribute("aria-hidden", "true");
     preview.setAttribute("inert", "");
     const elements = [preview, ...preview.querySelectorAll("*")];
-    const identifiers = new Map(elements.filter((element) => element.id).map((element) => [element.id, `${element.id}-${previewId}`]));
+    const identifiers = new Map(
+      elements
+        .filter((element) => element.id)
+        .map((element) => [element.id, `${element.id}-${previewId}`]),
+    );
     for (const element of elements) {
       if (element.id) element.id = identifiers.get(element.id)!;
       for (const attribute of [...element.attributes]) {
@@ -103,12 +115,10 @@ function NodeHost({
           if (value === `#${original}`) value = `#${replacement}`;
           value = value.split(`url(#${original})`).join(`url(#${replacement})`);
         }
-        if (value !== attribute.value) element.setAttribute(attribute.name, value);
+        if (value !== attribute.value)
+          element.setAttribute(attribute.name, value);
       }
     }
-    const size = gridPreview.size;
-    const from = previewPositionRef.current ?? { x, y, w: host.offsetWidth, h: host.offsetHeight };
-    const target = { x: gridPreview.x, y: gridPreview.y, w: size?.w ?? host.offsetWidth, h: size?.h ?? host.offsetHeight };
     Object.assign(preview.style, {
       opacity: "0.35",
       zIndex: "11",
@@ -116,35 +126,48 @@ function NodeHost({
       outline: "none",
       visibility: "visible",
     });
-    const update = (progress: number) => {
-      const position = {
-        x: from.x + (target.x - from.x) * progress,
-        y: from.y + (target.y - from.y) * progress,
-        w: from.w + (target.w - from.w) * progress,
-        h: from.h + (target.h - from.h) * progress,
-      };
-      previewPositionRef.current = position;
-      const left = size ? Math.round(position.x - position.w / 2) : position.x;
-      const top = size ? Math.round(position.y - position.h / 2) : position.y;
-      preview.style.transform = size ? `translate3d(${left}px, ${top}px, 0)` : `translate(-50%, -50%) translate3d(${left}px, ${top}px, 0)`;
-      preview.style.width = size ? `${Math.round(position.x + position.w / 2) - left}px` : "";
-      preview.style.height = size ? `${Math.round(position.y + position.h / 2) - top}px` : "";
-      if (size) {
-        preview.style.setProperty("--flow-grid-width", `${position.w}px`);
-        preview.style.setProperty("--flow-grid-height", `${position.h}px`);
-        preview.style.setProperty("--flow-grid-font", `${Math.max(12, Math.min(48, position.w / 8, position.h / 5))}px`);
-      }
-    };
-    update(0);
-    preview.querySelectorAll(".flow-sdk-node-animation, .flow-sdk-handle, .flow-sdk-property-port, [data-flow-collapse-control]").forEach((element) => element.remove());
-    preview.setAttribute("data-grid-preview-moving", "");
+    preview
+      .querySelectorAll(
+        ".flow-sdk-node-animation, .flow-sdk-handle, .flow-sdk-property-port, [data-flow-collapse-control]",
+      )
+      .forEach((element) => element.remove());
     host.parentElement?.appendChild(preview);
-    const cancel = animateTransition(gridPreview.animate ?? true, update, () => preview.removeAttribute("data-grid-preview-moving"));
+    previewRef.current = preview;
     return () => {
-      cancel();
       preview.remove();
+      previewRef.current = undefined;
     };
-  }, [id, previewId, x, y, gridPreview?.x, gridPreview?.y, gridPreview?.size?.w, gridPreview?.size?.h, gridPreview?.animate]);
+  }, [id, previewId, hasGridPreview]);
+
+  useLayoutEffect(() => {
+    const preview = previewRef.current;
+    if (!preview || !gridPreview) return;
+    const { x: centerX, y: centerY, size } = gridPreview;
+    const left = size ? Math.round(centerX - size.w / 2) : centerX;
+    const top = size ? Math.round(centerY - size.h / 2) : centerY;
+    preview.style.transform = size
+      ? `translate3d(${left}px, ${top}px, 0)`
+      : `translate(-50%, -50%) translate3d(${left}px, ${top}px, 0)`;
+    preview.style.width = size
+      ? `${Math.round(centerX + size.w / 2) - left}px`
+      : "";
+    preview.style.height = size
+      ? `${Math.round(centerY + size.h / 2) - top}px`
+      : "";
+    if (size) {
+      preview.style.setProperty("--flow-grid-width", `${size.w}px`);
+      preview.style.setProperty("--flow-grid-height", `${size.h}px`);
+      preview.style.setProperty(
+        "--flow-grid-font",
+        `${Math.max(12, Math.min(48, size.w / 8, size.h / 5))}px`,
+      );
+    }
+  }, [
+    gridPreview?.x,
+    gridPreview?.y,
+    gridPreview?.size?.w,
+    gridPreview?.size?.h,
+  ]);
 
   useLayoutEffect(() => {
     const host = ref.current;
@@ -223,8 +246,12 @@ function NodeHost({
 
   const gridLeft = gridSize ? Math.round(x - gridSize.w / 2) : 0;
   const gridTop = gridSize ? Math.round(y - gridSize.h / 2) : 0;
-  const gridWidth = gridSize ? Math.round(x + gridSize.w / 2) - gridLeft : undefined;
-  const gridHeight = gridSize ? Math.round(y + gridSize.h / 2) - gridTop : undefined;
+  const gridWidth = gridSize
+    ? Math.round(x + gridSize.w / 2) - gridLeft
+    : undefined;
+  const gridHeight = gridSize
+    ? Math.round(y + gridSize.h / 2) - gridTop
+    : undefined;
 
   return (
     <div
@@ -235,49 +262,63 @@ function NodeHost({
       data-grid-dragging={gridDragging || undefined}
       data-grid-drop-target={gridDropTarget || undefined}
       data-grid-fill={gridSize ? "" : undefined}
-      style={{
-        transform: gridSize
-          ? `translate3d(${gridLeft}px, ${gridTop}px, 0)`
-          : `translate(-50%, -50%) translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`,
-        visibility: placed && !hidden ? undefined : "hidden",
-        cursor: gridDraggable ? (gridDragging ? "grabbing" : "grab") : undefined,
-        zIndex: gridDragging ? 12 : undefined,
-        opacity: gridPreview ? 0 : gridDragging ? 0.75 : undefined,
-        outline: gridDropTarget ? `2px solid ${handleColor || "currentColor"}` : undefined,
-        outlineOffset: gridDropTarget ? 8 : undefined,
-        width: gridWidth,
-        height: gridHeight,
-        ...(gridSize ? {
-          "--flow-grid-width": `${gridSize.w}px`,
-          "--flow-grid-height": `${gridSize.h}px`,
-          "--flow-grid-font": `${Math.max(12, Math.min(48, gridSize.w / 8, gridSize.h / 5))}px`,
-        } : {}),
-      } as CSSProperties}
+      style={
+        {
+          transform: gridSize
+            ? `translate3d(${gridLeft}px, ${gridTop}px, 0)`
+            : `translate(-50%, -50%) translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`,
+          visibility: placed && !hidden ? undefined : "hidden",
+          cursor: gridDraggable
+            ? gridDragging
+              ? "grabbing"
+              : "grab"
+            : undefined,
+          zIndex: gridDragging ? 12 : undefined,
+          opacity: gridPreview ? 0 : gridDragging ? 0.75 : undefined,
+          outline: gridDropTarget
+            ? `2px solid ${handleColor || "currentColor"}`
+            : undefined,
+          outlineOffset: gridDropTarget ? 8 : undefined,
+          width: gridWidth,
+          height: gridHeight,
+          ...(gridSize
+            ? {
+                "--flow-grid-width": `${gridSize.w}px`,
+                "--flow-grid-height": `${gridSize.h}px`,
+                "--flow-grid-font": `${Math.max(12, Math.min(48, gridSize.w / 8, gridSize.h / 5))}px`,
+              }
+            : {}),
+        } as CSSProperties
+      }
     >
       {children}
-      {!gridSize && animated && animationWidth > 0 && width > 0 && height > 0 && (
-        <svg
-          className="flow-sdk-node-animation"
-          aria-hidden="true"
-          pointerEvents="none"
-        >
-          <NodeBorderAnimation
-            variant={animationVariant}
-            x={(surface?.left ?? 0) + animationWidth / 2}
-            y={(surface?.top ?? 0) + animationWidth / 2}
-            width={(surface?.width ?? width) - animationWidth}
-            height={(surface?.height ?? height) - animationWidth}
-            radius={(surface?.radius ?? 0) - animationWidth / 2}
-            path={
-              surface?.outline
-                ? `M${surface.outline.map((point) => `${point.x} ${point.y}`).join(" L")} Z`
-                : undefined
-            }
-            color={animationColor || handleColor || "currentColor"}
-            strokeWidth={animationWidth}
-          />
-        </svg>
-      )}
+      {!gridSize &&
+        animated &&
+        animationWidth > 0 &&
+        width > 0 &&
+        height > 0 && (
+          <svg
+            className="flow-sdk-node-animation"
+            aria-hidden="true"
+            pointerEvents="none"
+          >
+            <NodeBorderAnimation
+              variant={animationVariant}
+              x={(surface?.left ?? 0) + animationWidth / 2}
+              y={(surface?.top ?? 0) + animationWidth / 2}
+              width={(surface?.width ?? width) - animationWidth}
+              height={(surface?.height ?? height) - animationWidth}
+              radius={(surface?.radius ?? 0) - animationWidth / 2}
+              path={
+                surface?.outline
+                  ? `M${surface.outline.map((point) => `${point.x} ${point.y}`).join(" L")} Z`
+                  : undefined
+              }
+              color={animationColor || handleColor || "currentColor"}
+              strokeWidth={animationWidth}
+            />
+          </svg>
+        )}
       {drawHandles &&
         propertyMode &&
         rows.map((row) =>

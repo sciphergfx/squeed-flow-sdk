@@ -4,8 +4,6 @@ import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import { useStopPropagation } from "../hooks/useStopPropagation";
 import type { ContentFormat, NodeContent } from "../types";
-import { ToolbarIconButton } from "../components/toolbarControls";
-import { PiCode } from "react-icons/pi";
 import { ContentPreview } from "./ContentPreview";
 
 const CONTENT_LINE_HEIGHT = 1.55;
@@ -21,9 +19,11 @@ export function EditableContent({
   color: string;
   format?: ContentFormat;
 }) {
-  const { callbacks, config, readOnly } = useFlowDiagramContext();
-  const editable = !!config.editable && !readOnly;
-  const source = typeof content === "string" ? content : JSON.stringify(content, null, 2);
+  const { callbacks, config, readOnly, nodeGridOptions } =
+    useFlowDiagramContext();
+  const editable = !!config.editable && !readOnly && !nodeGridOptions;
+  const source =
+    typeof content === "string" ? content : JSON.stringify(content, null, 2);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(source);
   const [error, setError] = useState("");
@@ -61,10 +61,23 @@ export function EditableContent({
     if (format === "jsx") {
       try {
         next = JSON.parse(draft);
-        if (!Array.isArray(next) || next.some((component) => !component || typeof component !== "object" || Array.isArray(component) || typeof component.type !== "string"))
-          throw new Error("JSX content must be an array of components with a type.");
+        if (
+          !Array.isArray(next) ||
+          next.some(
+            (component) =>
+              !component ||
+              typeof component !== "object" ||
+              Array.isArray(component) ||
+              typeof component.type !== "string",
+          )
+        )
+          throw new Error(
+            "JSX content must be an array of components with a type.",
+          );
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "Invalid components array.");
+        setError(
+          cause instanceof Error ? cause.message : "Invalid components array.",
+        );
         return;
       }
     }
@@ -76,37 +89,7 @@ export function EditableContent({
   if (!editing || !editable)
     if (format !== "markdown")
       return (
-        <Box
-          ref={wrapperRef}
-          w="100%"
-          position="relative"
-          data-flow-content=""
-          css={{
-            "&:hover > [data-flow-content-edit], &:focus-within > [data-flow-content-edit]":
-              {
-                opacity: 1,
-                pointerEvents: "auto",
-              },
-          }}
-        >
-          {editable && (
-            <ToolbarIconButton
-              data-flow-content-edit=""
-              aria-label="Edit content source"
-              title="Edit content source"
-              icon={<PiCode />}
-              position="absolute"
-              top="8px"
-              right="48px"
-              zIndex={1}
-              opacity={0}
-              pointerEvents="none"
-              onClick={(event) => {
-                event.stopPropagation();
-                startEditing(event.currentTarget.parentElement);
-              }}
-            />
-          )}
+        <Box ref={wrapperRef} w="100%" position="relative" data-flow-content="">
           <ContentPreview
             content={content}
             format={format}
@@ -279,7 +262,11 @@ export function EditableContent({
         minH={0}
         resize="none"
       />
-      {error && <Box role="alert" fontSize="14px" color="red.500">{error}</Box>}
+      {error && (
+        <Box role="alert" fontSize="14px" color="red.500">
+          {error}
+        </Box>
+      )}
     </div>
   );
 }

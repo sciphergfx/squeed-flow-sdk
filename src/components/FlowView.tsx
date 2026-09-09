@@ -70,6 +70,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     setSelectedEdgeId,
     setIsPerformanceMode,
     setNodeGridOptions,
+    fillRadiusEditedIds,
     isZoomMode,
     setIsZoomMode,
     isMultiSelectMode,
@@ -350,6 +351,14 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           ? Views.parentContainer
           : Views[node.data.type] || Views.text;
         const edgeData = edgeBySource.get(node.data.id);
+        const viewProps = {
+          ...node,
+          isInverted: node.data.config?.isInverted ?? edgeData?.isInverted,
+          isParent: isParentContainer,
+          containerStyle: isParentContainer
+            ? containerStyle(node.data.id)
+            : undefined,
+        };
         return {
           id: node.data.id,
           collapsed: node.data.config?.collapsed,
@@ -367,11 +376,21 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           ),
           element: (
             <ViewComponent
-              {...node}
-              isInverted={node.data.config?.isInverted ?? edgeData?.isInverted}
-              isParent={isParentContainer}
+              {...viewProps}
+              key={`${node.data.id}-${themeColor}`}
+            />
+          ),
+          fillElement: fillRadiusEditedIds.has(node.data.id) ? undefined : (
+            <ViewComponent
+              {...viewProps}
+              data={{
+                ...node.data,
+                viewProps: { ...node.data.viewProps, borderRadius: 0 },
+              }}
               containerStyle={
-                isParentContainer ? containerStyle(node.data.id) : undefined
+                viewProps.containerStyle
+                  ? { ...viewProps.containerStyle, borderRadius: 0 }
+                  : undefined
               }
               key={`${node.data.id}-${themeColor}`}
             />
@@ -385,6 +404,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     themeColor,
     config.customViews,
     containerStyle,
+    fillRadiusEditedIds,
   ]);
 
   const layoutDebounce = useMemo(() => {
@@ -445,6 +465,15 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
     const wheelHandler = (e: WheelEvent) => {
       if (configRef.current.readOnly) return;
+      const fullscreenElement = el.ownerDocument.fullscreenElement;
+      if (
+        fullscreenElement &&
+        fullscreenElement !== el &&
+        el.contains(fullscreenElement) &&
+        e.target instanceof Node &&
+        fullscreenElement.contains(e.target)
+      )
+        return;
       e.preventDefault();
       e.stopPropagation();
 

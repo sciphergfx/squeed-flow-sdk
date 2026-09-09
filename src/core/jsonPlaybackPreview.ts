@@ -17,6 +17,23 @@ export function projectJsonPlaybackPreview(
     return Object.fromEntries(
       Object.entries(value).flatMap(([key, child]) => {
         if (!Object.prototype.hasOwnProperty.call(original, key)) return [];
+        if (
+          key === "$content" &&
+          value.$contentFormat === "jsx" &&
+          original.$contentFormat === "jsx" &&
+          Array.isArray(child) &&
+          Array.isArray(original[key])
+        )
+          return [
+            [
+              key,
+              child.filter(
+                (component, index) =>
+                  JSON.stringify(component) ===
+                  JSON.stringify(original[key][index]),
+              ),
+            ],
+          ];
         if (key.startsWith("$") && key !== "$")
           return JSON.stringify(child) === JSON.stringify(original[key])
             ? [[key, child]]

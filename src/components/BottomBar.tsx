@@ -32,10 +32,15 @@ import { useCustomColors } from "../theme/useCustomColors";
 import type { FlowDirection } from "../types";
 import { FlowType } from "../types";
 import { CompactPropertyLayoutToggle } from "./CompactPropertyLayoutToggle";
-import { NodeGridControls } from "./NodeGridControls";
 import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
 import { LabeledToolbarToggle } from "./LabeledToolbarToggle";
+import { NodeGridControls } from "./NodeGridControls";
+import {
+  RecentToolbarAction,
+  RecentToolbarContext,
+  useRecentToolbarStore,
+} from "./RecentToolbarAction";
 import {
   DEFAULT_PALETTE,
   EdgeTools,
@@ -50,11 +55,6 @@ import {
 } from "./toolbarControls";
 import { ToolbarScrollContainer } from "./ToolbarScrollContainer";
 import { WorkflowControls } from "./WorkflowControls";
-import {
-  RecentToolbarAction,
-  RecentToolbarContext,
-  useRecentToolbarStore,
-} from "./RecentToolbarAction";
 
 const DIRECTIONS: {
   value: FlowDirection;
@@ -359,6 +359,13 @@ const BottomBar = () => {
         visibility={visible ? "visible" : "hidden"}
         opacity={visible ? 1 : 0}
         css={{
+          "& button > svg:not([popover] *)": {
+            width: "20px",
+            height: "20px",
+            minWidth: "20px",
+            minHeight: "20px",
+            flexShrink: 0,
+          },
           "@media (hover: none)": {
             visibility: "visible",
             opacity: 1,

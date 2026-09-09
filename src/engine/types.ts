@@ -1,4 +1,11 @@
-import type { NodeCollision, NodeCollisionOptions, NodeCollisionResolution, NodeGridArrangement, NodeGridOptions, ResolveNodeCollisionsOptions } from "./nodeCollisions";
+import type {
+  NodeCollision,
+  NodeCollisionOptions,
+  NodeCollisionResolution,
+  NodeGridArrangement,
+  NodeGridOptions,
+  ResolveNodeCollisionsOptions,
+} from "./nodeCollisions";
 
 export interface Point {
   x: number;
@@ -76,7 +83,9 @@ export interface FlowEngine {
   modelToClient(p: Point): Point;
   getNodeBox(id: string): Box | undefined;
   detectNodeCollisions(options?: NodeCollisionOptions): NodeCollision[];
-  resolveNodeCollisions(options?: ResolveNodeCollisionsOptions): NodeCollisionResolution;
+  resolveNodeCollisions(
+    options?: ResolveNodeCollisionsOptions,
+  ): NodeCollisionResolution;
   arrangeNodesInGrid(options?: NodeGridOptions): NodeGridArrangement;
   setNodeGridMode(enabled: boolean, options?: NodeGridOptions): void;
   swapGridNodes(source: string, target: string, animate?: boolean): boolean;

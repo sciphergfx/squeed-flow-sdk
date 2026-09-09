@@ -4,8 +4,8 @@ import { resolveFormNode } from "../core/forms";
 import { isColorOnlyUpdate, recolorGraph } from "../core/recolorGraph";
 import { bindSqueedCallbacks } from "../core/squeedBinding";
 import { compileSqueed, getNode } from "../core/squeedEdits";
-import { EDGE_TRACE_ANIMATION_STYLES } from "../engine/EdgeTraceAnimation";
 import { EDGE_REVEAL_STYLES } from "../engine/EdgeReveal";
+import { EDGE_TRACE_ANIMATION_STYLES } from "../engine/EdgeTraceAnimation";
 import { NODE_BORDER_ANIMATION_STYLES } from "../engine/NodeBorderAnimation";
 import { FormDocumentContext } from "../nodes/NodeForm";
 import type {
@@ -38,10 +38,11 @@ function injectStyles() {
   style.setAttribute("data-flow-sdk", "");
   style.textContent =
     FLOW_SDK_STYLES +
-    '.flow-sdk-node[data-grid-fill] [data-flow-icon-label]{--flow-grid-caption-color:var(--flow-grid-on-surface-color)}' +
-    '.flow-sdk-node[data-grid-fill] [data-flow-node-surface]{border:0;outline:none;box-shadow:none}' +
-    `.flow-sdk-node[data-grid-fill]{box-sizing:border-box}.flow-sdk-node[data-grid-fill] :not(svg):has([data-flow-node-surface]),.flow-sdk-node[data-grid-fill]>:not(svg){width:100%;height:100%;min-width:0;max-width:none}.flow-sdk-node[data-grid-fill] [data-flow-node-surface]{width:100%;height:100%;min-width:0;max-width:none;box-sizing:border-box;border-radius:0;overflow:hidden}.flow-sdk-node[data-grid-fill] [data-flow-icon-label]{gap:0}.flow-sdk-node[data-grid-fill] [data-flow-icon-caption]{position:absolute;bottom:12px;left:12px;width:calc(100% - 24px);max-height:40%;overflow:hidden}.flow-sdk-node[data-grid-fill] [data-flow-node-surface]>svg{max-width:45%;max-height:55%}.flow-sdk-node[data-grid-fill] p{font-size:var(--flow-grid-font);white-space:normal;overflow-wrap:anywhere}` +
-    '.flow-sdk-canvas[data-node-grid] .flow-sdk-property-port,.flow-sdk-canvas[data-node-grid] .flow-sdk-handle,.flow-sdk-canvas[data-node-grid] [data-flow-collapse-control]{display:none}.flow-sdk-node[data-grid-draggable] :not(button):not(input):not(textarea):not(select):not(a){cursor:inherit}' +
+    ".flow-sdk-canvas[data-node-grid] .flow-sdk-node,.flow-sdk-canvas[data-node-grid] .flow-sdk-node *,.flow-sdk-canvas[data-node-grid] .flow-sdk-node *::before,.flow-sdk-canvas[data-node-grid] .flow-sdk-node *::after{animation:none!important;transition:none!important}" +
+    ".flow-sdk-node[data-grid-fill] [data-flow-icon-label]{--flow-grid-caption-color:var(--flow-grid-on-surface-color)}" +
+    ".flow-sdk-node[data-grid-fill] [data-flow-node-surface]{border:0;outline:none;box-shadow:none}" +
+    `.flow-sdk-node[data-grid-fill]{box-sizing:border-box}.flow-sdk-node[data-grid-fill] :not(svg):has([data-flow-node-surface]),.flow-sdk-node[data-grid-fill]>:not(svg){width:100%;height:100%;min-width:0;max-width:none}.flow-sdk-node[data-grid-fill] [data-flow-node-surface]{width:100%;height:100%;min-width:0;max-width:none;box-sizing:border-box;overflow:hidden}.flow-sdk-node[data-grid-fill] [data-flow-icon-label]{gap:0}.flow-sdk-node[data-grid-fill] [data-flow-icon-caption]{position:absolute;bottom:12px;left:12px;width:calc(100% - 24px);max-height:40%;overflow:hidden}.flow-sdk-node[data-grid-fill] [data-flow-node-surface]>svg{max-width:45%;max-height:55%}.flow-sdk-node[data-grid-fill] p{font-size:var(--flow-grid-font);white-space:normal;overflow-wrap:anywhere}` +
+    ".flow-sdk-canvas[data-node-grid] .flow-sdk-property-port,.flow-sdk-canvas[data-node-grid] .flow-sdk-handle,.flow-sdk-canvas[data-node-grid] [data-flow-collapse-control]{display:none}.flow-sdk-node[data-grid-draggable] :not(button):not(input):not(textarea):not(select):not(a){cursor:inherit}" +
     NODE_BORDER_ANIMATION_STYLES +
     EDGE_TRACE_ANIMATION_STYLES +
     EDGE_REVEAL_STYLES +
@@ -105,6 +106,8 @@ export function FlowDiagram({
         {prepared && (
           <FlowDiagramContent
             {...(pending ? prepared : props)}
+            children={props.children}
+            config={props.config}
             className={undefined}
             style={undefined}
           />
@@ -504,7 +507,10 @@ function FlowDiagramContent({
               },
         );
       },
-      onNodeContentChange: (id: string, content: import("../types").NodeContent) => {
+      onNodeContentChange: (
+        id: string,
+        content: import("../types").NodeContent,
+      ) => {
         if (referenceChange(id, "$content", content))
           callbacks.onNodeContentChange?.(id, content);
         else viewCallbacks.onNodeContentChange?.(id, content);

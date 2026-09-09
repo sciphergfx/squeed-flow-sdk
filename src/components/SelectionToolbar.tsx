@@ -1,23 +1,24 @@
 import { Box, chakra, HStack, Icon, Input, Text } from "@chakra-ui/react";
 import { useEffect, useId, useRef, useState } from "react";
 import {
-  RecentToolbarContext,
-  useRecentToolbarAction,
-} from "./RecentToolbarAction";
-import {
   PiArrowsInLineVertical,
   PiArrowsOutLineVertical,
   PiBezierCurve,
   PiBoundingBox,
+  PiBracketsCurly,
   PiCards,
   PiEraser,
   PiFastForward,
+  PiFileSvg,
   PiLineSegment,
   PiLineSegments,
   PiLineVerticalThin,
+  PiShapes,
   PiSpinnerGap,
   PiSquare,
   PiSquareFill,
+  PiTextAlignLeft,
+  PiTextT,
   PiTrash,
 } from "react-icons/pi";
 import { TbBorderRadius } from "react-icons/tb";
@@ -25,14 +26,14 @@ import { useNodeHasChildren } from "../hooks/useNodeHasChildren";
 import { getNodeBorderWidth } from "../nodes/nodeBorder";
 import { getChakraColorHex, LIGHT_BLACK } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
-import {
-  NODE_TYPE_VIEWS,
-  type NodeTypeView,
-  type SelectionToolbarConfig,
-} from "../types";
+import type { SelectionToolbarConfig } from "../types";
 import { AnimationVariantSelect } from "./AnimationVariantSelect";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
 import { NodeIconPicker } from "./NodeIconPicker";
+import {
+  RecentToolbarContext,
+  useRecentToolbarAction,
+} from "./RecentToolbarAction";
 import {
   ToolbarCloseButton as CloseButton,
   ToolbarIconButton,
@@ -447,11 +448,16 @@ export function BorderRadiusControl({
   ids: string[];
   showDivider?: boolean;
 }) {
-  const { callbacks, config } = useFlowDiagramContext();
+  const { callbacks, config, nodeGridOptions, fillRadiusEditedIds } =
+    useFlowDiagramContext();
   const { colorInactive } = useCustomColors();
   const { nodeById } = useFlowData();
   const [custom, setCustom] = useState(false);
-  const radii = ids.map((id) => nodeById.get(id)?.data.viewProps?.borderRadius);
+  const radii = ids.map((id) =>
+    nodeGridOptions?.fill && !fillRadiusEditedIds.has(id)
+      ? 0
+      : nodeById.get(id)?.data.viewProps?.borderRadius,
+  );
   const mixed = !radii.every((radius) => radius === radii[0]);
   const value = mixed ? "mixed" : String(radii[0] ?? "");
   const presets = ["0", "8", "16", "30", "53", "100"];
@@ -544,6 +550,23 @@ export function NodeTools({
   );
   const mixedTypeView = typeViews.some((view) => view !== typeViews[0]);
   const typeView = mixedTypeView ? "mixed" : (typeViews[0] ?? "");
+  const typeViewChoices = [
+    { value: "text", label: "Text", view: "text", icon: PiTextT },
+    {
+      value: "icon-label",
+      label: "Icon Label",
+      view: "icon-label",
+      icon: PiShapes,
+    },
+    { value: "object", label: "Object", view: "object", icon: PiBracketsCurly },
+    { value: "media", label: "Media", view: "icon-label", icon: PiFileSvg },
+    {
+      value: "content",
+      label: "Content",
+      view: "object",
+      icon: PiTextAlignLeft,
+    },
+  ] as const;
   const customTypeView = ids.some((id) => {
     const node = nodeById.get(id)?.data;
     return (
@@ -633,12 +656,12 @@ export function NodeTools({
             config.readOnly || config.editable === false || customTypeView
           }
           onValueChange={(value) => {
-            if (!NODE_TYPE_VIEWS.includes(value as NodeTypeView)) return;
+            const view = typeViewChoices.find(
+              (choice) => choice.value === value,
+            )?.view;
+            if (!view) return;
             each((id) => {
-              callbacks.onNodeTypeViewChange?.(
-                id,
-                (value || undefined) as NodeTypeView | undefined,
-              );
+              callbacks.onNodeTypeViewChange?.(id, view);
               setNodeViewMode(id, "default");
               callbacks.onNodeViewToggle?.(id);
             });
@@ -649,9 +672,16 @@ export function NodeTools({
               Mixed
             </option>
           )}
-          {NODE_TYPE_VIEWS.map((view) => (
-            <option key={view} value={view}>
-              {view || "None"}
+          {typeViewChoices.map((choice) => (
+            <option key={choice.value} value={choice.value}>
+              <HStack gap="12px">
+                <choice.icon
+                  size={20}
+                  aria-hidden="true"
+                  style={{ flexShrink: 0 }}
+                />
+                <span>{choice.label}</span>
+              </HStack>
             </option>
           ))}
         </ToolbarSelect>

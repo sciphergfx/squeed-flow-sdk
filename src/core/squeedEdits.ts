@@ -521,7 +521,10 @@ export function compileSqueed(
     if (["traveling", "pulse"].includes(src.$nodeAnimationVariant)) {
       data.nodeAnimationVariant = src.$nodeAnimationVariant;
     }
-    if (typeof src.$content === "string" || (src.$contentFormat === "jsx" && Array.isArray(src.$content))) {
+    if (
+      typeof src.$content === "string" ||
+      (src.$contentFormat === "jsx" && Array.isArray(src.$content))
+    ) {
       data.config = { ...data.config, content: src.$content };
       const contentFormat = src.$contentFormat ?? "markdown";
       if (!["markdown", "html", "jsx"].includes(contentFormat))
