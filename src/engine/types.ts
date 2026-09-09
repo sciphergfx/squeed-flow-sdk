@@ -45,10 +45,20 @@ export interface FlowEngine {
   /** Centre all elements at the current zoom */
   center(animate?: boolean): void;
   /** Fit one node; afterViewChange waits for opening geometry. Padding is in screen pixels (default 50). */
-  focusNode(id: string, padding?: number, animate?: boolean, afterViewChange?: boolean): void;
+  focusNode(
+    id: string,
+    padding?: number,
+    animate?: boolean,
+    afterViewChange?: boolean,
+  ): void;
   /** Fit laid-out hierarchy descendants and outgoing reachable nodes. Does not expand collapsed nodes. Animate overrides config.animateViewport. */
   focusBranch(id: string, padding?: number, animate?: boolean): void;
-  focusConnections(id: string, padding?: number, animate?: boolean, afterViewChange?: boolean): void;
+  focusConnections(
+    id: string,
+    padding?: number,
+    animate?: boolean,
+    afterViewChange?: boolean,
+  ): void;
   isolateConnections(id: string, padding?: number, animate?: boolean): void;
   /** Temporarily show only this branch and fit it, preserving graph data. */
   isolateBranch(id: string, padding?: number, animate?: boolean): void;

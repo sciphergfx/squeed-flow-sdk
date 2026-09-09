@@ -622,9 +622,14 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         let node = nodeByIdRef.current.get(selectedId);
         while (node && !visited.has(node.data.id)) {
           visited.add(node.data.id);
-          if (parentIds.has(node.data.id) && node.data.config?.collapsed !== true)
+          if (
+            parentIds.has(node.data.id) &&
+            node.data.config?.collapsed !== true
+          )
             callbacks.onNodeCollapse?.(node.data.id, true);
-          node = node.data.parent ? nodeByIdRef.current.get(node.data.parent) : undefined;
+          node = node.data.parent
+            ? nodeByIdRef.current.get(node.data.parent)
+            : undefined;
         }
       }
     }
