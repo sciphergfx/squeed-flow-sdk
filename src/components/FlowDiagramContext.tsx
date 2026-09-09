@@ -70,7 +70,9 @@ export interface FlowDiagramContextValue {
   setIsPerformanceMode: (v: boolean) => void;
   nodeGridOptions: NodeGridOptions | null;
   setNodeGridOptions: (options: NodeGridOptions | null) => void;
+  lastNodeGridOptions: NodeGridOptions;
   fillRadiusEditedIds: ReadonlySet<string>;
+  setFillRadiusEditedIds: (ids: Set<string>) => void;
   engineRef: React.MutableRefObject<FlowEngine | null>;
   callbacks: FlowDiagramCallbacks;
   config: FlowDiagramConfig;
@@ -137,6 +139,8 @@ export function FlowDiagramProvider({
   const [nodeGridOptions, setLocalNodeGridOptions] =
     useState<NodeGridOptions | null>(null);
   const nodeGridOptionsRef = useRef(nodeGridOptions);
+  const [lastNodeGridOptions, setLastNodeGridOptions] =
+    useState<NodeGridOptions>({ gaps: 15, fill: false, padding: 0 });
   const [fillRadiusEditedIds, setFillRadiusEditedIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -144,6 +148,7 @@ export function FlowDiagramProvider({
     if (!!options?.fill !== !!nodeGridOptionsRef.current?.fill)
       setFillRadiusEditedIds(new Set());
     nodeGridOptionsRef.current = options;
+    if (options) setLastNodeGridOptions(options);
     setLocalNodeGridOptions(options);
   }, []);
   const [localEdgeMode, setEdgeMode] = useState<EdgeMode>("auto");
@@ -510,7 +515,9 @@ export function FlowDiagramProvider({
       setIsPerformanceMode,
       nodeGridOptions,
       setNodeGridOptions,
+      lastNodeGridOptions,
       fillRadiusEditedIds,
+      setFillRadiusEditedIds,
       engineRef,
       callbacks: stableCallbacks,
       config: stableConfig,
@@ -548,6 +555,7 @@ export function FlowDiagramProvider({
       isPinned,
       isPerformanceMode,
       nodeGridOptions,
+      lastNodeGridOptions,
       fillRadiusEditedIds,
       readOnly,
       config.edgeHandles,

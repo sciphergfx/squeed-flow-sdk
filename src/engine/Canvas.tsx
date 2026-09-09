@@ -1149,7 +1149,7 @@ function Canvas(props: CanvasProps) {
             result.positions,
             options.animate,
             complete,
-            result.bounds
+            result.bounds && (!grid || !gridSizesRef.current.size)
               ? (animate) =>
                   viewport.transition({ zoom: 1, pan: { x: 0, y: 0 } }, animate)
               : undefined,
@@ -1160,6 +1160,13 @@ function Canvas(props: CanvasProps) {
         return result;
       },
       setNodeGridMode: (enabled, options = {}) => {
+        if (
+          options.order &&
+          (!Array.isArray(options.order) ||
+            options.order.some((id) => typeof id !== "string") ||
+            new Set(options.order).size !== options.order.length)
+        )
+          throw new Error("Invalid grid node order.");
         if (enabled) {
           arrangeNodesInGrid(collisionGeometry(), options);
           if (
@@ -1181,10 +1188,14 @@ function Canvas(props: CanvasProps) {
               ready: false,
             };
           }
+          if (options.order) nodeGridRef.current.order = [...options.order];
           nodeGridRef.current.options = { ...options };
           setNodeGridMode(true);
           engine.arrangeNodesInGrid(options);
-          propsRef.current.onNodeGridModeChange?.({ ...options });
+          propsRef.current.onNodeGridModeChange?.({
+            ...options,
+            order: [...nodeGridRef.current.order],
+          });
         } else {
           const grid = nodeGridRef.current;
           if (!grid) return;
@@ -1237,10 +1248,12 @@ function Canvas(props: CanvasProps) {
           grid.order[sourceIndex],
         ];
         geometryFocus.current = null;
+        grid.options = { ...grid.options, order: [...grid.order] };
         engine.arrangeNodesInGrid({
           ...grid.options,
           animate: animate ?? grid.options.animate,
         });
+        propsRef.current.onNodeGridModeChange?.({ ...grid.options });
         return true;
       },
       setNodePosition: (id, position, options) => {

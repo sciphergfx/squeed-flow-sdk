@@ -62,11 +62,44 @@ Subscribe SDK Test to `workflow:<executionId>` using a dedicated demo ID. POST t
 
 New commands use `mcp_sdk_command` with `data: { executionId, command, payload }`. Legacy node-view/node-animation event formats remain supported. Optional `requestId` prevents duplicate application within the most recent 256 successful commands in a mounted bridge. Commands execute serially. Explicit animation commands take precedence over lifecycle animation updates until disconnect.
 
+## Document-Scoped Configuration
+
+`configuration-export` and `configuration-replace` require `documentId` in
+addition to `executionId`. The execution ID selects the transport channel; the
+document ID must match the document connected to that channel. Missing or
+mismatched IDs are rejected before either configuration handler runs. There is
+no fallback to the active document and no editing of unopened documents.
+
+`inspect` includes `result.documentId`. Saved tabs use their stable document UUID;
+built-in examples use their existing document key, such as `platform`. Inspection
+results still arrive through the browser result event, not the HTTP response.
+For example, POST `/squeed/configuration-export` with:
+
+```json
+{
+  "executionId": "diagram-demo",
+  "documentId": "platform",
+  "requestId": "configuration-read-1"
+}
+```
+
+For replacement, add `configuration` containing the exported version 1 design
+or complete source/bindings/design/schema package. Export before editing: this
+is replacement, not a partial canvas patch. Configuration result events also
+include the connected `documentId`. Individual setting commands are not yet
+document-ID scoped. Document identity is a targeting check, not authorization;
+existing route authentication and browser read-only checks still apply.
+
+This is a breaking input change for the two configuration commands. Regenerate
+and provision those routes so `body.documentId` is forwarded in the command
+payload, then refresh MCP discovery. Local catalog changes do not update deployed
+routes. The route paths and their exact permission scopes are unchanged.
+
 ## Results And Limits
 
 HTTP/MCP responses confirm publication only. They do not confirm browser delivery, and inspection/export data is **not returned synchronously to the MCP caller**. The browser emits `window` CustomEvents named `squeed:mcp-result` with `{ executionId, requestId, command, status, result?, error? }`; hosts can also consume the bridge `onResult` callback. These results are not persisted or broadcast back to the server.
 
-Document/configuration operations use SDK Test's existing validators and callbacks. Configuration operations require a configured dataset; state and form operations require the corresponding dataset support. Read-only diagrams reject edits. Custom JavaScript/renderers, arbitrary callback invocation, authentication and lifecycle notifications are deliberately not executable commands. Local draft persistence remains an explicit host/UI action, not an SDK operation.
+Document/configuration operations use SDK Test's existing validators and callbacks. Configuration accepts a standalone design or complete package; standalone appearance application currently handles root/overrides rather than rebuilding defaults/types/nodes. State and form operations require the corresponding dataset support. Read-only diagrams reject edits. Custom JavaScript/renderers, arbitrary callback invocation, authentication and lifecycle notifications are deliberately not executable commands. Local draft persistence is managed per document by the host, not by the MCP server or SDK.
 
 ## Form Suggestions
 

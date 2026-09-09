@@ -7,6 +7,7 @@ export interface CommandField {
   maxLength?: number;
   items?: object;
   maxItems?: number;
+  uniqueItems?: boolean;
   anyOf?: readonly object[];
   optional?: boolean;
 }
@@ -102,12 +103,106 @@ const diagram = (
 
 export const FLOW_COMMANDS: readonly FlowCommand[] = [
   command(
+    "document-list",
+    "List the connected document and locally saved drafts available for configuration access.",
+    "diagram",
+    "host",
+    "listDocuments",
+  ),
+  command(
+    "configuration-patch",
+    "Apply validated set/remove edits to a document design; paths are arrays of literal key segments.",
+    "diagram",
+    "host",
+    "patchConfiguration",
+    {
+      edits: {
+        type: "array",
+        maxItems: 256,
+        items: {
+          type: "object",
+          properties: {
+            op: { enum: ["set", "remove"] },
+            path: {
+              type: "array",
+              minItems: 1,
+              maxItems: 32,
+              items: { type: "string", minLength: 1, maxLength: 1024 },
+            },
+            value: {},
+          },
+          required: ["op", "path"],
+          additionalProperties: false,
+        },
+      },
+    },
+  ),
+  diagram("default-edge-color", "setEdgeColor", { color: token }),
+  node("type-view", "onNodeTypeViewChange", {
+    view: choice("", "text", "icon-label", "object"),
+  }),
+  diagram("all-nodes-icon-label", "setAllNodesIconLabel", { enabled: boolean }),
+  command(
+    "toolbar-collapsed",
+    "Set bottom toolbar collapse state.",
+    "diagram",
+    "callback",
+    "onBottomBarCollapsedChange",
+    { collapsed: boolean },
+  ),
+  command(
+    "connections-only",
+    "Set Connected nodes mode.",
+    "diagram",
+    "host",
+    "setConnectionsOnly",
+    { enabled: boolean },
+  ),
+  command(
+    "focus-padding",
+    "Set node focus padding.",
+    "diagram",
+    "host",
+    "setFocusPadding",
+    { padding: nonnegative },
+  ),
+  command(
+    "grid-order",
+    "Set collision grid order without changing its enabled state.",
+    "diagram",
+    "host",
+    "setGridOrder",
+    {
+      order: {
+        type: "array",
+        items: token,
+        maxItems: 10000,
+        uniqueItems: true,
+      },
+    },
+  ),
+  command(
+    "fill-radius-overrides",
+    "Set nodes using their saved radius during Fill; an empty list resets all temporary overrides.",
+    "diagram",
+    "host",
+    "setFillRadiusOverrides",
+    {
+      nodes: {
+        type: "array",
+        items: token,
+        maxItems: 10000,
+        uniqueItems: true,
+      },
+    },
+  ),
+  command(
     "node-view",
-    "Set default or properties view.",
+    "Set default, properties, or icon-label view.",
     "node",
     "context",
     "setNodeViewMode",
-    { mode: choice("default", "properties") },
+    { mode: choice("default", "properties", "icon-label") },
   ),
   node("label", "onNodeLabelChange", { label: text }),
   node("content", "onNodeContentChange", {
@@ -461,18 +556,22 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
   ),
   command(
     "configuration-replace",
-    "Validate and apply a version 1 source/bindings/design/schema package.",
+    "Validate and apply a version 1 design or complete package to the specified connected document.",
     "diagram",
     "host",
     "replaceConfiguration",
-    { configuration: { type: "object" } },
+    {
+      documentId: { ...token, minLength: 1 },
+      configuration: { type: "object" },
+    },
   ),
   command(
     "configuration-export",
-    "Return the active configuration package through the browser result event.",
+    "Return configuration for the specified connected document through the browser result event.",
     "diagram",
     "host",
     "exportConfiguration",
+    { documentId: { ...token, minLength: 1 } },
   ),
   command(
     "color-mode",
@@ -504,8 +603,11 @@ export function commandSchema(command: FlowCommand) {
   const properties: Record<string, object> = {
     executionId: { type: "string", pattern: "^[A-Za-z0-9_-]{1,128}$" },
     requestId: { type: "string", pattern: "^[A-Za-z0-9_-]{1,128}$" },
+    documentId: { type: "string", minLength: 1, maxLength: 1024 },
   };
   const required = ["executionId"];
+  if (!["inspect", "document-list"].includes(command.name))
+    required.push("documentId");
   if (command.target !== "diagram") {
     properties[command.target] = {
       type: "string",
@@ -518,7 +620,7 @@ export function commandSchema(command: FlowCommand) {
     command.fields,
   )) {
     properties[name] = schema;
-    if (!optional) required.push(name);
+    if (!optional && !required.includes(name)) required.push(name);
   }
   return { type: "object", additionalProperties: false, properties, required };
 }

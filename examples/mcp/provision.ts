@@ -16,6 +16,7 @@ export function createSqueedProvision() {
             event: `mcp_node_${kind}`,
             data: {
               executionId: "{{input.executionId}}",
+              documentId: "{{input.documentId}}",
               node: "{{input.node}}",
               [kind === "view" ? "mode" : "animated"]:
                 `{{input.${kind === "view" ? "mode" : "animated"}}}`,
@@ -50,9 +51,12 @@ export function createSqueedProvision() {
     const schema = commandSchema(command);
     const input = legacy
       ? Object.fromEntries(
-          ["executionId", "node", ...Object.keys(command.fields)].map(
-            (field) => [field, `{{body.${field}}}`],
-          ),
+          [
+            "executionId",
+            "documentId",
+            "node",
+            ...Object.keys(command.fields),
+          ].map((field) => [field, `{{body.${field}}}`]),
         )
       : {
           executionId: "{{body.executionId}}",

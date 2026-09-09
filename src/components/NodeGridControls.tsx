@@ -1,5 +1,4 @@
 import { Box, HStack, Text } from "@chakra-ui/react";
-import { useState } from "react";
 import { PiArrowsOut, PiGridFour } from "react-icons/pi";
 import type { NodeGridOptions } from "../engine/nodeCollisions";
 import { getChakraColorHex } from "../theme/colorUtils";
@@ -9,15 +8,15 @@ import { useFlowDiagramContext } from "./FlowDiagramContext";
 import { LabeledToolbarToggle } from "./LabeledToolbarToggle";
 
 export function NodeGridControls() {
-  const { engineRef, nodeGridOptions, readOnly, themeColor } =
-    useFlowDiagramContext();
+  const {
+    engineRef,
+    nodeGridOptions,
+    lastNodeGridOptions,
+    readOnly,
+    themeColor,
+  } = useFlowDiagramContext();
   const { colorText, colorInactive } = useCustomColors();
-  const [lastOptions, setLastOptions] = useState<NodeGridOptions>({
-    gaps: 15,
-    fill: false,
-    padding: 0,
-  });
-  const options = nodeGridOptions ?? lastOptions;
+  const options = nodeGridOptions ?? lastNodeGridOptions;
   const gap =
     typeof options.gaps === "object"
       ? options.gaps.x
@@ -33,7 +32,6 @@ export function NodeGridControls() {
         icon={<PiGridFour size={20} />}
         checked={nodeGridOptions !== null}
         onChange={(enabled) => {
-          setLastOptions(options);
           engineRef.current?.setNodeGridMode(enabled, options);
         }}
       />

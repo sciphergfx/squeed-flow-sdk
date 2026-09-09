@@ -11,6 +11,7 @@ export interface ResolveNodeCollisionsOptions extends NodeCollisionOptions {
 }
 
 export interface NodeGridOptions extends NodeCollisionOptions {
+  order?: string[];
   columns?: number;
   animate?: boolean;
   gaps?: number | { x: number; y: number };
