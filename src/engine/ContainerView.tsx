@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { PiCircleFill } from "react-icons/pi";
 import {
@@ -36,6 +36,7 @@ export interface ContainerViewProps {
   rect: Rect;
   label?: string;
   labelLayer?: SVGGElement | null;
+  labelContent?: ReactNode;
   style: ContainerStyle;
   onSelect?: (id: string, modifiers?: NodeSelectionModifiers) => void;
   onCollapse?: (id: string) => void;
@@ -49,6 +50,7 @@ function ContainerView({
   rect,
   label,
   labelLayer,
+  labelContent,
   style,
   onSelect,
   onCollapse,
@@ -101,7 +103,18 @@ function ContainerView({
             </ToolbarTooltip>
           </foreignObject>
         )}
-        {label && (
+        {labelContent ? (
+          <foreignObject
+            x={cx - labelWidth / 2 - padding}
+            y={labelY - style.fontSize / 2 - padding}
+            width={labelWidth + 2 * padding}
+            height={style.fontSize + 2 * padding}
+            style={{ overflow: "visible" }}
+            onClick={stop}
+          >
+            {labelContent}
+          </foreignObject>
+        ) : label && (
           <>
             <rect
               x={cx - labelWidth / 2 - padding}

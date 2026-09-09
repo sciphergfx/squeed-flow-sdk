@@ -42,6 +42,7 @@ export function EditableContent({
     else if (editing) {
       committedRef.current = false;
       inputRef.current?.focus({ preventScroll: true });
+      inputRef.current?.select();
     }
   }, [editing, editable]);
 
@@ -61,19 +62,43 @@ export function EditableContent({
   if (!editing || !editable)
     if (format !== "markdown")
       return (
-        <Box w="100%" data-flow-content="">
+        <Box
+          ref={wrapperRef}
+          w="100%"
+          position="relative"
+          data-flow-content=""
+          css={{
+            "&:hover > [data-flow-content-edit], &:focus-within > [data-flow-content-edit]": {
+              opacity: 1,
+              pointerEvents: "auto",
+            },
+          }}
+        >
           {editable && (
             <ToolbarIconButton
+              data-flow-content-edit=""
               aria-label="Edit content source"
               title="Edit content source"
               icon={<PiCode />}
+              position="absolute"
+              top="8px"
+              right="48px"
+              zIndex={1}
+              opacity={0}
+              pointerEvents="none"
               onClick={(event) => {
                 event.stopPropagation();
                 startEditing(event.currentTarget.parentElement);
               }}
             />
           )}
-          <ContentPreview content={content} format={format} />
+          <ContentPreview
+            content={content}
+            format={format}
+            onEdit={editable ? () => {
+              if (wrapperRef.current) startEditing(wrapperRef.current);
+            } : undefined}
+          />
         </Box>
       );
 

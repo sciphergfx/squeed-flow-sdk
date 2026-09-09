@@ -128,7 +128,7 @@ export const ObjectNodeView = (props) => {
                   overflow="auto"
                   justifyContent="start"
                   background={colors.highlightColor}
-                  p={12}
+                  p={["html", "jsx"].includes(props.data?.config?.contentFormat) ? 0 : 12}
                   fontSize="5xl"
                   lineHeight="normal"
                 >

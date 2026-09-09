@@ -1409,7 +1409,8 @@ function Canvas(props: CanvasProps) {
       }}
       onClickCapture={(event) => {
         if (!event.currentTarget.contains(event.target as Node)) return;
-        if (suppressClickRef.current || props.readOnly) {
+        const fullscreenControl = event.target instanceof Element && event.target.closest("button[data-flow-fullscreen]");
+        if (suppressClickRef.current || (props.readOnly && !fullscreenControl)) {
           event.preventDefault();
           event.stopPropagation();
         }
@@ -1428,6 +1429,7 @@ function Canvas(props: CanvasProps) {
                   rect={rect}
                   label={labelById.get(id)}
                   labelLayer={labelLayer}
+                  labelContent={nodes.find((node) => node.id === id && node.label !== undefined)?.element}
                   style={containerStyle(id)}
                   onSelect={onContainerSelect}
                   onCollapse={
@@ -1535,6 +1537,7 @@ function Canvas(props: CanvasProps) {
         {nodes.map((n) => {
           const p = positions.get(n.id);
           const c = containers.get(n.id);
+          if (c && n.label !== undefined) return null;
           const x = p?.x ?? (c ? (c.x1 + c.x2) / 2 : 0);
           const y = p?.y ?? (c ? (c.y1 + c.y2) / 2 : 0);
           return (

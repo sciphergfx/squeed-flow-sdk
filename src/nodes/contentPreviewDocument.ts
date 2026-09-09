@@ -5,6 +5,7 @@ import type { ContentFormat } from "../types";
 export async function contentPreviewDocument(
   source: string,
   format: Exclude<ContentFormat, "markdown">,
+  editable = false,
 ) {
   if (source.length > 100_000)
     throw new Error("Preview source exceeds 100,000 characters.");
@@ -51,6 +52,12 @@ export async function contentPreviewDocument(
       );
     body = `<div id="preview"></div><script type="application/json" id="source">${JSON.stringify(result.outputText).replace(/</g, "\\u003c")}</script><script nonce="${nonce}">${runtime.replace(/<\/script/gi, "<\\/script")}</script>`;
   }
-  const policy = `default-src 'none'; script-src ${format === "jsx" ? `'nonce-${nonce}' 'unsafe-eval'` : "'none'"}; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none';`;
-  return `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="${policy}"><meta name="referrer" content="no-referrer"><style>html{color-scheme:light}body{margin:16px;font:16px/1.5 sans-serif;color:#18181b;background:white;overflow-wrap:anywhere}*{box-sizing:border-box}img{max-width:100%}pre{white-space:pre-wrap}</style></head><body>${body}</body></html>`;
+  if (editable)
+    body += `<script nonce="${nonce}">document.addEventListener('dblclick', function(event) {
+      if (event.defaultPrevented || !(event.target instanceof Element) || event.target.closest('button, a, input, textarea, select, video, audio, [contenteditable], [role="button"], [role="textbox"]')) return;
+      event.preventDefault();
+      parent.postMessage({type: 'squeed:content-edit'}, '*');
+    });</script>`;
+  const policy = `default-src 'none'; script-src ${format === "jsx" ? `'nonce-${nonce}' 'unsafe-eval'` : editable ? `'nonce-${nonce}'` : "'none'"}; style-src 'unsafe-inline'; img-src data: blob:; media-src https: data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none';`;
+  return `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="${policy}"><meta name="referrer" content="no-referrer"><style>html{color-scheme:light}body{margin:0;padding:0;font:16px/1.5 sans-serif;color:#18181b;background:white;overflow-wrap:anywhere}*{box-sizing:border-box}img{max-width:100%}pre{white-space:pre-wrap}</style></head><body>${body}</body></html>`;
 }
