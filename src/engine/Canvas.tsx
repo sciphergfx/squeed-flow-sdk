@@ -817,7 +817,8 @@ function Canvas(props: CanvasProps) {
         const parents = new Set(
           graph.nodes.map((node) => node.parent).filter(Boolean),
         );
-        if (!positions && (!ids || [...ids].some((id) => parents.has(id)))) return;
+        if (!positions && (!ids || [...ids].some((id) => parents.has(id))))
+          return;
         const targetContainers =
           positions &&
           computeContainers(
@@ -922,7 +923,11 @@ function Canvas(props: CanvasProps) {
       const r = rootRef.current?.getBoundingClientRect();
       return { x: clientX - (r?.left ?? 0), y: clientY - (r?.top ?? 0) };
     };
-    const fit = (padding = 0, animate = propsRef.current.animateViewport, afterViewChange = false) => {
+    const fit = (
+      padding = 0,
+      animate = propsRef.current.animateViewport,
+      afterViewChange = false,
+    ) => {
       if (afterViewChange) {
         focus(undefined, padding, animate, 1, true);
         return;

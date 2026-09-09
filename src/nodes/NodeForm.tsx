@@ -921,19 +921,32 @@ function NodeFormFields({
       </fieldset>
     );
   if (!data)
-    return <Fields $colorMode={colorMode} role="alert">Forms require a JSON document.</Fields>;
+    return (
+      <Fields $colorMode={colorMode} role="alert">
+        Forms require a JSON document.
+      </Fields>
+    );
   const bound = bindings
     ? resolveStateForm(bindings, nodeAddress, schema)
     : undefined;
   const resolved = bindings
     ? bound
     : schema && resolveFormNode(data, nodeAddress, schema);
-  if (!resolved) return <Fields $colorMode={colorMode} role="status">Form schema unavailable.</Fields>;
+  if (!resolved)
+    return (
+      <Fields $colorMode={colorMode} role="status">
+        Form schema unavailable.
+      </Fields>
+    );
   const stateAddress = bound?.address ?? nodeAddress;
   const node = getNode(data, stateAddress);
   const scalar = structured?.containers.get(nodeAddress)?.scalar;
   if (node === undefined || (typeof node !== "object" && !scalar))
-    return <Fields $colorMode={colorMode} role="alert">Bound form state is unavailable.</Fields>;
+    return (
+      <Fields $colorMode={colorMode} role="alert">
+        Bound form state is unavailable.
+      </Fields>
+    );
   const entries = Object.entries(resolved.type.properties).filter(([key]) =>
     conditionMatches(resolved.fields[key]?.$visibleWhen, data),
   );
