@@ -42,7 +42,8 @@ export const EditableLabel = ({
       committedRef.current = false;
       if (inputRef.current) {
         inputRef.current.focus();
-        inputRef.current.select();
+        const position = inputRef.current.value.length;
+        inputRef.current.setSelectionRange(position, position);
       }
     }
   }, [isEditing]);

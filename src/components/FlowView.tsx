@@ -616,6 +616,18 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           !backgroundSelected),
     );
     callbacks.onBackgroundClick?.();
+    if (!configRef.current.readOnly) {
+      const visited = new Set<string>();
+      for (const selectedId of selectedNodeIdsRef.current) {
+        let node = nodeByIdRef.current.get(selectedId);
+        while (node && !visited.has(node.data.id)) {
+          visited.add(node.data.id);
+          if (parentIds.has(node.data.id) && node.data.config?.collapsed !== true)
+            callbacks.onNodeCollapse?.(node.data.id, true);
+          node = node.data.parent ? nodeByIdRef.current.get(node.data.parent) : undefined;
+        }
+      }
+    }
     if (selectedNodeIdsRef.current.length) {
       setSelectedNodeIds([]);
       callbacks.onNodeDeselect?.();
@@ -631,6 +643,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     setBackgroundSelected,
     backgroundSelected,
     config.bottomBarCollapsed,
+    parentIds,
   ]);
 
   const handleBoxSelect = useCallback(

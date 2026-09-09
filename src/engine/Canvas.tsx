@@ -312,6 +312,7 @@ function Canvas(props: CanvasProps) {
   const animFallbackRef = useRef<ReturnType<typeof setTimeout>>();
   const pendingFitRef = useRef(false);
   const pendingLayoutAction = useRef<(() => void) | null>(null);
+  const geometryFocus = useRef<((positions?: Map<string, Point>) => void) | null>(null);
   const previousSpacingFactor = useRef(spacingFactor);
   const compactLayout = compactPropertyLayout;
   const previousCompactLayout = useRef(compactLayout);
@@ -332,6 +333,7 @@ function Canvas(props: CanvasProps) {
   };
 
   const onLayoutStop = () => {
+    geometryFocus.current = null;
     if (revealedNodes.current.length) centerRevealed.current = true;
     if (!hasLayoutRunRef.current && propsRef.current.fitOnInit !== false)
       pendingFitRef.current = true;
@@ -433,6 +435,7 @@ function Canvas(props: CanvasProps) {
       else if (!p.nodes.some((node) => node.id === id))
         placedNodes.current.delete(id);
     }
+    geometryFocus.current?.(target);
     if (hasLayoutRunRef.current && !p.isPerformanceMode) animateTo(target);
     else {
       cancelAnim();
@@ -451,7 +454,7 @@ function Canvas(props: CanvasProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const previous = new Map(
       previousNodes.current.map((node) => [node.id, node]),
     );
@@ -477,7 +480,10 @@ function Canvas(props: CanvasProps) {
     if (previousCompactLayout.current !== compactLayout)
       pendingFitRef.current = !pendingLayoutAction.current;
     previousCompactLayout.current = compactLayout;
-    scheduleLayout();
+    if (geometryFocus.current && !pendingLayoutAction.current) {
+      clearTimeout(layoutTimerRef.current);
+      runLayoutNow();
+    } else scheduleLayout();
   }, [
     nodes,
     edges,
@@ -527,7 +533,10 @@ function Canvas(props: CanvasProps) {
             sizesRef.current.set(nid, { w, h });
             changed = true;
           }
-          if (changed) scheduleLayout();
+          if (changed) {
+            geometryFocus.current?.();
+            scheduleLayout();
+          }
         });
       }
       if (el) {
@@ -797,22 +806,40 @@ function Canvas(props: CanvasProps) {
       padding = 50,
       animate = propsRef.current.animateViewport,
       zoomScale = 1,
+      afterViewChange = false,
     ) => {
-      const bounds = unionRects(
-        [...ids].flatMap((id) => {
-          const box = boxFor(id);
-          return box ? [boxToRect(box)] : [];
-        }),
-      );
-      if (bounds) {
-        pendingFitRef.current = false;
-        viewport.fit(
-          bounds,
-          Number.isFinite(padding) ? Math.max(0, padding) : 50,
-          animate,
-          zoomScale,
+      let previousBounds: Rect | null = null;
+      const applyFocus = (positions?: Map<string, Point>) => {
+        const graph = layoutGraphRef.current;
+        const parents = new Set(graph.nodes.map((node) => node.parent).filter(Boolean));
+        if (!positions && [...ids].some((id) => parents.has(id))) return;
+        const targetContainers = positions && computeContainers(
+          graph.nodes, positions, sizesRef.current,
+          (id) => propsRef.current.containerStyle(id).padding,
+          (id) => {
+            const label = propsRef.current.nodes.find((node) => node.id === id)?.label;
+            if (!label) return undefined;
+            const style = propsRef.current.containerStyle(id);
+            return { w: measureText(label, `bold ${style.fontSize}px ${EDGE_LABEL_FONT_FAMILY}`) + 2 * CONTAINER_LABEL_BG_PADDING, h: 0 };
+          },
         );
-      }
+        const bounds = unionRects([...ids].flatMap((id) => {
+          const container = targetContainers?.get(id);
+          if (container) return [container];
+          const position = positions?.get(id);
+          const size = sizesRef.current.get(id) || DEFAULT_SIZE;
+          const box = position ? { ...position, ...size } : boxFor(id);
+          return box ? [boxToRect(box)] : [];
+        }));
+        if (!bounds || JSON.stringify(bounds) === JSON.stringify(previousBounds)) return;
+        previousBounds = bounds;
+        pendingFitRef.current = false;
+        revealedNodes.current = [];
+        centerRevealed.current = false;
+        viewport.fit(bounds, Number.isFinite(padding) ? Math.max(0, padding) : 50, animate, zoomScale);
+      };
+      geometryFocus.current = afterViewChange ? applyFocus : null;
+      if (!afterViewChange) applyFocus(positionsRef.current);
     };
     const isolate = (
       id: string,
@@ -853,10 +880,12 @@ function Canvas(props: CanvasProps) {
       connectedNodeIds(id, propsRef.current.nodes, propsRef.current.edges);
     const zoom = ((level?: number) => {
       if (level === undefined) return viewport.zoom;
+      geometryFocus.current = null;
       viewport.set(undefined, level);
     }) as FlowEngine["zoom"];
     const pan = ((p?: Point) => {
       if (p === undefined) return viewport.pan;
+      geometryFocus.current = null;
       viewport.set(p);
     }) as FlowEngine["pan"];
     const rendered = (clientX: number, clientY: number): Point => {
@@ -867,17 +896,18 @@ function Canvas(props: CanvasProps) {
       zoom,
       pan,
       setEdgesVisible,
-      focusNode: (id, padding, animate) =>
-        updateViewport(() => focus(new Set([id]), padding, animate, 0.6)),
+      focusNode: (id, padding, animate, afterViewChange) =>
+        updateViewport(() => focus(new Set([id]), padding, animate, 0.6, afterViewChange)),
       focusBranch: (id, padding, animate) =>
         updateViewport(() => focus(branchIds(id), padding, animate)),
-      focusConnections: (id, padding, animate) =>
-        updateViewport(() => focus(connections(id), padding, animate)),
+      focusConnections: (id, padding, animate, afterViewChange) =>
+        updateViewport(() => focus(connections(id), padding, animate, 1, afterViewChange)),
       isolateConnections: (id, padding, animate) =>
         isolate(id, "connections", padding, animate),
       isolateBranch: (id, padding, animate) =>
         isolate(id, "branch", padding, animate),
       restoreView: (animate = propsRef.current.animateViewport, state) => {
+        geometryFocus.current = null;
         const needsLayout =
           propsRef.current.compactPropertyLayout && !!isolatedIdsRef.current;
         isolatedIdsRef.current = null;
@@ -891,8 +921,12 @@ function Canvas(props: CanvasProps) {
         else if (previous)
           updateViewport(() => viewport.transition(previous, animate));
       },
-      zoomAt: (level, pt) => viewport.zoomAt(level, pt),
+      zoomAt: (level, pt) => {
+        geometryFocus.current = null;
+        viewport.zoomAt(level, pt);
+      },
       fit: (padding = 0, animate = propsRef.current.animateViewport) => {
+        geometryFocus.current = null;
         updateViewport(() => {
           const bb = elementsBBox();
           if (bb) viewport.fit(bb, padding, animate);
@@ -902,12 +936,14 @@ function Canvas(props: CanvasProps) {
         padding = 0,
         animate = propsRef.current.animateViewport,
       ) => {
+        geometryFocus.current = null;
         updateViewport(() => {
           const bb = elementsBBox();
           if (bb) viewport.fit(bb, padding, animate);
         });
       },
       center: (animate = propsRef.current.animateViewport) => {
+        geometryFocus.current = null;
         const bb = elementsBBox();
         if (bb) viewport.center(bb, animate);
       },
@@ -1107,6 +1143,7 @@ function Canvas(props: CanvasProps) {
       )
     )
       return;
+    geometryFocus.current = null;
     if (p.multiSelect) {
       gestureRef.current = {
         kind: "box",

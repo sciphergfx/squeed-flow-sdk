@@ -31,6 +31,12 @@ export const CompactObjectView = (props) => {
   const toggleLabel = parent ? "Show parent" : "Show properties";
   const configurable =
     parent || props.data?.config?.form || props.data?.config?.ports?.length;
+  const onExpand = configurable
+    ? () => {
+        if (parent) callbacks.onNodeCollapse?.(props.data.id, false);
+        else setProperties(true);
+      }
+    : undefined;
   if (!parent && configurable && properties)
     return (
       <ObjectNodeView
@@ -43,23 +49,16 @@ export const CompactObjectView = (props) => {
     <CompactNodeView
       {...props}
       onOpenView={
-        !parent && configurable && props.data?.config?.labelBelow
+        onExpand && (parent || props.data?.config?.labelBelow)
           ? () => {
-              setProperties(true);
+              onExpand();
               callbacks.onNodeViewToggle?.(props.data.id);
             }
           : undefined
       }
       toggleLabel={toggleLabel}
       toggleDisabled={parent && readOnly}
-      onExpand={
-        configurable
-          ? () => {
-              if (parent) callbacks.onNodeCollapse?.(props.data.id, false);
-              else setProperties(true);
-            }
-          : undefined
-      }
+      onExpand={onExpand}
     />
   );
 };
