@@ -247,6 +247,9 @@ export function FlowDiagramProvider({
       onEdgeModeChange: wrap("onEdgeModeChange"),
       onCompactPropertyLayoutChange: wrap("onCompactPropertyLayoutChange"),
       onWorkflowContractChange: wrap("onWorkflowContractChange"),
+      onWorkflowConfigurationOpen: callbacks.onWorkflowConfigurationOpen
+        ? wrap("onWorkflowConfigurationOpen")
+        : undefined,
       onArrayModeChange: wrap("onArrayModeChange"),
       onInit: wrap("onInit"),
       onLayoutComplete: wrap("onLayoutComplete"),

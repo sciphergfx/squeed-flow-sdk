@@ -1,6 +1,8 @@
 import { useContext, useEffect, useRef, useState } from "react";
+import { Button } from "@chakra-ui/react";
 import {
   PiGraph,
+  PiGear,
   PiTable,
   PiTreeStructure,
   PiUploadSimple,
@@ -13,9 +15,14 @@ import { FormDocumentContext } from "../nodes/NodeForm";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
 import { ErrorToast } from "./ErrorToast";
+import {
+  RecentToolbarContext,
+  useRecentToolbarAction,
+} from "./RecentToolbarAction";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
 import {
   ToolbarDivider,
+  menuItemCorners,
   ToolbarIconButton,
   ToolbarSelect,
   ToolbarTooltip,
@@ -33,6 +40,7 @@ export function WorkflowControls({
     callbacks,
     readOnly,
     themeColor,
+    colorMode,
   } = useFlowDiagramContext();
   const { edgeById } = useFlowData();
   const {
@@ -67,177 +75,228 @@ export function WorkflowControls({
   const status = workflowContract
     ? `${workflowContract.name}: ${schema ? `${Object.keys(schema).length} form types loaded; ` : ""}${invalid} invalid or unverified connections`
     : "";
+  const remember = useRecentToolbarAction(
+    <WorkflowControls showDivider={false} compact />,
+  );
   return (
-    <>
-      <ErrorToast message={error} onDismiss={() => setError("")} />
-      {showDivider && <ToolbarDivider />}
-      <ToolbarSelect
-        aria-label="Edge mode"
-        title={
-          edgeMode === "auto"
-            ? "Connections: Auto"
-            : edgeMode === "properties"
-              ? "Connections: Properties"
-              : "Connections: Nodes"
-        }
-        icon={
-          edgeMode === "auto" ? (
-            <PiGraph size={20} />
-          ) : edgeMode === "properties" ? (
-            <PiTable size={20} />
-          ) : (
-            <PiTreeStructure size={20} />
-          )
-        }
-        style={{ width: 36 }}
-        value={edgeMode}
-        disabled={readOnly}
-        onValueChange={(value) => {
-          const mode =
-            value === "auto"
-              ? "auto"
-              : value === "properties"
-                ? "properties"
-                : "nodes";
-          setEdgeMode(mode);
-          callbacks.onEdgeModeChange?.(mode);
-        }}
-      >
-        <option value="auto">Auto</option>
-        <option value="nodes">Nodes</option>
-        <option value="properties">Properties</option>
-      </ToolbarSelect>
-      <span
-        style={{
-          display:
-            edgeMode === "auto" || edgeMode === "properties"
-              ? "contents"
-              : "none",
-        }}
-      >
-        <ToolbarTooltip
-          label={
-            workflowContract
-              ? `Replace ${workflowContract.name}`
-              : "Upload workflow interface"
+    <RecentToolbarContext.Provider value={null}>
+      <span style={{ display: "contents" }} onClickCapture={remember}>
+        <ErrorToast message={error} onDismiss={() => setError("")} />
+        {showDivider && <ToolbarDivider />}
+        <ToolbarSelect
+          aria-label="Edge mode"
+          title={
+            edgeMode === "auto"
+              ? "Connections: Auto"
+              : edgeMode === "properties"
+                ? "Connections: Properties"
+                : "Connections: Nodes"
           }
-        >
-          <ToolbarIconButton
-            aria-label="Upload workflow interface"
-            icon={<PiUploadSimple size={20} />}
-            color={getChakraColorHex(themeColor)}
-            size="sm"
-            variant="ghost"
-            disabled={busy || readOnly}
-            onClick={() => input.current?.click()}
-          />
-        </ToolbarTooltip>
-        <input
-          ref={input}
-          type="file"
-          hidden
-          accept=".ts,.json"
-          aria-label="Workflow interface file"
-          disabled={readOnly || busy}
-          onChange={async (event) => {
-            const file = event.target.files?.[0];
-            event.target.value = "";
-            if (!file) return;
-            const request = ++version.current;
-            setBusy(true);
-            setError("");
-            try {
-              const loaded = bindings
-                ? await readFormSchema(file, [
-                    ...new Set(
-                      Object.values(bindings).map(
-                        (binding) => binding.schemaType ?? binding.type,
-                      ),
-                    ),
-                  ])
-                : undefined;
-              if (bindings && loaded) {
-                for (const binding of Object.values(bindings))
-                  if (
-                    !Object.prototype.hasOwnProperty.call(
-                      loaded,
-                      binding.schemaType ?? binding.type,
-                    )
-                  )
-                    throw new Error(
-                      `Missing form type: ${binding.schemaType ?? binding.type}`,
-                    );
-              }
-              const { contract, schema: nextSchema } =
-                bindings && loaded
-                  ? {
-                      schema: loaded,
-                      contract: {
-                        name: file.name,
-                        nodes: Object.fromEntries(
-                          Object.entries(bindings).map(([address, binding]) => [
-                            address,
-                            {
-                              type: loaded[binding.schemaType ?? binding.type],
-                              optional: false,
-                            },
-                          ]),
-                        ),
-                      },
-                    }
-                  : await readWorkflowInterface(file, data);
-              if (request !== version.current) return;
-              setSchema?.(nextSchema);
-              setWorkflowContract(contract);
-              callbacks.onWorkflowContractChange?.(contract);
-            } catch (failure) {
-              if (request === version.current)
-                setError(
-                  `${file.name}: ${
-                    failure instanceof Error
-                      ? failure.message
-                      : "Unable to load interface."
-                  }`,
-                );
-            } finally {
-              if (request === version.current) setBusy(false);
-            }
+          icon={
+            edgeMode === "auto" ? (
+              <PiGraph size={20} />
+            ) : edgeMode === "properties" ? (
+              <PiTable size={20} />
+            ) : (
+              <PiTreeStructure size={20} />
+            )
+          }
+          style={{ width: 36 }}
+          value={edgeMode}
+          disabled={readOnly}
+          footer={
+            callbacks.onWorkflowConfigurationOpen && (
+              <>
+                <hr
+                  style={{
+                    border: 0,
+                    borderTop: "1px solid currentColor",
+                    opacity: 0.2,
+                    margin: "8px 0",
+                  }}
+                />
+                <Button
+                  data-flow-menu-action=""
+                  variant="ghost"
+                  width="100%"
+                  justifyContent="flex-start"
+                  color="inherit"
+                  bg="transparent"
+                  css={menuItemCorners}
+                  _hover={{
+                    bg:
+                      colorMode === "dark" ? "whiteAlpha.100" : "blackAlpha.50",
+                  }}
+                  _focusVisible={{
+                    bg:
+                      colorMode === "dark" ? "whiteAlpha.100" : "blackAlpha.50",
+                  }}
+                  onClick={(event) => {
+                    (
+                      event.currentTarget.closest(
+                        "[popover]",
+                      ) as HTMLElement | null
+                    )?.hidePopover();
+                    callbacks.onWorkflowConfigurationOpen?.();
+                  }}
+                >
+                  <PiGear />
+                  Configuration
+                </Button>
+              </>
+            )
+          }
+          onValueChange={(value) => {
+            const mode =
+              value === "auto"
+                ? "auto"
+                : value === "properties"
+                  ? "properties"
+                  : "nodes";
+            setEdgeMode(mode);
+            callbacks.onEdgeModeChange?.(mode);
           }}
-        />
-        {!compact && (status || busy) && (
-          <span
-            role="status"
-            title={status}
-            style={{
-              color: getChakraColorHex(colorText),
-              fontSize: 12,
-              maxWidth: 180,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
+        >
+          <option value="auto">Auto</option>
+          <option value="nodes">Nodes</option>
+          <option value="properties">Properties</option>
+        </ToolbarSelect>
+        <span
+          style={{
+            display:
+              edgeMode === "auto" || edgeMode === "properties"
+                ? "contents"
+                : "none",
+          }}
+        >
+          <ToolbarTooltip
+            label={
+              workflowContract
+                ? `Replace ${workflowContract.name}`
+                : "Upload workflow interface"
+            }
           >
-            {busy ? "Loading interface..." : status}
-          </span>
-        )}
-        {!compact && workflowContract && (
-          <ToolbarTooltip label="Remove workflow interface">
             <ToolbarIconButton
-              aria-label="Remove workflow interface"
-              icon={<PiX size={16} />}
+              aria-label="Upload workflow interface"
+              icon={<PiUploadSimple size={20} />}
+              color={getChakraColorHex(themeColor)}
               size="sm"
               variant="ghost"
-              disabled={readOnly || busy}
-              onClick={() => {
-                setSchema?.(undefined);
-                setWorkflowContract(undefined);
-                callbacks.onWorkflowContractChange?.(undefined);
-                setError("");
-              }}
+              disabled={busy || readOnly}
+              onClick={() => input.current?.click()}
             />
           </ToolbarTooltip>
-        )}
+          <input
+            ref={input}
+            type="file"
+            hidden
+            accept=".ts,.json"
+            aria-label="Workflow interface file"
+            disabled={readOnly || busy}
+            onChange={async (event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (!file) return;
+              const request = ++version.current;
+              setBusy(true);
+              setError("");
+              try {
+                const loaded = bindings
+                  ? await readFormSchema(file, [
+                      ...new Set(
+                        Object.values(bindings).map(
+                          (binding) => binding.schemaType ?? binding.type,
+                        ),
+                      ),
+                    ])
+                  : undefined;
+                if (bindings && loaded) {
+                  for (const binding of Object.values(bindings))
+                    if (
+                      !Object.prototype.hasOwnProperty.call(
+                        loaded,
+                        binding.schemaType ?? binding.type,
+                      )
+                    )
+                      throw new Error(
+                        `Missing form type: ${binding.schemaType ?? binding.type}`,
+                      );
+                }
+                const { contract, schema: nextSchema } =
+                  bindings && loaded
+                    ? {
+                        schema: loaded,
+                        contract: {
+                          name: file.name,
+                          nodes: Object.fromEntries(
+                            Object.entries(bindings).map(
+                              ([address, binding]) => [
+                                address,
+                                {
+                                  type: loaded[
+                                    binding.schemaType ?? binding.type
+                                  ],
+                                  optional: false,
+                                },
+                              ],
+                            ),
+                          ),
+                        },
+                      }
+                    : await readWorkflowInterface(file, data);
+                if (request !== version.current) return;
+                setSchema?.(nextSchema);
+                setWorkflowContract(contract);
+                callbacks.onWorkflowContractChange?.(contract);
+              } catch (failure) {
+                if (request === version.current)
+                  setError(
+                    `${file.name}: ${
+                      failure instanceof Error
+                        ? failure.message
+                        : "Unable to load interface."
+                    }`,
+                  );
+              } finally {
+                if (request === version.current) setBusy(false);
+              }
+            }}
+          />
+          {!compact && (status || busy) && (
+            <span
+              role="status"
+              title={status}
+              style={{
+                color: getChakraColorHex(colorText),
+                fontSize: 12,
+                maxWidth: 180,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {busy ? "Loading interface..." : status}
+            </span>
+          )}
+          {!compact && workflowContract && (
+            <ToolbarTooltip label="Remove workflow interface">
+              <ToolbarIconButton
+                aria-label="Remove workflow interface"
+                icon={<PiX size={16} />}
+                size="sm"
+                variant="ghost"
+                disabled={readOnly || busy}
+                onClick={() => {
+                  setSchema?.(undefined);
+                  setWorkflowContract(undefined);
+                  callbacks.onWorkflowContractChange?.(undefined);
+                  setError("");
+                }}
+              />
+            </ToolbarTooltip>
+          )}
+        </span>
       </span>
-    </>
+    </RecentToolbarContext.Provider>
   );
 }

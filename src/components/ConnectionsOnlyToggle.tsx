@@ -17,7 +17,9 @@ export function ConnectionsOnlyToggle({
 }: ConnectionsOnlyToggleProps) {
   return (
     <LabeledToolbarToggle
+      hideLabel
       label={label}
+      helper={`${label}: isolate node and its connections`}
       checked={checked}
       onChange={onChange}
       disabled={disabled}

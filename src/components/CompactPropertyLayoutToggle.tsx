@@ -10,6 +10,7 @@ export function CompactPropertyLayoutToggle({
     useFlowDiagramContext();
   return (
     <LabeledToolbarToggle
+      hideLabel
       label={label}
       checked={compactPropertyLayout}
       icon={<Icon as={PiArrowsIn} boxSize={5} />}

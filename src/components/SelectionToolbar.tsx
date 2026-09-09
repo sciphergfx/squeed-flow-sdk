@@ -1,6 +1,10 @@
 import { Box, chakra, HStack, Icon, Input, Text } from "@chakra-ui/react";
 import { useEffect, useId, useRef, useState } from "react";
 import {
+  RecentToolbarContext,
+  useRecentToolbarAction,
+} from "./RecentToolbarAction";
+import {
   PiArrowsInLineVertical,
   PiArrowsOutLineVertical,
   PiBezierCurve,
@@ -165,110 +169,123 @@ export function Swatches({
   const paletteId = useId();
   const toggle = useRef<HTMLButtonElement>(null);
   const selected = value ?? colors[0] ?? "transparent";
+  const remember = useRecentToolbarAction(
+    <Swatches
+      colors={colors}
+      value={value}
+      label={label}
+      onPick={onPick}
+      onReset={onReset}
+      includeTransparent={includeTransparent}
+    />,
+  );
   return (
-    <HStack
-      gap={1}
-      aria-label={label}
-      role="group"
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          setExpanded(false);
-          toggle.current?.focus();
-        }
-      }}
-    >
-      <ToolbarTooltip label={`${label}: ${selected}`}>
-        <chakra.button
-          ref={toggle}
-          type="button"
-          aria-label={`${label} colors`}
-          aria-expanded={expanded}
-          aria-controls={paletteId}
-          w={4}
-          h={4}
-          flexShrink={0}
-          borderRadius="full"
-          cursor="pointer"
-          style={{
-            backgroundColor: getChakraColorHex(selected),
-            ...(selected === "transparent"
-              ? {
-                  backgroundImage:
-                    "conic-gradient(#fff 25%, #a0aec0 0 50%, #fff 0 75%, #a0aec0 0)",
-                  backgroundSize: "8px 8px",
-                }
-              : {}),
-          }}
-          outline={`2px solid ${getChakraColorHex(colorText)}`}
-          outlineOffset="1px"
-          onClick={() => setExpanded((open) => !open)}
-        />
-      </ToolbarTooltip>
-      {expanded && (
-        <HStack id={paletteId} gap={1}>
-          {[
-            ...new Set([
-              ...colors,
-              ...(includeTransparent ? ["transparent"] : []),
-            ]),
-          ].map((c) => {
-            const active = value === c;
-            return (
-              <ToolbarTooltip key={c} label={`${label}: ${c}`}>
-                <Box
-                  as="button"
-                  aria-label={`${label} ${c}`}
-                  aria-pressed={active}
-                  w={4}
-                  h={4}
-                  borderRadius="full"
-                  cursor="pointer"
-                  style={{
-                    backgroundColor: getChakraColorHex(c),
-                    ...(c === "transparent"
-                      ? {
-                          backgroundImage:
-                            "conic-gradient(#fff 25%, #a0aec0 0 50%, #fff 0 75%, #a0aec0 0)",
-                          backgroundSize: "8px 8px",
-                        }
-                      : {}),
-                  }}
-                  outline={
-                    active
-                      ? `2px solid ${getChakraColorHex(colorText)}`
-                      : "none"
+    <RecentToolbarContext.Provider value={null}>
+      <HStack
+        gap={1}
+        aria-label={label}
+        role="group"
+        onClickCapture={remember}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            setExpanded(false);
+            toggle.current?.focus();
+          }
+        }}
+      >
+        <ToolbarTooltip label={`${label}: ${selected}`}>
+          <chakra.button
+            ref={toggle}
+            type="button"
+            aria-label={`${label} colors`}
+            aria-expanded={expanded}
+            aria-controls={paletteId}
+            w={4}
+            h={4}
+            flexShrink={0}
+            borderRadius="full"
+            cursor="pointer"
+            style={{
+              backgroundColor: getChakraColorHex(selected),
+              ...(selected === "transparent"
+                ? {
+                    backgroundImage:
+                      "conic-gradient(#fff 25%, #a0aec0 0 50%, #fff 0 75%, #a0aec0 0)",
+                    backgroundSize: "8px 8px",
                   }
-                  outlineOffset="1px"
-                  _hover={{ transform: "scale(1.15)" }}
-                  onClick={() => onPick(c)}
-                  onDoubleClick={(event) => {
-                    event.stopPropagation();
+                : {}),
+            }}
+            outline={`2px solid ${getChakraColorHex(colorText)}`}
+            outlineOffset="1px"
+            onClick={() => setExpanded((open) => !open)}
+          />
+        </ToolbarTooltip>
+        {expanded && (
+          <HStack id={paletteId} gap={1}>
+            {[
+              ...new Set([
+                ...colors,
+                ...(includeTransparent ? ["transparent"] : []),
+              ]),
+            ].map((c) => {
+              const active = value === c;
+              return (
+                <ToolbarTooltip key={c} label={`${label}: ${c}`}>
+                  <Box
+                    as="button"
+                    aria-label={`${label} ${c}`}
+                    aria-pressed={active}
+                    w={4}
+                    h={4}
+                    borderRadius="full"
+                    cursor="pointer"
+                    style={{
+                      backgroundColor: getChakraColorHex(c),
+                      ...(c === "transparent"
+                        ? {
+                            backgroundImage:
+                              "conic-gradient(#fff 25%, #a0aec0 0 50%, #fff 0 75%, #a0aec0 0)",
+                            backgroundSize: "8px 8px",
+                          }
+                        : {}),
+                    }}
+                    outline={
+                      active
+                        ? `2px solid ${getChakraColorHex(colorText)}`
+                        : "none"
+                    }
+                    outlineOffset="1px"
+                    _hover={{ transform: "scale(1.15)" }}
+                    onClick={() => onPick(c)}
+                    onDoubleClick={(event) => {
+                      event.stopPropagation();
+                      setExpanded(false);
+                      toggle.current?.focus();
+                    }}
+                  />
+                </ToolbarTooltip>
+              );
+            })}
+            {onReset && (
+              <ToolbarTooltip label={`Reset ${label.toLowerCase()}`}>
+                <ToolbarIconButton
+                  aria-label={`Reset ${label}`}
+                  icon={<Icon as={PiEraser} boxSize={4} />}
+                  size="xs"
+                  variant="ghost"
+                  color={colorInactive}
+                  onClick={() => {
+                    onReset();
                     setExpanded(false);
                     toggle.current?.focus();
                   }}
                 />
               </ToolbarTooltip>
-            );
-          })}
-          {onReset && (
-            <ToolbarTooltip label={`Reset ${label.toLowerCase()}`}>
-              <ToolbarIconButton
-                aria-label={`Reset ${label}`}
-                icon={<Icon as={PiEraser} boxSize={4} />}
-                size="xs"
-                variant="ghost"
-                color={colorInactive}
-                onClick={() => {
-                  onReset();
-                  setExpanded(false);
-                  toggle.current?.focus();
-                }}
-              />
-            </ToolbarTooltip>
-          )}
-        </HStack>
-      )}
-    </HStack>
+            )}
+          </HStack>
+        )}
+      </HStack>
+    </RecentToolbarContext.Provider>
   );
 }
 

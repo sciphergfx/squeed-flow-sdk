@@ -261,6 +261,70 @@ menu. The [small-step walkthrough](examples/configuration-basics/README.md) show
 two consumers sharing values, editing them, and exporting plain data, before
 introducing field-level mapping and returning values inline.
 
+## Connect Your Execution Backend
+
+Property schemas and bindings edit data; they do not execute it. Use
+`createWorkflowExecution(adapter, onChange)` to submit that data through your
+own API and receive normalized step progress and output:
+
+```ts
+import { createWorkflowExecution } from "@squeed/flow-sdk";
+import type { WorkflowExecutionAdapter } from "@squeed/flow-sdk";
+
+const adapter: WorkflowExecutionAdapter<MyWorkflow> = {
+  execute: async ({ input, executionId, signal }) => {
+    const response = await fetch("/api/workflows/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workflow: input, executionId }),
+      signal,
+    });
+    if (!response.ok) throw new Error(`Execution failed: ${response.status}`);
+    return await response.json();
+  },
+  subscribe: ({ executionId, signal }, receive) =>
+    feedback.subscribe(executionId, receive, signal),
+};
+
+const execution = createWorkflowExecution(adapter, setRun);
+await execution.run(workflowState);
+```
+
+`MyWorkflow`, `feedback.subscribe`, and `setRun` above are supplied by your
+application. Map your API response and feedback to `WorkflowExecutionUpdate`:
+
+```ts
+receive({
+  executionId,
+  step: { id: "fetch", status: "completed", output: { count: 3 } },
+});
+receive({ executionId, status: "completed", output: { result: "ready" } });
+```
+
+- `subscribe` must resolve with an unsubscribe function only after feedback is
+  ready. Execution starts afterwards, so early events are not lost. SSE,
+  WebSockets, and polling can all implement this adapter.
+- Your backend must use or correlate the supplied execution ID. Responses may
+  return an update, or nothing for an acknowledgement. Completion comes from
+  an explicit terminal status, not merely a successful HTTP response.
+- `onChange` receives run status, per-step status/output, and final output.
+  Use your bindings to map step IDs to node IDs and update your diagram or
+  output panel; the controller does not mutate the workflow or canvas.
+- A second run is rejected while one is active. Terminal updates release the
+  listener. Errors before terminal feedback reject `run()` and emit a failed
+  state; handle the rejection. Terminal feedback takes precedence over late
+  HTTP responses or errors. Each `run()` resolves with its own execution state.
+- Step updates merge with the previous step: omitted output/error fields are
+  preserved; explicitly passing `undefined` clears them.
+- Supply `adapter.cancel` to support `execution.cancel()`. Call
+  `execution.dispose()` on unmount to abort local requests and unsubscribe;
+  disposal does not cancel the remote job.
+- Keep service credentials in your backend. The SDK does not select a server,
+  forward Squeed credentials, or translate workflows into another tool's format.
+
+This API is for SDK hosts. It does not automatically wire the Squeed editor's
+Execution panel or its Backflow-specific execution mapping.
+
 ## Maintainer Guide
 
 The SDK Test **Form Connection** dataset loads
@@ -317,9 +381,9 @@ const resourceMappings = {
     version: 1 as const,
     templates: true,
     fields: [
-      { type: "CastLlmConfig", field: "prompt" },
-      { type: "CastLlmConfig", field: "model", createEmpty: true },
-      { type: "CastDatabaseConfig", field: "data" },
+      { type: "LlmConfig", field: "prompt" },
+      { type: "LlmConfig", field: "model", createEmpty: true },
+      { type: "DatabaseConfig", field: "data" },
     ],
   },
 };

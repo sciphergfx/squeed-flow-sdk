@@ -16,6 +16,7 @@ import { PiCaretUp, PiCheck, PiXLight } from "react-icons/pi";
 import { getInteractionSurface } from "../theme/interactionShadow";
 import { useCustomColors } from "../theme/useCustomColors";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
+import { useRecentToolbarAction } from "./RecentToolbarAction";
 
 export function ToolbarTooltip({
   label,
@@ -87,6 +88,7 @@ export function ToolbarSelect({
   title,
   icon,
   popupContent,
+  footer,
   labelCase = "title",
   "aria-label": label,
   ...triggerProps
@@ -99,6 +101,7 @@ export function ToolbarSelect({
   title?: string;
   icon?: ReactNode;
   popupContent?: ReactNode;
+  footer?: ReactNode;
   labelCase?: "title" | "preserve";
   "aria-label": string;
 } & Pick<
@@ -112,6 +115,23 @@ export function ToolbarSelect({
   const trigger = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  const remember = useRecentToolbarAction(
+    <ToolbarSelect
+      value={value}
+      onValueChange={onValueChange}
+      disabled={disabled}
+      style={style}
+      title={title}
+      icon={icon}
+      popupContent={popupContent}
+      footer={footer}
+      labelCase={labelCase}
+      aria-label={label}
+    >
+      {children}
+    </ToolbarSelect>,
+    !!icon,
+  );
   useEffect(() => {
     const panel = menu.current!;
     panel.setAttribute("popover", "auto");
@@ -142,6 +162,15 @@ export function ToolbarSelect({
     const anchor = trigger.current?.getBoundingClientRect();
     const panel = menu.current;
     if (!anchor || !panel) return;
+    if (trigger.current?.closest("[popover]")) {
+      const below = window.innerHeight - anchor.bottom - 16;
+      const above = anchor.top - 16;
+      panel.style.maxHeight = `${Math.max(60, below, above)}px`;
+      const bounds = panel.getBoundingClientRect();
+      panel.style.left = `${Math.max(12, Math.min(anchor.right - bounds.width, window.innerWidth - bounds.width - 12))}px`;
+      panel.style.top = `${Math.max(12, bounds.height <= below ? anchor.bottom + 4 : anchor.top - bounds.height - 4)}px`;
+      return;
+    }
     const toolbar = trigger.current
       ?.closest("[data-flow-toolbar-scroll]")
       ?.parentElement?.getBoundingClientRect();
@@ -211,7 +240,10 @@ export function ToolbarSelect({
           justifyContent={icon ? "center" : "space-between"}
           gap={2}
           style={style}
-          onClick={() => (open ? close() : show())}
+          onClick={() => {
+            remember();
+            open ? close() : show();
+          }}
           onKeyDown={(event) => {
             if (["ArrowDown", "ArrowUp"].includes(event.key)) {
               event.preventDefault();
@@ -267,7 +299,7 @@ export function ToolbarSelect({
           if (popupContent && !["Escape", "Tab"].includes(event.key)) return;
           const items = [
             ...event.currentTarget.querySelectorAll<HTMLButtonElement>(
-              '[role="option"]:not(:disabled)',
+              '[role="option"]:not(:disabled), [data-flow-menu-action]:not(:disabled)',
             ),
           ];
           const index = items.indexOf(
@@ -344,6 +376,7 @@ export function ToolbarSelect({
               />
             </chakra.button>
           ))}
+        {footer}
       </chakra.div>
     </>
   );
@@ -363,15 +396,42 @@ export const menuItemCorners = {
 
 export const ToolbarIconButton = forwardRef<
   HTMLButtonElement,
-  React.ComponentProps<typeof IconButton> & { icon: React.ReactElement }
->(function ToolbarIconButton({ icon, ...props }, ref) {
+  React.ComponentProps<typeof IconButton> & {
+    icon: React.ReactElement;
+    rememberAction?: boolean;
+  }
+>(function ToolbarIconButtonImpl(
+  { icon, rememberAction = true, ...props },
+  ref,
+) {
   const { colorMode } = useFlowDiagramContext();
+  const recentProps = Object.fromEntries(
+    Object.entries(props).filter(
+      ([key]) =>
+        key !== "id" &&
+        key !== "aria-describedby" &&
+        !key.startsWith("data-") &&
+        !/^on(Pointer|Mouse|Focus|Blur)/.test(key),
+    ),
+  );
+  const remember = useRecentToolbarAction(
+    <ToolbarTooltip
+      label={props.title ?? props["aria-label"] ?? "Last used action"}
+    >
+      <ToolbarIconButton {...recentProps} icon={icon} />
+    </ToolbarTooltip>,
+    rememberAction && !!props.onClick,
+  );
   return (
     <IconButton
       ref={ref}
       _hover={{ bg: colorMode === "dark" ? "whiteAlpha.100" : "blackAlpha.50" }}
       title={props.title ?? props["aria-label"]}
       {...props}
+      onClick={(event) => {
+        remember();
+        props.onClick?.(event);
+      }}
     >
       {icon}
     </IconButton>
@@ -388,7 +448,9 @@ export const ToolbarCloseButton = forwardRef<
       <ToolbarIconButton
         ref={ref}
         size="sm"
-        variant="ghost"
+        variant="plain"
+        bg="transparent"
+        _hover={{ bg: "transparent", color: themeColor }}
         color={themeColor}
         focusRingColor={themeColor}
         {...props}

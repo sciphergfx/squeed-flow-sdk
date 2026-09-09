@@ -93,6 +93,7 @@ export function NodeFormPopover({
   children,
   filter,
   height,
+  width,
 }: {
   nodeAddress: string;
   active: boolean;
@@ -102,6 +103,7 @@ export function NodeFormPopover({
   children?: ReactNode;
   filter?: ReactNode;
   height?: number;
+  width?: number;
 }) {
   const { background, border, colorText } = useCustomColors();
   const { colorMode } = useFlowDiagramContext();
@@ -152,7 +154,7 @@ export function NodeFormPopover({
               inset: "94px 20px auto auto",
               margin: 0,
               padding: 20,
-              width: "var(--top-toolbar-width, 360px)",
+              width: width ?? "var(--top-toolbar-width, 360px)",
               boxSizing: "border-box",
               maxWidth: "calc(100vw - 40px)",
               maxHeight: "calc(100dvh - 114px)",
@@ -179,16 +181,10 @@ export function NodeFormPopover({
                   <strong style={{ overflowWrap: "anywhere", minWidth: 0 }}>
                     {label}
                   </strong>
-                  <form
-                    method="dialog"
-                    style={{ margin: 0 }}
-                    onSubmit={(event) => event.stopPropagation()}
-                  >
-                    <ToolbarCloseButton
-                      type="submit"
-                      aria-label="Close node configuration"
-                    />
-                  </form>
+                  <ToolbarCloseButton
+                    aria-label="Close node configuration"
+                    onClick={() => dialog.current?.close()}
+                  />
                 </div>
                 {filter && (
                   <div data-form-filter="" style={{ flexShrink: 0 }}>

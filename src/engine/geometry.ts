@@ -335,7 +335,57 @@ function arrowPath(
   if (shape === "square") {
     return `M${pt(tip)} L${f(tip.x - uy * W)} ${f(tip.y + ux * W)} L${f(bx - uy * W)} ${f(by + ux * W)} L${f(bx + uy * W)} ${f(by - ux * W)} L${f(tip.x + uy * W)} ${f(tip.y - ux * W)} Z`;
   }
-  return `M${pt(tip)} L${f(bx - uy * W)} ${f(by + ux * W)} L${f(bx + uy * W)} ${f(by - ux * W)} Z`;
+  const vertices = [
+    tip,
+    { x: bx - uy * W, y: by + ux * W },
+    { x: bx + uy * W, y: by - ux * W },
+  ];
+  const corners = vertices.map((vertex, index) => {
+    const previous = vertices[(index + 2) % 3];
+    const next = vertices[(index + 1) % 3];
+    const incomingLength = Math.hypot(
+      previous.x - vertex.x,
+      previous.y - vertex.y,
+    );
+    const outgoingLength = Math.hypot(next.x - vertex.x, next.y - vertex.y);
+    const incoming = {
+      x: (previous.x - vertex.x) / incomingLength,
+      y: (previous.y - vertex.y) / incomingLength,
+    };
+    const outgoing = {
+      x: (next.x - vertex.x) / outgoingLength,
+      y: (next.y - vertex.y) / outgoingLength,
+    };
+    const cosine = Math.max(
+      -1,
+      Math.min(1, incoming.x * outgoing.x + incoming.y * outgoing.y),
+    );
+    const tangent = Math.sqrt((1 - cosine) / (1 + cosine));
+    const distance = Math.min(
+      1 / tangent,
+      incomingLength / 2,
+      outgoingLength / 2,
+    );
+    return {
+      start: {
+        x: vertex.x + incoming.x * distance,
+        y: vertex.y + incoming.y * distance,
+      },
+      end: {
+        x: vertex.x + outgoing.x * distance,
+        y: vertex.y + outgoing.y * distance,
+      },
+      radius: distance * tangent,
+    };
+  });
+  return (
+    corners
+      .map(
+        (corner, index) =>
+          `${index ? "L" : "M"}${pt(corner.start)} A${f(corner.radius)} ${f(corner.radius)} 0 0 1 ${pt(corner.end)}`,
+      )
+      .join(" ") + " Z"
+  );
 }
 
 /** cytoscape `lineAngleFromDelta` in degrees: never upside down */

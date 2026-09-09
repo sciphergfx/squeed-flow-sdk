@@ -5,7 +5,7 @@
           "nodes": {
                     "trigger": {
                               "address": "root.workflow",
-                              "type": "CastWorkflow",
+                              "type": "Workflow",
                               "label": "name",
                               "subtitle": [
                                         "trigger"
@@ -26,13 +26,13 @@
                     ],
                     "nodePrefix": "step_",
                     "types": {
-                              "database": "CastDatabaseConfig",
-                              "browser": "CastBrowserConfig",
-                              "llm": "CastLlmConfig",
-                              "transform": "CastTransformConfig",
-                              "emit_event": "CastEventConfig",
-                              "notification": "CastNotificationConfig",
-                              "output": "CastOutputConfig"
+                              "database": "DatabaseConfig",
+                              "browser": "BrowserConfig",
+                              "llm": "LlmConfig",
+                              "transform": "TransformConfig",
+                              "emit_event": "EventConfig",
+                              "notification": "NotificationConfig",
+                              "output": "OutputConfig"
                     },
                     "fields": {
                               "prompt": {
@@ -59,8 +59,8 @@
                     {
                               "field": "config.tools",
                               "registry": "tools",
-                              "type": "CastToolConfig",
-                              "registryType": "CastToolRegistry",
+                              "type": "ToolConfig",
+                              "registryType": "ToolRegistry",
                               "targetProperty": "config:tools",
                               "nodePrefix": "tool_",
                               "sourceProperty": "output:resource",

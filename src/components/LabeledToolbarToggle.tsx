@@ -10,31 +10,37 @@ export function LabeledToolbarToggle({
   checked,
   onChange,
   disabled,
+  hideLabel = false,
+  helper = label,
 }: {
   label: string;
   icon: ReactElement;
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
+  hideLabel?: boolean;
+  helper?: string;
 }) {
   const { themeColor, readOnly } = useFlowDiagramContext();
   const { colorInactive } = useCustomColors();
   return (
-    <ToolbarTooltip label={label}>
+    <ToolbarTooltip label={helper}>
       <ToolbarIconButton
         aria-label={label}
         aria-pressed={checked}
         icon={
           <>
             {icon}
-            <Text
-              as="span"
-              fontSize="16px"
-              fontWeight={checked ? "bold" : "normal"}
-              whiteSpace="nowrap"
-            >
-              {label}
-            </Text>
+            {!hideLabel && (
+              <Text
+                as="span"
+                fontSize="16px"
+                fontWeight={checked ? "bold" : "normal"}
+                whiteSpace="nowrap"
+              >
+                {label}
+              </Text>
+            )}
           </>
         }
         size="sm"

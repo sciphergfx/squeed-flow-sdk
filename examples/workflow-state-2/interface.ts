@@ -1,8 +1,9 @@
 /** @port output output */
-interface CastWorkflow {
+interface Workflow {
   name: string;
   description?: string;
   trigger: "manual" | "event" | "schedule" | "webhook";
+  subscribable?: boolean;
   onError?: {
     notify?: boolean;
     retry?: { maxAttempts?: number; delayMs?: number };
@@ -13,33 +14,33 @@ interface CastWorkflow {
  * @port input input
  * @port output output
  */
-interface CastDatabaseConfig {
+interface DatabaseConfig {
   collection: string;
   operation: string;
   provider?: string;
   id?: string;
-  where?: CastFilterConfig[];
+  where?: FilterConfig[];
   limit?: number;
-  orderBy?: CastSortConfig[];
+  orderBy?: SortConfig[];
   single?: boolean;
-  data?: CastDataConfig;
+  data?: DataConfig;
 }
 
 /** @port output resource "output" */
-interface CastFilterConfig {
+interface FilterConfig {
   field: string;
   operator: "==" | "!=" | ">" | ">=" | "<" | "<=" | "in" | "contains";
   value: string | number | boolean;
 }
 
 /** @port output resource "output" */
-interface CastSortConfig {
+interface SortConfig {
   field: string;
   direction: "asc" | "desc";
 }
 
 /** @port output resource "output" */
-interface CastDataConfig {
+interface DataConfig {
   [key: string]: any;
   status?: string;
   execution_id?: string;
@@ -51,7 +52,7 @@ interface CastDataConfig {
  * @port input input
  * @port output output
  */
-interface CastBrowserConfig {
+interface BrowserConfig {
   action: string;
   url?: string;
   mouseEnabled?: boolean | string;
@@ -68,9 +69,9 @@ interface CastBrowserConfig {
  * @port input input
  * @port output output
  */
-interface CastLlmConfig {
+interface LlmConfig {
   prompt: string;
-  /** @port config CastToolConfig */
+  /** @port config ToolConfig */
   tools?: string[];
   model?: string;
   provider?: string;
@@ -85,7 +86,7 @@ interface CastLlmConfig {
  * @port input input
  * @port output output
  */
-interface CastTransformConfig {
+interface TransformConfig {
   mode?: string;
   transform?: string;
   value?: any;
@@ -98,7 +99,7 @@ interface CastTransformConfig {
  * @port input input
  * @port output output
  */
-interface CastEventConfig {
+interface EventConfig {
   event: string;
   payload?: any;
   entity?: string;
@@ -110,7 +111,7 @@ interface CastEventConfig {
  * @port input input
  * @port output output
  */
-interface CastNotificationConfig {
+interface NotificationConfig {
   channels: string[];
   userId?: string;
   to?: string;
@@ -121,16 +122,16 @@ interface CastNotificationConfig {
 }
 
 /** @port input input */
-interface CastOutputConfig {
+interface OutputConfig {
   expression?: string;
   mapping?: Record<string, any>;
 }
 
 /** @port output resource "output" */
-interface CastToolConfig {
+interface ToolConfig {
   name: string;
 }
 
-interface CastToolRegistry {
-  tools: Record<string, CastToolConfig>;
+interface ToolRegistry {
+  tools: Record<string, ToolConfig>;
 }

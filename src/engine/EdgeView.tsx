@@ -298,7 +298,7 @@ function EdgeView({
     );
   const labelTransform = horizontalLabel
     ? `translate(${geo.label.x} ${geo.label.y - labelHeight / 2 - 2 * LABEL_PADDING})`
-    : `translate(${geo.label.x} ${geo.label.y}) rotate(${geo.label.angle}) translate(${labelAtTarget || Object.prototype.hasOwnProperty.call(customEdgeTypes ?? {}, edgeType) ? 0 : LABEL_MARGIN_X} 0)`;
+    : `translate(${geo.label.x} ${geo.label.y}) rotate(${geo.label.angle}) translate(${dir === "downward" || dir === "upward" || labelAtTarget || Object.prototype.hasOwnProperty.call(customEdgeTypes ?? {}, edgeType) ? 0 : LABEL_MARGIN_X} 0)`;
 
   const validationColor = validationIssue?.startsWith("Unverified:")
     ? "#b45309"

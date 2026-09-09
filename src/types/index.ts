@@ -409,6 +409,7 @@ export interface FlowDiagramCallbacks {
   onDirectionChange?: (direction: FlowDirection) => void;
   onThemeColorChange?: (color: string) => void;
   onEdgeModeChange?: (mode: EdgeMode) => void;
+  onWorkflowConfigurationOpen?: () => void;
   onWorkflowContractChange?: (
     contract: import("../core/workflowContract").WorkflowContract | undefined,
   ) => void;

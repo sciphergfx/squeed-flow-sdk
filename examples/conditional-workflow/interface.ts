@@ -1,5 +1,5 @@
 /** @port output output */
-interface CastWorkflow {
+interface Workflow {
   name: string;
   trigger: string;
 }

@@ -1,5 +1,15 @@
 // @squeed/flow-sdk - Standalone flow diagram renderer
 
+export { createWorkflowExecution } from "./utils/workflowExecution";
+export type {
+  WorkflowExecutionAdapter,
+  WorkflowExecutionRequest,
+  WorkflowExecutionState,
+  WorkflowExecutionUpdate,
+  WorkflowRunStatus,
+  WorkflowStepStatus,
+} from "./utils/workflowExecution";
+
 // Main component
 export { default as BottomBar } from "./components/BottomBar";
 export { CompactPropertyLayoutToggle } from "./components/CompactPropertyLayoutToggle";
