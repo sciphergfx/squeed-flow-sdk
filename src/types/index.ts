@@ -21,6 +21,7 @@ export enum FlowType {
 export type FlowDirection = "LR" | "RL" | "TB" | "BT" | "C";
 export type NodeAlignment = "leading" | "center" | "trailing";
 export type NodeViewMode = "default" | "properties" | "icon-label";
+export type ContentFormat = "markdown" | "html" | "jsx";
 export const NODE_TYPE_VIEWS = ["", "icon-label", "object", "text"] as const;
 export type NodeTypeView = Exclude<(typeof NODE_TYPE_VIEWS)[number], "">;
 export type NodeAnimationVariant = "traveling" | "pulse";

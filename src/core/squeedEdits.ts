@@ -36,6 +36,7 @@ export type SqueedNodeKey =
   | "$fontSize"
   | "$icon"
   | "$content"
+  | "$contentFormat"
   | "$media"
   | "$collapsed"
   | "$parent"
@@ -522,6 +523,12 @@ export function compileSqueed(
     }
     if (typeof src.$content === "string") {
       data.config = { ...data.config, content: src.$content };
+      const contentFormat = src.$contentFormat ?? "markdown";
+      if (!["markdown", "html", "jsx"].includes(contentFormat))
+        throw new Error(
+          "Invalid content format: expected markdown, html, or jsx.",
+        );
+      data.config.contentFormat = contentFormat;
       if (!src.$view) data.type = "objectView";
     }
     if (

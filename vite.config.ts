@@ -2,9 +2,33 @@ import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
+import { build } from "esbuild";
 
 export default defineConfig({
-  plugins: [react(), dts({ rollupTypes: true })],
+  plugins: [
+    react(),
+    {
+      name: "content-preview-runtime",
+      resolveId: (id) =>
+        id === "virtual:content-preview-runtime" ? `\0${id}` : undefined,
+      async load(id) {
+        if (id !== "\0virtual:content-preview-runtime") return;
+        const result = await build({
+          entryPoints: [
+            resolve(__dirname, "src/nodes/contentPreviewRuntime.tsx"),
+          ],
+          bundle: true,
+          write: false,
+          minify: true,
+          format: "iife",
+          platform: "browser",
+          define: { "process.env.NODE_ENV": '"production"' },
+        });
+        return `export default ${JSON.stringify(result.outputFiles[0].text)}`;
+      },
+    },
+    dts({ rollupTypes: true }),
+  ],
   resolve: {
     // The compiler imports from "lodash" (CJS, not tree-shakeable); bundle the ESM build instead
     alias: [{ find: /^lodash$/, replacement: "lodash-es" }],

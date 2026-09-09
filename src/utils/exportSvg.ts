@@ -5,7 +5,7 @@ export async function exportSvg(canvas: HTMLElement): Promise<string> {
     filter: (node) =>
       !(node instanceof Element) ||
       !node.matches(
-        "button, [role=tooltip], .flow-sdk-handle, .flow-sdk-property-port, .flow-sdk-edge-hit, .flow-sdk-ghost, .flow-sdk-node-animation",
+        "button, iframe, [role=tooltip], .flow-sdk-handle, .flow-sdk-property-port, .flow-sdk-edge-hit, .flow-sdk-ghost, .flow-sdk-node-animation",
       ),
   });
   const svg = new DOMParser().parseFromString(
@@ -17,6 +17,12 @@ export async function exportSvg(canvas: HTMLElement): Promise<string> {
       ".flow-sdk-edge-hit, .flow-sdk-handle, .flow-sdk-property-port, .flow-sdk-ghost",
     )
     .forEach((element) => element.remove());
+  svg.querySelectorAll("[data-flow-preview-source]").forEach((element) => {
+    element.setAttribute(
+      "style",
+      "display:block;white-space:pre-wrap;font:16px/1.5 monospace;overflow-wrap:anywhere",
+    );
+  });
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`;
 }
 

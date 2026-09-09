@@ -135,6 +135,7 @@ export const ObjectNodeView = (props) => {
                   <EditableContent
                     nodeId={id}
                     content={content}
+                    format={props.data?.config?.contentFormat}
                     color={data?.viewProps?.textColor || colors.hextextColor}
                   />
                 </Flex>

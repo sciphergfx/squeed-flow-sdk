@@ -517,7 +517,12 @@ function Canvas(props: CanvasProps) {
             const prev = sizesRef.current.get(nid);
             if (prev && prev.w === w && prev.h === h) continue;
             const position = positionsRef.current.get(nid);
-            if (prev && position && hasLayoutRunRef.current && !resizeAnchor.current)
+            if (
+              prev &&
+              position &&
+              hasLayoutRunRef.current &&
+              !resizeAnchor.current
+            )
               resizeAnchor.current = { id: nid, position: { ...position } };
             sizesRef.current.set(nid, { w, h });
             changed = true;

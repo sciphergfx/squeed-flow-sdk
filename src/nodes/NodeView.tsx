@@ -146,7 +146,7 @@ const NodeView = ({
         !event.currentTarget.contains(event.target as Node) ||
         (event.target instanceof Element &&
           event.target.closest(
-            "button, input, textarea, select, a, [contenteditable=true]",
+            "button, input, textarea, select, a, [contenteditable=true], [data-flow-content]",
           ))
       )
         return;

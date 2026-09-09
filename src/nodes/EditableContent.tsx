@@ -3,6 +3,10 @@ import Markdown from "markdown-to-jsx/react";
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import { useStopPropagation } from "../hooks/useStopPropagation";
+import type { ContentFormat } from "../types";
+import { ToolbarIconButton } from "../components/toolbarControls";
+import { PiCode } from "react-icons/pi";
+import { ContentPreview } from "./ContentPreview";
 
 const CONTENT_LINE_HEIGHT = 1.55;
 
@@ -10,10 +14,12 @@ export function EditableContent({
   nodeId,
   content,
   color,
+  format = "markdown",
 }: {
   nodeId: string;
   content: string;
   color: string;
+  format?: ContentFormat;
 }) {
   const { callbacks, config, readOnly } = useFlowDiagramContext();
   const editable = !!config.editable && !readOnly;
@@ -35,7 +41,7 @@ export function EditableContent({
     if (!editable) setEditing(false);
     else if (editing) {
       committedRef.current = false;
-      inputRef.current?.focus();
+      inputRef.current?.focus({ preventScroll: true });
     }
   }, [editing, editable]);
 
@@ -51,6 +57,25 @@ export function EditableContent({
     if (draft !== content) callbacks.onNodeContentChange?.(nodeId, draft);
     setEditing(false);
   };
+
+  if (!editing || !editable)
+    if (format !== "markdown")
+      return (
+        <Box w="100%" data-flow-content="">
+          {editable && (
+            <ToolbarIconButton
+              aria-label="Edit content source"
+              title="Edit content source"
+              icon={<PiCode />}
+              onClick={(event) => {
+                event.stopPropagation();
+                startEditing(event.currentTarget.parentElement);
+              }}
+            />
+          )}
+          <ContentPreview content={content} format={format} />
+        </Box>
+      );
 
   if (!editing || !editable)
     return (
@@ -200,6 +225,8 @@ export function EditableContent({
         bg="transparent"
         display="block"
         style={{ border: 0, outline: "none", boxShadow: "none" }}
+        _focus={{ border: 0, outline: "none", boxShadow: "none" }}
+        _focusVisible={{ border: 0, outline: "none", boxShadow: "none" }}
         p={0}
         w="100%"
         h="100%"
