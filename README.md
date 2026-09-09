@@ -474,6 +474,84 @@ drop placement that settles into the size-aware automatic layout. The example
 creation picker uses this mode so object expansion, property edits, and the
 spacing slider can reposition new nodes without retaining their drop positions.
 
+### Node Collisions
+
+Collision handling is opt-in through `FlowEngine`; the SDK does not automatically
+resolve overlaps or enable node dragging. Call after measurement/layout (for
+example from `onLayoutComplete`) or after explicitly placing nodes:
+
+```ts
+const collisions = engine.detectNodeCollisions({ margin: 15 });
+const result = engine.resolveNodeCollisions({ margin: 15, animate: true });
+// result: { positions, movedNodeIds, collisions, iterations, resolved }
+```
+
+`detectNodeCollisions` does not change state. It returns pairs with `source`,
+`target`, and `overlap: { x, y }`, using axis-aligned measured bounds and a gap
+of `margin` model units (default 15). Only visible layout nodes participate.
+Siblings are compared at every hierarchy level; parent-child containment is
+intentional, and conflicts between branches are reported as container pairs.
+Container padding and label minimum width are included, but edge paths and
+edge-label collisions are outside this API.
+
+Resolution moves sibling groups with their descendants, preserving nodes pinned
+by `setNodePosition` with persistent placement. A group containing a pinned node
+cannot be translated. It uses at most `maxIterations` (default 50, allowed 0-1000)
+and reports remaining collisions rather than moving pinned nodes or looping
+indefinitely. Invalid margins/iteration limits throw `RangeError`.
+
+`positions` is an independent map of target leaf positions, not animation progress;
+`movedNodeIds` lists changed leaves and `collisions` lists unresolved target pairs.
+`animate` defaults to true and reuses the layout animation driver; reduced motion,
+`config.disableAnimations`, and performance mode apply immediately. Pan/zoom stays
+unchanged, pending automatic viewport actions are cancelled when nodes move, and
+resolution does not emit `onLayoutComplete` again. Another layout or explicit
+position change can interrupt it. Results are renderer-local, are not pinned or
+written into JSON, and may be replaced by the next automatic layout.
+
+### Swappable Grid Mode
+
+One graph-level call hides edges, edge labels, collapse icons and connection handles, arranges
+visible nodes in a measured grid, then enables drag-to-swap after placement:
+
+```ts
+engine.setNodeGridMode(true, { columns: 3, margin: 40, animate: true });
+engine.swapGridNodes(sourceId, targetId); // Optional programmatic swap
+engine.setNodeGridMode(false); // Restore pre-grid positions and edge visibility
+```
+
+Drop a node onto a sibling to exchange their slots; dropping outside or pressing
+Escape cancels the drag. Read-only mode prevents swaps. The original JSON, edges
+and parent relationships are not changed. Sibling grids preserve parent groups;
+swaps across parents are rejected. Sibling sets containing persistent pinned
+nodes are not rearranged or swapped. Grid order survives layout/size changes
+while the mode is active. It is renderer-local and is not saved in the document.
+
+The bottom toolbar's **Collision mode** button uses this same API. While active,
+it shows the existing compact gap slider and a **Fill** toggle. These controls
+stay synchronized with programmatic mode changes.
+
+`columns` defaults to `ceil(sqrt(siblingCount))` without fill; `gaps` accepts a
+number or `{ x, y }`, falling back to `margin` (15 model units). `animate` defaults
+to true; reduced motion and the animation kill switch are respected. Ordinary
+grid entry and swapping do not change zoom/pan. Hosts can call `centerAndFit` after
+placement if needed. For arrangement without hiding edges or enabling swaps,
+use `engine.arrangeNodesInGrid(options)`, which returns `positions`, `movedNodeIds`,
+`skippedNodeIds` and remaining `collisions` without changing graph data.
+
+```ts
+engine.setNodeGridMode(true, { fill: true, gaps: 0 });
+```
+
+Fill resizes the existing node tiles to cover the canvas, not just their positions.
+It picks columns from the canvas aspect ratio and expands the final row to avoid
+empty cells. `padding` defaults to 0; gaps are constrained when needed to keep cells
+positive. Fill uses a 1:1 viewport (subject to configured zoom limits), with size,
+position and viewport animation coordinated. It reflows on canvas resize and keeps
+swapping enabled. Turning Fill off restores natural node sizes; exiting the mode
+also restores the pre-grid viewport. `arrangeNodesInGrid` returns target `sizes`
+and `bounds` when filling. These overrides never change the saved document.
+
 ### Animated Viewport Actions
 
 Capture `FlowEngine` through `callbacks.onInit`. Set `config.animateViewport`
@@ -883,6 +961,34 @@ Special `$`-prefixed keys control node rendering:
 ```
 
 `$content` renders Markdown headings, lists, emphasis, tables, links, and fenced code. Supply Markdown source text, not a filename or URL to load. Raw HTML is disabled and unsafe link schemes are filtered.
+
+For `$contentFormat: "jsx"`, supply a JSON array of declarative UI components,
+not executable JSX source:
+
+```json
+{
+  "panel": {
+    "$view": "object",
+    "$contentFormat": "jsx",
+    "$content": [{ "type": "text", "text": "Hello" }]
+  }
+}
+```
+
+The host supplies `config.customViews.jsxContent`, a component receiving
+`JsxContentRendererProps`: `{ components, colorMode, fillHeight }`. Squeed provides
+`WorkflowContentRenderer`, which wraps the array in one `render_scene` step for
+`UnifiedWorkflowRenderer`. The SDK does not import or depend on that renderer.
+Without a supplied view, it displays an unavailable-renderer message and keeps
+the content editable. JSON-encoded arrays are also accepted, but JSX source code
+is no longer compiled or executed. Invalid arrays show a validation error.
+
+The existing source editor and fullscreen controls are reused. JSX edits are
+parsed back into arrays, and `onNodeContentChange` receives `NodeContent`
+(`string | Record<string, unknown>[]`). Markdown stays text, and HTML keeps its
+sanitized iframe preview. Host renderers are responsible for their components'
+behavior and external actions; the SDK's HTML iframe sandbox does not apply to
+a host-supplied JSX-content view.
 
 With `config.editable: true`, double-click the content body to edit the original Markdown source. Enter inserts a new line; Ctrl/Cmd+Enter or clicking away saves, and Escape cancels. Source whitespace is preserved. The node grows vertically as text is added; label editors grow horizontally within their width limit. Both keep their starting size as a minimum and omit input focus outlines. Clearing the body keeps an empty, editable content view; use `setNodeProp(json, address, "$content", undefined)` to remove the content property. Content nodes use the same minimum width as their object-property rows, and the right-aligned table/article button switches views without changing the document.
 

@@ -32,6 +32,7 @@ import { useCustomColors } from "../theme/useCustomColors";
 import type { FlowDirection } from "../types";
 import { FlowType } from "../types";
 import { CompactPropertyLayoutToggle } from "./CompactPropertyLayoutToggle";
+import { NodeGridControls } from "./NodeGridControls";
 import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
 import { LabeledToolbarToggle } from "./LabeledToolbarToggle";
@@ -610,6 +611,7 @@ const BottomBar = () => {
                     aria-orientation="vertical"
                   />
                   <CompactPropertyLayoutToggle />
+                  <NodeGridControls />
                   <Icon
                     mx={-1}
                     as={PiLineVerticalThin}

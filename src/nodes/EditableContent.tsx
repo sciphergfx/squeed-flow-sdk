@@ -3,7 +3,7 @@ import Markdown from "markdown-to-jsx/react";
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import { useStopPropagation } from "../hooks/useStopPropagation";
-import type { ContentFormat } from "../types";
+import type { ContentFormat, NodeContent } from "../types";
 import { ToolbarIconButton } from "../components/toolbarControls";
 import { PiCode } from "react-icons/pi";
 import { ContentPreview } from "./ContentPreview";
@@ -17,14 +17,16 @@ export function EditableContent({
   format = "markdown",
 }: {
   nodeId: string;
-  content: string;
+  content: NodeContent;
   color: string;
   format?: ContentFormat;
 }) {
   const { callbacks, config, readOnly } = useFlowDiagramContext();
   const editable = !!config.editable && !readOnly;
+  const source = typeof content === "string" ? content : JSON.stringify(content, null, 2);
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(content);
+  const [draft, setDraft] = useState(source);
+  const [error, setError] = useState("");
   const [size, setSize] = useState<{ width: number; height: number }>();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const committedRef = useRef(false);
@@ -49,13 +51,25 @@ export function EditableContent({
   const startEditing = (element: HTMLElement) => {
     if (!editable) return;
     setSize({ width: element.offsetWidth, height: element.offsetHeight });
-    setDraft(content);
+    setDraft(source);
+    setError("");
     setEditing(true);
   };
   const commit = () => {
     if (committedRef.current || !editable) return;
+    let next: NodeContent = draft;
+    if (format === "jsx") {
+      try {
+        next = JSON.parse(draft);
+        if (!Array.isArray(next) || next.some((component) => !component || typeof component !== "object" || Array.isArray(component) || typeof component.type !== "string"))
+          throw new Error("JSX content must be an array of components with a type.");
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Invalid components array.");
+        return;
+      }
+    }
     committedRef.current = true;
-    if (draft !== content) callbacks.onNodeContentChange?.(nodeId, draft);
+    if (draft !== source) callbacks.onNodeContentChange?.(nodeId, next);
     setEditing(false);
   };
 
@@ -216,7 +230,7 @@ export function EditableContent({
             },
           }}
         >
-          {content || (editable ? "Write your content here" : "")}
+          {source || (editable ? "Write your content here" : "")}
         </Markdown>
       </Box>
     );
@@ -231,6 +245,7 @@ export function EditableContent({
         aria-label="Node content"
         placeholder="Write your content here"
         value={draft}
+        aria-invalid={!!error}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={commit}
         onKeyDown={(event) => {
@@ -264,6 +279,7 @@ export function EditableContent({
         minH={0}
         resize="none"
       />
+      {error && <Box role="alert" fontSize="14px" color="red.500">{error}</Box>}
     </div>
   );
 }

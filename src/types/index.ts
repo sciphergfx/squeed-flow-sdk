@@ -22,6 +22,12 @@ export type FlowDirection = "LR" | "RL" | "TB" | "BT" | "C";
 export type NodeAlignment = "leading" | "center" | "trailing";
 export type NodeViewMode = "default" | "properties" | "icon-label";
 export type ContentFormat = "markdown" | "html" | "jsx";
+export type NodeContent = string | Record<string, unknown>[];
+export interface JsxContentRendererProps {
+  components: { type: string; [key: string]: unknown }[];
+  colorMode?: "light" | "dark";
+  fillHeight?: boolean;
+}
 export const NODE_TYPE_VIEWS = ["", "icon-label", "object", "text"] as const;
 export type NodeTypeView = Exclude<(typeof NODE_TYPE_VIEWS)[number], "">;
 export type NodeAnimationVariant = "traveling" | "pulse";
@@ -262,7 +268,7 @@ export interface FlowDiagramConfig {
   renderBottomBar?: (props: BottomBarRenderProps) => React.ReactNode;
   /** Built-in node/edge selection toolbars (bottom bar swaps to them on select). `false` disables. */
   selectionToolbar?: SelectionToolbarConfig | false;
-  /** Custom node view components to override SDK defaults. Keys: objectView, arrayView, text, parentContainer */
+  /** Custom views: objectView, arrayView, text, parentContainer; jsxContent receives JsxContentRendererProps. */
   customViews?: Record<string, React.ComponentType<any>>;
   /** Disable built-in keyboard shortcuts (Z/M/D) when the consumer handles its own */
   disableKeyboardShortcuts?: boolean;
@@ -343,7 +349,7 @@ export interface FlowDiagramCallbacks {
   onNodeDelete?: (nodeId: string, nodeData: any) => void;
   /** Fires when a node label is edited inline */
   onNodeLabelChange?: (nodeId: string, newLabel: string) => void;
-  onNodeContentChange?: (nodeId: string, content: string) => void;
+  onNodeContentChange?: (nodeId: string, content: NodeContent) => void;
   /** Fires when a node's collapse toggle is clicked */
   onNodeCollapse?: (nodeId: string, collapsed: boolean) => void;
   /** Fires when a node's color is changed via the toolbar */

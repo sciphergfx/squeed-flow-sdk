@@ -31,6 +31,7 @@ import type { TaxiDir } from "./geometry";
 import { placeEdgeLabels } from "./labelPlacement";
 import { computeContainers, runDagreLayout } from "./layout";
 import NodeHost from "./NodeHost";
+import { arrangeNodesInGrid, detectNodeCollisions, resolveNodeCollisions, type CollisionGeometry, type NodeGridOptions } from "./nodeCollisions";
 import { surfaceBox, type NodeSurface } from "./nodeSurface";
 import type { PropertyRow } from "./propertyRows";
 import { EDGE_LABEL_FONT_FAMILY, measureText } from "./text";
@@ -117,6 +118,7 @@ export interface CanvasProps {
   multiSelect: boolean;
   onInit?: (engine: FlowEngine) => void;
   onLayoutComplete?: (engine: FlowEngine) => void;
+  onNodeGridModeChange?: (options: NodeGridOptions | null) => void;
   onViewportChange?: (vp: ViewportState) => void;
   onBackgroundTap?: () => void;
   onBoxSelect?: (ids: string[]) => void;
@@ -160,6 +162,7 @@ type Gesture =
     }
   | { kind: "tap"; pointerId: number; start: Point; moved: boolean }
   | { kind: "box"; pointerId: number; start: Point; current: Point }
+  | { kind: "grid"; pointerId: number; source: string; start: Point; moved: boolean }
   | {
       kind: "draw";
       pointerId: number;
@@ -305,6 +308,12 @@ function Canvas(props: CanvasProps) {
   );
   const positionsRef = useRef(positions);
   positionsRef.current = positions;
+  const [gridSizes, setGridSizes] = useState(new Map<string, Size>());
+  const gridSizesRef = useRef(gridSizes);
+  const clearGridSizes = () => {
+    gridSizesRef.current = new Map();
+    setGridSizes(gridSizesRef.current);
+  };
   const placedNodes = useRef(new Map<string, Point>());
   const resizeAnchor = useRef<{ id: string; position: Point } | null>(null);
   const hasLayoutRunRef = useRef(false);
@@ -321,6 +330,16 @@ function Canvas(props: CanvasProps) {
   const compactLayout = compactPropertyLayout;
   const previousCompactLayout = useRef(compactLayout);
   const [edgesVisible, setEdgesVisible] = useState(true);
+  const [nodeGridMode, setNodeGridMode] = useState(false);
+  const nodeGridRef = useRef<{
+    options: NodeGridOptions;
+    order: string[];
+    previousPositions: Map<string, Point>;
+    previousViewport: ViewportState;
+    restoreViewport: boolean;
+    ready: boolean;
+  } | null>(null);
+  const [gridDrag, setGridDrag] = useState<{ source: string; offset: Point; target: string | null } | null>(null);
   const isolatedIdsRef = useRef<Set<string> | null>(null);
   isolatedIdsRef.current = isolatedIds;
   const connectionSpacingRef = useRef(1);
@@ -351,9 +370,12 @@ function Canvas(props: CanvasProps) {
     target: Map<string, Point>,
     animate: boolean,
     updateViewport?: (progress: number) => void,
+    complete = onLayoutStop,
+    targetSizes?: Map<string, Size>,
   ) => {
     cancelAnim();
     const from = new Map(positionsRef.current);
+    const fromSizes = new Map([...sizesRef.current, ...gridSizesRef.current]);
     animRef.current = animateTransition(
       animate,
       (progress) => {
@@ -372,14 +394,28 @@ function Canvas(props: CanvasProps) {
         });
         positionsRef.current = next;
         setPositions(next);
+        if (targetSizes) {
+          const sizes = new Map<string, Size>();
+          for (const [id, size] of targetSizes) {
+            const previous = fromSizes.get(id) ?? size;
+            sizes.set(id, { w: previous.w + (size.w - previous.w) * progress, h: previous.h + (size.h - previous.h) * progress });
+          }
+          gridSizesRef.current = sizes;
+          setGridSizes(sizes);
+        }
         updateViewport?.(progress);
       },
-      onLayoutStop,
+      complete,
     );
   };
 
   const runLayoutNow = () => {
     clearTimeout(layoutTimerRef.current);
+    if (nodeGridRef.current) {
+      engine.arrangeNodesInGrid(nodeGridRef.current.options);
+      return;
+    }
+    if (gridSizesRef.current.size) clearGridSizes();
     const p = propsRef.current;
     const connectionSpacing = connectionSpacingRef.current;
     const graph = layoutGraphRef.current;
@@ -530,6 +566,7 @@ function Canvas(props: CanvasProps) {
           for (const entry of entries) {
             const nid = idByElRef.current.get(entry.target);
             if (!nid) continue;
+            if (gridSizesRef.current.has(nid)) continue;
             const t = entry.target as HTMLElement;
             const w = t.offsetWidth;
             const h = t.offsetHeight;
@@ -560,7 +597,7 @@ function Canvas(props: CanvasProps) {
         roRef.current?.observe(el);
         const w = el.offsetWidth;
         const h = el.offsetHeight;
-        if (w || h) sizesRef.current.set(id, { w, h });
+        if (!gridSizesRef.current.has(id) && (w || h)) sizesRef.current.set(id, { w, h });
       } else {
         const prev = elByIdRef.current.get(id);
         if (prev) {
@@ -579,6 +616,15 @@ function Canvas(props: CanvasProps) {
   useEffect(() => () => roRef.current?.disconnect(), []);
 
   // ── derived geometry ──
+  const containerMinSize = (id: string) => {
+    const label = propsRef.current.nodes.find((node) => node.id === id)?.label;
+    if (!label) return undefined;
+    const style = propsRef.current.containerStyle(id);
+    return {
+      w: measureText(label, `bold ${style.fontSize}px ${EDGE_LABEL_FONT_FAMILY}`) + 2 * CONTAINER_LABEL_BG_PADDING,
+      h: 0,
+    };
+  };
   const labelById = useMemo(() => {
     const m = new Map<string, string>();
     for (const n of nodes) if (n.label) m.set(n.id, n.label);
@@ -590,20 +636,11 @@ function Canvas(props: CanvasProps) {
       computeContainers(
         layoutGraph.nodes,
         positions,
-        sizesRef.current,
+        new Map([...sizesRef.current, ...gridSizes]),
         (id) => containerStyle(id).padding,
-        (id) => {
-          const label = labelById.get(id);
-          if (!label) return undefined;
-          const st = containerStyle(id);
-          const w = measureText(
-            label,
-            `bold ${st.fontSize}px ${EDGE_LABEL_FONT_FAMILY}`,
-          );
-          return { w: w + 2 * CONTAINER_LABEL_BG_PADDING, h: 0 };
-        },
+        containerMinSize,
       ),
-    [layoutGraph.nodes, positions, containerStyle, labelById],
+    [layoutGraph.nodes, positions, containerStyle, labelById, gridSizes],
   );
   const containersRef = useRef(containers);
   containersRef.current = containers;
@@ -613,7 +650,7 @@ function Canvas(props: CanvasProps) {
     if (r) return rectToBox(r);
     const p = positionsRef.current.get(id);
     if (!p) return undefined;
-    const s = sizesRef.current.get(id) || DEFAULT_SIZE;
+    const s = gridSizesRef.current.get(id) || sizesRef.current.get(id) || DEFAULT_SIZE;
     return { x: p.x, y: p.y, w: s.w, h: s.h };
   }, []);
 
@@ -766,7 +803,9 @@ function Canvas(props: CanvasProps) {
         w = window.innerWidth;
         if (w) root.style.width = `${w}px`;
       }
+      const resized = viewport.size.w !== w || viewport.size.h !== h;
       viewport.size = { w, h };
+      if (resized && nodeGridRef.current?.options.fill) scheduleLayout();
       if (
         !hasLayoutRunRef.current &&
         !positionsRef.current.size &&
@@ -814,8 +853,43 @@ function Canvas(props: CanvasProps) {
 
   // ── engine handle ──
   const engine = useMemo<FlowEngine>(() => {
+    const collisionGeometry = (): CollisionGeometry => {
+      const current = propsRef.current;
+      const visibleNodes = layoutGraphRef.current.nodes.filter((node) =>
+        isNodeVisible(node.id, current.edges, current.edgeMode) &&
+        (!isolatedIdsRef.current || isolatedIdsRef.current.has(node.id)),
+      );
+      return {
+        nodes: visibleNodes,
+        positions: positionsRef.current,
+        sizes: new Map(visibleNodes.map((node) => [node.id, sizesRef.current.get(node.id) ?? DEFAULT_SIZE])),
+        padding: (id) => propsRef.current.containerStyle(id).padding,
+        minSize: containerMinSize,
+        fixedIds: new Set(placedNodes.current.keys()),
+        viewportSize: { ...viewport.size },
+      };
+    };
     const branchIds = (id: string) =>
       branchNodeIds(id, propsRef.current.nodes, propsRef.current.edges);
+    const applyPositionTarget = (target: Map<string, Point>, animate = true, complete = () => {}, viewportAction?: (animate: boolean) => void, targetSizes?: Map<string, Size>) => {
+      clearTimeout(layoutTimerRef.current);
+      clearTimeout(settleTimerRef.current);
+      geometryFocus.current = null;
+      pendingLayoutAction.current = null;
+      pendingFitRef.current = false;
+      revealedNodes.current = [];
+      centerRevealed.current = false;
+      viewport.cancelAnimation();
+      const enabled = animate && !propsRef.current.isPerformanceMode && !propsRef.current.disableAnimations;
+      const updateViewport = viewportAction && viewport.coordinate(() => viewportAction(enabled));
+      animateTo(
+        new Map([...target].map(([id, position]) => [id, { ...position }])),
+        enabled,
+        updateViewport,
+        complete,
+        targetSizes,
+      );
+    };
     const focus = (
       ids: Set<string> | undefined,
       padding = 50,
@@ -838,22 +912,7 @@ function Canvas(props: CanvasProps) {
             positions,
             sizesRef.current,
             (id) => propsRef.current.containerStyle(id).padding,
-            (id) => {
-              const label = propsRef.current.nodes.find(
-                (node) => node.id === id,
-              )?.label;
-              if (!label) return undefined;
-              const style = propsRef.current.containerStyle(id);
-              return {
-                w:
-                  measureText(
-                    label,
-                    `bold ${style.fontSize}px ${EDGE_LABEL_FONT_FAMILY}`,
-                  ) +
-                  2 * CONTAINER_LABEL_BG_PADDING,
-                h: 0,
-              };
-            },
+            containerMinSize,
           );
         const bounds = unionRects(
           [...targetIds].flatMap((id) => {
@@ -996,6 +1055,81 @@ function Canvas(props: CanvasProps) {
         return { x: v.x + (r?.left ?? 0), y: v.y + (r?.top ?? 0) };
       },
       getNodeBox: (id) => boxFor(id),
+      detectNodeCollisions: (options) => {
+        const geometry = collisionGeometry();
+        return detectNodeCollisions({ ...geometry, sizes: new Map([...geometry.sizes, ...gridSizesRef.current]) }, options);
+      },
+      resolveNodeCollisions: (options = {}) => {
+        const result = resolveNodeCollisions(collisionGeometry(), options);
+        if (!result.movedNodeIds.length) return result;
+        applyPositionTarget(result.positions, options.animate);
+        return result;
+      },
+      arrangeNodesInGrid: (options = {}) => {
+        const geometry = collisionGeometry();
+        const grid = nodeGridRef.current;
+        if (grid) {
+          const ids = new Set(geometry.nodes.map((node) => node.id));
+          grid.order = grid.order.filter((id) => ids.has(id));
+          const known = new Set(grid.order);
+          grid.order.push(...geometry.nodes.filter((node) => !known.has(node.id)).map((node) => node.id));
+          const order = new Map(grid.order.map((id, index) => [id, index]));
+          geometry.nodes = [...geometry.nodes].sort((first, second) => order.get(first.id)! - order.get(second.id)!);
+        }
+        const result = arrangeNodesInGrid(geometry, options);
+        if (grid) grid.ready = false;
+        const complete = () => { if (grid) grid.ready = true; };
+        if (!result.sizes && gridSizesRef.current.size) clearGridSizes();
+        if (result.movedNodeIds.length || result.bounds) applyPositionTarget(result.positions, options.animate, complete,
+          result.bounds ? (animate) => viewport.transition({ zoom: 1, pan: { x: 0, y: 0 } }, animate) : undefined, result.sizes);
+        else complete();
+        return result;
+      },
+      setNodeGridMode: (enabled, options = {}) => {
+        if (enabled) {
+          arrangeNodesInGrid(collisionGeometry(), options);
+          if (!nodeGridRef.current) nodeGridRef.current = {
+            options,
+            order: collisionGeometry().nodes.map((node) => node.id),
+            previousPositions: new Map([...positionsRef.current].map(([id, position]) => [id, { ...position }])),
+            previousViewport: viewport.state,
+            restoreViewport: false,
+            ready: false,
+          };
+          nodeGridRef.current.options = { ...options };
+          nodeGridRef.current.restoreViewport ||= !!options.fill;
+          setNodeGridMode(true);
+          engine.arrangeNodesInGrid(options);
+          propsRef.current.onNodeGridModeChange?.({ ...options });
+        } else {
+          const grid = nodeGridRef.current;
+          if (!grid) return;
+          nodeGridRef.current = null;
+          setNodeGridMode(false);
+          clearGridSizes();
+          propsRef.current.onNodeGridModeChange?.(null);
+          setGridDrag(null);
+          const target = new Map([...positionsRef.current].map(([id, position]) => [id, grid.previousPositions.get(id) ?? position]));
+          applyPositionTarget(target, options.animate, undefined,
+            grid.restoreViewport ? (animate) => viewport.transition(grid.previousViewport, animate) : undefined);
+        }
+      },
+      swapGridNodes: (source, target, animate) => {
+        const grid = nodeGridRef.current;
+        if (!grid || !grid.ready || propsRef.current.readOnly || source === target) return false;
+        const geometry = collisionGeometry();
+        const first = geometry.nodes.find((node) => node.id === source);
+        const second = geometry.nodes.find((node) => node.id === target);
+        if (!first || !second || first.parent !== second.parent) return false;
+        const result = arrangeNodesInGrid(geometry, grid.options);
+        if (result.skippedNodeIds.includes(source) || result.skippedNodeIds.includes(target)) return false;
+        const sourceIndex = grid.order.indexOf(source);
+        const targetIndex = grid.order.indexOf(target);
+        if (sourceIndex < 0 || targetIndex < 0) return false;
+        [grid.order[sourceIndex], grid.order[targetIndex]] = [grid.order[targetIndex], grid.order[sourceIndex]];
+        engine.arrangeNodesInGrid({ ...grid.options, animate: animate ?? grid.options.animate });
+        return true;
+      },
       setNodePosition: (id, position, options) => {
         if (!positionsRef.current.has(id)) return false;
         if (
@@ -1138,6 +1272,7 @@ function Canvas(props: CanvasProps) {
       touchesRef.current.set(e.pointerId, rendered);
       const pinch = measurePinch(touchesRef.current);
       if (pinch) {
+        setGridDrag(null);
         gestureRef.current = {
           kind: "pinch",
           distance: pinch.distance,
@@ -1153,10 +1288,20 @@ function Canvas(props: CanvasProps) {
       }
     }
     if (gestureRef.current) return;
+    if (nodeGridRef.current) {
+      if (!nodeGridRef.current.ready) return;
+      if (target.closest("button, input, textarea, select, a, [contenteditable=true], [data-flow-content]")) return;
+      const source = target.closest<HTMLElement>("[data-node-id]")?.dataset.nodeId;
+      if (source && !placedNodes.current.has(source)) {
+        gestureRef.current = { kind: "grid", pointerId: e.pointerId, source, start: rendered, moved: false };
+        return;
+      }
+      if (source) return;
+    }
     const handle = p.drawHandles && target.closest(".flow-sdk-handle");
     const port =
       p.drawHandles && target.closest<HTMLElement>(".flow-sdk-property-port");
-    if (p.drawMode || handle || port) {
+    if (!nodeGridRef.current && (p.drawMode || handle || port)) {
       const model = viewport.renderedToModel(rendered);
       const row = p.drawMode ? hitTestProperty(model, "source") : null;
       const control = port || handle;
@@ -1236,6 +1381,21 @@ function Canvas(props: CanvasProps) {
     }
     if (g.pointerId !== e.pointerId) return;
     switch (g.kind) {
+      case "grid": {
+        const offset = { x: rendered.x - g.start.x, y: rendered.y - g.start.y };
+        if (!g.moved && Math.hypot(offset.x, offset.y) <= TAP_THRESHOLD) return;
+        if (!g.moved) {
+          cancelAnim();
+          geometryFocus.current = null;
+          viewport.cancelAnimation();
+          e.currentTarget.setPointerCapture(e.pointerId);
+        }
+        g.moved = true;
+        suppressClickRef.current = true;
+        e.preventDefault();
+        setGridDrag({ source: g.source, offset: { x: offset.x / viewport.zoom, y: offset.y / viewport.zoom }, target: hitTestNode(viewport.renderedToModel(rendered), g.source) });
+        break;
+      }
       case "pan": {
         const dx = rendered.x - g.start.x;
         const dy = rendered.y - g.start.y;
@@ -1317,6 +1477,13 @@ function Canvas(props: CanvasProps) {
     const p = propsRef.current;
     cancelled = cancelled || !!p.readOnly;
     switch (g.kind) {
+      case "grid": {
+        setGridDrag(null);
+        if (cancelled || !g.moved) break;
+        const target = hitTestNode(viewport.renderedToModel(toRendered(e)), g.source);
+        if (target) engine.swapGridNodes(g.source, target);
+        break;
+      }
       case "pan":
       case "tap":
         if (!cancelled && !g.moved) p.onBackgroundTap?.();
@@ -1387,6 +1554,7 @@ function Canvas(props: CanvasProps) {
     if (gesture && gesture.kind !== "pinch") pointerIds.push(gesture.pointerId);
     gestureRef.current = null;
     touchesRef.current.clear();
+    setGridDrag(null);
     setGhost(null);
     setBoxRect(null);
     for (const pointerId of pointerIds) {
@@ -1419,6 +1587,7 @@ function Canvas(props: CanvasProps) {
     direction,
     props.drawHandles,
     props.readOnly,
+    nodeGridMode,
     cancelGesture,
   ]);
 
@@ -1463,7 +1632,7 @@ function Canvas(props: CanvasProps) {
 
   const rootClass = [
     "flow-sdk-canvas",
-    drawMode ? "flow-sdk-draw" : "",
+    drawMode && !nodeGridMode ? "flow-sdk-draw" : "",
     isPerformanceMode ? "flow-sdk-perf" : "",
   ]
     .filter(Boolean)
@@ -1474,6 +1643,7 @@ function Canvas(props: CanvasProps) {
       ref={rootRef}
       className={rootClass}
       data-edge-mode={edgeMode}
+      data-node-grid={nodeGridMode || undefined}
       onPointerDownCapture={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={(e) => endGesture(e, false)}
@@ -1528,7 +1698,7 @@ function Canvas(props: CanvasProps) {
               ))}
           </g>
           <g className="flow-sdk-edges">
-            {edgesVisible &&
+            {edgesVisible && !nodeGridMode &&
               visibleEdges.map((e) => {
                 if (!edgeSequence.ready.has(e.id)) return null;
                 if (
@@ -1577,7 +1747,7 @@ function Canvas(props: CanvasProps) {
                 );
               })}
           </g>
-          {edgesVisible &&
+          {edgesVisible && !nodeGridMode &&
             ghost &&
             isEdgeVisible(ghost, edgeMode) &&
             ghostSource &&
@@ -1628,21 +1798,32 @@ function Canvas(props: CanvasProps) {
           if (c && n.label !== undefined) return null;
           const x = p?.x ?? (c ? (c.x1 + c.x2) / 2 : 0);
           const y = p?.y ?? (c ? (c.y1 + c.y2) / 2 : 0);
+          const previewTarget = gridDrag?.target
+            ? n.id === gridDrag.source ? gridDrag.target : n.id === gridDrag.target ? gridDrag.source : undefined
+            : undefined;
+          const previewPosition = previewTarget ? positions.get(previewTarget) : undefined;
           return (
             <NodeHost
               key={n.id}
               id={n.id}
-              x={x}
-              y={y}
+              x={x + (gridDrag?.source === n.id && !gridDrag.target ? gridDrag.offset.x : 0)}
+              y={y + (gridDrag?.source === n.id && !gridDrag.target ? gridDrag.offset.y : 0)}
+              gridDraggable={nodeGridMode && !props.readOnly && !placedNodes.current.has(n.id)}
+              gridDragging={gridDrag?.source === n.id}
+              gridDropTarget={gridDrag?.target === n.id}
+              gridSize={gridSizes.get(n.id)}
+              gridPreview={previewTarget && previewPosition
+                ? { ...previewPosition, size: gridSizes.get(previewTarget), animate: (nodeGridRef.current?.options.animate ?? true) && !props.disableAnimations && !isPerformanceMode }
+                : undefined}
               placed={!!p || !!c}
               hidden={
-                !edgeSequence.shown.has(n.id) ||
+                (!nodeGridMode && !edgeSequence.shown.has(n.id)) ||
                 !isNodeVisible(n.id, edges, edgeMode) ||
                 (!!isolatedIds && !isolatedIds.has(n.id))
               }
               onMount={onHostMount}
-              drawHandles={props.drawHandles && !props.readOnly}
-              drawMode={drawMode}
+              drawHandles={props.drawHandles && !props.readOnly && !nodeGridMode}
+              drawMode={drawMode && !nodeGridMode}
               connectedPorts={
                 new Set(
                   visibleEdges.flatMap((edge) => [

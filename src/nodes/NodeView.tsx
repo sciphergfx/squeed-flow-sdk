@@ -322,6 +322,7 @@ const NodeView = ({
                       top: "50%",
                       transform: "translateY(-50%)",
                     })}
+                data-flow-collapse-control=""
                 aria-label={nodeData.config.collapsed ? "Expand" : "Collapse"}
                 disabled={config.readOnly}
                 onClick={(e) => {
@@ -499,6 +500,7 @@ const NodeView = ({
                           : "translateY(-50%)",
                       zIndex: iconHalfSize === undefined ? undefined : 1,
                     })}
+                data-flow-collapse-control=""
                 aria-label={nodeData.config.collapsed ? "Expand" : "Collapse"}
                 disabled={config.readOnly}
                 onClick={(e) => {

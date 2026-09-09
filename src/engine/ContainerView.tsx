@@ -87,6 +87,7 @@ function ContainerView({
             width={48}
             height={48}
             data-flow-content-toggle=""
+            data-flow-collapse-control=""
             style={{ pointerEvents: "auto" }}
           >
             <ToolbarTooltip label="Show icon">

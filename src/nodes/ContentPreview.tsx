@@ -2,17 +2,33 @@ import { useEffect, useRef, useState } from "react";
 import { Box } from "@chakra-ui/react";
 import { PiArrowsIn, PiArrowsOut } from "react-icons/pi";
 import { ToolbarIconButton } from "../components/toolbarControls";
-import type { ContentFormat } from "../types";
+import type { ContentFormat, NodeContent } from "../types";
+import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 
 export function ContentPreview({
   content,
   format,
   onEdit,
 }: {
-  content: string;
+  content: NodeContent;
   format: Exclude<ContentFormat, "markdown">;
   onEdit?: () => void;
 }) {
+  const { config, colorMode } = useFlowDiagramContext();
+  const JsxContent = config.customViews?.jsxContent;
+  const source = typeof content === "string" ? content : JSON.stringify(content, null, 2);
+  let components: Record<string, unknown>[] | undefined;
+  let contentError: string | undefined;
+  if (format === "jsx") {
+    try {
+      const parsed = typeof content === "string" ? JSON.parse(content) : content;
+      if (!Array.isArray(parsed) || parsed.some((component) => !component || typeof component !== "object" || Array.isArray(component) || typeof component.type !== "string"))
+        throw new Error("JSX content must be an array of components with a type.");
+      components = parsed;
+    } catch (error) {
+      contentError = error instanceof Error ? error.message : "Invalid components array.";
+    }
+  }
   const frame = useRef<HTMLIFrameElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const fullscreenButton = useRef<HTMLButtonElement>(null);
@@ -53,19 +69,20 @@ export function ContentPreview({
     error?: string;
   }>();
   useEffect(() => {
+    if (format === "jsx") return;
     let cancelled = false;
     import("./contentPreviewDocument")
       .then(({ contentPreviewDocument }) =>
-        contentPreviewDocument(content, format, editable),
+        contentPreviewDocument(source, format, editable),
       )
       .then(
         (document) => {
-          if (!cancelled) setPreview({ content, format, editable, document });
+          if (!cancelled) setPreview({ content: source, format, editable, document });
         },
         (error) => {
           if (!cancelled)
             setPreview({
-              content,
+              content: source,
               format,
               editable,
               error: error instanceof Error ? error.message : String(error),
@@ -75,7 +92,7 @@ export function ContentPreview({
     return () => {
       cancelled = true;
     };
-  }, [content, format, editable]);
+  }, [source, format, editable]);
   useEffect(() => {
     if (!onEdit) return;
     const edit = async (event: MessageEvent) => {
@@ -101,7 +118,7 @@ export function ContentPreview({
     return () => window.removeEventListener("message", edit);
   }, [onEdit]);
   const current =
-    preview?.content === content &&
+    preview?.content === source &&
     preview.format === format &&
     preview.editable === editable
       ? preview
@@ -115,14 +132,22 @@ export function ContentPreview({
         data-flow-preview-source=""
         style={{ display: "none", whiteSpace: "pre-wrap" }}
       >
-        {content}
+        {source}
       </pre>
       <Box
         ref={viewport}
         position="relative"
         w="100%"
         h="100%"
-        bg="white"
+        bg={format === "jsx" && colorMode === "dark" ? "gray.900" : "white"}
+        onDoubleClick={(event) => {
+          if (format !== "jsx" || !onEdit || event.defaultPrevented || (event.target as Element).closest('button, a, input, textarea, select, [contenteditable], [role="button"], [role="textbox"]')) return;
+          event.stopPropagation();
+          void (async () => {
+            if (document.fullscreenElement === viewport.current) await document.exitFullscreen();
+            onEdit();
+          })().catch((error) => setFullscreenError(String(error)));
+        }}
         onKeyDownCapture={(event) => {
           if (
             event.key !== "Escape" ||
@@ -179,7 +204,11 @@ export function ContentPreview({
             {fullscreenError}
           </Box>
         )}
-        {current?.error ? (
+        {format === "jsx" ? (
+          contentError ? <pre role="alert" style={{ whiteSpace: "pre-wrap" }}>{contentError}</pre>
+            : JsxContent && components ? <JsxContent components={components} colorMode={colorMode} fillHeight />
+              : <Box role="status" fontSize="14px">JSX content renderer is not available.</Box>
+        ) : current?.error ? (
           <pre role="alert" style={{ whiteSpace: "pre-wrap" }}>
             {current.error}
           </pre>
@@ -187,7 +216,7 @@ export function ContentPreview({
           <iframe
             ref={frame}
             title={`${format.toUpperCase()} content preview`}
-            sandbox={format === "jsx" || editable ? "allow-scripts" : ""}
+            sandbox={editable ? "allow-scripts" : ""}
             allowFullScreen
             referrerPolicy="no-referrer"
             srcDoc={current.document}

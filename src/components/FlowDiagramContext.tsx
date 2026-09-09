@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import type { FlowEngine } from "../engine";
+import type { NodeGridOptions } from "../engine/nodeCollisions";
 import type {
   BackgroundVariant,
   EdgeMode,
@@ -67,6 +68,8 @@ export interface FlowDiagramContextValue {
   setIsPinned: (v: boolean) => void;
   isPerformanceMode: boolean;
   setIsPerformanceMode: (v: boolean) => void;
+  nodeGridOptions: NodeGridOptions | null;
+  setNodeGridOptions: (options: NodeGridOptions | null) => void;
   engineRef: React.MutableRefObject<FlowEngine | null>;
   callbacks: FlowDiagramCallbacks;
   config: FlowDiagramConfig;
@@ -130,6 +133,7 @@ export function FlowDiagramProvider({
   const [isArrayNodeMode, setIsArrayNodeMode] = useState(false);
   const [isPinned, setIsPinned] = useState(true);
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
+  const [nodeGridOptions, setNodeGridOptions] = useState<NodeGridOptions | null>(null);
   const [localEdgeMode, setEdgeMode] = useState<EdgeMode>("auto");
   const [localCompactPropertyLayout, setCompactPropertyLayout] =
     useState(false);
@@ -488,6 +492,8 @@ export function FlowDiagramProvider({
       setIsPinned,
       isPerformanceMode,
       setIsPerformanceMode,
+      nodeGridOptions,
+      setNodeGridOptions,
       engineRef,
       callbacks: stableCallbacks,
       config: stableConfig,
@@ -524,6 +530,7 @@ export function FlowDiagramProvider({
       isArrayNodeMode,
       isPinned,
       isPerformanceMode,
+      nodeGridOptions,
       readOnly,
       config.edgeHandles,
       config.edgeType,

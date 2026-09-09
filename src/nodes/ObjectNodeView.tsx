@@ -33,7 +33,8 @@ export const ObjectNodeView = (props) => {
   const canShowNativeIcon =
     !props.onShowIcon &&
     !props.data.config?.parentContainer &&
-    typeof props.data.config?.content !== "string";
+    typeof props.data.config?.content !== "string" &&
+    !(props.data.config?.contentFormat === "jsx" && Array.isArray(props.data.config?.content));
   const onShowNativeIcon = canShowNativeIcon
     ? () => actions.setNodeViewMode(props.data.id, "icon-label")
     : undefined;
@@ -62,7 +63,7 @@ export const ObjectNodeView = (props) => {
         const uniformKeyWidth = calculateUniformKeyWidth(data.description);
         const icon = props.data?.config?.icon;
         const content = props.data?.config?.content;
-        const hasContent = typeof content === "string" && !props.onShowIcon;
+        const hasContent = (typeof content === "string" || (props.data?.config?.contentFormat === "jsx" && Array.isArray(content))) && !props.onShowIcon;
         const borderRadius = data?.viewProps?.borderRadius ?? "53px";
         const borderProps = getNodeBorderProps(
           data?.viewProps,

@@ -1,6 +1,6 @@
 # SDK Test MCP Map
 
-The command catalog contains 72 viewer actions plus a separate model-generation route. `provision.ts` generates 73 authenticated, uncached POST routes and four workflows: two legacy workflows, one shared `emit_event` workflow, and one Backflow model-generation workflow. No backend or SDK runtime changes are required.
+The command catalog contains 77 viewer actions plus a separate model-generation route. `provision.ts` generates 78 authenticated, uncached POST routes and four workflows: two legacy workflows, one shared `emit_event` workflow, and one Backflow model-generation workflow. No backend or SDK runtime changes are required.
 
 | Group      | Commands                                                                                                                                  |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -11,6 +11,50 @@ The command catalog contains 72 viewer actions plus a separate model-generation 
 | Forms      | validated field edit, options lookup, schema import/clear, connection contract import/clear                                               |
 | Documents  | JSON/state replacement, document/state export, SVG export, configuration package replacement/export                                       |
 | Inspection | graph IDs/aliases/selection/viewport, node data/geometry, edge data                                                                       |
+| Grid       | collision-mode (Fill/gaps/columns/padding), node-grid, grid-swap, collision-detect, collision-resolve                                    |
+
+## Collision Grid
+
+POST `/squeed/collision-mode` to enter or leave the reversible grid mode:
+
+```json
+{
+  "executionId": "grid-demo",
+  "requestId": "fill-1",
+  "enabled": true,
+  "fill": true,
+  "gaps": 0,
+  "padding": 0,
+  "animate": false
+}
+```
+
+`columns`, `margin`, `gaps` (number or `{ "x": 10, "y": 20 }`), `fill`,
+`padding`, and `animate` are optional. Omitted fields retain the current mode's
+options; `enabled: false` restores the graph. `spacing` remains general graph
+spacing, not grid gaps. No document mutation or persistent pinning is introduced.
+
+- `/squeed/node-grid`: one-shot arrangement, with the same optional grid settings.
+- `/squeed/grid-swap`: `source`, `target`, optional `animate`; IDs or mapped aliases.
+- `/squeed/collision-detect`: optional `margin`; permitted in read-only mode.
+- `/squeed/collision-resolve`: optional `margin`, `animate`, `maxIterations` (0-1000).
+
+`inspect` includes `nodeGrid: { enabled, options }`. Arrangement/resolution results
+serialize `positions` and optional `sizes` as objects keyed by node ID, not Maps.
+Swaps return `{ swapped: boolean }`; false means the engine did not accept the
+swap (for example, layout is still animating, nodes are pinned or not siblings).
+Use `animate: false` on mode entry for deterministic immediate follow-up swaps.
+Existing read-only, execution-scope and request-ID protections remain in effect.
+
+`node-content` accepts both strings and declarative component arrays. For JSX,
+the node must already have `$contentFormat: "jsx"` and the host must provide its
+JSX-content renderer; use `document-replace` to create such a node. Component
+entries require a string `type`. Executable JSX is not evaluated.
+
+Provision the updated routes and generate/rotate the restricted client key to
+include their exact write scopes. Local code generation does not deploy routes
+or change already-issued keys. Command POSTs are uncached because each publishes
+an event; no database or cached document state is changed by these routes.
 
 ## Delivery
 
@@ -30,7 +74,7 @@ Document/configuration operations use SDK Test's existing validators and callbac
 
 For arbitrary source shapes, pass `formSuggestions` to SDK Test as `{ "root.custom.table": { action: "database", field: "collection" } }`. Lookups use the authenticated host API and a tenant-plus-URL React Query key with a 30-second freshness window. Existing resource selectors take precedence. Missing permissions and malformed responses remain errors; they do not become fabricated options.
 
-The optional `runSqueedAgentLoop` adapter in SDK Test's `squeedAgentLoop.ts` takes a connected MCP client and a `requestAgent` callback for `/agent/tool-call`. It supplies all 72 schemas using `squeedAgentTools(executionId)`, appends the assistant message and every tool reply, rejects cross-session/unknown calls, deduplicates repeated call IDs, and limits rounds (default 8, maximum 16). It is not automatically attached to a chat UI or an MCP connection. No live LLM request is made by the tests.
+The optional `runSqueedAgentLoop` adapter in SDK Test's `squeedAgentLoop.ts` takes a connected MCP client and a `requestAgent` callback for `/agent/tool-call`. It supplies all 77 schemas using `squeedAgentTools(executionId)`, appends the assistant message and every tool reply, rejects cross-session/unknown calls, deduplicates repeated call IDs, and limits rounds (default 8, maximum 16). It is not automatically attached to a chat UI or an MCP connection. No live LLM request is made by the tests.
 
 Restricted server MCP discovery currently returns tool names without their input fields. The adapter supplies the schemas from the same catalog instead of granting configuration-read permissions. Collection suggestions use the browser's existing authenticated API, not the route-only MCP key. Do not treat a Squeed publication response as browser state or an LLM answer.
 
@@ -85,7 +129,7 @@ Providers without streaming may deliver only a complete final snapshot.
 
 The AI Diagram listener is independent of the deferred diagram render. Other
 templates continue to use the existing viewer-command bridge. AI Diagram is a
-dedicated generation view, not the ordinary 72-command session. HTTP/MCP results
+dedicated generation view, not the ordinary 77-command session. HTTP/MCP results
 report backend generation completion, not browser rendering acknowledgement.
 
 Provision the updated manifest and add the exact `/squeed/generate-diagram` write

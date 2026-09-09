@@ -69,6 +69,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     selectedEdgeId,
     setSelectedEdgeId,
     setIsPerformanceMode,
+    setNodeGridOptions,
     isZoomMode,
     setIsZoomMode,
     isMultiSelectMode,
@@ -765,6 +766,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           multiSelect={!!isMultiSelectMode}
           onInit={handleInit}
           onLayoutComplete={callbacks.onLayoutComplete}
+          onNodeGridModeChange={setNodeGridOptions}
           animateViewport={config.animateViewport}
           disableAnimations={config.disableAnimations}
           onViewportChange={handleViewportChange}

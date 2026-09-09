@@ -15,7 +15,8 @@ export function useObjectInspection(props) {
   const inspecting =
     !!props.onShowIcon ||
     objVisible ||
-    typeof props.data.config?.content !== "string";
+    (typeof props.data.config?.content !== "string" &&
+      !(props.data.config?.contentFormat === "jsx" && Array.isArray(props.data.config?.content)));
   const { bindings, data: formState, schema } = useContext(FormDocumentContext);
   const resourcePorts = bindings?.[props.data.id]?.portResources;
   const form = bindings

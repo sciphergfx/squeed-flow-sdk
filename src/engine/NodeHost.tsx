@@ -1,6 +1,7 @@
-import { memo, useLayoutEffect, useRef, useState } from "react";
+import { memo, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { PiPlusBold } from "react-icons/pi";
 import type { FlowDirection } from "../types";
+import { animateTransition } from "./animation";
 import { NodeBorderAnimation } from "./NodeBorderAnimation";
 import { measureNodeSurface, type NodeSurface } from "./nodeSurface";
 import { measurePropertyRows, type PropertyRow } from "./propertyRows";
@@ -12,6 +13,11 @@ export interface NodeHostProps {
   /** Positioned by a layout run; hidden (but measurable) before that */
   placed: boolean;
   hidden?: boolean;
+  gridDraggable?: boolean;
+  gridDragging?: boolean;
+  gridDropTarget?: boolean;
+  gridSize?: { w: number; h: number };
+  gridPreview?: { x: number; y: number; size?: { w: number; h: number }; animate?: boolean };
   /** Register/unregister the host element for size observation */
   onMount: (id: string, el: HTMLDivElement | null) => void;
   drawHandles?: boolean;
@@ -40,6 +46,11 @@ function NodeHost({
   y,
   placed,
   hidden,
+  gridDraggable,
+  gridDragging,
+  gridDropTarget,
+  gridSize,
+  gridPreview,
   onMount,
   drawHandles,
   drawMode,
@@ -64,6 +75,76 @@ function NodeHost({
   const [measuredRows, setRows] = useState<PropertyRow[]>([]);
   const rows = resolvedRows ?? measuredRows;
   const [surface, setSurface] = useState<NodeSurface>();
+  const previewId = useId();
+  const previewPositionRef = useRef<{ x: number; y: number; w: number; h: number }>();
+
+  useLayoutEffect(() => {
+    const host = ref.current;
+    if (!host || !gridPreview) {
+      previewPositionRef.current = undefined;
+      return;
+    }
+    const preview = host.cloneNode(true) as HTMLDivElement;
+    preview.removeAttribute("data-node-id");
+    preview.removeAttribute("data-grid-dragging");
+    preview.removeAttribute("data-grid-draggable");
+    preview.removeAttribute("data-grid-drop-target");
+    preview.setAttribute("data-grid-preview", id);
+    preview.setAttribute("aria-hidden", "true");
+    preview.setAttribute("inert", "");
+    const elements = [preview, ...preview.querySelectorAll("*")];
+    const identifiers = new Map(elements.filter((element) => element.id).map((element) => [element.id, `${element.id}-${previewId}`]));
+    for (const element of elements) {
+      if (element.id) element.id = identifiers.get(element.id)!;
+      for (const attribute of [...element.attributes]) {
+        if (attribute.name === "id") continue;
+        let value = attribute.value;
+        for (const [original, replacement] of identifiers) {
+          if (value === `#${original}`) value = `#${replacement}`;
+          value = value.split(`url(#${original})`).join(`url(#${replacement})`);
+        }
+        if (value !== attribute.value) element.setAttribute(attribute.name, value);
+      }
+    }
+    const size = gridPreview.size;
+    const from = previewPositionRef.current ?? { x, y, w: host.offsetWidth, h: host.offsetHeight };
+    const target = { x: gridPreview.x, y: gridPreview.y, w: size?.w ?? host.offsetWidth, h: size?.h ?? host.offsetHeight };
+    Object.assign(preview.style, {
+      opacity: "0.35",
+      zIndex: "11",
+      pointerEvents: "none",
+      outline: "none",
+      visibility: "visible",
+    });
+    const update = (progress: number) => {
+      const position = {
+        x: from.x + (target.x - from.x) * progress,
+        y: from.y + (target.y - from.y) * progress,
+        w: from.w + (target.w - from.w) * progress,
+        h: from.h + (target.h - from.h) * progress,
+      };
+      previewPositionRef.current = position;
+      const left = size ? Math.round(position.x - position.w / 2) : position.x;
+      const top = size ? Math.round(position.y - position.h / 2) : position.y;
+      preview.style.transform = size ? `translate3d(${left}px, ${top}px, 0)` : `translate(-50%, -50%) translate3d(${left}px, ${top}px, 0)`;
+      preview.style.width = size ? `${Math.round(position.x + position.w / 2) - left}px` : "";
+      preview.style.height = size ? `${Math.round(position.y + position.h / 2) - top}px` : "";
+      if (size) {
+        preview.style.setProperty("--flow-grid-width", `${position.w}px`);
+        preview.style.setProperty("--flow-grid-height", `${position.h}px`);
+        preview.style.setProperty("--flow-grid-font", `${Math.max(12, Math.min(48, position.w / 8, position.h / 5))}px`);
+      }
+    };
+    update(0);
+    preview.querySelectorAll(".flow-sdk-node-animation, .flow-sdk-handle, .flow-sdk-property-port, [data-flow-collapse-control]").forEach((element) => element.remove());
+    preview.setAttribute("data-grid-preview-moving", "");
+    host.parentElement?.appendChild(preview);
+    const cancel = animateTransition(gridPreview.animate ?? true, update, () => preview.removeAttribute("data-grid-preview-moving"));
+    return () => {
+      cancel();
+      preview.remove();
+    };
+  }, [id, previewId, x, y, gridPreview?.x, gridPreview?.y, gridPreview?.size?.w, gridPreview?.size?.h, gridPreview?.animate]);
 
   useLayoutEffect(() => {
     const host = ref.current;
@@ -140,18 +221,41 @@ function NodeHost({
     };
   }, [id, propertyMode, onPropertyRows, children]);
 
+  const gridLeft = gridSize ? Math.round(x - gridSize.w / 2) : 0;
+  const gridTop = gridSize ? Math.round(y - gridSize.h / 2) : 0;
+  const gridWidth = gridSize ? Math.round(x + gridSize.w / 2) - gridLeft : undefined;
+  const gridHeight = gridSize ? Math.round(y + gridSize.h / 2) - gridTop : undefined;
+
   return (
     <div
       ref={ref}
       className="flow-sdk-node"
       data-node-id={id}
+      data-grid-draggable={gridDraggable || undefined}
+      data-grid-dragging={gridDragging || undefined}
+      data-grid-drop-target={gridDropTarget || undefined}
+      data-grid-fill={gridSize ? "" : undefined}
       style={{
-        transform: `translate(-50%, -50%) translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`,
+        transform: gridSize
+          ? `translate3d(${gridLeft}px, ${gridTop}px, 0)`
+          : `translate(-50%, -50%) translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`,
         visibility: placed && !hidden ? undefined : "hidden",
-      }}
+        cursor: gridDraggable ? (gridDragging ? "grabbing" : "grab") : undefined,
+        zIndex: gridDragging ? 12 : undefined,
+        opacity: gridPreview ? 0 : gridDragging ? 0.75 : undefined,
+        outline: gridDropTarget ? `2px solid ${handleColor || "currentColor"}` : undefined,
+        outlineOffset: gridDropTarget ? 8 : undefined,
+        width: gridWidth,
+        height: gridHeight,
+        ...(gridSize ? {
+          "--flow-grid-width": `${gridSize.w}px`,
+          "--flow-grid-height": `${gridSize.h}px`,
+          "--flow-grid-font": `${Math.max(12, Math.min(48, gridSize.w / 8, gridSize.h / 5))}px`,
+        } : {}),
+      } as CSSProperties}
     >
       {children}
-      {animated && animationWidth > 0 && width > 0 && height > 0 && (
+      {!gridSize && animated && animationWidth > 0 && width > 0 && height > 0 && (
         <svg
           className="flow-sdk-node-animation"
           aria-hidden="true"

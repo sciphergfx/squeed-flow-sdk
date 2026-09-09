@@ -50,6 +50,7 @@ export const NodeTextInput = ({
     return (
       <Flex
         data-flow-icon-label=""
+        css={{ "--flow-grid-on-surface-color": hextextColor }}
         direction="column"
         align="center"
         gap="24px"
@@ -84,7 +85,7 @@ export const NodeTextInput = ({
           <EditableLabel
             nodeId={id}
             label={label}
-            color={getChakraColorHex(data?.viewProps?.textColor || colorText)}
+            color={`var(--flow-grid-caption-color, ${getChakraColorHex(data?.viewProps?.textColor || colorText)})`}
             isEditing={isEditing}
             onEditStart={onEditStart}
             onEditEnd={onEditEnd}
