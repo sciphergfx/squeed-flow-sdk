@@ -348,9 +348,6 @@ function Canvas(props: CanvasProps) {
     options: NodeGridOptions;
     order: string[];
     previousPositions: Map<string, Point>;
-    previousViewport: ViewportState;
-    restoreViewport: boolean;
-    fitOnEntry: boolean;
     ready: boolean;
   } | null>(null);
   const [gridDrag, setGridDrag] = useState<{
@@ -911,10 +908,11 @@ function Canvas(props: CanvasProps) {
       complete = () => {},
       viewportAction?: (animate: boolean) => void,
       targetSizes?: Map<string, Size>,
+      preserveFocus = false,
     ) => {
       clearTimeout(layoutTimerRef.current);
       clearTimeout(settleTimerRef.current);
-      geometryFocus.current = null;
+      if (!preserveFocus) geometryFocus.current = null;
       pendingLayoutAction.current = null;
       pendingFitRef.current = false;
       revealedNodes.current = [];
@@ -924,8 +922,10 @@ function Canvas(props: CanvasProps) {
         animate &&
         !propsRef.current.isPerformanceMode &&
         !propsRef.current.disableAnimations;
-      const updateViewport =
-        viewportAction && viewport.coordinate(() => viewportAction(enabled));
+      const updateViewport = viewport.coordinate(() => {
+        if (viewportAction) viewportAction(enabled);
+        else if (preserveFocus) geometryFocus.current?.(target);
+      });
       animateTo(
         new Map([...target].map(([id, position]) => [id, { ...position }])),
         enabled,
@@ -1133,34 +1133,18 @@ function Canvas(props: CanvasProps) {
           );
         }
         const result = arrangeNodesInGrid(geometry, options);
-        let entryBounds = result.bounds;
-        if (!entryBounds && grid?.fitOnEntry) {
-          const containers = computeContainers(
-            geometry.nodes,
-            result.positions,
-            geometry.sizes,
-            geometry.padding,
-            geometry.minSize,
-          );
-          entryBounds = unionRects(
-            geometry.nodes.flatMap((node) => {
-              const container = containers.get(node.id);
-              if (container) return [container];
-              const position = result.positions.get(node.id);
-              const size = geometry.sizes.get(node.id) ?? DEFAULT_SIZE;
-              return position ? [boxToRect({ ...position, ...size })] : [];
-            }),
-          );
-        }
         if (grid) {
           grid.ready = false;
-          grid.fitOnEntry = false;
         }
         const complete = () => {
           if (grid) grid.ready = true;
         };
         if (!result.sizes && gridSizesRef.current.size) clearGridSizes();
-        if (result.movedNodeIds.length || entryBounds)
+        if (
+          result.movedNodeIds.length ||
+          result.bounds ||
+          geometryFocus.current
+        )
           applyPositionTarget(
             result.positions,
             options.animate,
@@ -1168,10 +1152,9 @@ function Canvas(props: CanvasProps) {
             result.bounds
               ? (animate) =>
                   viewport.transition({ zoom: 1, pan: { x: 0, y: 0 } }, animate)
-              : entryBounds
-                ? (animate) => viewport.fit(entryBounds!, 80, animate)
-                : undefined,
+              : undefined,
             result.sizes,
+            !!grid && !result.bounds,
           );
         else complete();
         return result;
@@ -1179,7 +1162,13 @@ function Canvas(props: CanvasProps) {
       setNodeGridMode: (enabled, options = {}) => {
         if (enabled) {
           arrangeNodesInGrid(collisionGeometry(), options);
-          if (!nodeGridRef.current)
+          if (
+            !nodeGridRef.current ||
+            (nodeGridRef.current.options.fill && !options.fill)
+          )
+            engine.centerAndFit(80, options.animate, true);
+          else geometryFocus.current = null;
+          if (!nodeGridRef.current) {
             nodeGridRef.current = {
               options,
               order: collisionGeometry().nodes.map((node) => node.id),
@@ -1189,11 +1178,9 @@ function Canvas(props: CanvasProps) {
                   { ...position },
                 ]),
               ),
-              previousViewport: viewport.state,
-              restoreViewport: true,
-              fitOnEntry: true,
               ready: false,
             };
+          }
           nodeGridRef.current.options = { ...options };
           setNodeGridMode(true);
           engine.arrangeNodesInGrid(options);
@@ -1201,6 +1188,7 @@ function Canvas(props: CanvasProps) {
         } else {
           const grid = nodeGridRef.current;
           if (!grid) return;
+          engine.centerAndFit(80, options.animate, true);
           nodeGridRef.current = null;
           setNodeGridMode(false);
           clearGridSizes();
@@ -1216,9 +1204,9 @@ function Canvas(props: CanvasProps) {
             target,
             options.animate,
             undefined,
-            grid.restoreViewport
-              ? (animate) => viewport.transition(grid.previousViewport, animate)
-              : undefined,
+            undefined,
+            undefined,
+            true,
           );
         }
       },
@@ -1248,6 +1236,7 @@ function Canvas(props: CanvasProps) {
           grid.order[targetIndex],
           grid.order[sourceIndex],
         ];
+        geometryFocus.current = null;
         engine.arrangeNodesInGrid({
           ...grid.options,
           animate: animate ?? grid.options.animate,

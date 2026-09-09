@@ -534,9 +534,10 @@ stay synchronized with programmatic mode changes.
 `columns` defaults to `ceil(sqrt(siblingCount))` without fill; `gaps` accepts a
 number or `{ x, y }`, falling back to `margin` (15 model units). `animate` defaults
 to true; reduced motion and the animation kill switch are respected. Ordinary
-grid entry centers and fits the arranged graph with 80px viewport padding, coordinated
-with placement. Gap changes and swaps preserve zoom/pan; exiting restores the pre-grid
-viewport. Fill retains its separate tile padding and 1:1 viewport behavior.
+grid entry and exit center and fit with 80px viewport padding using the same queued
+fit as direction changes, coordinated with placement and subsequent size updates.
+Manual pan/zoom cancels the queued fit. Gap changes and swaps preserve zoom/pan.
+Fill retains its separate tile padding and 1:1 viewport behavior.
 For arrangement without hiding edges or enabling swaps,
 use `engine.arrangeNodesInGrid(options)`, which returns `positions`, `movedNodeIds`,
 `skippedNodeIds` and remaining `collisions` without changing graph data.
@@ -550,8 +551,9 @@ It picks columns from the canvas aspect ratio and expands the final row to avoid
 empty cells. `padding` defaults to 0; gaps are constrained when needed to keep cells
 positive. Fill uses a 1:1 viewport (subject to configured zoom limits), with size,
 position and viewport animation coordinated. It reflows on canvas resize and keeps
-swapping enabled. Turning Fill off restores natural node sizes; exiting the mode
-also restores the pre-grid viewport. `arrangeNodesInGrid` returns target `sizes`
+swapping enabled. Turning Fill off restores natural node sizes and queues an 80px
+center-and-fit; exiting the mode
+centers and fits the restored graph. `arrangeNodesInGrid` returns target `sizes`
 and `bounds` when filling. These overrides never change the saved document.
 
 ### Animated Viewport Actions
