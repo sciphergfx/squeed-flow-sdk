@@ -205,6 +205,7 @@ export interface FlowDiagramConfig {
   bottomBarCollapsed?: boolean;
   /** Animate fit/center/focus actions for 300ms by default. Per-action flags override this; reduced motion stays instant. */
   animateViewport?: boolean;
+  disableAnimations?: boolean;
   edgeReveal?: { durationMs?: number; paused?: boolean; revealNodes?: boolean };
   formSchema?: import("../core/forms").FormSchema;
   spacing?: NodeSpacing;

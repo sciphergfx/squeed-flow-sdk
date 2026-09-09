@@ -745,7 +745,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           edgeType={config.edgeType}
           edgeRadius={edgeRadius}
           customEdgeTypes={config.customEdgeTypes}
-          edgeReveal={config.edgeReveal}
+          edgeReveal={config.disableAnimations ? undefined : config.edgeReveal}
           rankSep={rankSep}
           edgeSep={edgeSep}
           spacingFactor={spacingFactor}
@@ -766,6 +766,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           onInit={handleInit}
           onLayoutComplete={callbacks.onLayoutComplete}
           animateViewport={config.animateViewport}
+          disableAnimations={config.disableAnimations}
           onViewportChange={handleViewportChange}
           onBackgroundTap={handleBackgroundTap}
           onBoxSelect={handleBoxSelect}

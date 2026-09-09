@@ -550,12 +550,18 @@ function FlowDiagramContent({
         <Box
           className={className}
           data-flow-diagram=""
+          data-animations-disabled={config.disableAnimations || undefined}
           style={style}
           width="100%"
           height="100%"
           position="relative"
           overflow="hidden"
           css={{
+            "&[data-animations-disabled], &[data-animations-disabled] *, &[data-animations-disabled] *::before, &[data-animations-disabled] *::after":
+              {
+                animation: "none !important",
+                transition: "none !important",
+              },
             "& input, & textarea, & select": {
               outline: "none !important",
               boxShadow: "none !important",

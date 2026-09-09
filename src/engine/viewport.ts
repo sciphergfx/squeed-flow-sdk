@@ -1,4 +1,5 @@
 import type { Point, Rect, ViewportState } from "./types";
+import { animateTransition, motionEnabled } from "./animation";
 
 type Listener = (vp: ViewportState) => void;
 
@@ -11,43 +12,50 @@ export class Viewport {
   /** Container size in rendered px; kept current by the canvas ResizeObserver */
   size = { w: 0, h: 0 };
   private listeners = new Set<Listener>();
-  private animationFrame?: number;
-  private animationTimer?: ReturnType<typeof setTimeout>;
+  private cancelTransition?: () => void;
+  private animationVersion = 0;
+  private captureTransition?: (update: (progress: number) => void) => void;
+  private animationsDisabled = false;
+  private finishTransition?: () => void;
+
+  setAnimationsDisabled(disabled: boolean) {
+    if (disabled === this.animationsDisabled) return;
+    this.animationsDisabled = disabled;
+    if (disabled) {
+      this.finishTransition?.();
+      this.cancelAnimation();
+    }
+  }
 
   cancelAnimation() {
-    if (this.animationFrame !== undefined)
-      cancelAnimationFrame(this.animationFrame);
-    clearTimeout(this.animationTimer);
-    this.animationFrame = undefined;
-    this.animationTimer = undefined;
+    this.cancelTransition?.();
+    this.cancelTransition = undefined;
+    this.finishTransition = undefined;
+    this.animationVersion++;
+  }
+
+  coordinate(action: () => void): ((progress: number) => void) | undefined {
+    let update: ((progress: number) => void) | undefined;
+    this.captureTransition = (next) => {
+      update = next;
+    };
+    try {
+      action();
+    } finally {
+      this.captureTransition = undefined;
+    }
+    return update;
   }
 
   transition(state: ViewportState, animate = false) {
     this.cancelAnimation();
-    if (
-      !animate ||
-      typeof requestAnimationFrame === "undefined" ||
-      (typeof matchMedia !== "undefined" &&
-        matchMedia("(prefers-reduced-motion: reduce)").matches)
-    ) {
-      this.set(state.pan, state.zoom);
-      return;
-    }
     const from = this.state;
     const target = { pan: { ...state.pan }, zoom: this.clamp(state.zoom) };
-    const start = performance.now();
-    const duration = 300 / 1.4;
-    const finish = () => {
-      this.cancelAnimation();
-      this.set(target.pan, target.zoom);
-    };
-    const frame = (now: number) => {
-      const progress = Math.min(1, (now - start) / duration);
-      if (progress >= 1) {
-        finish();
-        return;
-      }
-      const eased = progress * progress * (3 - 2 * progress);
+    const version = this.animationVersion;
+    const enabled = motionEnabled(animate, this.animationsDisabled);
+    const update = (progress: number) => {
+      if (version !== this.animationVersion) return;
+      const eased = enabled ? progress : 1;
       this.apply(
         {
           x: from.pan.x + (target.pan.x - from.pan.x) * eased,
@@ -55,10 +63,16 @@ export class Viewport {
         },
         from.zoom + (target.zoom - from.zoom) * eased,
       );
-      this.animationFrame = requestAnimationFrame(frame);
     };
-    this.animationFrame = requestAnimationFrame(frame);
-    this.animationTimer = setTimeout(finish, duration + 100);
+    this.finishTransition = () => update(1);
+    if (this.captureTransition) this.captureTransition(update);
+    else
+      this.cancelTransition = animateTransition(
+        enabled,
+        update,
+        undefined,
+        300 / 1.4,
+      );
   }
 
   constructor(init: ViewportState, minZoom: number, maxZoom: number) {

@@ -48,6 +48,7 @@ import {
 } from "./types";
 import { useEdgeRevealSequence } from "./useEdgeRevealSequence";
 import { Viewport } from "./viewport";
+import { animateTransition } from "./animation";
 
 export interface CanvasNode {
   id: string;
@@ -105,6 +106,7 @@ export interface CanvasProps {
   initialViewport: ViewportState;
   fitOnInit?: boolean;
   animateViewport?: boolean;
+  disableAnimations?: boolean;
   readOnly?: boolean;
   containerStyle: (id: string) => ContainerStyle & { padding: number };
   /** Ghost edge colour while drawing */
@@ -144,11 +146,8 @@ const TAXI_DIR: Record<CanvasProps["direction"], TaxiDir> = {
 const DEFAULT_SIZE = { w: 60, h: 60 };
 const TAP_THRESHOLD = 4;
 const DRAW_INTO_SPACE_THRESHOLD = 30;
-const LAYOUT_ANIMATION_MS = 300;
 const LAYOUT_SETTLE_MS = 500;
 const CONTAINER_LABEL_BG_PADDING = 45;
-const easeInOutCubic = (t: number) =>
-  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
 type Size = { w: number; h: number };
 type Gesture =
@@ -201,6 +200,7 @@ function Canvas(props: CanvasProps) {
     dragMode,
     multiSelect,
     isPerformanceMode,
+    disableAnimations = false,
   } = props;
 
   const [isolation, setIsolation] = useState<{
@@ -259,6 +259,9 @@ function Canvas(props: CanvasProps) {
     viewport.minZoom = minZoom;
     viewport.maxZoom = maxZoom;
   }, [viewport, minZoom, maxZoom]);
+  useLayoutEffect(() => {
+    viewport.setAnimationsDisabled(disableAnimations);
+  }, [viewport, disableAnimations]);
 
   // ── node sizes (ResizeObserver over the DOM hosts) ──
   const sizesRef = useRef(new Map<string, Size>());
@@ -308,8 +311,7 @@ function Canvas(props: CanvasProps) {
   const [layoutRevision, setLayoutRevision] = useState(0);
   const layoutTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const settleTimerRef = useRef<ReturnType<typeof setTimeout>>();
-  const animRef = useRef<number | null>(null);
-  const animFallbackRef = useRef<ReturnType<typeof setTimeout>>();
+  const animRef = useRef<(() => void) | null>(null);
   const pendingFitRef = useRef(false);
   const pendingLayoutAction = useRef<(() => void) | null>(null);
   const geometryFocus = useRef<
@@ -329,9 +331,8 @@ function Canvas(props: CanvasProps) {
   const centerRevealed = useRef(false);
 
   const cancelAnim = () => {
-    if (animRef.current !== null) cancelAnimationFrame(animRef.current);
+    animRef.current?.();
     animRef.current = null;
-    clearTimeout(animFallbackRef.current);
   };
 
   const onLayoutStop = () => {
@@ -346,40 +347,49 @@ function Canvas(props: CanvasProps) {
     }, LAYOUT_SETTLE_MS);
   };
 
-  const animateTo = (target: Map<string, Point>) => {
+  const animateTo = (
+    target: Map<string, Point>,
+    animate: boolean,
+    updateViewport?: (progress: number) => void,
+  ) => {
     cancelAnim();
     const from = new Map(positionsRef.current);
-    const start = performance.now();
-    const finish = () => {
-      cancelAnim();
-      setPositions(target);
-      onLayoutStop();
-    };
-    const step = (now: number) => {
-      const t = Math.min(1, (now - start) / LAYOUT_ANIMATION_MS);
-      if (t >= 1) return finish();
-      const e = easeInOutCubic(t);
-      const next = new Map<string, Point>();
-      target.forEach((p, id) => {
-        const f0 = from.get(id);
-        next.set(
-          id,
-          f0 ? { x: f0.x + (p.x - f0.x) * e, y: f0.y + (p.y - f0.y) * e } : p,
-        );
-      });
-      setPositions(next);
-      animRef.current = requestAnimationFrame(step);
-    };
-    animRef.current = requestAnimationFrame(step);
-    // rAF is paused in background tabs; still land on the final layout
-    animFallbackRef.current = setTimeout(finish, LAYOUT_ANIMATION_MS + 100);
+    animRef.current = animateTransition(
+      animate,
+      (progress) => {
+        const next = new Map<string, Point>();
+        target.forEach((position, id) => {
+          const previous = from.get(id);
+          next.set(
+            id,
+            previous
+              ? {
+                  x: previous.x + (position.x - previous.x) * progress,
+                  y: previous.y + (position.y - previous.y) * progress,
+                }
+              : position,
+          );
+        });
+        positionsRef.current = next;
+        setPositions(next);
+        updateViewport?.(progress);
+      },
+      onLayoutStop,
+    );
   };
 
   const runLayoutNow = () => {
+    clearTimeout(layoutTimerRef.current);
     const p = propsRef.current;
     const connectionSpacing = connectionSpacingRef.current;
     const graph = layoutGraphRef.current;
     const inputs = graph.nodes.map((n) => {
+      const host = elByIdRef.current.get(n.id);
+      if (host && (host.offsetWidth || host.offsetHeight))
+        sizesRef.current.set(n.id, {
+          w: host.offsetWidth,
+          h: host.offsetHeight,
+        });
       const s = sizesRef.current.get(n.id) || DEFAULT_SIZE;
       return { id: n.id, parent: n.parent, width: s.w, height: s.h };
     });
@@ -437,13 +447,14 @@ function Canvas(props: CanvasProps) {
       else if (!p.nodes.some((node) => node.id === id))
         placedNodes.current.delete(id);
     }
-    geometryFocus.current?.(target);
-    if (hasLayoutRunRef.current && !p.isPerformanceMode) animateTo(target);
-    else {
-      cancelAnim();
-      setPositions(target);
-      onLayoutStop();
-    }
+    const updateViewport = viewport.coordinate(() =>
+      geometryFocus.current?.(target),
+    );
+    animateTo(
+      target,
+      hasLayoutRunRef.current && !p.isPerformanceMode && !p.disableAnimations,
+      updateViewport,
+    );
   };
 
   const scheduleLayout = useCallback(() => {
@@ -499,6 +510,7 @@ function Canvas(props: CanvasProps) {
     scheduleLayout,
     spacingFactor,
     compactSpacingScale,
+    disableAnimations,
   ]);
 
   useEffect(
@@ -536,8 +548,9 @@ function Canvas(props: CanvasProps) {
             changed = true;
           }
           if (changed) {
-            geometryFocus.current?.();
-            scheduleLayout();
+            if (geometryFocus.current && !pendingLayoutAction.current)
+              runLayoutNow();
+            else scheduleLayout();
           }
         });
       }
@@ -810,7 +823,6 @@ function Canvas(props: CanvasProps) {
       zoomScale = 1,
       afterViewChange = false,
     ) => {
-      let previousBounds: Rect | null = null;
       const applyFocus = (positions?: Map<string, Point>) => {
         const graph = layoutGraphRef.current;
         const targetIds = ids ?? new Set(graph.nodes.map((node) => node.id));
@@ -853,12 +865,7 @@ function Canvas(props: CanvasProps) {
             return box ? [boxToRect(box)] : [];
           }),
         );
-        if (
-          !bounds ||
-          JSON.stringify(bounds) === JSON.stringify(previousBounds)
-        )
-          return;
-        previousBounds = bounds;
+        if (!bounds) return;
         pendingFitRef.current = false;
         revealedNodes.current = [];
         centerRevealed.current = false;

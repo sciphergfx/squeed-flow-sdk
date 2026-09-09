@@ -506,6 +506,20 @@ and final positions. Use `onLayoutComplete(engine)` to fit newly laid-out data:
 This callback runs after each settled layout, not viewport-only changes. Hosts
 that only want to fit after dataset selection should gate it with a pending flag.
 
+For a view change that should move nodes and the viewport together, call
+`engine.centerAndFit(60, true, true)` before changing direction, compact layout,
+or node presentation. The third argument defers fitting until target geometry
+is available, using the layout's 300ms animation progress rather than a second
+fit from `onLayoutComplete`. `focusNode` and `focusConnections` accept the same
+option as their fourth argument. Manual zoom and pan cancel viewport motion.
+
+Set `config.disableAnimations: true` to disable SDK layout, viewport, node/edge
+effects, reveal, and in-diagram CSS transitions. It defaults to `false` and takes
+precedence over `animateViewport` and per-action `true` arguments. Active motion
+lands on its target; changing the flag back to `false` restores configured
+animations. Embedded content and application-owned playback are not controlled
+by this flag.
+
 ### Structured Form Bindings
 
 Set `forms.structured: true` with `forms.state`, `forms.bindings` and
