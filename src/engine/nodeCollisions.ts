@@ -13,7 +13,7 @@ export interface ResolveNodeCollisionsOptions extends NodeCollisionOptions {
 export interface NodeGridOptions extends NodeCollisionOptions {
   adjustment?: {
     enabled?: boolean;
-    sections?: Record<string, { rows?: number[]; columns?: number[][] }>;
+    sections?: Record<string, { rows?: number[]; columns?: number[][]; members?: string[][] }>;
   };
   order?: string[];
   columns?: number;
@@ -115,7 +115,11 @@ export function validateGridAdjustment(
       (section.columns !== undefined &&
         (!Array.isArray(section.columns) ||
           section.columns.length > 10000 ||
-          !section.columns.every(validWeights)))
+          !section.columns.every(validWeights))) ||
+      (section.members !== undefined &&
+        (!Array.isArray(section.members) || section.members.length > 10000 ||
+          !section.members.every(row => Array.isArray(row) && row.length > 0 && row.length <= 10000 && row.every(member => typeof member === "string" && member.length > 0)) ||
+          new Set(section.members.flat()).size !== section.members.flat().length))
     )
       throw new RangeError("Invalid grid section proportions.");
   }
@@ -255,6 +259,67 @@ export function detectNodeCollisions(
   );
 }
 
+function gridMemberRows(ids: string[], options: NodeGridOptions, section: string, columns: number): string[][] {
+  const available = new Set(ids);
+  const rows = (options.adjustment?.sections?.[section]?.members ?? []).map(row => row.filter(id => available.delete(id))).filter(row => row.length);
+  const remaining = ids.filter(id => available.has(id));
+  for (let index = 0; index < remaining.length; index += columns) rows.push(remaining.slice(index, index + columns));
+  return rows;
+}
+
+export function insertGridMember(
+  geometry: CollisionGeometry,
+  options: NodeGridOptions,
+  source: string,
+  target: string,
+  side: "before" | "after" | "above" | "below",
+): NodeGridOptions | undefined {
+  if (source === target) return;
+  const { groups, leaves } = collisionTree(geometry);
+  const siblings = groups.find(group => group.includes(source) && group.includes(target));
+  if (!siblings || siblings.some(id => geometry.fixedIds.has(id) || (leaves.get(id) ?? []).some(leaf => geometry.fixedIds.has(leaf)))) return;
+  const boxes = collisionBoxes(geometry, geometry.positions);
+  if (siblings.some(id => !boxes.has(id))) return;
+  const sectionId = geometry.nodes.find(node => node.id === source)?.parent ?? "canvas";
+  const section = options.adjustment?.sections?.[sectionId];
+  const memberRows: string[][] = [];
+  const ordered = [...siblings].sort((first, second) => {
+    const firstBox = boxes.get(first)!;
+    const secondBox = boxes.get(second)!;
+    const difference = (firstBox.y1 + firstBox.y2 - secondBox.y1 - secondBox.y2) / 2;
+    return Math.abs(difference) > 1 ? difference : firstBox.x1 - secondBox.x1;
+  });
+  for (const id of ordered) {
+    const row = memberRows.at(-1);
+    const box = boxes.get(id)!;
+    const previous = row && boxes.get(row[0])!;
+    if (previous && Math.abs(box.y1 + box.y2 - previous.y1 - previous.y2) < 2) row!.push(id);
+    else memberRows.push([id]);
+  }
+  const rows = memberRows.map((members, index) => ({
+    weight: section?.rows?.[index] ?? 1,
+    cells: members.map((id, column) => ({ id, weight: section?.columns?.[index]?.[column] ?? 1 })),
+  }));
+  for (const row of rows) row.cells = row.cells.filter(cell => cell.id !== source);
+  const populated = rows.filter(row => row.cells.length);
+  const rowIndex = populated.findIndex(row => row.cells.some(cell => cell.id === target));
+  const row = populated[rowIndex];
+  if (!row) return;
+  if (side === "above" || side === "below") populated.splice(rowIndex + (side === "below" ? 1 : 0), 0, { weight: 1, cells: [{ id: source, weight: 1 }] });
+  else row.cells.splice(row.cells.findIndex(cell => cell.id === target) + (side === "after" ? 1 : 0), 0, { id: source, weight: 1 });
+  const members = populated.map(row => row.cells.map(cell => cell.id));
+  if (JSON.stringify(members) === JSON.stringify(memberRows)) return;
+  return {
+    ...options,
+    adjustment: { ...options.adjustment, sections: { ...options.adjustment?.sections, [sectionId]: {
+      ...section,
+      members,
+      rows: populated.map(row => row.weight),
+      columns: populated.map(row => row.cells.map(cell => cell.weight)),
+    } } },
+  };
+}
+
 export function arrangeNodesInGrid(
   geometry: CollisionGeometry,
   options: NodeGridOptions = {},
@@ -302,7 +367,9 @@ export function arrangeNodesInGrid(
       items.length,
       options.columns ?? Math.ceil(Math.sqrt(items.length)),
     );
-    const rows = Math.ceil(items.length / columns);
+    const section = geometry.nodes.find(node => node.id === items[0])?.parent ?? "canvas";
+    const memberRows = gridMemberRows(items, options, section, columns);
+    const rowColumns = Math.max(...memberRows.map(row => row.length));
     const stepX = cellWidth + gaps.x;
     const stepY = cellHeight + gaps.y;
     const centers = bounds.map((box) => ({
@@ -317,16 +384,16 @@ export function arrangeNodesInGrid(
       (Math.min(...centers.map((point) => point.y)) +
         Math.max(...centers.map((point) => point.y))) /
       2;
-    items.forEach((id, index) => {
+    memberRows.forEach((row, rowIndex) => row.forEach((id, columnIndex) => {
       const box = boxes.get(id)!;
       const offset = {
         x:
           centerX +
-          ((index % columns) - (columns - 1) / 2) * stepX -
+          (columnIndex - (rowColumns - 1) / 2) * stepX -
           (box.x1 + box.x2) / 2,
         y:
           centerY +
-          (Math.floor(index / columns) - (rows - 1) / 2) * stepY -
+          (rowIndex - (memberRows.length - 1) / 2) * stepY -
           (box.y1 + box.y2) / 2,
       };
       for (const leaf of leaves.get(id) ?? []) {
@@ -336,7 +403,7 @@ export function arrangeNodesInGrid(
           y: position.y + offset.y,
         });
       }
-    });
+    }));
   }
   const movedNodeIds = [...positions]
     .filter(([id, position]) => {
@@ -395,7 +462,8 @@ function fillNodeGrid(
       options.columns ??
         Math.max(1, Math.round(Math.sqrt((ids.length * width) / height))),
     );
-    const rows = Math.ceil(ids.length / columns);
+    const memberRows = gridMemberRows(ids, options, sectionId, columns);
+    const rows = memberRows.length;
     const gapY = Math.min(gaps.y, height / (2 * rows));
     const section = options.adjustment?.sections?.[sectionId];
     const rowWeights = Array.from(
@@ -407,7 +475,7 @@ function fillNodeGrid(
     let top = area.y1;
     for (let row = 0; row < rows; row++) {
       const cellHeight = (rowSpace * rowWeights[row]) / rowTotal;
-      const rowCount = Math.min(columns, ids.length - row * columns);
+      const rowCount = memberRows[row].length;
       const gapX = Math.min(gaps.x, width / (2 * rowCount));
       const columnWeights = Array.from(
         { length: rowCount },
@@ -420,7 +488,7 @@ function fillNodeGrid(
       const columnSpace = width - (rowCount - 1) * gapX;
       let left = area.x1;
       for (let column = 0; column < rowCount; column++) {
-        const id = ids[row * columns + column];
+        const id = memberRows[row][column];
         const cellWidth = (columnSpace * columnWeights[column]) / columnTotal;
         const descendants = children.get(id);
         if (descendants) {

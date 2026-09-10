@@ -520,12 +520,33 @@ engine.swapGridNodes(sourceId, targetId); // Optional programmatic swap
 engine.setNodeGridMode(false); // Restore pre-grid positions and edge visibility
 ```
 
-Drop a node onto a sibling to exchange their slots; dropping outside or pressing
-Escape cancels the drag. Read-only mode prevents swaps. The original JSON, edges
+Drop a node onto a sibling's center to exchange their slots. Drop near its left
+or right edge to insert into that row, or near its top or bottom edge to add a
+row. An insertion line previews the destination without saving until release.
+The insertion target extends 24 screen pixels outside the edge, including when
+zoomed out or embedded in a scaled parent. Interior targets remain capped at a
+quarter of the node dimension; the insertion line stays 3 screen pixels thick.
+Start the drag on a title, icon, or non-interactive surface; embedded editors and
+form controls retain their own pointer behavior.
+Dropping outside the canvas or pressing Escape cancels the drag. Shift-drag
+continues to use the host's transfer/grouping callback. A valid ordinary boundary
+insertion takes priority over that callback, so a Grid member can be a sibling
+insertion target without transferring the dragged node into its document.
+Read-only mode prevents swaps and insertion. The original JSON, edges
 and parent relationships are not changed. Sibling grids preserve parent groups;
 swaps across parents are rejected. Sibling sets containing persistent pinned
 nodes are not rearranged or swapped. Grid order survives layout/size changes
 while the mode is active. It is renderer-local and is not saved in the document.
+
+Explicit row membership uses
+`options.adjustment.sections[sectionId].members: string[][]`, with `canvas` for
+top-level siblings and the parent node ID for nested sibling groups. It applies
+with or without Fill and independently of adjustment-handle visibility. Existing
+rows retain their relative membership; newly arriving nodes use the column
+setting for additional rows and missing nodes are omitted. Member IDs must be
+nonempty strings, unique within a section. Row and column proportions continue
+to use the existing `rows` and `columns` arrays. Hosts can persist the updated
+options through their existing canvas configuration save path, as Squeed does.
 
 The bottom toolbar's **Collision mode** button uses this same API. While active,
 it shows the existing compact gap slider and a **Fill** toggle. These controls
