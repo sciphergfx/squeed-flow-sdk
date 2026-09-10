@@ -136,6 +136,12 @@ export { useEdgeProximity } from "./hooks/useEdgeProximity";
 export { useStopPropagation } from "./hooks/useStopPropagation";
 export { EditableLabel } from "./nodes/EditableLabel";
 export { default as NodeView } from "./nodes/NodeView";
+export {
+  copySelection,
+  duplicateSelection,
+  getSelectionRoots,
+  reparentNode,
+} from "./core/selectionEdits";
 
 // Utilities
 export {
@@ -160,6 +166,7 @@ export type {
   NodeGridOptions,
   ResolveNodeCollisionsOptions,
 } from "./engine/nodeCollisions";
+export { validateGridAdjustment } from "./engine/nodeCollisions";
 export type {
   BackgroundPattern,
   BackgroundVariant,

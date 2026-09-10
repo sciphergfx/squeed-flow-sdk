@@ -28,7 +28,14 @@ export interface JsxContentRendererProps {
   colorMode?: "light" | "dark";
   fillHeight?: boolean;
 }
-export const NODE_TYPE_VIEWS = ["", "icon-label", "object", "text"] as const;
+export const NODE_TYPE_VIEWS = [
+  "",
+  "icon-label",
+  "object",
+  "text",
+  "grid",
+  "parent",
+] as const;
 export type NodeTypeView = Exclude<(typeof NODE_TYPE_VIEWS)[number], "">;
 export type NodeAnimationVariant = "traveling" | "pulse";
 export type EdgeAnimationVariant = "dashed" | "traveling";
@@ -209,6 +216,7 @@ export interface BottomBarRenderProps {
 export interface FlowDiagramConfig {
   bottomBarExtra?: React.ReactNode;
   bottomBarCollapsed?: boolean;
+  bottomBarNavigation?: boolean;
   /** Animate fit/center/focus actions for 300ms by default. Per-action flags override this; reduced motion stays instant. */
   animateViewport?: boolean;
   disableAnimations?: boolean;
@@ -298,6 +306,8 @@ export interface FlowNodeCreationRequest {
 
 /** Event callbacks for the flow diagram */
 export interface FlowDiagramCallbacks {
+  onNodesCopy?: (ids: string[]) => boolean | void | Promise<boolean | void>;
+  onNodesDuplicate?: (ids: string[]) => boolean | void;
   onGraphEdgeColorChange?: (color: string) => void;
   onAllNodesIconLabelChange?: (enabled: boolean) => void;
   onNodeCreateRequest?: (request: FlowNodeCreationRequest) => boolean;
@@ -319,6 +329,21 @@ export interface FlowDiagramCallbacks {
   onEdgeRadiusChange?: (radius: number) => void;
   onCompactPropertyLayoutChange?: (enabled: boolean) => void;
   onBackgroundVariantChange?: (variant: BackgroundVariant) => void;
+  onNodeGridZoomOut?: (
+    options: import("../engine/nodeCollisions").NodeGridOptions,
+  ) => boolean;
+  onNodeGridFillRequest?: (
+    options: import("../engine/nodeCollisions").NodeGridOptions,
+  ) => boolean;
+  onNodeGridModeRequest?: (
+    enabled: boolean,
+    options: import("../engine/nodeCollisions").NodeGridOptions,
+  ) => boolean;
+  onNodeGridDrop?: (
+    nodeId: string,
+    point: { x: number; y: number },
+    modifiers?: NodeSelectionModifiers,
+  ) => boolean;
   // ── Node events ──
   /** Fires when a node is clicked/selected */
   onNodeSelect?: (
@@ -344,14 +369,16 @@ export interface FlowDiagramCallbacks {
     position: any;
     sourceNodeId?: string;
     isArrayMode?: boolean;
-  }) => void;
+  }) => boolean | void;
   /** Fires when a node is deleted */
   onNodeDelete?: (nodeId: string, nodeData: any) => void;
   /** Fires when a node label is edited inline */
   onNodeLabelChange?: (nodeId: string, newLabel: string) => void;
+  onNodeSubtitleChange?: (nodeId: string, subtitle: string) => void;
   onNodeContentChange?: (nodeId: string, content: NodeContent) => void;
   /** Fires when a node's collapse toggle is clicked */
   onNodeCollapse?: (nodeId: string, collapsed: boolean) => void;
+  onNodeParentChange?: (nodeId: string, parentId: string) => void;
   /** Fires when a node's color is changed via the toolbar */
   onNodeColorChange?: (
     nodeId: string,

@@ -13,14 +13,15 @@ const TooltipIconButton = ({
   const { background, border, colorText } = useCustomColors();
   return (
     <ToolbarTooltip label={label}>
-      <Flex>
-        <Icon
-          as={icon}
-          boxSize={boxSize}
-          color={color}
-          cursor={onClick ? "pointer" : undefined}
-          onClick={onClick}
-        />
+      <Flex asChild p={0} border={0} bg="transparent">
+        <button type="button" aria-label={label} onClick={onClick}>
+          <Icon
+            as={icon}
+            boxSize={boxSize}
+            color={color}
+            cursor={onClick ? "pointer" : undefined}
+          />
+        </button>
       </Flex>
     </ToolbarTooltip>
   );

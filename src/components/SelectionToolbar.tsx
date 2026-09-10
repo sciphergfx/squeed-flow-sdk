@@ -10,6 +10,10 @@ import {
   PiEraser,
   PiFastForward,
   PiFileSvg,
+  PiGridFour,
+  PiCopy,
+  PiCopySimple,
+  PiStack,
   PiLineSegment,
   PiLineSegments,
   PiLineVerticalThin,
@@ -28,6 +32,7 @@ import { getChakraColorHex, LIGHT_BLACK } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
 import type { SelectionToolbarConfig } from "../types";
 import { AnimationVariantSelect } from "./AnimationVariantSelect";
+import { SliderContent } from "./DiagramAppearanceControls";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
 import { NodeIconPicker } from "./NodeIconPicker";
 import {
@@ -448,23 +453,55 @@ export function BorderRadiusControl({
   ids: string[];
   showDivider?: boolean;
 }) {
-  const { callbacks, config, nodeGridOptions, fillRadiusEditedIds } =
+  const { callbacks, config, nodeGridOptions, fillRadiusEditedIds, setNodeRadiusPreview } =
     useFlowDiagramContext();
   const { colorInactive } = useCustomColors();
   const { nodeById } = useFlowData();
-  const [custom, setCustom] = useState(false);
+  const [draft, setDraft] = useState<number>();
+  const pending = useRef<{ ids: string[]; radius: number }>();
+  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const latest = useRef({ callbacks, readOnly: config.readOnly, nodeById });
+  latest.current = { callbacks, readOnly: config.readOnly, nodeById };
+  const commit = () => {
+    clearTimeout(timer.current);
+    const next = pending.current;
+    pending.current = undefined;
+    if (!next) return;
+    if (!latest.current.readOnly) for (const id of next.ids)
+      if (latest.current.nodeById.has(id)) latest.current.callbacks.onNodeBorderRadiusChange?.(id, next.radius);
+    setNodeRadiusPreview(next.ids, undefined);
+    setDraft(undefined);
+  };
+  const flush = useRef(commit);
+  flush.current = commit;
+  useEffect(() => {
+    const save = () => flush.current();
+    window.addEventListener("pagehide", save);
+    return () => { window.removeEventListener("pagehide", save); save(); };
+  }, []);
   const radii = ids.map((id) =>
     nodeGridOptions?.fill && !fillRadiusEditedIds.has(id)
       ? 0
       : nodeById.get(id)?.data.viewProps?.borderRadius,
   );
   const mixed = !radii.every((radius) => radius === radii[0]);
-  const value = mixed ? "mixed" : String(radii[0] ?? "");
-  const presets = ["0", "8", "16", "30", "53", "100"];
-  const customMode =
-    custom || (!mixed && value !== "" && !presets.includes(value));
-  const update = (radius: number | undefined) =>
-    ids.forEach((id) => callbacks.onNodeBorderRadiusChange?.(id, radius));
+  const value = draft ?? radii[0] ?? 0;
+  const update = (radius: number | undefined) => {
+    if (config.readOnly) return;
+    if (radius !== undefined && ids.every((id) => nodeById.get(id)?.data.type === "grid")) {
+      setDraft(radius);
+      setNodeRadiusPreview(ids, radius);
+      pending.current = { ids: [...ids], radius };
+      clearTimeout(timer.current);
+      timer.current = setTimeout(commit, 150);
+    } else {
+      clearTimeout(timer.current);
+      pending.current = undefined;
+      setDraft(undefined);
+      setNodeRadiusPreview(ids, undefined);
+      ids.forEach((id) => callbacks.onNodeBorderRadiusChange?.(id, radius));
+    }
+  };
   return (
     <>
       {showDivider && <Divider />}
@@ -493,39 +530,45 @@ export function BorderRadiusControl({
             height: "100%",
             cursor: "pointer",
           }}
-          value={customMode ? "custom" : value}
+          value="radius"
           disabled={config.readOnly}
-          onValueChange={(next) => {
-            setCustom(next === "custom");
-            if (next !== "custom")
-              update(next === "" ? undefined : Number(next));
-          }}
+          onValueChange={() => {}}
+          popupContent={
+            <>
+              <SliderContent
+                label="Border radius"
+                inputLabel="Node corner radius"
+                min={0}
+                max={Math.max(500, ...radii.map((radius) => radius ?? 0))}
+                step={1}
+                value={value}
+                displayValue={
+                  draft !== undefined ? `${draft}px` : mixed
+                    ? "Mixed"
+                    : radii[0] === undefined
+                      ? "Default"
+                      : `${value}px`
+                }
+                onChange={update}
+                onChangeEnd={commit}
+              />
+              <ToolbarTooltip label="Reset border radius">
+                <ToolbarIconButton
+                  aria-label="Reset border radius"
+                  icon={<PiEraser size={20} />}
+                  size="sm"
+                  variant="ghost"
+                  color={colorInactive}
+                  disabled={config.readOnly}
+                  onClick={() => update(undefined)}
+                />
+              </ToolbarTooltip>
+            </>
+          }
         >
-          <option value="">Default radius</option>
-          {mixed && (
-            <option value="mixed" disabled>
-              Mixed radii
-            </option>
-          )}
-          {presets.map((radius) => (
-            <option key={radius} value={radius}>
-              {radius}px radius
-            </option>
-          ))}
-          <option value="custom">Custom radius</option>
+          <option value="radius">Border radius</option>
         </ToolbarSelect>
       </Box>
-      {customMode && (
-        <CommitInput
-          ariaLabel="Custom border radius"
-          placeholder={mixed ? "Mixed" : "Auto"}
-          type="number"
-          min={0}
-          width="72px"
-          value={mixed ? "" : value}
-          onCommit={(next) => update(next === "" ? undefined : Number(next))}
-        />
-      )}
     </>
   );
 }
@@ -544,6 +587,7 @@ export function NodeTools({
   const { nodeById, parentIds } = useFlowData();
   const { palette, show } = useToolbarConfig();
   const single = ids.length === 1;
+  const [selectionError, setSelectionError] = useState("");
   const data = single ? nodeById.get(ids[0])?.data : undefined;
   const typeViews = ids.map(
     (id) => nodeById.get(id)?.data.config?.typeView ?? "",
@@ -559,6 +603,8 @@ export function NodeTools({
       icon: PiShapes,
     },
     { value: "object", label: "Object", view: "object", icon: PiBracketsCurly },
+    { value: "grid", label: "Grid", view: "grid", icon: PiGridFour },
+    { value: "parent", label: "Parent", view: "parent", icon: PiStack },
     { value: "media", label: "Media", view: "icon-label", icon: PiFileSvg },
     {
       value: "content",
@@ -913,6 +959,47 @@ export function NodeTools({
             />
           </ToolbarTooltip>
         </>
+      )}
+      <Divider />
+      <ToolbarTooltip label="Copy selection">
+        <ToolbarIconButton
+          aria-label="Copy selection"
+          icon={<PiCopy size={20} />}
+          size="sm"
+          variant="ghost"
+          color={colorInactive}
+          onClick={async () => {
+            try {
+              await callbacks.onNodesCopy?.(ids);
+              setSelectionError("");
+            } catch (error) {
+              setSelectionError(String(error));
+            }
+          }}
+        />
+      </ToolbarTooltip>
+      <ToolbarTooltip label="Duplicate selection">
+        <ToolbarIconButton
+          aria-label="Duplicate selection"
+          icon={<PiCopySimple size={20} />}
+          size="sm"
+          variant="ghost"
+          color={colorInactive}
+          disabled={config.readOnly || config.editable === false}
+          onClick={() => {
+            try {
+              callbacks.onNodesDuplicate?.(ids);
+              setSelectionError("");
+            } catch (error) {
+              setSelectionError(String(error));
+            }
+          }}
+        />
+      </ToolbarTooltip>
+      {selectionError && (
+        <Text role="alert" fontSize="xs">
+          {selectionError}
+        </Text>
       )}
     </>
   );

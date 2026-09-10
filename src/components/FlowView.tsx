@@ -83,6 +83,11 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   } = useFlowDiagramContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const [engine, setEngine] = useState<FlowEngine | null>(null);
+  const pendingDrawFocus = useRef<{
+    sourceId: string;
+    nodeIds: Set<string>;
+    reverse: boolean;
+  } | null>(null);
 
   const isPerformanceMode = nodes.length > 200;
   useEffect(() => {
@@ -363,6 +368,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           id: node.data.id,
           collapsed: node.data.config?.collapsed,
           parent: node.data.parent,
+          acceptsChildren:
+            !!node.data.config?.parentContainer || parentIds.has(node.data.id),
           label: nodeLabel,
           animated: !!node.data.isNodeAnimated,
           animationVariant: node.data.nodeAnimationVariant,
@@ -721,6 +728,11 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       sourceProperty?: string,
       reverse = false,
     ) => {
+      pendingDrawFocus.current = {
+        sourceId,
+        nodeIds: new Set(nodeByIdRef.current.keys()),
+        reverse,
+      };
       if (
         edgeMode === "properties" &&
         callbacks.onNodeCreateRequest?.({
@@ -731,7 +743,10 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         }) === true
       )
         return;
-      if (sourceProperty !== undefined || reverse) return;
+      if (sourceProperty !== undefined || reverse) {
+        pendingDrawFocus.current = null;
+        return;
+      }
       callbacks.onNodeCreate?.({
         type: "text",
         sourceNodeId: sourceId,
@@ -794,8 +809,40 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           dragMode={isDragMode}
           multiSelect={!!isMultiSelectMode}
           onInit={handleInit}
-          onLayoutComplete={callbacks.onLayoutComplete}
+          onLayoutComplete={(currentEngine) => {
+            callbacks.onLayoutComplete?.(currentEngine);
+            const pending = pendingDrawFocus.current;
+            if (!pending) return;
+            if (!nodeByIdRef.current.has(pending.sourceId)) {
+              pendingDrawFocus.current = null;
+              return;
+            }
+            const added = nodes.filter(
+              (node) => !pending.nodeIds.has(node.data.id),
+            );
+            const connected = added.filter((node) =>
+              edges.some(
+                ({ data }) =>
+                  (data.source === pending.sourceId &&
+                    data.target === node.data.id) ||
+                  (data.target === pending.sourceId &&
+                    data.source === node.data.id),
+              ),
+            );
+            if (
+              !connected.length ||
+              connected.some((node) => !currentEngine.getNodeBox(node.data.id))
+            )
+              return;
+            pendingDrawFocus.current = null;
+            currentEngine.focusBranch(
+              pending.reverse ? connected[0].data.id : pending.sourceId,
+            );
+          }}
           onNodeGridModeChange={setNodeGridOptions}
+          onNodeGridZoomOut={callbacks.onNodeGridZoomOut}
+          onNodeGridDrop={callbacks.onNodeGridDrop}
+          onNodeParentChange={callbacks.onNodeParentChange}
           animateViewport={config.animateViewport}
           disableAnimations={config.disableAnimations}
           onViewportChange={handleViewportChange}

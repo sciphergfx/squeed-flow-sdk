@@ -5,11 +5,13 @@ type Graph = { nodes: FlowDiagramNode[]; edges: FlowDiagramEdge[] };
 
 export function applyParentGroups(json: SqueedJson, graph: Graph): Graph {
   const groupIds = new Set<string>();
-  const collect = (value: any) => {
+  const collect = (value: any, address = "root") => {
     if (!value || typeof value !== "object") return;
+    if (value.$view === "parent") groupIds.add(address);
     if (typeof value.$parent === "string") groupIds.add(value.$parent);
     for (const [key, child] of Object.entries(value))
-      if (!key.startsWith("$") || key === "$") collect(child);
+      if (!key.startsWith("$") || key === "$")
+        collect(child, key === "$" ? address : `${address}.${key}`);
   };
   collect(json);
   if (!groupIds.size) return graph;

@@ -184,6 +184,18 @@ export function EditableContent({
         }}
         cursor={editable ? "text" : undefined}
         tabIndex={editable ? 0 : undefined}
+        outline="none"
+        _focusVisible={{ outline: "none", boxShadow: "none" }}
+        onClick={(event) => {
+          if (
+            !editable ||
+            (event.target instanceof Element &&
+              event.target.closest("a, button, input"))
+          )
+            return;
+          event.stopPropagation();
+          startEditing(event.currentTarget);
+        }}
         onDoubleClick={(event) => {
           event.stopPropagation();
           startEditing(event.currentTarget);

@@ -7,7 +7,12 @@ import {
   PiLineSegments,
   PiBezierCurve,
 } from "react-icons/pi";
-import { forwardRef, useId, type ComponentProps, type CSSProperties } from "react";
+import {
+  forwardRef,
+  useId,
+  type ComponentProps,
+  type CSSProperties,
+} from "react";
 import styled from "@emotion/styled";
 import type { BackgroundVariant } from "../types";
 import { useCustomColors } from "../theme/useCustomColors";
@@ -67,24 +72,34 @@ const StyledRangeInput = styled.input`
   }
 `;
 
-export const RangeInput = forwardRef<HTMLInputElement, ComponentProps<"input">>(function RangeInput({ style, ...props }, ref) {
-  return (
-    <StyledRangeInput
-      {...props}
-      ref={ref}
-      style={{ ...style, backgroundImage: "none", "--flow-range-track": style?.backgroundImage ?? "none" } as CSSProperties}
-    />
-  );
-});
+export const RangeInput = forwardRef<HTMLInputElement, ComponentProps<"input">>(
+  function RangeInput({ style, ...props }, ref) {
+    return (
+      <StyledRangeInput
+        {...props}
+        ref={ref}
+        style={
+          {
+            ...style,
+            backgroundImage: "none",
+            "--flow-range-track": style?.backgroundImage ?? "none",
+          } as CSSProperties
+        }
+      />
+    );
+  },
+);
 
-function SliderContent({
+export function SliderContent({
   label,
   inputLabel,
   value,
   displayValue,
   min,
   max,
+  step = 5,
   onChange,
+  onChangeEnd,
 }: {
   label: string;
   inputLabel: string;
@@ -92,7 +107,9 @@ function SliderContent({
   displayValue: string | number;
   min: number;
   max: number;
+  step?: number;
   onChange: (value: number) => void;
+  onChangeEnd?: () => void;
 }) {
   const id = useId();
   const { readOnly, themeColor } = useFlowDiagramContext();
@@ -120,7 +137,7 @@ function SliderContent({
         type="range"
         min={min}
         max={max}
-        step={5}
+        step={step}
         value={value}
         disabled={readOnly}
         style={{
@@ -129,6 +146,9 @@ function SliderContent({
           backgroundImage: `linear-gradient(to right, currentColor ${progress}%, var(--chakra-colors-${colorInactive.replace(".", "-")}) ${progress}%)`,
         }}
         onChange={(event) => onChange(Number(event.target.value))}
+        onPointerUp={onChangeEnd}
+        onKeyUp={onChangeEnd}
+        onBlur={onChangeEnd}
       />
     </div>
   );

@@ -26,6 +26,8 @@ export interface FlowDiagramContextValue {
   setAllNodesIconLabel: (enabled: boolean) => void;
   nodeViewModes: Record<string, NodeViewMode>;
   setNodeViewMode: (nodeId: string, mode: NodeViewMode) => void;
+  nodeRadiusPreviews: Record<string, number>;
+  setNodeRadiusPreview: (ids: string[], radius: number | undefined) => void;
   spacing: number;
   edgeRadius: number | undefined;
   setEdgeRadius: (radius: number) => void;
@@ -160,12 +162,24 @@ export function FlowDiagramProvider({
     Record<string, NodeViewMode>
   >({});
   const nodeViewModes = config.nodeViewModes ?? localNodeViewModes;
+  const [nodeRadiusPreviews, setNodeRadiusPreviews] = useState<Record<string, number>>({});
+  const setNodeRadiusPreview = useCallback((ids: string[], radius: number | undefined) => {
+    setNodeRadiusPreviews((current) => {
+      const next = { ...current };
+      for (const id of ids) {
+        if (radius === undefined) delete next[id];
+        else next[id] = radius;
+      }
+      return next;
+    });
+  }, []);
   const iconLabelNodes = [...dataValue.nodeById.values()].filter(
     (node) =>
       dataValue.parentIds.has(node.data.id) ||
       node.data.config?.parentContainer ||
       node.data.type === "objectView" ||
-      node.data.type === "arrayView",
+      node.data.type === "arrayView" ||
+      node.data.type === "grid",
   );
   const allNodesIconLabel =
     !!iconLabelNodes.length &&
@@ -224,8 +238,15 @@ export function FlowDiagramProvider({
     return {
       // Node events
       onNodeSelect: wrap("onNodeSelect"),
+      onNodesCopy: wrap("onNodesCopy"),
+      onNodesDuplicate: wrap("onNodesDuplicate"),
       onBackgroundClick: wrap("onBackgroundClick"),
       onBottomBarCollapsedChange: wrap("onBottomBarCollapsedChange"),
+      onNodeGridZoomOut: wrap("onNodeGridZoomOut"),
+      onNodeGridFillRequest: wrap("onNodeGridFillRequest"),
+      onNodeGridModeRequest: wrap("onNodeGridModeRequest"),
+      onNodeGridDrop: wrap("onNodeGridDrop"),
+      onNodeParentChange: wrap("onNodeParentChange"),
       onNodeDeselect: wrap("onNodeDeselect"),
       onNodeDoubleClick: wrap("onNodeDoubleClick"),
       onNodeViewToggle: wrap("onNodeViewToggle"),
@@ -234,6 +255,7 @@ export function FlowDiagramProvider({
       onNodeCreateRequest: wrap("onNodeCreateRequest"),
       onNodeDelete: wrap("onNodeDelete"),
       onNodeLabelChange: wrap("onNodeLabelChange"),
+      onNodeSubtitleChange: wrap("onNodeSubtitleChange"),
       onNodeContentChange: wrap("onNodeContentChange"),
       onNodeCollapse: wrap("onNodeCollapse"),
       onNodeColorChange: wrap("onNodeColorChange"),
@@ -333,6 +355,9 @@ export function FlowDiagramProvider({
         },
         get bottomBarCollapsed() {
           return configRef.current.bottomBarCollapsed;
+        },
+        get bottomBarNavigation() {
+          return configRef.current.bottomBarNavigation;
         },
         get edgeType() {
           return configRef.current.edgeType;
@@ -470,6 +495,8 @@ export function FlowDiagramProvider({
       },
       nodeViewModes,
       setNodeViewMode,
+      nodeRadiusPreviews,
+      setNodeRadiusPreview,
       spacing,
       setSpacing,
       edgeRadius,
@@ -532,6 +559,8 @@ export function FlowDiagramProvider({
       callbacks.onGraphEdgeColorChange,
       nodeViewModes,
       callbacks.onNodeViewModeChange,
+      nodeRadiusPreviews,
+      setNodeRadiusPreview,
       themeColor,
       spacing,
       backgroundVariant,
@@ -567,6 +596,7 @@ export function FlowDiagramProvider({
       config.selectionToolbar,
       config.bottomBarExtra,
       config.bottomBarCollapsed,
+      config.bottomBarNavigation,
       config.compactPropertyLayout,
       compactPropertyLayout,
       stableCallbacks,

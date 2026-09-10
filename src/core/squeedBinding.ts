@@ -4,6 +4,11 @@ import {
   type FlowDiagramEdge,
 } from "../types";
 import { createFormNode } from "./createFormNode";
+import {
+  copySelection,
+  duplicateSelection,
+  reparentNode,
+} from "./selectionEdits";
 import type { FormSchema } from "./forms";
 import { applyFormChange } from "./forms";
 import {
@@ -17,6 +22,7 @@ import {
   setEdgeProp,
   setEdgeStyle,
   setNodeProp,
+  updateNode,
   type RenderedEdgeRef,
   type SqueedJson,
 } from "./squeedEdits";
@@ -90,6 +96,27 @@ export function bindSqueedCallbacks(
 
   return {
     ...callbacks,
+    onNodeParentChange: (id, parentId) => {
+      const next = reparentNode(json, id, parentId);
+      callbacks.onNodeParentChange?.(id, parentId);
+      emit(next, {
+        type: "nodeStyle",
+        address: id,
+        key: "$parent",
+        value: parentId,
+      });
+    },
+    onNodesCopy: async (ids) => {
+      if ((await callbacks.onNodesCopy?.(ids)) === true) return;
+      await navigator.clipboard.writeText(
+        JSON.stringify(copySelection(json, ids), null, 2),
+      );
+    },
+    onNodesDuplicate: (ids) => {
+      if (callbacks.onNodesDuplicate?.(ids) === true) return;
+      const duplicated = duplicateSelection(json, ids);
+      emit(duplicated.json, { type: "nodeCreate", address: duplicated.ids[0] });
+    },
     onFormChange: (event) => {
       const owner = getNode(json, event.nodeAddress);
       if (!owner || (event.nodeId !== undefined && owner.id !== event.nodeId))
@@ -107,6 +134,15 @@ export function bindSqueedCallbacks(
         address: id,
         key: "$label",
         value: label,
+      });
+    },
+    onNodeSubtitleChange: (id, subtitle) => {
+      callbacks.onNodeSubtitleChange?.(id, subtitle);
+      emit(setNodeProp(json, id, "$subtitle", subtitle), {
+        type: "nodeStyle",
+        address: id,
+        key: "$subtitle",
+        value: subtitle,
       });
     },
     onNodeContentChange: (id, content) => {
@@ -224,31 +260,46 @@ export function bindSqueedCallbacks(
       });
     },
     onNodeCreate: (params) => {
-      const created =
-        params.sourceNodeId &&
-        createFormNode(json, params.sourceNodeId, formSchema);
-      if (created) {
-        callbacks.onNodeCreate?.(params);
-        emit(created.json, {
-          type: "nodeCreate",
-          address: created.address,
-          value: "form",
-        });
-        return;
-      }
-      callbacks.onNodeCreate?.(params);
+      if (callbacks.onNodeCreate?.(params) === true) return;
       const parent = params.sourceNodeId || "root";
-      const parentNode = getNode(json, parent);
-      // set mode → object child, array mode → array child; the compiler labels them by key
-      const key = uniqueKey(parentNode, params.isArrayMode ? "list" : "node");
-      const child = params.isArrayMode
-        ? { $bgColor: "gray.500", $: [] }
-        : { $bgColor: "gray.500" };
-      const res = addChild(json, parent, child, key);
-      emit(res.json, {
+      const firstArrayDraw =
+        !!params.sourceNodeId &&
+        params.isArrayMode &&
+        !getNode(json, parent)?.$arrayDrawInitialized;
+      let next = json;
+      let address: string | undefined;
+      let value = params.isArrayMode ? "array" : "set";
+      for (let index = 0; index < (firstArrayDraw ? 2 : 1); index++) {
+        const created =
+          params.sourceNodeId &&
+          createFormNode(next, params.sourceNodeId, formSchema);
+        if (created) {
+          next = created.json;
+          address ??= created.address;
+          value = "form";
+        } else {
+          const key = uniqueKey(
+            getNode(next, parent),
+            params.isArrayMode ? "list" : "node",
+          );
+          const child = params.isArrayMode
+            ? { $bgColor: "gray.500", $: [] }
+            : { $bgColor: "gray.500" };
+          const result = addChild(next, parent, child, key);
+          next = result.json;
+          address ??= result.address;
+        }
+      }
+      if (firstArrayDraw)
+        next = updateNode(next, parent, (node) =>
+          Array.isArray(node)
+            ? { $: node, $arrayDrawInitialized: true }
+            : { ...node, $arrayDrawInitialized: true },
+        );
+      emit(next, {
         type: "nodeCreate",
-        address: res.address,
-        value: params.isArrayMode ? "array" : "set",
+        address,
+        value,
       });
     },
     onNodeDelete: (id, data) => {

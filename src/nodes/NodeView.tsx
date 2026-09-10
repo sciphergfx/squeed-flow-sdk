@@ -42,6 +42,7 @@ const NodeView = ({
     selectedEdgeId,
     setSelectedEdgeId,
     isMultiSelectMode,
+    nodeGridOptions,
     isPerformanceMode,
     engineRef,
     callbacks,
@@ -64,6 +65,8 @@ const NodeView = ({
   const isActive = selectedNodeIds.includes(id);
   const overlayActions = config.nodeOverlayActions;
   const renderNodeOverlay = config.renderNodeOverlay;
+  const overlayTop = nodeData?.type === "grid" ? "20px" : "-100px";
+  const overlayOrigin = nodeData?.type === "grid" ? "top center" : undefined;
 
   const isLowZoom = (() => {
     try {
@@ -88,7 +91,7 @@ const NodeView = ({
         setSelectedEdgeId(null);
         callbacks.onEdgeDeselect?.();
       }
-      if (isMultiSelectMode) {
+      if (isMultiSelectMode || (event.shiftKey && nodeGridOptions?.fill)) {
         const isAlreadySelected = selectedNodeIds.includes(id);
         const newIds = isAlreadySelected
           ? selectedNodeIds.filter((nid) => nid !== id)
@@ -110,6 +113,7 @@ const NodeView = ({
       selectedNodeIds,
       selectedEdgeId,
       isMultiSelectMode,
+      nodeGridOptions,
       isEditing,
       setSelectedNodeIds,
       setSelectedEdgeId,
@@ -223,7 +227,8 @@ const NodeView = ({
                 <Box
                   position="absolute"
                   zIndex={1000}
-                  top={"-100px"}
+                  top={overlayTop}
+                  transformOrigin={overlayOrigin}
                   left="50%"
                   pointerEvents="auto"
                   transform="translateX(-50%) scale3d(3, 3, 1)"
@@ -244,7 +249,8 @@ const NodeView = ({
                 <Box
                   position="absolute"
                   zIndex={1000}
-                  top={"-100px"}
+                  top={overlayTop}
+                  transformOrigin={overlayOrigin}
                   left="50%"
                   bg={background}
                   p={3}
@@ -387,7 +393,8 @@ const NodeView = ({
               <Box
                 position="absolute"
                 zIndex={1000}
-                top={"-100px"}
+                top={overlayTop}
+                transformOrigin={overlayOrigin}
                 left="50%"
                 pointerEvents="auto"
                 transform="translateX(-50%) scale3d(3, 3, 1)"
@@ -408,7 +415,8 @@ const NodeView = ({
               <Box
                 position="absolute"
                 zIndex={1000}
-                top={"-100px"}
+                top={overlayTop}
+                transformOrigin={overlayOrigin}
                 left="50%"
                 bg={background}
                 p={3}

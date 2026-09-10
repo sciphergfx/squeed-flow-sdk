@@ -481,6 +481,39 @@ export function compileSqueed(
       delete data.viewProps.borderWidth;
     }
     if (!src || typeof src !== "object" || Array.isArray(src)) return { data };
+    if (src.$view === "parent") {
+      data.type = "objectView";
+      data.config = {
+        ...data.config,
+        typeView: "parent",
+        parentContainer: true,
+        collapsed: !!src.$collapsed,
+      };
+    }
+    if (src.$view === "grid") {
+      data.type = "grid";
+      const gridSize = src.$gridSize;
+      if (
+        gridSize !== undefined &&
+        (!gridSize ||
+          ![gridSize.width, gridSize.height].every(
+            (size) => Number.isFinite(size) && size > 0 && size <= 16384,
+          ))
+      )
+        throw new Error("Invalid grid frame size.");
+      data.config = {
+        ...data.config,
+        typeView: "grid",
+        documentId: src.$document,
+        gridSize,
+      };
+      data.viewProps = {
+        ...data.viewProps,
+        bgColor: src.$bgColor ?? "transparent",
+        borderRadius: src.$borderRadius ?? 0,
+        borderWidth: src.$borderWidth ?? 0,
+      };
+    }
     if (src.$form && typeof src.$form === "object") {
       data.config = { ...data.config, form: src.$form };
       data.type = "objectView";

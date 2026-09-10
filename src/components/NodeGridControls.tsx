@@ -1,5 +1,5 @@
 import { Box, HStack, Text } from "@chakra-ui/react";
-import { PiArrowsOut, PiGridFour } from "react-icons/pi";
+import { PiArrowsOut, PiGridFour, PiArrowsHorizontal } from "react-icons/pi";
 import type { NodeGridOptions } from "../engine/nodeCollisions";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
@@ -14,6 +14,7 @@ export function NodeGridControls() {
     lastNodeGridOptions,
     readOnly,
     themeColor,
+    callbacks,
   } = useFlowDiagramContext();
   const { colorText, colorInactive } = useCustomColors();
   const options = nodeGridOptions ?? lastNodeGridOptions;
@@ -32,6 +33,8 @@ export function NodeGridControls() {
         icon={<PiGridFour size={20} />}
         checked={nodeGridOptions !== null}
         onChange={(enabled) => {
+          if (callbacks.onNodeGridModeRequest?.(enabled, options) === true)
+            return;
           engineRef.current?.setNodeGridMode(enabled, options);
         }}
       />
@@ -72,8 +75,27 @@ export function NodeGridControls() {
             label="Fill"
             icon={<PiArrowsOut size={18} />}
             checked={!!options.fill}
-            onChange={(fill) => change({ fill })}
+            onChange={(fill) => {
+              if (
+                fill &&
+                callbacks.onNodeGridFillRequest?.({ ...options, fill }) === true
+              )
+                return;
+              change({ fill });
+            }}
           />
+          {options.fill && (
+            <LabeledToolbarToggle
+              label="Grid adjustment"
+              hideLabel
+              icon={<PiArrowsHorizontal size={20} />}
+              checked={!!options.adjustment?.enabled}
+              onChange={(enabled) => {
+                if (!readOnly)
+                  change({ adjustment: { ...options.adjustment, enabled } });
+              }}
+            />
+          )}
         </HStack>
       )}
     </>

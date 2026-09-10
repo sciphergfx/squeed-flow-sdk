@@ -27,6 +27,7 @@ export interface NodeHostProps {
     x: number;
     y: number;
     size?: { w: number; h: number };
+    floating?: boolean;
   };
   /** Register/unregister the host element for size observation */
   onMount: (id: string, el: HTMLDivElement | null) => void;
@@ -88,6 +89,7 @@ function NodeHost({
   const previewId = useId();
   const previewRef = useRef<HTMLDivElement>();
   const hasGridPreview = !!gridPreview;
+  const floatingPreview = !!gridPreview?.floating;
 
   useLayoutEffect(() => {
     const host = ref.current;
@@ -121,28 +123,58 @@ function NodeHost({
     }
     Object.assign(preview.style, {
       opacity: "0.35",
-      zIndex: "11",
+      zIndex: floatingPreview ? "2147483647" : "11",
       pointerEvents: "none",
       outline: "none",
       visibility: "visible",
     });
+    if (floatingPreview) {
+      const style = getComputedStyle(host);
+      preview.setAttribute("data-grid-preview-floating", "");
+      Object.assign(preview.style, {
+        position: "fixed",
+        left: "0",
+        top: "0",
+        transformOrigin: "top left",
+        font: style.font,
+        color: style.color,
+      });
+      for (const element of elements) {
+        element.removeAttribute("data-node-id");
+        (element as HTMLElement).style.pointerEvents = "none";
+      }
+    }
     preview
       .querySelectorAll(
         ".flow-sdk-node-animation, .flow-sdk-handle, .flow-sdk-property-port, [data-flow-collapse-control]",
       )
       .forEach((element) => element.remove());
-    host.parentElement?.appendChild(preview);
+    (floatingPreview ? document.body : host.parentElement)?.appendChild(
+      preview,
+    );
     previewRef.current = preview;
     return () => {
       preview.remove();
       previewRef.current = undefined;
     };
-  }, [id, previewId, hasGridPreview]);
+  }, [id, previewId, hasGridPreview, floatingPreview]);
 
   useLayoutEffect(() => {
     const preview = previewRef.current;
     if (!preview || !gridPreview) return;
     const { x: centerX, y: centerY, size } = gridPreview;
+    if (floatingPreview && ref.current) {
+      const host = ref.current;
+      const bounds = host.getBoundingClientRect();
+      const scaleX = bounds.width / host.offsetWidth || 1;
+      const scaleY = bounds.height / host.offsetHeight || 1;
+      const left = bounds.left + (centerX - x) * scaleX;
+      const top = bounds.top + (centerY - y) * scaleY;
+      preview.style.transform = `translate3d(${left}px, ${top}px, 0) scale(${scaleX}, ${scaleY})`;
+      preview.style.width = `${host.offsetWidth}px`;
+      preview.style.height = `${host.offsetHeight}px`;
+      return;
+    }
     const left = size ? Math.round(centerX - size.w / 2) : centerX;
     const top = size ? Math.round(centerY - size.h / 2) : centerY;
     preview.style.transform = size
@@ -167,6 +199,9 @@ function NodeHost({
     gridPreview?.y,
     gridPreview?.size?.w,
     gridPreview?.size?.h,
+    floatingPreview,
+    x,
+    y,
   ]);
 
   useLayoutEffect(() => {
