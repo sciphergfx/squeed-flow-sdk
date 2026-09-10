@@ -109,6 +109,7 @@ export interface CanvasProps {
   rankSep: number;
   edgeSep: number;
   nodeGridSpacing?: FlowDiagramConfig["nodeGridSpacing"];
+  nodeGridConnections?: boolean;
   spacingFactor?: number;
   compactSpacingScale?: number;
   layoutDebounce: number;
@@ -1549,9 +1550,14 @@ function Canvas(props: CanvasProps) {
       }
     }
     if (gestureRef.current) return;
+    const connectionsAllowed = !nodeGridRef.current || !!p.nodeGridConnections;
+    const handle = p.drawHandles && target.closest(".flow-sdk-handle");
+    const port =
+      p.drawHandles && target.closest<HTMLElement>(".flow-sdk-property-port");
     if (
-      nodeGridRef.current ||
-      (e.shiftKey && (p.onNodeGridDrop || p.onNodeParentChange))
+      (!connectionsAllowed || (!handle && !port && (!p.drawMode || e.shiftKey))) &&
+      (nodeGridRef.current ||
+      (e.shiftKey && (p.onNodeGridDrop || p.onNodeParentChange)))
     ) {
       if (nodeGridRef.current && !nodeGridRef.current.ready) return;
       if (
@@ -1574,10 +1580,7 @@ function Canvas(props: CanvasProps) {
       }
       if (source) return;
     }
-    const handle = p.drawHandles && target.closest(".flow-sdk-handle");
-    const port =
-      p.drawHandles && target.closest<HTMLElement>(".flow-sdk-property-port");
-    if (!nodeGridRef.current && (p.drawMode || handle || port)) {
+    if (connectionsAllowed && (p.drawMode || handle || port)) {
       const model = viewport.renderedToModel(rendered);
       const row = p.drawMode ? hitTestProperty(model, "source") : null;
       const control = port || handle;
@@ -1973,10 +1976,11 @@ function Canvas(props: CanvasProps) {
   const ghostSource = ghost
     ? edgeBoxFor(ghost.source, ghost.sourceProperty)
     : null;
+  const connectionsAllowed = !nodeGridMode || !!props.nodeGridConnections;
 
   const rootClass = [
     "flow-sdk-canvas",
-    drawMode && !nodeGridMode ? "flow-sdk-draw" : "",
+    drawMode && connectionsAllowed ? "flow-sdk-draw" : "",
     isPerformanceMode ? "flow-sdk-perf" : "",
   ]
     .filter(Boolean)
@@ -1988,6 +1992,7 @@ function Canvas(props: CanvasProps) {
       className={rootClass}
       data-edge-mode={edgeMode}
       data-node-grid={nodeGridMode || undefined}
+      data-grid-connections={props.nodeGridConnections || undefined}
       onPointerDownCapture={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={(e) => endGesture(e, false)}
@@ -2043,7 +2048,7 @@ function Canvas(props: CanvasProps) {
           </g>
           <g className="flow-sdk-edges">
             {edgesVisible &&
-              !nodeGridMode &&
+              connectionsAllowed &&
               visibleEdges.map((e) => {
                 if (!edgeSequence.ready.has(e.id)) return null;
                 if (
@@ -2093,7 +2098,7 @@ function Canvas(props: CanvasProps) {
               })}
           </g>
           {edgesVisible &&
-            !nodeGridMode &&
+            connectionsAllowed &&
             ghost &&
             isEdgeVisible(ghost, edgeMode) &&
             ghostSource &&
@@ -2245,9 +2250,9 @@ function Canvas(props: CanvasProps) {
               }
               onMount={onHostMount}
               drawHandles={
-                props.drawHandles && !props.readOnly && !nodeGridMode
+                props.drawHandles && !props.readOnly && connectionsAllowed
               }
-              drawMode={drawMode && !nodeGridMode}
+              drawMode={drawMode && connectionsAllowed}
               connectedPorts={
                 new Set(
                   visibleEdges.flatMap((edge) => [

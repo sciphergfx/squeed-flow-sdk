@@ -383,6 +383,9 @@ export function FlowDiagramProvider({
         get bottomBarFill() {
           return configRef.current.bottomBarFill;
         },
+        get nodeGridConnections() {
+          return configRef.current.nodeGridConnections;
+        },
         get edgeType() {
           return configRef.current.edgeType;
         },
@@ -628,6 +631,7 @@ export function FlowDiagramProvider({
       config.bottomBarNavigation,
       config.bottomBarFill,
       config.nodeGridSpacing,
+      config.nodeGridConnections,
       config.compactPropertyLayout,
       compactPropertyLayout,
       stableCallbacks,

@@ -815,6 +815,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           rankSep={rankSep}
           edgeSep={edgeSep}
           nodeGridSpacing={config.nodeGridSpacing}
+          nodeGridConnections={config.nodeGridConnections}
           spacingFactor={spacingFactor}
           compactSpacingScale={spacing}
           layoutDebounce={layoutDebounce}
