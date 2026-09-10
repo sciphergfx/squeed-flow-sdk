@@ -1555,9 +1555,10 @@ function Canvas(props: CanvasProps) {
     const port =
       p.drawHandles && target.closest<HTMLElement>(".flow-sdk-property-port");
     if (
-      (!connectionsAllowed || (!handle && !port && (!p.drawMode || e.shiftKey))) &&
+      (!connectionsAllowed ||
+        (!handle && !port && (!p.drawMode || e.shiftKey))) &&
       (nodeGridRef.current ||
-      (e.shiftKey && (p.onNodeGridDrop || p.onNodeParentChange)))
+        (e.shiftKey && (p.onNodeGridDrop || p.onNodeParentChange)))
     ) {
       if (nodeGridRef.current && !nodeGridRef.current.ready) return;
       if (
