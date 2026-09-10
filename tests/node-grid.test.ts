@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { computeContainers } from "../src/engine/layout";
 import {
+  adjustGridDivider,
   arrangeNodesInGrid,
   detectNodeCollisions,
   type CollisionGeometry,
 } from "../src/engine/nodeCollisions";
-import { computeContainers } from "../src/engine/layout";
 
 function geometry(count = 8): CollisionGeometry {
   const nodes = Array.from({ length: count }, (_, index) => ({
@@ -27,6 +28,54 @@ function geometry(count = 8): CollisionGeometry {
     fixedIds: new Set(),
   };
 }
+
+test("section adjustments retain proportional widths and row heights across viewport sizes", () => {
+  const options = {
+    fill: true,
+    columns: 2,
+    gaps: 0,
+    adjustment: {
+      enabled: true,
+      sections: {
+        canvas: {
+          rows: [1, 3],
+          columns: [
+            [1, 3],
+            [2, 2],
+          ],
+        },
+      },
+    },
+  };
+  for (const viewportSize of [
+    { w: 1200, h: 800 },
+    { w: 360, h: 640 },
+  ]) {
+    const result = arrangeNodesInGrid(
+      { ...geometry(4), viewportSize },
+      options,
+    );
+    assert.equal(result.sizes!.get("node-0")!.w, viewportSize.w / 4);
+    assert.equal(result.sizes!.get("node-0")!.h, viewportSize.h / 4);
+    assert.equal(result.sizes!.get("node-1")!.w, (viewportSize.w * 3) / 4);
+    assert.equal(result.sizes!.get("node-2")!.w, viewportSize.w / 2);
+    assert.deepEqual(result.collisions, []);
+    const divider = result.dividers!.find(
+      (divider) => divider.axis === "x" && divider.row === 0,
+    )!;
+    const adjusted = adjustGridDivider(options, divider, viewportSize.w / 4);
+    assert.deepEqual(adjusted.adjustment!.sections!.canvas.columns![0], [2, 2]);
+    assert.deepEqual(options.adjustment.sections.canvas.columns[0], [1, 3]);
+  }
+  assert.throws(
+    () =>
+      arrangeNodesInGrid(
+        { ...geometry(4), viewportSize: { w: 800, h: 600 } },
+        { adjustment: { sections: { canvas: { rows: [0] } } } },
+      ),
+    /proportions/,
+  );
+});
 
 test("eight variable-sized nodes form a three-column grid without mutating input", () => {
   const input = geometry();
@@ -123,6 +172,54 @@ test("groups are arranged inside-out, preserving containment and avoiding siblin
     result.positions.get("node-2")!.y,
     result.positions.get("node-3")!.y,
   );
+});
+
+test("disconnected expanded parents remain within their Fill cells and respect grid gaps", () => {
+  const input = geometry(2);
+  input.nodes = [
+    { id: "parent" },
+    { id: "node-0", parent: "parent" },
+    { id: "node-1" },
+  ];
+  input.padding = () => 80;
+  input.minSize = () => ({ w: 400, h: 0 });
+  for (const viewportSize of [
+    { w: 390, h: 640 },
+    { w: 1440, h: 900 },
+  ]) {
+    const result = arrangeNodesInGrid(
+      { ...input, viewportSize },
+      { fill: true, columns: 2, gaps: 24 },
+    );
+    const containers = computeContainers(
+      input.nodes,
+      result.positions,
+      result.sizes!,
+      input.padding,
+      input.minSize,
+      result.sizes,
+    );
+    const parent = containers.get("parent")!;
+    const sibling = result.positions.get("node-1")!;
+    const siblingSize = result.sizes!.get("node-1")!;
+    assert.equal(parent.x1, 0);
+    assert.equal(parent.y1, 0);
+    assert.equal(parent.y2, viewportSize.h);
+    assert.equal(sibling.x - siblingSize.w / 2 - parent.x2, 24);
+    assert.deepEqual(result.collisions, []);
+    assert.deepEqual(
+      detectNodeCollisions(
+        {
+          ...input,
+          positions: result.positions,
+          sizes: result.sizes!,
+          fixedSizes: result.sizes,
+        },
+        { margin: 24 },
+      ),
+      [],
+    );
+  }
 });
 
 test("pinned sibling groups are skipped, not silently unpinned", () => {

@@ -28,6 +28,7 @@ export {
 } from "./components/FlowDiagramContext";
 export type { FlowDiagramContextValue } from "./components/FlowDiagramContext";
 export { FlowPort } from "./components/FlowPort";
+export { LoadingBorder } from "./components/LoadingBorder";
 export type { FlowPortProps } from "./components/FlowPort";
 export { default as FlowView } from "./components/FlowView";
 export { NodeFormPopover } from "./components/NodeFormPopover";

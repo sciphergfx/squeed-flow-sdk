@@ -2,6 +2,7 @@ import { Box, HStack } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { PiArrowsIn, PiArrowsOut, PiCode } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
+import { LoadingBorder } from "../components/LoadingBorder";
 import { ToolbarIconButton } from "../components/toolbarControls";
 import { ToolbarScrollContainer } from "../components/ToolbarScrollContainer";
 import { useCustomColors } from "../theme/useCustomColors";
@@ -85,6 +86,8 @@ export function ContentPreview({
     document?: string;
     error?: string;
   }>();
+  const [loadedPreview, setLoadedPreview] = useState<typeof preview>();
+  const [failedPreview, setFailedPreview] = useState<typeof preview>();
   useEffect(() => {
     if (format === "jsx") return;
     let cancelled = false;
@@ -141,6 +144,8 @@ export function ContentPreview({
     preview.editable === editable
       ? preview
       : undefined;
+  const frameFailed = !!current && current === failedPreview;
+  const loading = format !== "jsx" && !current?.error && !frameFailed && (!current || loadedPreview !== current);
   return (
     <div
       data-flow-content-preview=""
@@ -157,6 +162,7 @@ export function ContentPreview({
         position="relative"
         w="100%"
         h="100%"
+        aria-busy={format !== "jsx" ? loading : undefined}
         bg={format === "jsx" && colorMode === "dark" ? "gray.900" : "white"}
         onDoubleClick={(event) => {
           if (
@@ -319,29 +325,32 @@ export function ContentPreview({
               JSX content renderer is not available.
             </Box>
           )
-        ) : current?.error ? (
+        ) : current?.error || frameFailed ? (
           <pre role="alert" style={{ whiteSpace: "pre-wrap" }}>
-            {current.error}
+            {current?.error || "Content preview could not be loaded."}
           </pre>
         ) : current?.document ? (
           <iframe
+            key={current.document}
             ref={frame}
             title={`${format.toUpperCase()} content preview`}
             sandbox={editable ? "allow-scripts" : ""}
             allowFullScreen
             referrerPolicy="no-referrer"
             srcDoc={current.document}
+            onLoad={() => setLoadedPreview(current)}
+            onError={() => setFailedPreview(current)}
             style={{
               width: "100%",
               height: "100%",
               border: 0,
               display: "block",
               background: "white",
+              visibility: loading ? "hidden" : "visible",
             }}
           />
-        ) : (
-          <span role="status">Loading preview...</span>
-        )}
+        ) : null}
+        <LoadingBorder active={loading} label="Loading HTML content" />
       </Box>
     </div>
   );
