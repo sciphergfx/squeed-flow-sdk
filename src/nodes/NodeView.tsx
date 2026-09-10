@@ -58,9 +58,12 @@ const NodeView = ({
   const { background, border, colorText } = useCustomColors();
   const nodeRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => {
-    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    },
+    [],
+  );
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(
     editOnMount && !!config.editable && !config.readOnly,
@@ -139,12 +142,23 @@ const NodeView = ({
     hoverTimeoutRef.current = setTimeout(() => setIsHovered(true), 100);
   }, []);
 
-  const handleMouseLeave = useCallback((event: React.MouseEvent) => {
-    if (event.relatedTarget instanceof Node && nodeRef.current?.contains(event.relatedTarget)) return;
-    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-    if (hoverLeaveDelay) hoverTimeoutRef.current = setTimeout(() => setIsHovered(false), hoverLeaveDelay);
-    else setIsHovered(false);
-  }, [hoverLeaveDelay]);
+  const handleMouseLeave = useCallback(
+    (event: React.MouseEvent) => {
+      if (
+        event.relatedTarget instanceof Node &&
+        nodeRef.current?.contains(event.relatedTarget)
+      )
+        return;
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+      if (hoverLeaveDelay)
+        hoverTimeoutRef.current = setTimeout(
+          () => setIsHovered(false),
+          hoverLeaveDelay,
+        );
+      else setIsHovered(false);
+    },
+    [hoverLeaveDelay],
+  );
 
   const formAvailable = !!nodeData?.config?.form;
   const formHandlers = {

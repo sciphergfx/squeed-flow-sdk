@@ -18,7 +18,9 @@ export function ObjectNodeHeader({
   hasConfig,
   id,
   isActive,
+  isHovered,
   isEditing,
+  onSelect,
   onEditStart,
   onEditEnd,
   props,
@@ -38,7 +40,7 @@ export function ObjectNodeHeader({
       {(headerTitle ||
         hasContent ||
         data.config?.form ||
-        (isActive && onShowNativeIcon)) && (
+        ((isActive || isHovered) && onShowNativeIcon)) && (
         <Flex
           justify="flex-start"
           direction="row"
@@ -77,7 +79,7 @@ export function ObjectNodeHeader({
             onEditStart={onEditStart}
             onEditEnd={onEditEnd}
           />
-          {isActive && (hasContent || showIcon) && (
+          {(isActive || isHovered) && (hasContent || showIcon) && (
             <Box ml="auto" pl={6} flexShrink={0} data-flow-content-toggle="">
               <ToolbarTooltip label={toggleLabel}>
                 <ToolbarIconButton
@@ -90,6 +92,7 @@ export function ObjectNodeHeader({
                   color={colors.hextextColor}
                   onClick={(event) => {
                     event.stopPropagation();
+                    if (!isActive) onSelect(event);
                     if (showIcon) showIcon();
                     else setObjVisible(!objVisible);
                     callbacks.onNodeViewToggle?.(id);
