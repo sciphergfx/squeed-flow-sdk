@@ -70,8 +70,23 @@ export const ObjectNodeView = (props) => {
       />
     );
   return (
-    <NodeView {...props} data={{ ...props.data, description }} hoverLeaveDelay={hasContent || props.onShowIcon || onShowNativeIcon ? 350 : 0}>
-      {({ id, data, isActive, isHovered, isEditing, onSelect, onEditStart, onEditEnd }) => {
+    <NodeView
+      {...props}
+      data={{ ...props.data, description }}
+      hoverLeaveDelay={
+        hasContent || props.onShowIcon || onShowNativeIcon ? 350 : 0
+      }
+    >
+      {({
+        id,
+        data,
+        isActive,
+        isHovered,
+        isEditing,
+        onSelect,
+        onEditStart,
+        onEditEnd,
+      }) => {
         const colors = getColorVars(data, themeColor, colorMode);
         const headerTitle = data.label ?? data.headerTitle;
         const hasConfig = Object.entries(data.description || {}).length > 0;

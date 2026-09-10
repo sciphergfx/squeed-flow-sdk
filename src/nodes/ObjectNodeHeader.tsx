@@ -1,10 +1,10 @@
 import { Box, Flex, Icon } from "@chakra-ui/react";
 import { PiCircleFill } from "react-icons/pi";
+import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import {
   ToolbarIconButton,
   ToolbarTooltip,
 } from "../components/toolbarControls";
-import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import DynamicIcon from "../utils/DynamicIcon";
 import { EditableLabel } from "./EditableLabel";
 import { formatHeaderTitle } from "./objectViewTheme";
