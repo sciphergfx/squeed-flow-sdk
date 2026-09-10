@@ -146,7 +146,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
   const lineColor = edgeColor ? getColorHex(edgeColor) : autoLineColor;
 
   const initialViewport = useMemo(
-    () => config.initialViewport || { pan: { x: 0, y: 0 }, zoom: 0.01 },
+    () => config.initialViewport || { pan: { x: 0, y: 0 }, zoom: config.nodeGrid?.enabled && config.nodeGrid.options.fill ? 1 : 0.01 },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
@@ -816,6 +816,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           edgeSep={edgeSep}
           nodeGridSpacing={config.nodeGridSpacing}
           nodeGridConnections={config.nodeGridConnections}
+          initialNodeGrid={config.nodeGrid}
           spacingFactor={spacingFactor}
           compactSpacingScale={spacing}
           layoutDebounce={layoutDebounce}
@@ -823,7 +824,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           minZoom={config.minZoom ?? 0.01}
           maxZoom={config.maxZoom ?? 1.5}
           initialViewport={initialViewport}
-          fitOnInit={!config.initialViewport}
+          fitOnInit={!config.initialViewport && !(config.nodeGrid?.enabled && config.nodeGrid.options.fill)}
           readOnly={!!config.readOnly}
           containerStyle={containerStyle}
           lineColor={edgeColor ? lineColor : connectorColor}

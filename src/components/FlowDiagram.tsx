@@ -325,10 +325,10 @@ function FlowDiagramContent({
     structured,
     config.direction,
   ]);
-  const resolvedEdges: FlowDiagramEdge[] = [
-    ...(compiled?.edges ?? edges ?? []),
-    ...(structured?.edges ?? []),
-  ];
+  const resolvedEdges = useMemo<FlowDiagramEdge[]>(
+    () => [...(compiled?.edges ?? edges ?? []), ...(structured?.edges ?? [])],
+    [compiled?.edges, edges, structured?.edges],
+  );
 
   // Document mode: edits are applied to the JSON and surfaced via onJsonChange
   const viewCallbacks = useMemo(() => {

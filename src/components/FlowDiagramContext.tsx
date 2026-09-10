@@ -140,10 +140,12 @@ export function FlowDiagramProvider({
   const [isPinned, setIsPinned] = useState(true);
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
   const [nodeGridOptions, setLocalNodeGridOptions] =
-    useState<NodeGridOptions | null>(null);
+    useState<NodeGridOptions | null>(() => config.nodeGrid?.enabled
+      ? { ...config.nodeGrid.options, ...(config.nodeGrid.order ? { order: config.nodeGrid.order } : {}) }
+      : null);
   const nodeGridOptionsRef = useRef(nodeGridOptions);
   const [lastNodeGridOptions, setLastNodeGridOptions] =
-    useState<NodeGridOptions>({ gaps: 15, fill: false, padding: 0 });
+    useState<NodeGridOptions>(nodeGridOptions ?? config.nodeGrid?.options ?? { gaps: 15, fill: false, padding: 0 });
   const [fillRadiusEditedIds, setFillRadiusEditedIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -388,6 +390,9 @@ export function FlowDiagramProvider({
         },
         get nodeGridConnections() {
           return configRef.current.nodeGridConnections;
+        },
+        get nodeGrid() {
+          return configRef.current.nodeGrid;
         },
         get edgeType() {
           return configRef.current.edgeType;

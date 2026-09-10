@@ -110,6 +110,7 @@ export interface CanvasProps {
   edgeSep: number;
   nodeGridSpacing?: FlowDiagramConfig["nodeGridSpacing"];
   nodeGridConnections?: boolean;
+  initialNodeGrid?: FlowDiagramConfig["nodeGrid"];
   spacingFactor?: number;
   compactSpacingScale?: number;
   layoutDebounce: number;
@@ -356,7 +357,7 @@ function Canvas(props: CanvasProps) {
   const compactLayout = compactPropertyLayout;
   const previousCompactLayout = useRef(compactLayout);
   const [edgesVisible, setEdgesVisible] = useState(true);
-  const [nodeGridMode, setNodeGridMode] = useState(false);
+  const [nodeGridMode, setNodeGridMode] = useState(!!props.initialNodeGrid?.enabled);
   const [gridDividers, setGridDividers] = useState<GridDivider[]>([]);
   const nodeGridRef = useRef<{
     options: NodeGridOptions;
@@ -365,7 +366,14 @@ function Canvas(props: CanvasProps) {
     previousViewport: ViewportState;
     previousSize: Size;
     ready: boolean;
-  } | null>(null);
+  } | null>(props.initialNodeGrid?.enabled ? {
+    options: { ...props.initialNodeGrid.options, animate: false },
+    order: [...(props.initialNodeGrid.order ?? props.initialNodeGrid.options.order ?? nodes.map(node => node.id))],
+    previousPositions: new Map(),
+    previousViewport: initialViewport,
+    previousSize: { w: 0, h: 0 },
+    ready: false,
+  } : null);
   const [gridDrag, setGridDrag] = useState<{
     source: string;
     offset: Point;
@@ -1200,10 +1208,16 @@ function Canvas(props: CanvasProps) {
         }
         const complete = () => {
           if (grid) grid.ready = true;
+          if (grid && geometry.nodes.length && !hasLayoutRunRef.current) {
+            hasLayoutRunRef.current = true;
+            if (propsRef.current.fitOnInit !== false && !options.fill) engine.centerAndFit(50, false);
+            else if (propsRef.current.fitOnInit === false) viewport.transition(initialViewport, false);
+          }
           setLayoutRevision((revision) => revision + 1);
         };
         if (!result.sizes && gridSizesRef.current.size) clearGridSizes();
         if (
+          geometry.nodes.some(node => !positionsRef.current.has(node.id)) ||
           result.movedNodeIds.length ||
           result.bounds ||
           geometryFocus.current
@@ -1287,6 +1301,10 @@ function Canvas(props: CanvasProps) {
           clearGridSizes();
           propsRef.current.onNodeGridModeChange?.(null);
           setGridDrag(null);
+          if (!grid.previousPositions.size) {
+            scheduleLayout();
+            return;
+          }
           const target = new Map(
             [...positionsRef.current].map(([id, position]) => [
               id,
