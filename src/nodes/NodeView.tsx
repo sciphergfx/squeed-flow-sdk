@@ -1,5 +1,5 @@
 import { Box, HStack, IconButton } from "@chakra-ui/react";
-import { memo, useCallback, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { PiMinusBold, PiPlusBold } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import { FlowPort, type FlowPortProps } from "../components/FlowPort";
@@ -15,6 +15,7 @@ interface NodeViewProps {
   isParent?: boolean;
   onOpenView?: () => void;
   editOnMount?: boolean;
+  hoverLeaveDelay?: number;
   children: (args: NodeViewChildArgs) => React.ReactNode;
 }
 
@@ -25,6 +26,7 @@ interface NodeViewChildArgs {
   isHovered: boolean;
   isLowZoom: boolean;
   isEditing: boolean;
+  onSelect: (event: React.MouseEvent) => void;
   onEditStart: () => void;
   onEditEnd: () => void;
 }
@@ -36,6 +38,7 @@ const NodeView = ({
   isParent,
   onOpenView,
   editOnMount = false,
+  hoverLeaveDelay = 0,
 }: NodeViewProps) => {
   const {
     selectedNodeIds,
@@ -55,6 +58,9 @@ const NodeView = ({
   const { background, border, colorText } = useCustomColors();
   const nodeRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+  }, []);
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(
     editOnMount && !!config.editable && !config.readOnly,
@@ -133,10 +139,12 @@ const NodeView = ({
     hoverTimeoutRef.current = setTimeout(() => setIsHovered(true), 100);
   }, []);
 
-  const handleMouseLeave = useCallback(() => {
+  const handleMouseLeave = useCallback((event: React.MouseEvent) => {
+    if (event.relatedTarget instanceof Node && nodeRef.current?.contains(event.relatedTarget)) return;
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-    setIsHovered(false);
-  }, []);
+    if (hoverLeaveDelay) hoverTimeoutRef.current = setTimeout(() => setIsHovered(false), hoverLeaveDelay);
+    else setIsHovered(false);
+  }, [hoverLeaveDelay]);
 
   const formAvailable = !!nodeData?.config?.form;
   const formHandlers = {
@@ -306,6 +314,7 @@ const NodeView = ({
           isHovered,
           isLowZoom,
           isEditing,
+          onSelect: handleClick,
           onEditStart: () => setIsEditing(true),
           onEditEnd: () => setIsEditing(false),
         })}
@@ -545,6 +554,7 @@ const NodeView = ({
           isHovered,
           isLowZoom,
           isEditing,
+          onSelect: handleClick,
           onEditStart: () => setIsEditing(true),
           onEditEnd: () => setIsEditing(false),
         })}

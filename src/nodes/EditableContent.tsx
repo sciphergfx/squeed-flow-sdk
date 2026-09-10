@@ -225,7 +225,7 @@ export function EditableContent({
             },
           }}
         >
-          {source || (editable ? "Write your content here" : "")}
+          {source || (config.editable && !readOnly ? "Write your content here" : "")}
         </Markdown>
       </Box>
     );

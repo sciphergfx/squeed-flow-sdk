@@ -28,7 +28,7 @@ export function CompactNodeView({
 }: CompactNodeViewProps) {
   const { colorMode, callbacks } = useFlowDiagramContext();
   return (
-    <NodeView {...props}>
+    <NodeView {...props} hoverLeaveDelay={onExpand ? 350 : 0}>
       {(args) => (
         <Box position="relative">
           <RenderCompact {...args} />
@@ -51,6 +51,7 @@ export function CompactNodeView({
                   disabled={toggleDisabled}
                   onClick={(event) => {
                     event.stopPropagation();
+                    if (!args.isActive) args.onSelect(event);
                     onExpand();
                     callbacks.onNodeViewToggle?.(props.data.id);
                   }}
