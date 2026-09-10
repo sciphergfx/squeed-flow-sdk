@@ -12,6 +12,42 @@ Requires React 18 and Chakra UI 3.36 or later. Peer dependencies: `react`, `reac
 
 The Markdown renderer is a required peer supplied by the consuming application, not embedded in the SDK bundle. It remains part of the application's dependency footprint.
 
+## Ownership And Code Patterns
+
+The dependency direction is **Squeed app -> public SDK API**. This package owns
+reusable diagram behavior, not application document storage, project ownership,
+authentication, navigation, or backend transport. Consumers retain changed
+documents and application state. See the
+[app pattern](../squeed/README.md#ownership-and-code-patterns) and
+[contribution rules](CONTRIBUTING.md).
+
+| Location | Responsibility |
+| --- | --- |
+| `src/core` | Compilation, immutable document edits, and callback binding |
+| `src/engine` | Geometry, layout, viewport, gestures, and canvas rendering |
+| `src/components`, `src/nodes` | Public composition, shared controls, and node views |
+| `src/types`, `src/hooks`, `src/theme`, `src/utils` | Contracts and existing shared support |
+| `src/index.ts` | Consumer-facing exports; internal modules use local imports |
+| `examples`, `tests` | Consumer demonstrations, fixtures, and verification |
+
+Reuse the existing owner of a behavior instead of adding a parallel helper or
+host-specific branch. Keep pure document operations independent of UI and
+storage. Prefer design/configuration defaults over imperative presentation fixes.
+JSON edits use the shared callback binding and emit one immutable document;
+raw graph consumers own their mutations. Preserve read-only restrictions.
+
+Use PascalCase for components/types, `use...` for hooks, and lower-camel-case
+module names for non-component operations. Use exported types at public
+boundaries, distinguish type-only dependencies from runtime dependencies, and
+avoid runtime import cycles. Document public contract changes and test the
+owning module plus affected consumer behavior.
+
+The current tree still has runtime cycles between `squeedEdits`/`parentGroups`
+and `NodeForm`/`StructuredFieldControls`. SDK examples and the app's local
+examples are not automatically synchronized or interchangeable contracts.
+These remain structural review items; passing behavior or release tests alone
+does not establish that the code follows this pattern.
+
 ## Quick Start
 
 ```tsx
