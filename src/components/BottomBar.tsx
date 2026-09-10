@@ -1,5 +1,6 @@
 import { Box, Flex, HStack, Icon, Text } from "@chakra-ui/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   PiAlignCenterHorizontal,
   PiArrowCounterClockwise,
@@ -88,7 +89,9 @@ const DIRECTIONS: {
   },
 ];
 
-const BottomBar = () => {
+const BottomBar = ({
+  nodeGridControlsTarget,
+}: { nodeGridControlsTarget?: HTMLElement | null } = {}) => {
   const {
     engineRef,
     themeColor,
@@ -625,7 +628,12 @@ const BottomBar = () => {
                     </ToolbarTooltip>
                   </span>
 
-                  {config.bottomBarNavigation === false && <NodeGridControls />}
+                  {config.bottomBarNavigation === false &&
+                    (nodeGridControlsTarget === undefined ? (
+                      <NodeGridControls />
+                    ) : nodeGridControlsTarget ? (
+                      createPortal(<NodeGridControls />, nodeGridControlsTarget)
+                    ) : null)}
                   {config.bottomBarExtra && (
                     <>
                       {config.bottomBarNavigation !== false && (

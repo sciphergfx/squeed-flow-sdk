@@ -184,6 +184,7 @@ type Gesture =
   | {
       kind: "grid";
       pointerId: number;
+      captureTarget: Element;
       source: string;
       start: Point;
       moved: boolean;
@@ -1199,6 +1200,7 @@ function Canvas(props: CanvasProps) {
         }
         const complete = () => {
           if (grid) grid.ready = true;
+          setLayoutRevision((revision) => revision + 1);
         };
         if (!result.sizes && gridSizesRef.current.size) clearGridSizes();
         if (
@@ -1570,9 +1572,11 @@ function Canvas(props: CanvasProps) {
       const source =
         target.closest<HTMLElement>("[data-node-id]")?.dataset.nodeId;
       if (source && !placedNodes.current.has(source)) {
+        target.setPointerCapture(e.pointerId);
         gestureRef.current = {
           kind: "grid",
           pointerId: e.pointerId,
+          captureTarget: target,
           source,
           start: rendered,
           moved: false,
@@ -1675,7 +1679,6 @@ function Canvas(props: CanvasProps) {
           cancelAnim();
           geometryFocus.current = null;
           viewport.cancelAnimation();
-          e.currentTarget.setPointerCapture(e.pointerId);
         }
         g.moved = true;
         suppressClickRef.current = true;
@@ -1766,7 +1769,10 @@ function Canvas(props: CanvasProps) {
     if (g.pointerId !== e.pointerId) return;
     gestureRef.current = null;
     try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
+      (g.kind === "grid"
+        ? g.captureTarget
+        : e.currentTarget
+      ).releasePointerCapture(e.pointerId);
     } catch {
       /* already released */
     }
@@ -1906,6 +1912,11 @@ function Canvas(props: CanvasProps) {
     setGhost(null);
     setBoxRect(null);
     for (const pointerId of pointerIds) {
+      if (
+        gesture?.kind === "grid" &&
+        gesture.captureTarget.hasPointerCapture(pointerId)
+      )
+        gesture.captureTarget.releasePointerCapture(pointerId);
       if (rootRef.current?.hasPointerCapture(pointerId))
         rootRef.current.releasePointerCapture(pointerId);
     }

@@ -145,7 +145,11 @@ export function ContentPreview({
       ? preview
       : undefined;
   const frameFailed = !!current && current === failedPreview;
-  const loading = format !== "jsx" && !current?.error && !frameFailed && (!current || loadedPreview !== current);
+  const loading =
+    format !== "jsx" &&
+    !current?.error &&
+    !frameFailed &&
+    (!current || loadedPreview !== current);
   return (
     <div
       data-flow-content-preview=""

@@ -1,5 +1,5 @@
 import { Box, chakra, HStack, Icon, Input, Text } from "@chakra-ui/react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   PiArrowsInLineVertical,
   PiArrowsOutLineVertical,
@@ -592,9 +592,11 @@ export function BorderRadiusControl({
 export function NodeTools({
   ids,
   onClose,
+  afterLabel,
 }: {
   ids: string[];
   onClose: () => void;
+  afterLabel?: ReactNode;
 }) {
   const {
     callbacks,
@@ -725,6 +727,7 @@ export function NodeTools({
           {ids.length} selected
         </Text>
       )}
+      {afterLabel}
       {show("typeView") && (
         <ToolbarSelect
           aria-label="Type view"

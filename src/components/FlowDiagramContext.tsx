@@ -383,6 +383,9 @@ export function FlowDiagramProvider({
         get bottomBarFill() {
           return configRef.current.bottomBarFill;
         },
+        get bottomBarCollision() {
+          return configRef.current.bottomBarCollision;
+        },
         get nodeGridConnections() {
           return configRef.current.nodeGridConnections;
         },
@@ -630,6 +633,7 @@ export function FlowDiagramProvider({
       config.bottomBarCollapsed,
       config.bottomBarNavigation,
       config.bottomBarFill,
+      config.bottomBarCollision,
       config.nodeGridSpacing,
       config.nodeGridConnections,
       config.compactPropertyLayout,

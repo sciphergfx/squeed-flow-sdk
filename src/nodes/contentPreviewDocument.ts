@@ -1,5 +1,4 @@
 import DOMPurify from "dompurify";
-import runtime from "virtual:content-preview-runtime";
 import type { ContentFormat } from "../types";
 
 export async function contentPreviewDocument(
@@ -28,7 +27,10 @@ export async function contentPreviewDocument(
       FORBID_ATTR: ["href", "action", "formaction", "srcset"],
     });
   } else {
-    const ts = await import("typescript");
+    const [ts, { default: runtime }] = await Promise.all([
+      import("typescript"),
+      import("virtual:content-preview-runtime"),
+    ]);
     const result = ts.transpileModule(source, {
       fileName: "preview.tsx",
       reportDiagnostics: true,

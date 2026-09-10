@@ -28,9 +28,9 @@ export {
 } from "./components/FlowDiagramContext";
 export type { FlowDiagramContextValue } from "./components/FlowDiagramContext";
 export { FlowPort } from "./components/FlowPort";
-export { LoadingBorder } from "./components/LoadingBorder";
 export type { FlowPortProps } from "./components/FlowPort";
 export { default as FlowView } from "./components/FlowView";
+export { LoadingBorder } from "./components/LoadingBorder";
 export { NodeFormPopover } from "./components/NodeFormPopover";
 export { NodeIconPicker } from "./components/NodeIconPicker";
 export {
@@ -133,16 +133,16 @@ export {
 } from "./theme/useCustomColors";
 
 // Hooks (for consumers building custom editable node content)
-export { useEdgeProximity } from "./hooks/useEdgeProximity";
-export { useStopPropagation } from "./hooks/useStopPropagation";
-export { EditableLabel } from "./nodes/EditableLabel";
-export { default as NodeView } from "./nodes/NodeView";
 export {
   copySelection,
   duplicateSelection,
   getSelectionRoots,
   reparentNode,
 } from "./core/selectionEdits";
+export { useEdgeProximity } from "./hooks/useEdgeProximity";
+export { useStopPropagation } from "./hooks/useStopPropagation";
+export { EditableLabel } from "./nodes/EditableLabel";
+export { default as NodeView } from "./nodes/NodeView";
 
 // Utilities
 export {
@@ -159,6 +159,7 @@ export type {
 export { default as DynamicIcon } from "./utils/DynamicIcon";
 
 // Types
+export { validateGridAdjustment } from "./engine/nodeCollisions";
 export type {
   NodeCollision,
   NodeCollisionOptions,
@@ -167,14 +168,11 @@ export type {
   NodeGridOptions,
   ResolveNodeCollisionsOptions,
 } from "./engine/nodeCollisions";
-export { validateGridAdjustment } from "./engine/nodeCollisions";
 export type {
   BackgroundPattern,
   BackgroundVariant,
   BottomBarRenderProps,
   BuiltInEdgeType,
-  NodeContent,
-  JsxContentRendererProps,
   CustomEdgeContext,
   CustomEdgeFactory,
   CustomEdgeGeometry,
@@ -189,9 +187,11 @@ export type {
   FlowEdgeProperties,
   FlowEngine,
   FlowNodeCreationRequest,
+  JsxContentRendererProps,
   LayoutAlgorithm,
   NodeAlignment,
   NodeAnimationVariant,
+  NodeContent,
   NodeOverlayAction,
   NodeOverlayProps,
   NodeSelectionModifiers,

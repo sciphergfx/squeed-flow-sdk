@@ -28,17 +28,19 @@ export function NodeGridControls() {
     engineRef.current?.setNodeGridMode(true, { ...options, ...next });
   return (
     <>
-      <LabeledToolbarToggle
-        label="Collision mode"
-        hideLabel
-        icon={<PiGridFour size={20} />}
-        checked={nodeGridOptions !== null}
-        onChange={(enabled) => {
-          if (callbacks.onNodeGridModeRequest?.(enabled, options) === true)
-            return;
-          engineRef.current?.setNodeGridMode(enabled, options);
-        }}
-      />
+      {config.bottomBarCollision !== false && (
+        <LabeledToolbarToggle
+          label="Collision mode"
+          hideLabel
+          icon={<PiGridFour size={20} />}
+          checked={nodeGridOptions !== null}
+          onChange={(enabled) => {
+            if (callbacks.onNodeGridModeRequest?.(enabled, options) === true)
+              return;
+            engineRef.current?.setNodeGridMode(enabled, options);
+          }}
+        />
+      )}
       {nodeGridOptions && (
         <HStack
           role="group"

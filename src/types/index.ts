@@ -253,6 +253,7 @@ export interface FlowDiagramConfig {
   minZoom?: number;
   nodeGridSpacing?: "collision" | "layout";
   nodeGridConnections?: boolean;
+  bottomBarCollision?: boolean;
   bottomBarFill?: boolean;
   /** Max zoom level (default: 1.5) */
   maxZoom?: number;

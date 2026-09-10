@@ -1,4 +1,6 @@
 import { Flex } from "@chakra-ui/react";
+import { useRef } from "react";
+import { useCloseOnDeselect } from "../hooks/useCloseOnDeselect";
 import { useNodeViewActions } from "../hooks/useNodeViewActions";
 import { CompactNodeView } from "./CompactNodeView";
 import { EditableContent } from "./EditableContent";
@@ -30,14 +32,24 @@ export const ObjectNodeView = (props) => {
   } = useObjectInspection(props);
   const actions = useNodeViewActions();
   const iconVisible = actions.getNodeViewMode(props.data.id) === "icon-label";
-  const canShowNativeIcon =
+  const hasContent =
     !props.onShowIcon &&
-    !props.data.config?.parentContainer &&
-    typeof props.data.config?.content !== "string" &&
-    !(
-      props.data.config?.contentFormat === "jsx" &&
-      Array.isArray(props.data.config?.content)
-    );
+    (typeof props.data.config?.content === "string" ||
+      (props.data.config?.contentFormat === "jsx" &&
+        Array.isArray(props.data.config?.content)));
+  const openedFromIcon = useRef(iconVisible);
+  if (iconVisible) openedFromIcon.current = true;
+  useCloseOnDeselect(
+    props.data.id,
+    hasContent &&
+      !props.data.config?.parentContainer &&
+      actions.allNodesIconLabel &&
+      !iconVisible &&
+      openedFromIcon.current,
+    () => actions.setNodeViewMode(props.data.id, "icon-label"),
+  );
+  const canShowNativeIcon =
+    !props.onShowIcon && !props.data.config?.parentContainer && !hasContent;
   const onShowNativeIcon = canShowNativeIcon
     ? () => actions.setNodeViewMode(props.data.id, "icon-label")
     : undefined;
@@ -66,11 +78,6 @@ export const ObjectNodeView = (props) => {
         const uniformKeyWidth = calculateUniformKeyWidth(data.description);
         const icon = props.data?.config?.icon;
         const content = props.data?.config?.content;
-        const hasContent =
-          (typeof content === "string" ||
-            (props.data?.config?.contentFormat === "jsx" &&
-              Array.isArray(content))) &&
-          !props.onShowIcon;
         const borderRadius = data?.viewProps?.borderRadius ?? "53px";
         const borderProps = getNodeBorderProps(
           data?.viewProps,
