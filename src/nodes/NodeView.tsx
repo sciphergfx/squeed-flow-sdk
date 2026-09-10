@@ -22,6 +22,7 @@ interface NodeViewChildArgs {
   id: string;
   data: any;
   isActive: boolean;
+  isHovered: boolean;
   isLowZoom: boolean;
   isEditing: boolean;
   onEditStart: () => void;
@@ -302,6 +303,7 @@ const NodeView = ({
           id,
           data: nodeData,
           isActive,
+          isHovered,
           isLowZoom,
           isEditing,
           onEditStart: () => setIsEditing(true),
@@ -540,6 +542,7 @@ const NodeView = ({
           id,
           data: nodeData,
           isActive,
+          isHovered,
           isLowZoom,
           isEditing,
           onEditStart: () => setIsEditing(true),

@@ -32,7 +32,7 @@ export function CompactNodeView({
       {(args) => (
         <Box position="relative">
           <RenderCompact {...args} />
-          {onExpand && args.isActive && (
+          {onExpand && (args.isHovered || args.isActive) && (
             <Box
               position="absolute"
               top="-24px"
