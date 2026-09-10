@@ -218,7 +218,13 @@ export function FlowDiagramProvider({
   const spacing =
     typeof requestedSpacing === "number"
       ? Number.isFinite(requestedSpacing)
-        ? Math.min(2, Math.max(0.5, requestedSpacing))
+        ? Math.min(
+            2,
+            Math.max(
+              config.nodeGridSpacing === "layout" ? 0 : 0.5,
+              requestedSpacing,
+            ),
+          )
         : 1
       : requestedSpacing === "compact"
         ? 0.5
@@ -374,6 +380,9 @@ export function FlowDiagramProvider({
         get bottomBarNavigation() {
           return configRef.current.bottomBarNavigation;
         },
+        get bottomBarFill() {
+          return configRef.current.bottomBarFill;
+        },
         get edgeType() {
           return configRef.current.edgeType;
         },
@@ -397,6 +406,9 @@ export function FlowDiagramProvider({
         },
         get minZoom() {
           return configRef.current.minZoom;
+        },
+        get nodeGridSpacing() {
+          return configRef.current.nodeGridSpacing;
         },
         get maxZoom() {
           return configRef.current.maxZoom;
@@ -614,6 +626,8 @@ export function FlowDiagramProvider({
       config.bottomBarExtra,
       config.bottomBarCollapsed,
       config.bottomBarNavigation,
+      config.bottomBarFill,
+      config.nodeGridSpacing,
       config.compactPropertyLayout,
       compactPropertyLayout,
       stableCallbacks,

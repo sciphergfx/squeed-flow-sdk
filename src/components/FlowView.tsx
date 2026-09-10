@@ -96,13 +96,18 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
   const { edgeSep, rankSep, spacingFactor } = useMemo(() => {
     const base = calculateOptimalSpacing(nodes.length);
-    const scale = spacing < 1 ? 0.3 + 0.7 * spacing : 0.5 + 0.5 * spacing;
+    const scale =
+      config.nodeGridSpacing === "layout" && spacing < 0.5
+        ? spacing * 1.3
+        : spacing < 1
+          ? 0.3 + 0.7 * spacing
+          : 0.5 + 0.5 * spacing;
     return {
       edgeSep: base.edgeSep * scale,
       rankSep: base.rankSep * scale,
       spacingFactor: 1.3 + (spacing - 1) * (spacing < 1 ? 0.4 : 0.3),
     };
-  }, [nodes.length, spacing]);
+  }, [nodes.length, spacing, config.nodeGridSpacing]);
 
   const { bgColor: highlightColor } = useThemeContentColors(themeColor);
   const {
@@ -715,9 +720,25 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     [callbacks, setSelectedNodeIds],
   );
 
+  const pendingEdgeFocus = useRef<{
+    source: string;
+    target: string;
+    edgeIds: Set<string>;
+  } | null>(null);
   const handleEdgeDraw = useCallback(
-    (source: string, target: string, properties?: FlowEdgeProperties) =>
-      callbacks.onEdgeCreate?.(source, target, properties),
+    (source: string, target: string, properties?: FlowEdgeProperties) => {
+      pendingEdgeFocus.current = {
+        source,
+        target,
+        edgeIds: new Set(edgeByIdRef.current.keys()),
+      };
+      try {
+        callbacks.onEdgeCreate?.(source, target, properties);
+      } catch (error) {
+        pendingEdgeFocus.current = null;
+        throw error;
+      }
+    },
     [callbacks],
   );
 
@@ -793,6 +814,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           edgeReveal={config.disableAnimations ? undefined : config.edgeReveal}
           rankSep={rankSep}
           edgeSep={edgeSep}
+          nodeGridSpacing={config.nodeGridSpacing}
           spacingFactor={spacingFactor}
           compactSpacingScale={spacing}
           layoutDebounce={layoutDebounce}
@@ -811,6 +833,27 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           onInit={handleInit}
           onLayoutComplete={(currentEngine) => {
             callbacks.onLayoutComplete?.(currentEngine);
+            const connection = pendingEdgeFocus.current;
+            if (connection) {
+              if (
+                !nodeByIdRef.current.has(connection.source) ||
+                !nodeByIdRef.current.has(connection.target)
+              )
+                pendingEdgeFocus.current = null;
+              else if (
+                edges.some(
+                  ({ data }) =>
+                    data.source === connection.source &&
+                    data.target === connection.target &&
+                    !connection.edgeIds.has(data.id),
+                ) &&
+                currentEngine.getNodeBox(connection.source) &&
+                currentEngine.getNodeBox(connection.target)
+              ) {
+                pendingEdgeFocus.current = null;
+                currentEngine.focusConnections(connection.source);
+              }
+            }
             const pending = pendingDrawFocus.current;
             if (!pending) return;
             if (!nodeByIdRef.current.has(pending.sourceId)) {

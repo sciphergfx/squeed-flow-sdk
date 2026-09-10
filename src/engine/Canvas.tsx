@@ -29,8 +29,10 @@ import {
 import { isEdgeVisible, isNodeVisible, visibleLayoutGraph } from "./edgeMode";
 import EdgeView from "./EdgeView";
 import type { TaxiDir } from "./geometry";
+import { GridAdjustmentHandles } from "./GridAdjustmentHandles";
 import { placeEdgeLabels } from "./labelPlacement";
 import { computeContainers, runDagreLayout } from "./layout";
+import type { GridDivider } from "./nodeCollisions";
 import {
   arrangeNodesInGrid,
   detectNodeCollisions,
@@ -38,8 +40,6 @@ import {
   type CollisionGeometry,
   type NodeGridOptions,
 } from "./nodeCollisions";
-import type { GridDivider } from "./nodeCollisions";
-import { GridAdjustmentHandles } from "./GridAdjustmentHandles";
 import NodeHost from "./NodeHost";
 import { surfaceBox, type NodeSurface } from "./nodeSurface";
 import type { PropertyRow } from "./propertyRows";
@@ -108,6 +108,7 @@ export interface CanvasProps {
   edgeReveal?: FlowDiagramConfig["edgeReveal"];
   rankSep: number;
   edgeSep: number;
+  nodeGridSpacing?: FlowDiagramConfig["nodeGridSpacing"];
   spacingFactor?: number;
   compactSpacingScale?: number;
   layoutDebounce: number;
@@ -579,6 +580,7 @@ function Canvas(props: CanvasProps) {
     spacingFactor,
     compactSpacingScale,
     disableAnimations,
+    props.nodeGridSpacing,
   ]);
 
   useEffect(
@@ -677,6 +679,7 @@ function Canvas(props: CanvasProps) {
         new Map([...sizesRef.current, ...gridSizes]),
         (id) => containerStyle(id).padding,
         containerMinSize,
+        gridSizes,
       ),
     [layoutGraph.nodes, positions, containerStyle, labelById, gridSizes],
   );
@@ -757,10 +760,10 @@ function Canvas(props: CanvasProps) {
 
   const elementsBBox = (): Rect | null => {
     const rects: Rect[] = [];
-    positionsRef.current.forEach((p, id) => {
+    positionsRef.current.forEach((_position, id) => {
       if (containersRef.current.has(id)) return;
-      const s = sizesRef.current.get(id) || DEFAULT_SIZE;
-      rects.push(boxToRect({ x: p.x, y: p.y, w: s.w, h: s.h }));
+      const box = boxFor(id);
+      if (box) rects.push(boxToRect(box));
     });
     containersRef.current.forEach((r) => rects.push(r));
     try {
@@ -893,6 +896,19 @@ function Canvas(props: CanvasProps) {
 
   // ── engine handle ──
   const engine = useMemo<FlowEngine>(() => {
+    const gridOptions = (options: NodeGridOptions): NodeGridOptions => {
+      const current = propsRef.current;
+      if (current.nodeGridSpacing !== "layout") return options;
+      const horizontal =
+        current.direction === "LR" || current.direction === "RL";
+      return {
+        ...options,
+        gaps: {
+          x: horizontal ? current.rankSep : current.edgeSep,
+          y: horizontal ? current.edgeSep : current.rankSep,
+        },
+      };
+    };
     const collisionGeometry = (): CollisionGeometry => {
       const current = propsRef.current;
       const visibleNodes = layoutGraphRef.current.nodes.filter(
@@ -1136,6 +1152,7 @@ function Canvas(props: CanvasProps) {
           {
             ...geometry,
             sizes: new Map([...geometry.sizes, ...gridSizesRef.current]),
+            fixedSizes: gridSizesRef.current,
           },
           options,
         );
@@ -1174,7 +1191,7 @@ function Canvas(props: CanvasProps) {
             (first, second) => order.get(first.id)! - order.get(second.id)!,
           );
         }
-        const result = arrangeNodesInGrid(geometry, options);
+        const result = arrangeNodesInGrid(geometry, gridOptions(options));
         setGridDividers(result.dividers ?? []);
         if (grid) {
           grid.ready = false;
@@ -1211,13 +1228,11 @@ function Canvas(props: CanvasProps) {
         )
           throw new Error("Invalid grid node order.");
         if (enabled) {
-          arrangeNodesInGrid(collisionGeometry(), options);
-          if (
+          arrangeNodesInGrid(collisionGeometry(), gridOptions(options));
+          const fitGrid =
             !nodeGridRef.current ||
-            (nodeGridRef.current.options.fill && !options.fill)
-          )
-            geometryFocus.current = null;
-          else geometryFocus.current = null;
+            (nodeGridRef.current.options.fill && !options.fill);
+          geometryFocus.current = null;
           if (!nodeGridRef.current) {
             nodeGridRef.current = {
               options,
@@ -1236,11 +1251,7 @@ function Canvas(props: CanvasProps) {
               ready: false,
             };
           }
-          if (
-            !nodeGridRef.current.ready ||
-            (nodeGridRef.current.options.fill && !options.fill)
-          )
-            engine.centerAndFit(80, options.animate, true);
+          if (fitGrid) engine.centerAndFit(80, options.animate, true);
           if (options.order) nodeGridRef.current.order = [...options.order];
           nodeGridRef.current.options = { ...options };
           setNodeGridMode(true);
@@ -1259,7 +1270,15 @@ function Canvas(props: CanvasProps) {
             [...positionsRef.current.keys()].every((id) =>
               grid.previousPositions.has(id),
             );
-          if (!restoreViewport) engine.centerAndFit(80, options.animate, true);
+          if (restoreViewport)
+            geometryFocus.current = () =>
+              viewport.transition(
+                grid.previousViewport,
+                options.animate !== false &&
+                  !propsRef.current.disableAnimations &&
+                  !propsRef.current.isPerformanceMode,
+              );
+          else engine.centerAndFit(80, options.animate, true);
           nodeGridRef.current = null;
           setNodeGridMode(false);
           clearGridSizes();
@@ -1275,11 +1294,9 @@ function Canvas(props: CanvasProps) {
             target,
             options.animate,
             undefined,
-            restoreViewport
-              ? (animate) => viewport.transition(grid.previousViewport, animate)
-              : undefined,
             undefined,
-            !restoreViewport,
+            undefined,
+            true,
           );
         }
       },
@@ -1296,7 +1313,7 @@ function Canvas(props: CanvasProps) {
         const first = geometry.nodes.find((node) => node.id === source);
         const second = geometry.nodes.find((node) => node.id === target);
         if (!first || !second || first.parent !== second.parent) return false;
-        const result = arrangeNodesInGrid(geometry, grid.options);
+        const result = arrangeNodesInGrid(geometry, gridOptions(grid.options));
         if (
           result.skippedNodeIds.includes(source) ||
           result.skippedNodeIds.includes(target)

@@ -251,6 +251,8 @@ export interface FlowDiagramConfig {
   parentNodeStyle?: ParentNodeStyle;
   /** Min zoom level (default: 0.01) */
   minZoom?: number;
+  nodeGridSpacing?: "collision" | "layout";
+  bottomBarFill?: boolean;
   /** Max zoom level (default: 1.5) */
   maxZoom?: number;
   /** Initial viewport position and zoom */

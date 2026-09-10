@@ -58,21 +58,32 @@ export function useRecentToolbarAction(element: ReactElement, enabled = true) {
   };
 }
 
-export function RecentToolbarAction({ divider }: { divider: ReactElement }) {
+export function RecentToolbarAction({
+  divider,
+  visibleActions = [],
+}: {
+  divider: ReactElement;
+  visibleActions?: string[];
+}) {
   const store = useContext(RecentToolbarContext)!;
   const action = useSyncExternalStore(
     store.subscribe,
     store.getSnapshot,
     () => null,
   );
+  const duplicate =
+    action &&
+    visibleActions.includes(
+      (action.props as { "aria-label"?: string })["aria-label"] ?? "",
+    );
   return (
     <RecentToolbarContext.Provider value={null}>
       <span
         data-recent-toolbar-action=""
-        style={{ display: action ? "contents" : "none" }}
+        style={{ display: action && !duplicate ? "contents" : "none" }}
       >
-        {action && divider}
-        {action}
+        {action && !duplicate && divider}
+        {!duplicate && action}
       </span>
     </RecentToolbarContext.Provider>
   );

@@ -101,6 +101,7 @@ const BottomBar = () => {
     edgeMode,
     allNodesIconLabel,
     setAllNodesIconLabel,
+    nodeGridOptions,
     selectedNodeIds,
     setSelectedNodeIds,
     selectedEdgeId,
@@ -488,6 +489,17 @@ const BottomBar = () => {
                   </ToolbarTooltip>
                   {isCollapsed && (
                     <RecentToolbarAction
+                      visibleActions={
+                        nodeGridOptions
+                          ? [
+                              "Collision mode",
+                              "Fill",
+                              ...(nodeGridOptions.fill
+                                ? ["Grid adjustment"]
+                                : []),
+                            ]
+                          : []
+                      }
                       divider={
                         <Icon
                           mx={-1}
@@ -613,6 +625,7 @@ const BottomBar = () => {
                     </ToolbarTooltip>
                   </span>
 
+                  {config.bottomBarNavigation === false && <NodeGridControls />}
                   {config.bottomBarExtra && (
                     <>
                       {config.bottomBarNavigation !== false && (
@@ -638,7 +651,19 @@ const BottomBar = () => {
                     aria-orientation="vertical"
                   />
                   <CompactPropertyLayoutToggle />
+                </span>
+                <span
+                  style={{
+                    display:
+                      config.bottomBarNavigation === false ||
+                      (isCollapsed && !nodeGridOptions)
+                        ? "none"
+                        : "contents",
+                  }}
+                >
                   <NodeGridControls />
+                </span>
+                <span style={{ display: isCollapsed ? "none" : "contents" }}>
                   <Icon
                     mx={-1}
                     as={PiLineVerticalThin}

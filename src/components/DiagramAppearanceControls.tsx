@@ -1,23 +1,23 @@
-import {
-  PiArrowsOutCardinal,
-  PiGridFour,
-  PiDotsNine,
-  PiSelection,
-  PiSquareFill,
-  PiLineSegments,
-  PiBezierCurve,
-} from "react-icons/pi";
+import styled from "@emotion/styled";
 import {
   forwardRef,
   useId,
   type ComponentProps,
   type CSSProperties,
 } from "react";
-import styled from "@emotion/styled";
-import type { BackgroundVariant } from "../types";
+import {
+  PiArrowsOutCardinal,
+  PiBezierCurve,
+  PiDotsNine,
+  PiGridFour,
+  PiLineSegments,
+  PiSelection,
+  PiSquareFill,
+} from "react-icons/pi";
 import { useCustomColors } from "../theme/useCustomColors";
+import type { BackgroundVariant } from "../types";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
-import { ToolbarSelect, ToolbarDivider } from "./toolbarControls";
+import { ToolbarDivider, ToolbarSelect } from "./toolbarControls";
 
 const StyledRangeInput = styled.input`
   appearance: none;
@@ -172,6 +172,7 @@ export function DiagramAppearanceControls() {
     setBackgroundVariant,
     callbacks,
     readOnly,
+    config,
   } = useFlowDiagramContext();
   const BackgroundIcon = backgrounds[backgroundVariant].icon;
   return (
@@ -189,7 +190,7 @@ export function DiagramAppearanceControls() {
           <SliderContent
             label="Spacing"
             inputLabel="Node spacing percentage"
-            min={50}
+            min={config.nodeGridSpacing === "layout" ? 0 : 50}
             max={200}
             value={Math.round(spacing * 100)}
             displayValue={`${Math.round(spacing * 100)}%`}

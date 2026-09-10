@@ -7,13 +7,12 @@ import {
   PiBoundingBox,
   PiBracketsCurly,
   PiCards,
+  PiCopy,
+  PiCopySimple,
   PiEraser,
   PiFastForward,
   PiFileSvg,
   PiGridFour,
-  PiCopy,
-  PiCopySimple,
-  PiStack,
   PiLineSegment,
   PiLineSegments,
   PiLineVerticalThin,
@@ -21,6 +20,7 @@ import {
   PiSpinnerGap,
   PiSquare,
   PiSquareFill,
+  PiStack,
   PiTextAlignLeft,
   PiTextT,
   PiTrash,
@@ -596,17 +596,38 @@ export function NodeTools({
   ids: string[];
   onClose: () => void;
 }) {
-  const { callbacks, colorMode, themeColor, config, setNodeViewMode } =
-    useFlowDiagramContext();
+  const {
+    callbacks,
+    colorMode,
+    themeColor,
+    config,
+    setNodeViewMode,
+    nodeViewModes,
+  } = useFlowDiagramContext();
   const { colorText, colorInactive } = useCustomColors();
   const { nodeById, parentIds } = useFlowData();
   const { palette, show } = useToolbarConfig();
   const single = ids.length === 1;
   const [selectionError, setSelectionError] = useState("");
   const data = single ? nodeById.get(ids[0])?.data : undefined;
-  const typeViews = ids.map(
-    (id) => nodeById.get(id)?.data.config?.typeView ?? "",
-  );
+  const typeViews = ids.map((id) => {
+    const node = nodeById.get(id)?.data;
+    const view = node?.config?.typeView ?? "";
+    if (
+      view === "object" &&
+      node?.config?.content !== undefined &&
+      nodeViewModes[id] !== "properties"
+    )
+      return "content";
+    if (
+      view === "icon-label" &&
+      node?.viewProps?.bgColor === "transparent" &&
+      node?.viewProps?.borderWidth === 0 &&
+      node?.viewProps?.outline === false
+    )
+      return "media";
+    return view;
+  });
   const mixedTypeView = typeViews.some((view) => view !== typeViews[0]);
   const typeView = mixedTypeView ? "mixed" : (typeViews[0] ?? "");
   const typeViewChoices = [
@@ -632,6 +653,8 @@ export function NodeTools({
     const node = nodeById.get(id)?.data;
     return (
       node &&
+      node.config?.typeView !== "grid" &&
+      node.config?.typeView !== "parent" &&
       (parentIds.has(id) ||
         node.config?.parentContainer ||
         Object.prototype.hasOwnProperty.call(
@@ -722,8 +745,26 @@ export function NodeTools({
             )?.view;
             if (!view) return;
             each((id) => {
+              const node = nodeById.get(id)?.data;
+              if (value === "media") {
+                callbacks.onNodeColorChange?.(id, "bg", "transparent");
+                callbacks.onNodeBorderColorChange?.(id, "#00000000");
+                callbacks.onNodeBorderWidthChange?.(id, 0);
+                callbacks.onNodeOutlineChange?.(id, false);
+              } else if (typeViews[ids.indexOf(id)] === "media") {
+                callbacks.onNodeColorChange?.(id, "bg", "");
+                callbacks.onNodeBorderColorChange?.(id, "");
+                callbacks.onNodeBorderWidthChange?.(id, undefined);
+              }
+              if (value === "content" && node?.config?.content === undefined)
+                callbacks.onNodeContentChange?.(id, "");
               callbacks.onNodeTypeViewChange?.(id, view);
-              setNodeViewMode(id, "default");
+              setNodeViewMode(
+                id,
+                value === "object" && node?.config?.content !== undefined
+                  ? "properties"
+                  : "default",
+              );
               callbacks.onNodeViewToggle?.(id);
             });
           }}

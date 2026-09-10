@@ -142,6 +142,7 @@ export interface CollisionGeometry {
   padding: (id: string) => number;
   minSize: (id: string) => { w: number; h: number } | undefined;
   fixedIds: ReadonlySet<string>;
+  fixedSizes?: ReadonlyMap<string, { w: number; h: number }>;
   viewportSize?: { w: number; h: number };
 }
 
@@ -184,6 +185,7 @@ function collisionTree(geometry: CollisionGeometry) {
 function collisionBoxes(
   geometry: CollisionGeometry,
   positions: Map<string, Point>,
+  fixedSizes = geometry.fixedSizes,
 ) {
   const boxes = computeContainers(
     geometry.nodes,
@@ -191,6 +193,7 @@ function collisionBoxes(
     geometry.sizes,
     geometry.padding,
     geometry.minSize,
+    fixedSizes,
   );
   for (const node of geometry.nodes) {
     if (boxes.has(node.id)) continue;
@@ -421,6 +424,11 @@ function fillNodeGrid(
         const cellWidth = (columnSpace * columnWeights[column]) / columnTotal;
         const descendants = children.get(id);
         if (descendants) {
+          positions.set(id, {
+            x: left + cellWidth / 2,
+            y: top + cellHeight / 2,
+          });
+          sizes.set(id, { w: cellWidth, h: cellHeight });
           const pad = Math.min(
             geometry.padding(id),
             Math.max(0, (Math.min(cellWidth, cellHeight) - 1) / 2),
@@ -473,8 +481,8 @@ function fillNodeGrid(
   place(roots, bounds);
   const movedNodeIds = [...positions]
     .filter(([id, position]) => {
-      const before = geometry.positions.get(id)!;
-      return position.x !== before.x || position.y !== before.y;
+      const before = geometry.positions.get(id);
+      return !before || position.x !== before.x || position.y !== before.y;
     })
     .map(([id]) => id);
   return {
@@ -486,7 +494,7 @@ function fillNodeGrid(
     dividers,
     collisions: collisionsIn(
       groups,
-      collisionBoxes({ ...geometry, sizes }, positions),
+      collisionBoxes({ ...geometry, sizes }, positions, sizes),
       0,
     ),
   };

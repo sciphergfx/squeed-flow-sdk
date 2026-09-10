@@ -1,5 +1,5 @@
 import { Box, HStack, Text } from "@chakra-ui/react";
-import { PiArrowsOut, PiGridFour, PiArrowsHorizontal } from "react-icons/pi";
+import { PiArrowsHorizontal, PiArrowsOut, PiGridFour } from "react-icons/pi";
 import type { NodeGridOptions } from "../engine/nodeCollisions";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
@@ -15,6 +15,7 @@ export function NodeGridControls() {
     readOnly,
     themeColor,
     callbacks,
+    config,
   } = useFlowDiagramContext();
   const { colorText, colorInactive } = useCustomColors();
   const options = nodeGridOptions ?? lastNodeGridOptions;
@@ -45,46 +46,70 @@ export function NodeGridControls() {
           gap={2}
           flexShrink={0}
         >
-          <Box width="96px" flexShrink={0} display="flex" alignItems="center">
-            <RangeInput
-              type="range"
-              aria-label="Collision gap"
-              title={`Gap: ${gap}`}
-              min={0}
-              max={maximum}
-              step={5}
-              value={gap}
-              disabled={readOnly}
-              style={{
-                color: getChakraColorHex(themeColor),
-                backgroundImage: `linear-gradient(to right, currentColor ${(gap / maximum) * 100}%, ${getChakraColorHex(colorInactive)} ${(gap / maximum) * 100}%)`,
+          {nodeGridOptions && config.nodeGridSpacing !== "layout" && (
+            <>
+              <Box
+                width="96px"
+                flexShrink={0}
+                display="flex"
+                alignItems="center"
+              >
+                <RangeInput
+                  type="range"
+                  aria-label="Collision gap"
+                  title={`Gap: ${gap}`}
+                  min={0}
+                  max={maximum}
+                  step={5}
+                  value={gap}
+                  disabled={readOnly}
+                  style={{
+                    color: getChakraColorHex(themeColor),
+                    backgroundImage: `linear-gradient(to right, currentColor ${(gap / maximum) * 100}%, ${getChakraColorHex(colorInactive)} ${(gap / maximum) * 100}%)`,
+                  }}
+                  onChange={(event) =>
+                    change({ gaps: Number(event.target.value) })
+                  }
+                />
+              </Box>
+              <Text
+                fontSize="xs"
+                color={colorText}
+                width="28px"
+                textAlign="right"
+                fontVariantNumeric="tabular-nums"
+              >
+                {gap}
+              </Text>
+            </>
+          )}
+          {config.bottomBarFill !== false && (
+            <LabeledToolbarToggle
+              label="Fill"
+              hideLabel
+              helper="Fill available canvas space"
+              icon={<PiArrowsOut size={18} />}
+              checked={!!nodeGridOptions && !!options.fill}
+              onChange={(fill) => {
+                if (
+                  !nodeGridOptions &&
+                  callbacks.onNodeGridModeRequest?.(true, {
+                    ...options,
+                    fill,
+                  }) === true
+                )
+                  return;
+                if (
+                  fill &&
+                  callbacks.onNodeGridFillRequest?.({ ...options, fill }) ===
+                    true
+                )
+                  return;
+                change({ fill });
               }}
-              onChange={(event) => change({ gaps: Number(event.target.value) })}
             />
-          </Box>
-          <Text
-            fontSize="xs"
-            color={colorText}
-            width="28px"
-            textAlign="right"
-            fontVariantNumeric="tabular-nums"
-          >
-            {gap}
-          </Text>
-          <LabeledToolbarToggle
-            label="Fill"
-            icon={<PiArrowsOut size={18} />}
-            checked={!!options.fill}
-            onChange={(fill) => {
-              if (
-                fill &&
-                callbacks.onNodeGridFillRequest?.({ ...options, fill }) === true
-              )
-                return;
-              change({ fill });
-            }}
-          />
-          {options.fill && (
+          )}
+          {nodeGridOptions && options.fill && (
             <LabeledToolbarToggle
               label="Grid adjustment"
               hideLabel

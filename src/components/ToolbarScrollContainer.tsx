@@ -92,7 +92,21 @@ export function ToolbarScrollContainer({
       maxW="100%"
       flex="0 1 auto"
       borderRadius={framed ? "30px" : 0}
-      css={{ ...(framed ? getInteractionSurface(color, `var(--chakra-colors-${border.replace(".", "-")})`) : {}), ...(framed || startElement ? { "--flow-toolbar-start-width": startElement ? `${startElementWidth}px` : "0px" } : {}) }}
+      css={{
+        ...(framed
+          ? getInteractionSurface(
+              color,
+              `var(--chakra-colors-${border.replace(".", "-")})`,
+            )
+          : {}),
+        ...(framed || startElement
+          ? {
+              "--flow-toolbar-start-width": startElement
+                ? `${startElementWidth}px`
+                : "0px",
+            }
+          : {}),
+      }}
     >
       <Box
         ref={scrollRef}
@@ -124,7 +138,12 @@ export function ToolbarScrollContainer({
           pointerEvents="none"
           borderRadius={side === "left" ? "30px 0 0 30px" : "0 30px 30px 0"}
           style={{
-            [side]: side === "right" && endElement ? 44 : side === "left" && startElement ? startElementWidth : 0,
+            [side]:
+              side === "right" && endElement
+                ? 44
+                : side === "left" && startElement
+                  ? startElementWidth
+                  : 0,
             opacity: hidden[side] ? 1 : 0,
             background: `linear-gradient(to ${side === "left" ? "right" : "left"}, ${color}, transparent)`,
           }}
@@ -145,7 +164,16 @@ export function ToolbarScrollContainer({
         </Box>
       )}
       {startElement && (
-        <Box position="absolute" left="6px" top={0} h="50px" w={`${startElementWidth - 12}px`} display="flex" alignItems="center" justifyContent="center">
+        <Box
+          position="absolute"
+          left="6px"
+          top={0}
+          h="50px"
+          w={`${startElementWidth - 12}px`}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
           {startElement}
         </Box>
       )}

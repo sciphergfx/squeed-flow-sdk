@@ -165,6 +165,7 @@ export function computeContainers(
   sizes: Map<string, { w: number; h: number }>,
   padding: (id: string) => number,
   minSize: (id: string) => { w: number; h: number } | undefined,
+  fixedSizes?: ReadonlyMap<string, { w: number; h: number }>,
 ): Map<string, Rect> {
   const children = new Map<string, string[]>();
   const byId = new Map(nodes.map((n) => [n.id, n]));
@@ -184,6 +185,17 @@ export function computeContainers(
 
   const rects = new Map<string, Rect>();
   for (const pid of order) {
+    const fixedSize = fixedSizes?.get(pid);
+    const position = positions.get(pid);
+    if (fixedSize && position) {
+      rects.set(pid, {
+        x1: position.x - fixedSize.w / 2,
+        y1: position.y - fixedSize.h / 2,
+        x2: position.x + fixedSize.w / 2,
+        y2: position.y + fixedSize.h / 2,
+      });
+      continue;
+    }
     let r: Rect | null = null;
     for (const cid of children.get(pid) || []) {
       let cr: Rect | undefined = rects.get(cid);
