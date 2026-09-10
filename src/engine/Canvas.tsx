@@ -357,7 +357,9 @@ function Canvas(props: CanvasProps) {
   const compactLayout = compactPropertyLayout;
   const previousCompactLayout = useRef(compactLayout);
   const [edgesVisible, setEdgesVisible] = useState(true);
-  const [nodeGridMode, setNodeGridMode] = useState(!!props.initialNodeGrid?.enabled);
+  const [nodeGridMode, setNodeGridMode] = useState(
+    !!props.initialNodeGrid?.enabled,
+  );
   const [gridDividers, setGridDividers] = useState<GridDivider[]>([]);
   const nodeGridRef = useRef<{
     options: NodeGridOptions;
@@ -366,14 +368,22 @@ function Canvas(props: CanvasProps) {
     previousViewport: ViewportState;
     previousSize: Size;
     ready: boolean;
-  } | null>(props.initialNodeGrid?.enabled ? {
-    options: { ...props.initialNodeGrid.options, animate: false },
-    order: [...(props.initialNodeGrid.order ?? props.initialNodeGrid.options.order ?? nodes.map(node => node.id))],
-    previousPositions: new Map(),
-    previousViewport: initialViewport,
-    previousSize: { w: 0, h: 0 },
-    ready: false,
-  } : null);
+  } | null>(
+    props.initialNodeGrid?.enabled
+      ? {
+          options: { ...props.initialNodeGrid.options, animate: false },
+          order: [
+            ...(props.initialNodeGrid.order ??
+              props.initialNodeGrid.options.order ??
+              nodes.map((node) => node.id)),
+          ],
+          previousPositions: new Map(),
+          previousViewport: initialViewport,
+          previousSize: { w: 0, h: 0 },
+          ready: false,
+        }
+      : null,
+  );
   const [gridDrag, setGridDrag] = useState<{
     source: string;
     offset: Point;
@@ -1210,14 +1220,16 @@ function Canvas(props: CanvasProps) {
           if (grid) grid.ready = true;
           if (grid && geometry.nodes.length && !hasLayoutRunRef.current) {
             hasLayoutRunRef.current = true;
-            if (propsRef.current.fitOnInit !== false && !options.fill) engine.centerAndFit(50, false);
-            else if (propsRef.current.fitOnInit === false) viewport.transition(initialViewport, false);
+            if (propsRef.current.fitOnInit !== false && !options.fill)
+              engine.centerAndFit(50, false);
+            else if (propsRef.current.fitOnInit === false)
+              viewport.transition(initialViewport, false);
           }
           setLayoutRevision((revision) => revision + 1);
         };
         if (!result.sizes && gridSizesRef.current.size) clearGridSizes();
         if (
-          geometry.nodes.some(node => !positionsRef.current.has(node.id)) ||
+          geometry.nodes.some((node) => !positionsRef.current.has(node.id)) ||
           result.movedNodeIds.length ||
           result.bounds ||
           geometryFocus.current
