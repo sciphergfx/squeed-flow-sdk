@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -162,17 +163,29 @@ export function FlowDiagramProvider({
     Record<string, NodeViewMode>
   >({});
   const nodeViewModes = config.nodeViewModes ?? localNodeViewModes;
-  const [nodeRadiusPreviews, setNodeRadiusPreviews] = useState<Record<string, number>>({});
-  const setNodeRadiusPreview = useCallback((ids: string[], radius: number | undefined) => {
-    setNodeRadiusPreviews((current) => {
-      const next = { ...current };
-      for (const id of ids) {
-        if (radius === undefined) delete next[id];
-        else next[id] = radius;
-      }
-      return next;
-    });
-  }, []);
+  const [localAllNodesIconLabel, setLocalAllNodesIconLabel] = useState<
+    boolean | undefined
+  >(config.allNodesIconLabel);
+  useEffect(
+    () => setLocalAllNodesIconLabel(config.allNodesIconLabel),
+    [config.allNodesIconLabel],
+  );
+  const [nodeRadiusPreviews, setNodeRadiusPreviews] = useState<
+    Record<string, number>
+  >({});
+  const setNodeRadiusPreview = useCallback(
+    (ids: string[], radius: number | undefined) => {
+      setNodeRadiusPreviews((current) => {
+        const next = { ...current };
+        for (const id of ids) {
+          if (radius === undefined) delete next[id];
+          else next[id] = radius;
+        }
+        return next;
+      });
+    },
+    [],
+  );
   const iconLabelNodes = [...dataValue.nodeById.values()].filter(
     (node) =>
       dataValue.parentIds.has(node.data.id) ||
@@ -181,15 +194,17 @@ export function FlowDiagramProvider({
       node.data.type === "arrayView" ||
       node.data.type === "grid",
   );
+  const inferredIconLabel = iconLabelNodes.every((node) =>
+    dataValue.parentIds.has(node.data.id) || node.data.config?.parentContainer
+      ? !!node.data.config?.collapsed
+      : nodeViewModes[node.data.id] === "icon-label" ||
+        (node.data.type === "grid" &&
+          nodeViewModes[node.data.id] === undefined) ||
+        (node.data.config?.labelBelow &&
+          nodeViewModes[node.data.id] !== "properties"),
+  );
   const allNodesIconLabel =
-    !!iconLabelNodes.length &&
-    iconLabelNodes.every((node) =>
-      dataValue.parentIds.has(node.data.id) || node.data.config?.parentContainer
-        ? !!node.data.config?.collapsed
-        : nodeViewModes[node.data.id] === "icon-label" ||
-          (node.data.config?.labelBelow &&
-            nodeViewModes[node.data.id] !== "properties"),
-    );
+    localAllNodesIconLabel ?? config.allNodesIconLabel ?? inferredIconLabel;
   const [localSpacing, setSpacing] = useState<NodeSpacing>("normal");
   const [localEdgeRadius, setEdgeRadius] = useState<number>();
   const requestedEdgeRadius = config.edgeRadius ?? localEdgeRadius;
@@ -458,18 +473,20 @@ export function FlowDiagramProvider({
     (nodeId: string, mode: NodeViewMode) => {
       if (mode !== "default" && mode !== "properties" && mode !== "icon-label")
         throw new Error("Unknown node view mode.");
+      setLocalAllNodesIconLabel((current) => current ?? allNodesIconLabel);
       setLocalNodeViewModes((current) =>
         current[nodeId] === mode ? current : { ...current, [nodeId]: mode },
       );
       callbacks.onNodeViewModeChange?.(nodeId, mode);
     },
-    [callbacks.onNodeViewModeChange],
+    [callbacks.onNodeViewModeChange, allNodesIconLabel],
   );
 
   const value: FlowDiagramContextValue = useMemo(
     () => ({
       allNodesIconLabel,
       setAllNodesIconLabel: (enabled) => {
+        setLocalAllNodesIconLabel(enabled);
         if (!enabled)
           for (const [id, mode] of Object.entries(nodeViewModes))
             if (mode === "icon-label" && !dataValue.nodeById.has(id))

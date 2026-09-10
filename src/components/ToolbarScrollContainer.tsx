@@ -7,11 +7,17 @@ export function ToolbarScrollContainer({
   background,
   border,
   endElement,
+  startElement,
+  startElementWidth = 44,
+  framed = true,
 }: {
   children: ReactNode;
   background: string;
   border: string;
   endElement?: ReactNode;
+  startElement?: ReactNode;
+  startElementWidth?: number;
+  framed?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hidden, setHidden] = useState({ left: false, right: false });
@@ -51,8 +57,8 @@ export function ToolbarScrollContainer({
       if (
         event.defaultPrevented ||
         event.ctrlKey ||
-        event.deltaX !== 0 ||
-        !event.deltaY ||
+        (framed && event.deltaX !== 0) ||
+        !(event.deltaX || event.deltaY) ||
         element.scrollWidth <= element.clientWidth
       )
         return;
@@ -63,7 +69,7 @@ export function ToolbarScrollContainer({
           : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
             ? element.clientWidth
             : 1;
-      element.scrollLeft += event.deltaY * unit;
+      element.scrollLeft += (event.deltaX || event.deltaY) * unit;
     };
     const observer = new ResizeObserver(update);
     observer.observe(element);
@@ -81,15 +87,12 @@ export function ToolbarScrollContainer({
   return (
     <Box
       position="relative"
-      bg={background}
+      bg={framed ? background : "transparent"}
       minW={0}
       maxW="100%"
       flex="0 1 auto"
-      borderRadius="30px"
-      css={getInteractionSurface(
-        color,
-        `var(--chakra-colors-${border.replace(".", "-")})`,
-      )}
+      borderRadius={framed ? "30px" : 0}
+      css={{ ...(framed ? getInteractionSurface(color, `var(--chakra-colors-${border.replace(".", "-")})`) : {}), ...(framed || startElement ? { "--flow-toolbar-start-width": startElement ? `${startElementWidth}px` : "0px" } : {}) }}
     >
       <Box
         ref={scrollRef}
@@ -100,6 +103,7 @@ export function ToolbarScrollContainer({
         overflowX="auto"
         overflowY="hidden"
         mr={endElement ? "44px" : undefined}
+        ml={startElement ? `${startElementWidth}px` : undefined}
         borderRadius="inherit"
         css={{
           scrollbarWidth: "none",
@@ -120,7 +124,7 @@ export function ToolbarScrollContainer({
           pointerEvents="none"
           borderRadius={side === "left" ? "30px 0 0 30px" : "0 30px 30px 0"}
           style={{
-            [side]: side === "right" && endElement ? 44 : 0,
+            [side]: side === "right" && endElement ? 44 : side === "left" && startElement ? startElementWidth : 0,
             opacity: hidden[side] ? 1 : 0,
             background: `linear-gradient(to ${side === "left" ? "right" : "left"}, ${color}, transparent)`,
           }}
@@ -138,6 +142,11 @@ export function ToolbarScrollContainer({
           justifyContent="center"
         >
           {endElement}
+        </Box>
+      )}
+      {startElement && (
+        <Box position="absolute" left="6px" top={0} h="50px" w={`${startElementWidth - 12}px`} display="flex" alignItems="center" justifyContent="center">
+          {startElement}
         </Box>
       )}
     </Box>

@@ -233,6 +233,7 @@ export interface FlowDiagramConfig {
   edgeMode?: EdgeMode;
   compactPropertyLayout?: boolean;
   nodeViewModes?: Record<string, NodeViewMode>;
+  allNodesIconLabel?: boolean;
   workflowContract?: import("../core/workflowContract").WorkflowContract;
   /** Layout algorithm */
   layout?: LayoutAlgorithm;

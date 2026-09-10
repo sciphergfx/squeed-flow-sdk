@@ -359,6 +359,8 @@ function Canvas(props: CanvasProps) {
     options: NodeGridOptions;
     order: string[];
     previousPositions: Map<string, Point>;
+    previousViewport: ViewportState;
+    previousSize: Size;
     ready: boolean;
   } | null>(null);
   const [gridDrag, setGridDrag] = useState<{
@@ -1214,7 +1216,7 @@ function Canvas(props: CanvasProps) {
             !nodeGridRef.current ||
             (nodeGridRef.current.options.fill && !options.fill)
           )
-            engine.centerAndFit(80, options.animate, true);
+            geometryFocus.current = null;
           else geometryFocus.current = null;
           if (!nodeGridRef.current) {
             nodeGridRef.current = {
@@ -1226,9 +1228,19 @@ function Canvas(props: CanvasProps) {
                   { ...position },
                 ]),
               ),
+              previousViewport: {
+                zoom: viewport.zoom,
+                pan: { ...viewport.pan },
+              },
+              previousSize: { ...viewport.size },
               ready: false,
             };
           }
+          if (
+            !nodeGridRef.current.ready ||
+            (nodeGridRef.current.options.fill && !options.fill)
+          )
+            engine.centerAndFit(80, options.animate, true);
           if (options.order) nodeGridRef.current.order = [...options.order];
           nodeGridRef.current.options = { ...options };
           setNodeGridMode(true);
@@ -1240,7 +1252,14 @@ function Canvas(props: CanvasProps) {
         } else {
           const grid = nodeGridRef.current;
           if (!grid) return;
-          engine.centerAndFit(80, options.animate, true);
+          const restoreViewport =
+            viewport.size.w === grid.previousSize.w &&
+            viewport.size.h === grid.previousSize.h &&
+            positionsRef.current.size === grid.previousPositions.size &&
+            [...positionsRef.current.keys()].every((id) =>
+              grid.previousPositions.has(id),
+            );
+          if (!restoreViewport) engine.centerAndFit(80, options.animate, true);
           nodeGridRef.current = null;
           setNodeGridMode(false);
           clearGridSizes();
@@ -1256,9 +1275,11 @@ function Canvas(props: CanvasProps) {
             target,
             options.animate,
             undefined,
+            restoreViewport
+              ? (animate) => viewport.transition(grid.previousViewport, animate)
+              : undefined,
             undefined,
-            undefined,
-            true,
+            !restoreViewport,
           );
         }
       },

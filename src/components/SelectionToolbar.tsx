@@ -453,8 +453,13 @@ export function BorderRadiusControl({
   ids: string[];
   showDivider?: boolean;
 }) {
-  const { callbacks, config, nodeGridOptions, fillRadiusEditedIds, setNodeRadiusPreview } =
-    useFlowDiagramContext();
+  const {
+    callbacks,
+    config,
+    nodeGridOptions,
+    fillRadiusEditedIds,
+    setNodeRadiusPreview,
+  } = useFlowDiagramContext();
   const { colorInactive } = useCustomColors();
   const { nodeById } = useFlowData();
   const [draft, setDraft] = useState<number>();
@@ -467,8 +472,10 @@ export function BorderRadiusControl({
     const next = pending.current;
     pending.current = undefined;
     if (!next) return;
-    if (!latest.current.readOnly) for (const id of next.ids)
-      if (latest.current.nodeById.has(id)) latest.current.callbacks.onNodeBorderRadiusChange?.(id, next.radius);
+    if (!latest.current.readOnly)
+      for (const id of next.ids)
+        if (latest.current.nodeById.has(id))
+          latest.current.callbacks.onNodeBorderRadiusChange?.(id, next.radius);
     setNodeRadiusPreview(next.ids, undefined);
     setDraft(undefined);
   };
@@ -477,7 +484,10 @@ export function BorderRadiusControl({
   useEffect(() => {
     const save = () => flush.current();
     window.addEventListener("pagehide", save);
-    return () => { window.removeEventListener("pagehide", save); save(); };
+    return () => {
+      window.removeEventListener("pagehide", save);
+      save();
+    };
   }, []);
   const radii = ids.map((id) =>
     nodeGridOptions?.fill && !fillRadiusEditedIds.has(id)
@@ -488,7 +498,10 @@ export function BorderRadiusControl({
   const value = draft ?? radii[0] ?? 0;
   const update = (radius: number | undefined) => {
     if (config.readOnly) return;
-    if (radius !== undefined && ids.every((id) => nodeById.get(id)?.data.type === "grid")) {
+    if (
+      radius !== undefined &&
+      ids.every((id) => nodeById.get(id)?.data.type === "grid")
+    ) {
       setDraft(radius);
       setNodeRadiusPreview(ids, radius);
       pending.current = { ids: [...ids], radius };
@@ -543,11 +556,13 @@ export function BorderRadiusControl({
                 step={1}
                 value={value}
                 displayValue={
-                  draft !== undefined ? `${draft}px` : mixed
-                    ? "Mixed"
-                    : radii[0] === undefined
-                      ? "Default"
-                      : `${value}px`
+                  draft !== undefined
+                    ? `${draft}px`
+                    : mixed
+                      ? "Mixed"
+                      : radii[0] === undefined
+                        ? "Default"
+                        : `${value}px`
                 }
                 onChange={update}
                 onChangeEnd={commit}
