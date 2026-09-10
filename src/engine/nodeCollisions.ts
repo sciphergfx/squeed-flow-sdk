@@ -13,7 +13,10 @@ export interface ResolveNodeCollisionsOptions extends NodeCollisionOptions {
 export interface NodeGridOptions extends NodeCollisionOptions {
   adjustment?: {
     enabled?: boolean;
-    sections?: Record<string, { rows?: number[]; columns?: number[][]; members?: string[][] }>;
+    sections?: Record<
+      string,
+      { rows?: number[]; columns?: number[][]; members?: string[][] }
+    >;
   };
   order?: string[];
   columns?: number;
@@ -117,9 +120,19 @@ export function validateGridAdjustment(
           section.columns.length > 10000 ||
           !section.columns.every(validWeights))) ||
       (section.members !== undefined &&
-        (!Array.isArray(section.members) || section.members.length > 10000 ||
-          !section.members.every(row => Array.isArray(row) && row.length > 0 && row.length <= 10000 && row.every(member => typeof member === "string" && member.length > 0)) ||
-          new Set(section.members.flat()).size !== section.members.flat().length))
+        (!Array.isArray(section.members) ||
+          section.members.length > 10000 ||
+          !section.members.every(
+            (row) =>
+              Array.isArray(row) &&
+              row.length > 0 &&
+              row.length <= 10000 &&
+              row.every(
+                (member) => typeof member === "string" && member.length > 0,
+              ),
+          ) ||
+          new Set(section.members.flat()).size !==
+            section.members.flat().length))
     )
       throw new RangeError("Invalid grid section proportions.");
   }
@@ -259,11 +272,19 @@ export function detectNodeCollisions(
   );
 }
 
-function gridMemberRows(ids: string[], options: NodeGridOptions, section: string, columns: number): string[][] {
+function gridMemberRows(
+  ids: string[],
+  options: NodeGridOptions,
+  section: string,
+  columns: number,
+): string[][] {
   const available = new Set(ids);
-  const rows = (options.adjustment?.sections?.[section]?.members ?? []).map(row => row.filter(id => available.delete(id))).filter(row => row.length);
-  const remaining = ids.filter(id => available.has(id));
-  for (let index = 0; index < remaining.length; index += columns) rows.push(remaining.slice(index, index + columns));
+  const rows = (options.adjustment?.sections?.[section]?.members ?? [])
+    .map((row) => row.filter((id) => available.delete(id)))
+    .filter((row) => row.length);
+  const remaining = ids.filter((id) => available.has(id));
+  for (let index = 0; index < remaining.length; index += columns)
+    rows.push(remaining.slice(index, index + columns));
   return rows;
 }
 
@@ -276,47 +297,82 @@ export function insertGridMember(
 ): NodeGridOptions | undefined {
   if (source === target) return;
   const { groups, leaves } = collisionTree(geometry);
-  const siblings = groups.find(group => group.includes(source) && group.includes(target));
-  if (!siblings || siblings.some(id => geometry.fixedIds.has(id) || (leaves.get(id) ?? []).some(leaf => geometry.fixedIds.has(leaf)))) return;
+  const siblings = groups.find(
+    (group) => group.includes(source) && group.includes(target),
+  );
+  if (
+    !siblings ||
+    siblings.some(
+      (id) =>
+        geometry.fixedIds.has(id) ||
+        (leaves.get(id) ?? []).some((leaf) => geometry.fixedIds.has(leaf)),
+    )
+  )
+    return;
   const boxes = collisionBoxes(geometry, geometry.positions);
-  if (siblings.some(id => !boxes.has(id))) return;
-  const sectionId = geometry.nodes.find(node => node.id === source)?.parent ?? "canvas";
+  if (siblings.some((id) => !boxes.has(id))) return;
+  const sectionId =
+    geometry.nodes.find((node) => node.id === source)?.parent ?? "canvas";
   const section = options.adjustment?.sections?.[sectionId];
   const memberRows: string[][] = [];
   const ordered = [...siblings].sort((first, second) => {
     const firstBox = boxes.get(first)!;
     const secondBox = boxes.get(second)!;
-    const difference = (firstBox.y1 + firstBox.y2 - secondBox.y1 - secondBox.y2) / 2;
+    const difference =
+      (firstBox.y1 + firstBox.y2 - secondBox.y1 - secondBox.y2) / 2;
     return Math.abs(difference) > 1 ? difference : firstBox.x1 - secondBox.x1;
   });
   for (const id of ordered) {
     const row = memberRows.at(-1);
     const box = boxes.get(id)!;
     const previous = row && boxes.get(row[0])!;
-    if (previous && Math.abs(box.y1 + box.y2 - previous.y1 - previous.y2) < 2) row!.push(id);
+    if (previous && Math.abs(box.y1 + box.y2 - previous.y1 - previous.y2) < 2)
+      row!.push(id);
     else memberRows.push([id]);
   }
   const rows = memberRows.map((members, index) => ({
     weight: section?.rows?.[index] ?? 1,
-    cells: members.map((id, column) => ({ id, weight: section?.columns?.[index]?.[column] ?? 1 })),
+    cells: members.map((id, column) => ({
+      id,
+      weight: section?.columns?.[index]?.[column] ?? 1,
+    })),
   }));
-  for (const row of rows) row.cells = row.cells.filter(cell => cell.id !== source);
-  const populated = rows.filter(row => row.cells.length);
-  const rowIndex = populated.findIndex(row => row.cells.some(cell => cell.id === target));
+  for (const row of rows)
+    row.cells = row.cells.filter((cell) => cell.id !== source);
+  const populated = rows.filter((row) => row.cells.length);
+  const rowIndex = populated.findIndex((row) =>
+    row.cells.some((cell) => cell.id === target),
+  );
   const row = populated[rowIndex];
   if (!row) return;
-  if (side === "above" || side === "below") populated.splice(rowIndex + (side === "below" ? 1 : 0), 0, { weight: 1, cells: [{ id: source, weight: 1 }] });
-  else row.cells.splice(row.cells.findIndex(cell => cell.id === target) + (side === "after" ? 1 : 0), 0, { id: source, weight: 1 });
-  const members = populated.map(row => row.cells.map(cell => cell.id));
+  if (side === "above" || side === "below")
+    populated.splice(rowIndex + (side === "below" ? 1 : 0), 0, {
+      weight: 1,
+      cells: [{ id: source, weight: 1 }],
+    });
+  else
+    row.cells.splice(
+      row.cells.findIndex((cell) => cell.id === target) +
+        (side === "after" ? 1 : 0),
+      0,
+      { id: source, weight: 1 },
+    );
+  const members = populated.map((row) => row.cells.map((cell) => cell.id));
   if (JSON.stringify(members) === JSON.stringify(memberRows)) return;
   return {
     ...options,
-    adjustment: { ...options.adjustment, sections: { ...options.adjustment?.sections, [sectionId]: {
-      ...section,
-      members,
-      rows: populated.map(row => row.weight),
-      columns: populated.map(row => row.cells.map(cell => cell.weight)),
-    } } },
+    adjustment: {
+      ...options.adjustment,
+      sections: {
+        ...options.adjustment?.sections,
+        [sectionId]: {
+          ...section,
+          members,
+          rows: populated.map((row) => row.weight),
+          columns: populated.map((row) => row.cells.map((cell) => cell.weight)),
+        },
+      },
+    },
   };
 }
 
@@ -367,9 +423,10 @@ export function arrangeNodesInGrid(
       items.length,
       options.columns ?? Math.ceil(Math.sqrt(items.length)),
     );
-    const section = geometry.nodes.find(node => node.id === items[0])?.parent ?? "canvas";
+    const section =
+      geometry.nodes.find((node) => node.id === items[0])?.parent ?? "canvas";
     const memberRows = gridMemberRows(items, options, section, columns);
-    const rowColumns = Math.max(...memberRows.map(row => row.length));
+    const rowColumns = Math.max(...memberRows.map((row) => row.length));
     const stepX = cellWidth + gaps.x;
     const stepY = cellHeight + gaps.y;
     const centers = bounds.map((box) => ({
@@ -384,26 +441,28 @@ export function arrangeNodesInGrid(
       (Math.min(...centers.map((point) => point.y)) +
         Math.max(...centers.map((point) => point.y))) /
       2;
-    memberRows.forEach((row, rowIndex) => row.forEach((id, columnIndex) => {
-      const box = boxes.get(id)!;
-      const offset = {
-        x:
-          centerX +
-          (columnIndex - (rowColumns - 1) / 2) * stepX -
-          (box.x1 + box.x2) / 2,
-        y:
-          centerY +
-          (rowIndex - (memberRows.length - 1) / 2) * stepY -
-          (box.y1 + box.y2) / 2,
-      };
-      for (const leaf of leaves.get(id) ?? []) {
-        const position = positions.get(leaf)!;
-        positions.set(leaf, {
-          x: position.x + offset.x,
-          y: position.y + offset.y,
-        });
-      }
-    }));
+    memberRows.forEach((row, rowIndex) =>
+      row.forEach((id, columnIndex) => {
+        const box = boxes.get(id)!;
+        const offset = {
+          x:
+            centerX +
+            (columnIndex - (rowColumns - 1) / 2) * stepX -
+            (box.x1 + box.x2) / 2,
+          y:
+            centerY +
+            (rowIndex - (memberRows.length - 1) / 2) * stepY -
+            (box.y1 + box.y2) / 2,
+        };
+        for (const leaf of leaves.get(id) ?? []) {
+          const position = positions.get(leaf)!;
+          positions.set(leaf, {
+            x: position.x + offset.x,
+            y: position.y + offset.y,
+          });
+        }
+      }),
+    );
   }
   const movedNodeIds = [...positions]
     .filter(([id, position]) => {

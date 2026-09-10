@@ -1365,12 +1365,24 @@ function Canvas(props: CanvasProps) {
         grid.options = { ...grid.options, order: [...grid.order] };
         const sectionId = first.parent ?? "canvas";
         const section = grid.options.adjustment?.sections?.[sectionId];
-        if (section?.members) grid.options = {
-          ...grid.options,
-          adjustment: { ...grid.options.adjustment, sections: { ...grid.options.adjustment?.sections, [sectionId]: {
-            ...section, members: section.members.map(row => row.map(id => id === source ? target : id === target ? source : id)),
-          } } },
-        };
+        if (section?.members)
+          grid.options = {
+            ...grid.options,
+            adjustment: {
+              ...grid.options.adjustment,
+              sections: {
+                ...grid.options.adjustment?.sections,
+                [sectionId]: {
+                  ...section,
+                  members: section.members.map((row) =>
+                    row.map((id) =>
+                      id === source ? target : id === target ? source : id,
+                    ),
+                  ),
+                },
+              },
+            },
+          };
         engine.arrangeNodesInGrid({
           ...grid.options,
           animate: animate ?? grid.options.animate,
@@ -1513,14 +1525,32 @@ function Canvas(props: CanvasProps) {
   const gridInsertionTarget = (source: string, point: Point) => {
     const grid = nodeGridRef.current;
     if (!grid?.ready || propsRef.current.readOnly) return;
-    const nodes = propsRef.current.nodes.filter(node => isNodeVisible(node.id, propsRef.current.edges, propsRef.current.edgeMode) &&
-      (!isolatedIdsRef.current || isolatedIdsRef.current.has(node.id)));
-    const sourceNode = nodes.find(node => node.id === source);
+    const nodes = propsRef.current.nodes.filter(
+      (node) =>
+        isNodeVisible(
+          node.id,
+          propsRef.current.edges,
+          propsRef.current.edgeMode,
+        ) &&
+        (!isolatedIdsRef.current || isolatedIdsRef.current.has(node.id)),
+    );
+    const sourceNode = nodes.find((node) => node.id === source);
     if (!sourceNode) return;
     const root = rootRef.current;
-    const scale = viewport.zoom * (root && root.clientWidth ? root.getBoundingClientRect().width / root.clientWidth : 1);
+    const scale =
+      viewport.zoom *
+      (root && root.clientWidth
+        ? root.getBoundingClientRect().width / root.clientWidth
+        : 1);
     const reach = 24 / scale;
-    let closest: { id: string; side: Parameters<typeof insertGridMember>[4]; distance: number; marker: Rect } | undefined;
+    let closest:
+      | {
+          id: string;
+          side: Parameters<typeof insertGridMember>[4];
+          distance: number;
+          marker: Rect;
+        }
+      | undefined;
     for (const node of nodes) {
       if (node.id === source || node.parent !== sourceNode.parent) continue;
       const box = boxFor(node.id);
@@ -1529,13 +1559,27 @@ function Canvas(props: CanvasProps) {
       const horizontal = Math.min(box.w / 4, reach);
       const vertical = Math.min(box.h / 4, reach);
       const thickness = 3 / scale;
-      const candidates: { side: Parameters<typeof insertGridMember>[4]; distance: number; marker: Rect }[] = [];
+      const candidates: {
+        side: Parameters<typeof insertGridMember>[4];
+        distance: number;
+        marker: Rect;
+      }[] = [];
       if (point.y > bounds.y1 + vertical && point.y < bounds.y2 - vertical) {
         for (const side of ["before", "after"] as const) {
           const edge = side === "before" ? bounds.x1 : bounds.x2;
           const distance = Math.abs(point.x - edge);
           const outside = side === "before" ? point.x < edge : point.x > edge;
-          if (distance <= (outside ? reach : horizontal)) candidates.push({ side, distance, marker: { x1: edge - thickness / 2, x2: edge + thickness / 2, y1: bounds.y1, y2: bounds.y2 } });
+          if (distance <= (outside ? reach : horizontal))
+            candidates.push({
+              side,
+              distance,
+              marker: {
+                x1: edge - thickness / 2,
+                x2: edge + thickness / 2,
+                y1: bounds.y1,
+                y2: bounds.y2,
+              },
+            });
         }
       }
       if (point.x >= bounds.x1 && point.x <= bounds.x2) {
@@ -1543,21 +1587,39 @@ function Canvas(props: CanvasProps) {
           const edge = side === "above" ? bounds.y1 : bounds.y2;
           const distance = Math.abs(point.y - edge);
           const outside = side === "above" ? point.y < edge : point.y > edge;
-          if (distance <= (outside ? reach : vertical)) candidates.push({ side, distance, marker: { x1: bounds.x1, x2: bounds.x2, y1: edge - thickness / 2, y2: edge + thickness / 2 } });
+          if (distance <= (outside ? reach : vertical))
+            candidates.push({
+              side,
+              distance,
+              marker: {
+                x1: bounds.x1,
+                x2: bounds.x2,
+                y1: edge - thickness / 2,
+                y2: edge + thickness / 2,
+              },
+            });
         }
       }
-      for (const candidate of candidates) if (!closest || candidate.distance < closest.distance) closest = { id: node.id, ...candidate };
+      for (const candidate of candidates)
+        if (!closest || candidate.distance < closest.distance)
+          closest = { id: node.id, ...candidate };
     }
     if (!closest) return;
-    const options = insertGridMember({
-      nodes,
-      positions: positionsRef.current,
-      sizes: new Map([...sizesRef.current, ...gridSizesRef.current]),
-      fixedSizes: gridSizesRef.current,
-      padding: id => propsRef.current.containerStyle(id).padding,
-      minSize: containerMinSize,
-      fixedIds: new Set(placedNodes.current.keys()),
-    }, grid.options, source, closest.id, closest.side);
+    const options = insertGridMember(
+      {
+        nodes,
+        positions: positionsRef.current,
+        sizes: new Map([...sizesRef.current, ...gridSizesRef.current]),
+        fixedSizes: gridSizesRef.current,
+        padding: (id) => propsRef.current.containerStyle(id).padding,
+        minSize: containerMinSize,
+        fixedIds: new Set(placedNodes.current.keys()),
+      },
+      grid.options,
+      source,
+      closest.id,
+      closest.side,
+    );
     return options ? { options, marker: closest.marker } : undefined;
   };
 
@@ -1778,12 +1840,21 @@ function Canvas(props: CanvasProps) {
           x: offset.x / viewport.zoom,
           y: offset.y / viewport.zoom,
         };
-        const insertion = !e.shiftKey && rendered.x >= 0 && rendered.y >= 0 && rendered.x <= viewport.size.w && rendered.y <= viewport.size.h
-          ? gridInsertionTarget(g.source, viewport.renderedToModel(rendered)) : undefined;
+        const insertion =
+          !e.shiftKey &&
+          rendered.x >= 0 &&
+          rendered.y >= 0 &&
+          rendered.x <= viewport.size.w &&
+          rendered.y <= viewport.size.h
+            ? gridInsertionTarget(g.source, viewport.renderedToModel(rendered))
+            : undefined;
         setGridDrag({
           source: g.source,
           offset: modelOffset,
-          target: e.shiftKey || insertion ? null : gridDragTarget(g.source, modelOffset),
+          target:
+            e.shiftKey || insertion
+              ? null
+              : gridDragTarget(g.source, modelOffset),
           shiftKey: e.shiftKey,
           insertion,
         });
@@ -1877,10 +1948,22 @@ function Canvas(props: CanvasProps) {
         setGridDrag(null);
         if (cancelled || !g.moved) break;
         const rendered = toRendered(e);
-        if (!e.shiftKey && rendered.x >= 0 && rendered.y >= 0 && rendered.x <= viewport.size.w && rendered.y <= viewport.size.h) {
-          const insertion = gridInsertionTarget(g.source, viewport.renderedToModel(rendered));
+        if (
+          !e.shiftKey &&
+          rendered.x >= 0 &&
+          rendered.y >= 0 &&
+          rendered.x <= viewport.size.w &&
+          rendered.y <= viewport.size.h
+        ) {
+          const insertion = gridInsertionTarget(
+            g.source,
+            viewport.renderedToModel(rendered),
+          );
           if (insertion) {
-            engine.setNodeGridMode(true, { ...insertion.options, animate: false });
+            engine.setNodeGridMode(true, {
+              ...insertion.options,
+              animate: false,
+            });
             break;
           }
         }
@@ -2257,14 +2340,20 @@ function Canvas(props: CanvasProps) {
       </svg>
       <div ref={nodesLayerRef} className="flow-sdk-nodes">
         {gridDrag?.insertion && (
-          <div className="flow-sdk-box" data-grid-insertion="" style={{
-            left: gridDrag.insertion.marker.x1,
-            top: gridDrag.insertion.marker.y1,
-            width: gridDrag.insertion.marker.x2 - gridDrag.insertion.marker.x1,
-            height: gridDrag.insertion.marker.y2 - gridDrag.insertion.marker.y1,
-            background: lineColor,
-            border: 0,
-          }} />
+          <div
+            className="flow-sdk-box"
+            data-grid-insertion=""
+            style={{
+              left: gridDrag.insertion.marker.x1,
+              top: gridDrag.insertion.marker.y1,
+              width:
+                gridDrag.insertion.marker.x2 - gridDrag.insertion.marker.x1,
+              height:
+                gridDrag.insertion.marker.y2 - gridDrag.insertion.marker.y1,
+              background: lineColor,
+              border: 0,
+            }}
+          />
         )}
         {nodeGridMode &&
           nodeGridRef.current?.options.fill &&
