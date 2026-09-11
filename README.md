@@ -463,6 +463,12 @@ the source tree. Edit this single JSON source to keep the guide current.
 
 ## Callbacks
 
+`isNodeVisible(id, edges, edgeMode)` exposes the same edge-mode visibility rule
+used by Canvas. Pass edge data, not `{ data }` wrappers. In property-edge mode,
+`root` is hidden unless it has a property connection; other modes retain it.
+Hosts measuring embedded content can filter with this predicate before waiting
+for node boxes. It does not report measurement readiness or connection isolation.
+
 ### All Icon-Label Views
 
 Inside a diagram, `useNodeViewActions()` (or `useFlowDiagramContext()`) exposes
