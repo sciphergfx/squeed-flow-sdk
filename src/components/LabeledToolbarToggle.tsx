@@ -1,8 +1,22 @@
 import { Text } from "@chakra-ui/react";
 import type { ReactElement } from "react";
+import { PiArrowsInLineVertical } from "react-icons/pi";
 import { useCustomColors } from "../theme/useCustomColors";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
 import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
+
+export function CollapseAllToggle() {
+  const { allNodesIconLabel, setAllNodesIconLabel } = useFlowDiagramContext();
+  return (
+    <LabeledToolbarToggle
+      label="Collapse all"
+      hideLabel
+      checked={allNodesIconLabel}
+      icon={<PiArrowsInLineVertical size={20} />}
+      onChange={setAllNodesIconLabel}
+    />
+  );
+}
 
 export function LabeledToolbarToggle({
   label,

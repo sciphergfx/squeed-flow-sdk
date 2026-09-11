@@ -73,8 +73,11 @@ const NodeView = ({
   const id = nodeData?.id;
   const hasChildren = useNodeHasChildren(id);
   const isActive = selectedNodeIds.includes(id);
-  const overlayActions = config.nodeOverlayActions?.filter((action) => !action.nodeTypes || action.nodeTypes.includes(nodeData?.type));
+  const overlayActions = config.nodeOverlayActions?.filter(
+    (action) => !action.nodeTypes || action.nodeTypes.includes(nodeData?.type),
+  );
   const renderNodeOverlay = config.renderNodeOverlay;
+  const HoverControls = nodeData?.type === "grid" ? config.customViews?.gridHoverControls : undefined;
   const overlayTop = nodeData?.type === "grid" ? "20px" : "-100px";
   const overlayOrigin = nodeData?.type === "grid" ? "top center" : undefined;
 
@@ -317,6 +320,7 @@ const NodeView = ({
                         />
                       </Box>
                     ))}
+                    {HoverControls && <HoverControls data={nodeData} />}
                   </HStack>
                 </Box>
               )}
@@ -485,6 +489,7 @@ const NodeView = ({
                       />
                     </Box>
                   ))}
+                  {HoverControls && <HoverControls data={nodeData} />}
                 </HStack>
               </Box>
             )}

@@ -35,7 +35,7 @@ import { FlowType } from "../types";
 import { CompactPropertyLayoutToggle } from "./CompactPropertyLayoutToggle";
 import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
-import { LabeledToolbarToggle } from "./LabeledToolbarToggle";
+import { CollapseAllToggle, LabeledToolbarToggle } from "./LabeledToolbarToggle";
 import { NodeGridControls } from "./NodeGridControls";
 import {
   RecentToolbarAction,
@@ -680,13 +680,7 @@ const BottomBar = ({
                     role="separator"
                     aria-orientation="vertical"
                   />
-                  <LabeledToolbarToggle
-                    label="Collapse all"
-                    hideLabel
-                    checked={allNodesIconLabel}
-                    icon={<Icon as={PiArrowsInLineVertical} boxSize={5} />}
-                    onChange={setAllNodesIconLabel}
-                  />
+                  <CollapseAllToggle />
 
                   {edgeMode !== "properties" && (
                     <>

@@ -1,6 +1,66 @@
 import { expect, test } from "@playwright/test";
 import { ready } from "./helpers";
 
+for (const width of [1440, 390]) {
+  for (const direction of ["TB", "BT", "LR", "RL"] as const) {
+    test(`icon captions clear edges in ${direction} at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await ready(page, "graph=basic-json");
+      await page.evaluate((direction) => {
+        window.__flowTest.configure({ direction, edgeMode: "auto", edgeReveal: false });
+        window.__flowTest.replaceDocument({
+          $hideRoot: true,
+          analysis: {
+            $view: "icon-label", $label: "Analysis Agent", $icon: "PiChartBar",
+            $connections: [{ target: "root.library" }],
+          },
+          library: { $view: "icon-label", $label: "Knowledge Library", $icon: "PiBooks" },
+        });
+      }, direction);
+      const captions = page.locator("[data-flow-icon-caption]");
+      await expect(captions).toHaveCount(2);
+      const edge = page.locator(".flow-sdk-edge-hit");
+      await expect(edge).toHaveCount(1);
+      await expect.poll(async () => edge.evaluate((path: SVGPathElement) => {
+        const captions = Array.from(document.querySelectorAll("[data-flow-icon-caption]"))
+          .map(caption => caption.getBoundingClientRect());
+        const matrix = path.getScreenCTM()!;
+        const length = path.getTotalLength();
+        return Array.from({ length: 201 }, (_, index) => {
+          const local = path.getPointAtLength(length * index / 200);
+          const point = new DOMPoint(local.x, local.y).matrixTransform(matrix);
+          return captions.some(caption => point.x > caption.left && point.x < caption.right && point.y > caption.top && point.y < caption.bottom);
+        }).some(Boolean);
+      })).toBe(false);
+      const geometry = await edge.evaluate((path: SVGPathElement) => {
+        const point = (length: number) => {
+          const local = path.getPointAtLength(length);
+          const screen = new DOMPoint(local.x, local.y).matrixTransform(path.getScreenCTM()!);
+          return { x: screen.x, y: screen.y };
+        };
+        const bounds = (id: string) => {
+          const node = document.querySelector(`.flow-sdk-node[data-node-id="${id}"]`)!;
+          const surface = node.querySelector("[data-flow-node-surface]")!.getBoundingClientRect();
+          const caption = node.querySelector("[data-flow-icon-caption]")!.getBoundingClientRect();
+          return { top: surface.top, bottom: caption.bottom, middle: surface.top + surface.height / 2 };
+        };
+        return { start: point(0), end: point(path.getTotalLength()), source: bounds("root.analysis"), target: bounds("root.library") };
+      });
+      if (direction === "TB") {
+        expect(geometry.start.y).toBeGreaterThanOrEqual(geometry.source.bottom);
+        expect(geometry.end.y).toBeLessThanOrEqual(geometry.target.top);
+      } else if (direction === "BT") {
+        expect(geometry.start.y).toBeLessThanOrEqual(geometry.source.top);
+        expect(geometry.end.y).toBeGreaterThanOrEqual(geometry.target.bottom);
+      } else {
+        expect(Math.abs(geometry.start.y - geometry.source.middle)).toBeLessThan(0.5);
+        expect(Math.abs(geometry.end.y - geometry.target.middle)).toBeLessThan(0.5);
+      }
+      await page.screenshot({ path: test.info().outputPath("caption-clearance.png") });
+    });
+  }
+}
+
 test("all icon labels closes an expanded grouped Tools registry", async ({
   page,
 }) => {

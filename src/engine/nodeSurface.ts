@@ -6,6 +6,7 @@ export interface NodeSurface {
   width: number;
   height: number;
   radius: number;
+  captionBottom?: number;
   outline?: Point[];
 }
 
@@ -21,6 +22,10 @@ export function measureNodeSurface(host: HTMLElement): NodeSurface | undefined {
   if (!Number.isFinite(scale) || scale <= 0) return;
   const bounds = surface.getBoundingClientRect();
   if (!bounds.width || !bounds.height) return;
+  const caption = surface
+    .closest("[data-flow-icon-label]")
+    ?.querySelector<HTMLElement>("[data-flow-icon-caption]")
+    ?.getBoundingClientRect();
   const geometry = surface as SVGGeometryElement;
   const matrix =
     typeof geometry.getScreenCTM === "function"
@@ -68,6 +73,9 @@ export function measureNodeSurface(host: HTMLElement): NodeSurface | undefined {
         ? surface.offsetHeight
         : rounded(bounds.height / scale),
     radius: parseFloat(getComputedStyle(surface).borderTopLeftRadius) || 0,
+    ...(caption?.height
+      ? { captionBottom: rounded((caption.bottom - hostBounds.top) / scale) }
+      : {}),
     ...(outline ? { outline } : {}),
   };
 }

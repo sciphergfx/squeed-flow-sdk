@@ -31,6 +31,8 @@ export { FlowPort } from "./components/FlowPort";
 export type { FlowPortProps } from "./components/FlowPort";
 export { default as FlowView } from "./components/FlowView";
 export { LoadingBorder } from "./components/LoadingBorder";
+export { CollapseAllToggle } from "./components/LabeledToolbarToggle";
+export { GridAdjustmentToggle } from "./components/NodeGridControls";
 export { NodeFormPopover } from "./components/NodeFormPopover";
 export { NodeIconPicker } from "./components/NodeIconPicker";
 export {

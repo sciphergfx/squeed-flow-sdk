@@ -7,6 +7,25 @@ import { RangeInput } from "./DiagramAppearanceControls";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
 import { LabeledToolbarToggle } from "./LabeledToolbarToggle";
 
+export function GridAdjustmentToggle() {
+  const { engineRef, nodeGridOptions, readOnly } = useFlowDiagramContext();
+  const available = !!nodeGridOptions?.fill;
+  return (
+    <LabeledToolbarToggle
+      label="Grid adjustment"
+      hideLabel
+      helper={available ? "Grid adjustment" : "Enable Collision and Fill to adjust the Grid"}
+      icon={<PiArrowsHorizontal size={20} />}
+      checked={available && !!nodeGridOptions?.adjustment?.enabled}
+      disabled={!available}
+      onChange={(enabled) => {
+        if (readOnly || !nodeGridOptions?.fill) return;
+        engineRef.current?.setNodeGridMode(true, { ...nodeGridOptions, adjustment: { ...nodeGridOptions.adjustment, enabled } });
+      }}
+    />
+  );
+}
+
 export function NodeGridControls() {
   const {
     engineRef,
@@ -89,7 +108,11 @@ export function NodeGridControls() {
             <LabeledToolbarToggle
               label="Fill"
               hideLabel
-              helper={nodeGridOptions ? "Fill available canvas space" : "Enable Collision mode to use Fill"}
+              helper={
+                nodeGridOptions
+                  ? "Fill available canvas space"
+                  : "Enable Collision mode to use Fill"
+              }
               icon={<PiArrowsOut size={18} />}
               checked={!!nodeGridOptions && !!options.fill}
               disabled={!nodeGridOptions}
@@ -113,16 +136,7 @@ export function NodeGridControls() {
             />
           )}
           {nodeGridOptions && options.fill && (
-            <LabeledToolbarToggle
-              label="Grid adjustment"
-              hideLabel
-              icon={<PiArrowsHorizontal size={20} />}
-              checked={!!options.adjustment?.enabled}
-              onChange={(enabled) => {
-                if (!readOnly)
-                  change({ adjustment: { ...options.adjustment, enabled } });
-              }}
-            />
+            <GridAdjustmentToggle />
           )}
         </HStack>
       )}

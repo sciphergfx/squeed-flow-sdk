@@ -244,7 +244,10 @@ Mark the visible shape with `data-flow-node-surface`, excluding captions and
 form summaries. For SVG views, put it on the closed geometry element (such as
 `circle`, `polygon`, or `path`), not the surrounding `svg`. Connectors, draw
 handles, and animated borders use that surface; layout still reserves the full
-node bounds. Unmarked custom views retain rectangular host bounds.
+node bounds. In `TB` and `BT`, ordinary icon-label connectors also reserve the
+caption below the icon, so paths and arrowheads do not cross wrapped labels or
+subtitles. Horizontal connectors still attach to the icon surface. Unmarked
+custom views retain rectangular host bounds.
 
 For content and custom-shape views, use `<FlowPort id="tools" role="source"
 side="bottom" position={0.5} />` inside the node. `side` accepts `top`, `right`,

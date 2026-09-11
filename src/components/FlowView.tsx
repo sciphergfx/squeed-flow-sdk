@@ -482,6 +482,12 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
     const wheelHandler = (e: WheelEvent) => {
       if (configRef.current.readOnly) return;
+      if (
+        configRef.current.minZoom === configRef.current.maxZoom &&
+        configRef.current.minZoom !== undefined &&
+        el.parentElement?.closest(".flow-sdk-canvas")
+      )
+        return;
       const fullscreenElement = el.ownerDocument.fullscreenElement;
       if (
         fullscreenElement &&
