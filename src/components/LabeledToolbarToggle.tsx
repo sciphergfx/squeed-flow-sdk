@@ -5,7 +5,9 @@ import { useCustomColors } from "../theme/useCustomColors";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
 import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
 
-export function CollapseAllToggle({ onBeforeExpand }: { onBeforeExpand?: () => void } = {}) {
+export function CollapseAllToggle({
+  onBeforeExpand,
+}: { onBeforeExpand?: () => void } = {}) {
   const { allNodesIconLabel, setAllNodesIconLabel } = useFlowDiagramContext();
   return (
     <LabeledToolbarToggle

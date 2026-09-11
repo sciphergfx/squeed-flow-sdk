@@ -83,7 +83,10 @@ const NodeView = ({
       : undefined;
   const overlayTop = nodeData?.type === "grid" ? "20px" : "-100px";
   const overlayOrigin = nodeData?.type === "grid" ? "top center" : undefined;
-  const overlayTransform = nodeData?.type === "grid" ? "translateX(-50%) scale3d(1.8, 1.8, 1)" : "translateX(-50%) scale3d(3, 3, 1)";
+  const overlayTransform =
+    nodeData?.type === "grid"
+      ? "translateX(-50%) scale3d(1.8, 1.8, 1)"
+      : "translateX(-50%) scale3d(3, 3, 1)";
 
   const isLowZoom = (() => {
     try {

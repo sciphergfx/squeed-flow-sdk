@@ -1324,7 +1324,7 @@ function Canvas(props: CanvasProps) {
                   !propsRef.current.disableAnimations &&
                   !propsRef.current.isPerformanceMode,
               );
-                else engine.centerAndFit(80, options.animate, true);
+          else engine.centerAndFit(80, options.animate, true);
           nodeGridRef.current = null;
           setNodeGridMode(false);
           clearGridSizes();
@@ -2170,7 +2170,8 @@ function Canvas(props: CanvasProps) {
     !!props.edgeReveal?.revealNodes,
   );
   useLayoutEffect(() => {
-    if (rootRef.current && labelLayer) placeEdgeLabels(rootRef.current, labelLayer);
+    if (rootRef.current && labelLayer)
+      placeEdgeLabels(rootRef.current, labelLayer);
   });
   useEffect(() => {
     const root = rootRef.current;

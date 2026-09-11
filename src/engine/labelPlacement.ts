@@ -65,25 +65,43 @@ export function placeEdgeLabels(root: HTMLElement, layer: SVGGElement) {
   const paths = new Map(
     [...root.querySelectorAll<SVGGElement>(".flow-sdk-edge")]
       .filter((edge) => edge.closest(".flow-sdk-canvas") === root)
-      .map((edge) => [edge.dataset.edgeId, edge.querySelector<SVGPathElement>("path")]),
+      .map((edge) => [
+        edge.dataset.edgeId,
+        edge.querySelector<SVGPathElement>("path"),
+      ]),
   );
-  const geometry = JSON.stringify([
-    obstacles,
-    [...paths].map(([id, path]) => [id, path?.getAttribute("d")]),
-    labels.map((label) => {
-      const bounds = label.getBBox();
-      const mask = label.querySelector<SVGRectElement>("rect")?.getBBox();
-      return [
-        label.dataset.edgeId, label.dataset.labelTransform, label.dataset.labelHorizontal,
-        bounds.x, bounds.y, bounds.width, bounds.height, mask?.width, mask?.height,
-      ];
-    }),
-  ], (_key, value) => typeof value === "number" ? Math.round(value * 1000) / 1000 : value);
+  const geometry = JSON.stringify(
+    [
+      obstacles,
+      [...paths].map(([id, path]) => [id, path?.getAttribute("d")]),
+      labels.map((label) => {
+        const bounds = label.getBBox();
+        const mask = label.querySelector<SVGRectElement>("rect")?.getBBox();
+        return [
+          label.dataset.edgeId,
+          label.dataset.labelTransform,
+          label.dataset.labelHorizontal,
+          bounds.x,
+          bounds.y,
+          bounds.width,
+          bounds.height,
+          mask?.width,
+          mask?.height,
+        ];
+      }),
+    ],
+    (_key, value) =>
+      typeof value === "number" ? Math.round(value * 1000) / 1000 : value,
+  );
   const previous = placements.get(layer);
-  if (previous?.geometry === geometry && labels.every((label) => previous.transforms.has(label))) {
+  if (
+    previous?.geometry === geometry &&
+    labels.every((label) => previous.transforms.has(label))
+  ) {
     for (const label of labels) {
       const transform = previous.transforms.get(label)!;
-      if (label.getAttribute("transform") !== transform) label.setAttribute("transform", transform);
+      if (label.getAttribute("transform") !== transform)
+        label.setAttribute("transform", transform);
     }
     return;
   }
@@ -173,6 +191,8 @@ export function placeEdgeLabels(root: HTMLElement, layer: SVGGElement) {
   }
   placements.set(layer, {
     geometry,
-    transforms: new Map(labels.map((label) => [label, label.getAttribute("transform") ?? ""])),
+    transforms: new Map(
+      labels.map((label) => [label, label.getAttribute("transform") ?? ""]),
+    ),
   });
 }
