@@ -354,7 +354,10 @@ function Canvas(props: CanvasProps) {
   const geometryFocus = useRef<
     ((positions?: Map<string, Point>) => void) | null
   >(null);
-  const focusedLayout = useRef<{ focus: typeof geometryFocus.current; geometry: string }>();
+  const focusedLayout = useRef<{
+    focus: typeof geometryFocus.current;
+    geometry: string;
+  }>();
   const previousSpacingFactor = useRef(spacingFactor);
   const compactLayout = compactPropertyLayout;
   const previousCompactLayout = useRef(compactLayout);
@@ -540,8 +543,18 @@ function Canvas(props: CanvasProps) {
         placedNodes.current.delete(id);
     }
     if (geometryFocus.current) {
-      const geometry = JSON.stringify([inputs, [...target], viewport.size, p.isPerformanceMode, p.disableAnimations]);
-      if (focusedLayout.current?.focus === geometryFocus.current && focusedLayout.current.geometry === geometry) return;
+      const geometry = JSON.stringify([
+        inputs,
+        [...target],
+        viewport.size,
+        p.isPerformanceMode,
+        p.disableAnimations,
+      ]);
+      if (
+        focusedLayout.current?.focus === geometryFocus.current &&
+        focusedLayout.current.geometry === geometry
+      )
+        return;
       focusedLayout.current = { focus: geometryFocus.current, geometry };
     } else focusedLayout.current = undefined;
     const updateViewport = viewport.coordinate(() =>
