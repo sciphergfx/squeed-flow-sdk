@@ -21,14 +21,14 @@ documents and application state. See the
 [app pattern](../squeed/README.md#ownership-and-code-patterns) and
 [contribution rules](CONTRIBUTING.md).
 
-| Location | Responsibility |
-| --- | --- |
-| `src/core` | Compilation, immutable document edits, and callback binding |
-| `src/engine` | Geometry, layout, viewport, gestures, and canvas rendering |
-| `src/components`, `src/nodes` | Public composition, shared controls, and node views |
-| `src/types`, `src/hooks`, `src/theme`, `src/utils` | Contracts and existing shared support |
-| `src/index.ts` | Consumer-facing exports; internal modules use local imports |
-| `examples`, `tests` | Consumer demonstrations, fixtures, and verification |
+| Location                                           | Responsibility                                              |
+| -------------------------------------------------- | ----------------------------------------------------------- |
+| `src/core`                                         | Compilation, immutable document edits, and callback binding |
+| `src/engine`                                       | Geometry, layout, viewport, gestures, and canvas rendering  |
+| `src/components`, `src/nodes`                      | Public composition, shared controls, and node views         |
+| `src/types`, `src/hooks`, `src/theme`, `src/utils` | Contracts and existing shared support                       |
+| `src/index.ts`                                     | Consumer-facing exports; internal modules use local imports |
+| `examples`, `tests`                                | Consumer demonstrations, fixtures, and verification         |
 
 Reuse the existing owner of a behavior instead of adding a parallel helper or
 host-specific branch. Keep pure document operations independent of UI and
