@@ -65,7 +65,7 @@ export interface FlowEngine {
     afterViewChange?: boolean,
   ): void;
   /** Fit laid-out hierarchy descendants and outgoing reachable nodes. Does not expand collapsed nodes. Animate overrides config.animateViewport. */
-  focusBranch(id: string, padding?: number, animate?: boolean): void;
+  focusBranch(id: string, padding?: number, animate?: boolean, afterViewChange?: boolean): void;
   focusConnections(
     id: string,
     padding?: number,

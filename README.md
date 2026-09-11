@@ -628,6 +628,10 @@ engine.isolateBranch(nodeId, 60, true);
 engine.restoreView(true);
 ```
 
+Pass `true` as the fourth argument to `focusBranch`, `focusNode`, or
+`focusConnections` after a view toggle to fit the new geometry together with
+the layout animation. Existing three-argument calls keep their behavior.
+
 Animation defaults to false. Explicit false overrides the config default.
 Transitions interpolate pan and zoom over 300ms; center preserves zoom.
 Reduced-motion preferences disable animation. New viewport commands cancel

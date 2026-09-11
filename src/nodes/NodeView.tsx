@@ -90,6 +90,7 @@ const NodeView = ({
   const handleClick = useCallback(
     (event: React.MouseEvent) => {
       if (isEditing || config.readOnly) return;
+      if (nodeGridOptions?.fill && !event.shiftKey) return;
       const modifiers = {
         shiftKey: event.shiftKey,
         ctrlKey: event.ctrlKey,
