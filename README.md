@@ -249,6 +249,12 @@ caption below the icon, so paths and arrowheads do not cross wrapped labels or
 subtitles. Horizontal connectors still attach to the icon surface. Unmarked
 custom views retain rectangular host bounds.
 
+Edge-label placement is scoped to each canvas and skips empty label layers.
+The existing placement is reused while node bounds, edge paths, and label
+dimensions are unchanged. Geometry changes and font loading recheck placement;
+unrelated updates do not resample SVG paths. This does not change JSON loading,
+repair streaming, or playback.
+
 For content and custom-shape views, use `<FlowPort id="tools" role="source"
 side="bottom" position={0.5} />` inside the node. `side` accepts `top`, `right`,
 `bottom`, or `left`; `position` ranges from 0 to 1 and defaults to the midpoint.

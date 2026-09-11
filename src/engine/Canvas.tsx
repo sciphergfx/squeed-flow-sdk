@@ -1324,7 +1324,7 @@ function Canvas(props: CanvasProps) {
                   !propsRef.current.disableAnimations &&
                   !propsRef.current.isPerformanceMode,
               );
-          else engine.centerAndFit(80, options.animate, true);
+                else engine.centerAndFit(80, options.animate, true);
           nodeGridRef.current = null;
           setNodeGridMode(false);
           clearGridSizes();
@@ -2170,8 +2170,16 @@ function Canvas(props: CanvasProps) {
     !!props.edgeReveal?.revealNodes,
   );
   useLayoutEffect(() => {
-    if (rootRef.current && labelLayer) placeEdgeLabels(rootRef.current);
+    if (rootRef.current && labelLayer) placeEdgeLabels(rootRef.current, labelLayer);
   });
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || !labelLayer) return;
+    const fonts = root.ownerDocument.fonts;
+    const placeLabels = () => placeEdgeLabels(root, labelLayer);
+    fonts?.addEventListener("loadingdone", placeLabels);
+    return () => fonts?.removeEventListener("loadingdone", placeLabels);
+  }, [labelLayer]);
   const branches = branchRoutes(visibleEdges, edgeBoxFor, taxiDir);
   const onEdgeSelect = props.onEdgeSelect;
   const onContainerSelect = props.onContainerSelect;

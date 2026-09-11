@@ -83,6 +83,7 @@ const NodeView = ({
       : undefined;
   const overlayTop = nodeData?.type === "grid" ? "20px" : "-100px";
   const overlayOrigin = nodeData?.type === "grid" ? "top center" : undefined;
+  const overlayTransform = nodeData?.type === "grid" ? "translateX(-50%) scale3d(1.8, 1.8, 1)" : "translateX(-50%) scale3d(3, 3, 1)";
 
   const isLowZoom = (() => {
     try {
@@ -261,7 +262,7 @@ const NodeView = ({
                   transformOrigin={overlayOrigin}
                   left="50%"
                   pointerEvents="auto"
-                  transform="translateX(-50%) scale3d(3, 3, 1)"
+                  transform={overlayTransform}
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={handleMouseLeave}
                   willChange="transform"
@@ -286,9 +287,9 @@ const NodeView = ({
                   p={3}
                   borderColor={border}
                   borderWidth={1}
-                  borderRadius={15}
+                  borderRadius="30px"
                   pointerEvents="auto"
-                  transform="translateX(-50%) scale3d(3, 3, 1)"
+                  transform={overlayTransform}
                   boxShadow="lg"
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={handleMouseLeave}
@@ -430,7 +431,7 @@ const NodeView = ({
                 transformOrigin={overlayOrigin}
                 left="50%"
                 pointerEvents="auto"
-                transform="translateX(-50%) scale3d(3, 3, 1)"
+                transform={overlayTransform}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={handleMouseLeave}
                 willChange="transform"
@@ -455,9 +456,9 @@ const NodeView = ({
                 p={3}
                 borderColor={border}
                 borderWidth={1}
-                borderRadius={15}
+                borderRadius="30px"
                 pointerEvents="auto"
-                transform="translateX(-50%) scale3d(3, 3, 1)"
+                transform={overlayTransform}
                 boxShadow="lg"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={handleMouseLeave}

@@ -11,8 +11,19 @@ const overlaps = (left: Bounds, right: Bounds) =>
   left.top < right.bottom &&
   left.bottom > right.top;
 
-export function placeEdgeLabels(root: HTMLElement) {
-  const layer = root.querySelector<SVGGElement>(".flow-sdk-labels");
+const placements = new WeakMap<
+  SVGGElement,
+  { geometry: string; transforms: Map<SVGGElement, string> }
+>();
+
+export function placeEdgeLabels(root: HTMLElement, layer: SVGGElement) {
+  const labels = [
+    ...layer.querySelectorAll<SVGGElement>(".flow-sdk-edge-label"),
+  ];
+  if (!labels.length) {
+    placements.delete(layer);
+    return;
+  }
   const matrix = layer?.getScreenCTM();
   if (!layer || !matrix) return;
   const inverse = matrix.inverse();
@@ -36,6 +47,7 @@ export function placeEdgeLabels(root: HTMLElement) {
       ".flow-sdk-node, .flow-sdk-node button",
     ),
   ]
+    .filter((element) => element.closest(".flow-sdk-canvas") === root)
     .filter((element) => {
       const bounds = element.getBoundingClientRect();
       const style = getComputedStyle(element);
@@ -50,19 +62,35 @@ export function placeEdgeLabels(root: HTMLElement) {
   for (const title of layer.querySelectorAll(".flow-sdk-container-label"))
     obstacles.push(modelBounds(title, 12));
 
-  const labels = [
-    ...layer.querySelectorAll<SVGGElement>(".flow-sdk-edge-label"),
-  ];
+  const paths = new Map(
+    [...root.querySelectorAll<SVGGElement>(".flow-sdk-edge")]
+      .filter((edge) => edge.closest(".flow-sdk-canvas") === root)
+      .map((edge) => [edge.dataset.edgeId, edge.querySelector<SVGPathElement>("path")]),
+  );
+  const geometry = JSON.stringify([
+    obstacles,
+    [...paths].map(([id, path]) => [id, path?.getAttribute("d")]),
+    labels.map((label) => {
+      const bounds = label.getBBox();
+      const mask = label.querySelector<SVGRectElement>("rect")?.getBBox();
+      return [
+        label.dataset.edgeId, label.dataset.labelTransform, label.dataset.labelHorizontal,
+        bounds.x, bounds.y, bounds.width, bounds.height, mask?.width, mask?.height,
+      ];
+    }),
+  ], (_key, value) => typeof value === "number" ? Math.round(value * 1000) / 1000 : value);
+  const previous = placements.get(layer);
+  if (previous?.geometry === geometry && labels.every((label) => previous.transforms.has(label))) {
+    for (const label of labels) {
+      const transform = previous.transforms.get(label)!;
+      if (label.getAttribute("transform") !== transform) label.setAttribute("transform", transform);
+    }
+    return;
+  }
   for (const label of labels)
     label.setAttribute("transform", label.dataset.labelTransform ?? "");
   const reserved = new Map(
     labels.map((label) => [label, modelBounds(label, 8)]),
-  );
-  const paths = new Map(
-    [...root.querySelectorAll<SVGGElement>(".flow-sdk-edge")].map((edge) => [
-      edge.dataset.edgeId,
-      edge.querySelector<SVGPathElement>("path"),
-    ]),
   );
 
   for (const label of labels) {
@@ -143,4 +171,8 @@ export function placeEdgeLabels(root: HTMLElement) {
       reserved.set(label, placement.bounds);
     } else reserved.set(label, preferred);
   }
+  placements.set(layer, {
+    geometry,
+    transforms: new Map(labels.map((label) => [label, label.getAttribute("transform") ?? ""])),
+  });
 }

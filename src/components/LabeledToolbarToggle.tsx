@@ -5,7 +5,7 @@ import { useCustomColors } from "../theme/useCustomColors";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
 import { ToolbarIconButton, ToolbarTooltip } from "./toolbarControls";
 
-export function CollapseAllToggle() {
+export function CollapseAllToggle({ onBeforeExpand }: { onBeforeExpand?: () => void } = {}) {
   const { allNodesIconLabel, setAllNodesIconLabel } = useFlowDiagramContext();
   return (
     <LabeledToolbarToggle
@@ -13,7 +13,10 @@ export function CollapseAllToggle() {
       hideLabel
       checked={allNodesIconLabel}
       icon={<PiArrowsInLineVertical size={20} />}
-      onChange={setAllNodesIconLabel}
+      onChange={(enabled) => {
+        if (!enabled) onBeforeExpand?.();
+        setAllNodesIconLabel(enabled);
+      }}
     />
   );
 }
