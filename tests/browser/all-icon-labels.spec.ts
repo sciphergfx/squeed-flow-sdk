@@ -2,6 +2,37 @@ import { expect, test } from "@playwright/test";
 import { ready } from "./helpers";
 
 for (const width of [1440, 390]) {
+  test(`Shift content editing preserves focus and permissions at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await ready(page, "graph=basic-json");
+    await page.evaluate(() => {
+      window.__flowTest.configure({ editable: true, readOnly: true, allNodesIconLabel: false, nodeViewModes: { "root.alpha": "default" }, nodeGrid: { enabled: true, options: { fill: false } } });
+      window.__flowTest.replaceDocument({ $hideRoot: true, alpha: { $view: "object", $label: "Content", $content: "Original content" } });
+    });
+    const node = page.locator('.flow-sdk-node[data-node-id="root.alpha"]');
+    const preview = node.locator("[data-flow-content]");
+    const input = node.getByRole("textbox", { name: "Node content", exact: true });
+    await expect(preview).toHaveText("Original content");
+    await preview.click({ modifiers: ["Shift"] });
+    await expect(input).toHaveCount(0);
+    await page.evaluate(() => window.__flowTest.configure({ readOnly: false, editable: false }));
+    await preview.click({ modifiers: ["Shift"] });
+    await expect(input).toHaveCount(0);
+    await page.evaluate(() => window.__flowTest.configure({ editable: true }));
+    await preview.click({ modifiers: ["Shift"] });
+    await expect(input).toBeFocused();
+    await input.fill("Unsaved draft");
+    await page.evaluate(() => window.__flowTest.replaceDocument({ ...window.__flowTest.document, alpha: { ...window.__flowTest.document.alpha, $label: "Updated label" } }));
+    await expect(node.getByText("Updated label", { exact: true })).toBeVisible();
+    await expect(input).toBeFocused();
+    await expect(input).toHaveValue("Unsaved draft");
+    await page.evaluate(() => window.__flowTest.configure({ readOnly: true }));
+    await expect(input).toHaveCount(0);
+    await expect(preview).toHaveText("Original content");
+  });
+}
+
+for (const width of [1440, 390]) {
   for (const direction of ["TB", "BT", "LR", "RL"] as const) {
     test(`icon captions clear edges in ${direction} at ${width}px`, async ({
       page,

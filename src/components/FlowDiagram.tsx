@@ -99,7 +99,12 @@ export function FlowDiagram({
       <div
         style={{ width: "100%", height: "100%" }}
         ref={(element) => {
-          if (busy) element?.setAttribute("inert", "");
+          const editing =
+            element?.contains(document.activeElement) &&
+            document.activeElement?.matches(
+              "input, textarea, [contenteditable=true]",
+            );
+          if (busy && (loading || !editing)) element?.setAttribute("inert", "");
           else element?.removeAttribute("inert");
         }}
       >

@@ -21,7 +21,8 @@ export function EditableContent({
 }) {
   const { callbacks, config, readOnly, nodeGridOptions } =
     useFlowDiagramContext();
-  const editable = !!config.editable && !readOnly && !nodeGridOptions;
+  const editable = !!config.editable && !readOnly;
+  const directEditable = editable && !nodeGridOptions;
   const source =
     typeof content === "string" ? content : JSON.stringify(content, null, 2);
   const [editing, setEditing] = useState(false);
@@ -48,8 +49,8 @@ export function EditableContent({
     }
   }, [editing, editable]);
 
-  const startEditing = (element: HTMLElement) => {
-    if (!editable) return;
+  const startEditing = (element: HTMLElement, shiftKey = false) => {
+    if (!editable || (nodeGridOptions && !shiftKey)) return;
     setSize({ width: element.offsetWidth, height: element.offsetHeight });
     setDraft(source);
     setError("");
@@ -94,7 +95,7 @@ export function EditableContent({
             content={content}
             format={format}
             onEdit={
-              editable
+              directEditable
                 ? () => {
                     if (wrapperRef.current) startEditing(wrapperRef.current);
                   }
@@ -182,33 +183,35 @@ export function EditableContent({
           "& th": { fontWeight: 700 },
           "& img": { maxWidth: "100%", height: "auto" },
         }}
-        cursor={editable ? "text" : undefined}
-        tabIndex={editable ? 0 : undefined}
+        cursor={directEditable ? "text" : undefined}
+        tabIndex={directEditable ? 0 : undefined}
         outline="none"
         _focusVisible={{ outline: "none", boxShadow: "none" }}
         onClick={(event) => {
           if (
             !editable ||
+            (nodeGridOptions && !event.shiftKey) ||
             (event.target instanceof Element &&
               event.target.closest("a, button, input"))
           )
             return;
           event.stopPropagation();
-          startEditing(event.currentTarget);
+          startEditing(event.currentTarget, event.shiftKey);
         }}
         onDoubleClick={(event) => {
           event.stopPropagation();
-          startEditing(event.currentTarget);
+          startEditing(event.currentTarget, event.shiftKey);
         }}
         onKeyDown={(event) => {
           if (
             editable &&
+            (!nodeGridOptions || event.shiftKey) &&
             event.key === "Enter" &&
             event.target === event.currentTarget
           ) {
             event.preventDefault();
             event.stopPropagation();
-            startEditing(event.currentTarget);
+            startEditing(event.currentTarget, event.shiftKey);
           }
         }}
       >

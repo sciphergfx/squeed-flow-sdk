@@ -21,6 +21,7 @@ export {
 } from "./components/DiagramAppearanceControls";
 export { ErrorToast } from "./components/ErrorToast";
 export { FlowDiagram } from "./components/FlowDiagram";
+export { isNodeVisible } from "./engine/edgeMode";
 export {
   FlowDiagramProvider,
   useFlowData,
