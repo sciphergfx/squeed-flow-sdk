@@ -1236,6 +1236,11 @@ Helpers reuse untouched branches and do not fire callbacks themselves. The `upda
 
 ### Node Hover Overlay
 
+Reuse `config.nodeOverlayActions` for standard hover buttons. An action's optional
+`nodeTypes` array limits it to matching node types (for example, `["grid"]`).
+Omitting `nodeTypes` preserves the existing all-node behavior; actions continue
+to dispatch through `callbacks.onNodeHoverAction`.
+
 ```tsx
 import { HStack, IconButton } from "@chakra-ui/react";
 import { PiPencilSimple, PiTrash } from "react-icons/pi";

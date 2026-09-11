@@ -41,7 +41,7 @@ export function NodeGridControls() {
           }}
         />
       )}
-      {nodeGridOptions && (
+      {(nodeGridOptions || config.bottomBarFill === true) && (
         <HStack
           role="group"
           aria-label="Collision settings"
@@ -89,9 +89,10 @@ export function NodeGridControls() {
             <LabeledToolbarToggle
               label="Fill"
               hideLabel
-              helper="Fill available canvas space"
+              helper={nodeGridOptions ? "Fill available canvas space" : "Enable Collision mode to use Fill"}
               icon={<PiArrowsOut size={18} />}
               checked={!!nodeGridOptions && !!options.fill}
+              disabled={!nodeGridOptions}
               onChange={(fill) => {
                 if (
                   !nodeGridOptions &&

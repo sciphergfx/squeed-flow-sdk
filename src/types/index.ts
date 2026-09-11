@@ -161,6 +161,7 @@ export interface NodeOverlayAction {
   id: string;
   icon: any;
   label: string;
+  nodeTypes?: string[];
 }
 
 /** Props passed to custom node overlay renderer */

@@ -1118,7 +1118,9 @@ function Canvas(props: CanvasProps) {
           focus(new Set([id]), padding, animate, 0.6, afterViewChange),
         ),
       focusBranch: (id, padding, animate, afterViewChange) =>
-        updateViewport(() => focus(branchIds(id), padding, animate, 1, afterViewChange)),
+        updateViewport(() =>
+          focus(branchIds(id), padding, animate, 1, afterViewChange),
+        ),
       focusConnections: (id, padding, animate, afterViewChange) =>
         updateViewport(() =>
           focus(connections(id), padding, animate, 1, afterViewChange),
