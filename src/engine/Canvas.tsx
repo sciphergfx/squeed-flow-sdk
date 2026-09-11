@@ -354,6 +354,7 @@ function Canvas(props: CanvasProps) {
   const geometryFocus = useRef<
     ((positions?: Map<string, Point>) => void) | null
   >(null);
+  const focusedLayout = useRef<{ focus: typeof geometryFocus.current; geometry: string }>();
   const previousSpacingFactor = useRef(spacingFactor);
   const compactLayout = compactPropertyLayout;
   const previousCompactLayout = useRef(compactLayout);
@@ -518,7 +519,7 @@ function Canvas(props: CanvasProps) {
       console.warn("[flow-sdk] layout failed", err);
       return;
     }
-    const anchor = resizeAnchor.current;
+    const anchor = geometryFocus.current ? null : resizeAnchor.current;
     resizeAnchor.current = null;
     const anchorTarget = anchor && target.get(anchor.id);
     if (anchor && anchorTarget) {
@@ -538,6 +539,11 @@ function Canvas(props: CanvasProps) {
       else if (!p.nodes.some((node) => node.id === id))
         placedNodes.current.delete(id);
     }
+    if (geometryFocus.current) {
+      const geometry = JSON.stringify([inputs, [...target], viewport.size, p.isPerformanceMode, p.disableAnimations]);
+      if (focusedLayout.current?.focus === geometryFocus.current && focusedLayout.current.geometry === geometry) return;
+      focusedLayout.current = { focus: geometryFocus.current, geometry };
+    } else focusedLayout.current = undefined;
     const updateViewport = viewport.coordinate(() =>
       geometryFocus.current?.(target),
     );
@@ -584,10 +590,7 @@ function Canvas(props: CanvasProps) {
     if (previousCompactLayout.current !== compactLayout)
       pendingFitRef.current = !pendingLayoutAction.current;
     previousCompactLayout.current = compactLayout;
-    if (geometryFocus.current && !pendingLayoutAction.current) {
-      clearTimeout(layoutTimerRef.current);
-      runLayoutNow();
-    } else scheduleLayout();
+    scheduleLayout();
   }, [
     nodes,
     edges,
@@ -641,9 +644,7 @@ function Canvas(props: CanvasProps) {
             changed = true;
           }
           if (changed) {
-            if (geometryFocus.current && !pendingLayoutAction.current)
-              runLayoutNow();
-            else scheduleLayout();
+            scheduleLayout();
           }
         });
       }
@@ -983,7 +984,6 @@ function Canvas(props: CanvasProps) {
       pendingFitRef.current = false;
       revealedNodes.current = [];
       centerRevealed.current = false;
-      viewport.cancelAnimation();
       const enabled =
         animate &&
         !propsRef.current.isPerformanceMode &&

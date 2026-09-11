@@ -26,7 +26,7 @@ interface NodeViewChildArgs {
   isHovered: boolean;
   isLowZoom: boolean;
   isEditing: boolean;
-  onSelect: (event: React.MouseEvent) => void;
+  onSelect: (event: React.MouseEvent, viewToggle?: boolean) => void;
   onEditStart: () => void;
   onEditEnd: () => void;
 }
@@ -98,7 +98,7 @@ const NodeView = ({
   })();
 
   const handleClick = useCallback(
-    (event: React.MouseEvent) => {
+    (event: React.MouseEvent, viewToggle = false) => {
       if (isEditing || config.readOnly) return;
       if (nodeGridOptions?.fill && !event.shiftKey) return;
       const modifiers = {
@@ -106,6 +106,7 @@ const NodeView = ({
         ctrlKey: event.ctrlKey,
         metaKey: event.metaKey,
         altKey: event.altKey,
+        ...(viewToggle ? { viewToggle: true } : {}),
       };
       // one selection toolbar at a time
       if (selectedEdgeId) {

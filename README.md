@@ -481,6 +481,13 @@ stays disabled. Individual node-view actions do not change this setting.
 
 `NodeViewMode` supports `"default"`, `"properties"` and `"icon-label"`; controlled
 consumers continue using `config.nodeViewModes` and `onNodeViewModeChange`.
+Dot-triggered selection includes `NodeSelectionModifiers.viewToggle: true`;
+ordinary selections omit it. The dot invokes `onNodeViewToggle` before changing
+the view so a host can queue geometry-aware focus without first focusing the
+compact node. SDK Test centers the opened node using its existing default focus
+padding; ordinary clicks still honor Include children. The layout scheduler
+coalesces measurements and does not restart a pending focus for identical
+destination geometry.
 Parent changes follow the host's existing collapse persistence behavior. The
 name `collapsed` remains reserved for child-collapse behavior, not object view
 modes. `onAllNodesIconLabelChange` reports bulk actions. The bottom toolbar exposes

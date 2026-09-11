@@ -51,9 +51,9 @@ export function CompactNodeView({
                   disabled={toggleDisabled}
                   onClick={(event) => {
                     event.stopPropagation();
-                    if (!args.isActive) args.onSelect(event);
-                    onExpand();
+                    if (!args.isActive) args.onSelect(event, true);
                     callbacks.onNodeViewToggle?.(props.data.id);
+                    onExpand();
                   }}
                 />
               </ToolbarTooltip>
