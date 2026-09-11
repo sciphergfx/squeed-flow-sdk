@@ -778,8 +778,16 @@ function Canvas(props: CanvasProps) {
       propertyY(id, property) === undefined
       ? surfaceBox(
           box,
-          (direction === "TB" || direction === "BT") && surface.captionBottom !== undefined
-            ? { ...surface, height: Math.max(surface.height, surface.captionBottom - surface.top), outline: undefined }
+          (direction === "TB" || direction === "BT") &&
+            surface.captionBottom !== undefined
+            ? {
+                ...surface,
+                height: Math.max(
+                  surface.height,
+                  surface.captionBottom - surface.top,
+                ),
+                outline: undefined,
+              }
             : surface,
         )
       : box;

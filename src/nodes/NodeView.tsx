@@ -77,7 +77,10 @@ const NodeView = ({
     (action) => !action.nodeTypes || action.nodeTypes.includes(nodeData?.type),
   );
   const renderNodeOverlay = config.renderNodeOverlay;
-  const HoverControls = nodeData?.type === "grid" ? config.customViews?.gridHoverControls : undefined;
+  const HoverControls =
+    nodeData?.type === "grid"
+      ? config.customViews?.gridHoverControls
+      : undefined;
   const overlayTop = nodeData?.type === "grid" ? "20px" : "-100px";
   const overlayOrigin = nodeData?.type === "grid" ? "top center" : undefined;
 

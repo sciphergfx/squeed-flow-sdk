@@ -30,10 +30,10 @@ export type { FlowDiagramContextValue } from "./components/FlowDiagramContext";
 export { FlowPort } from "./components/FlowPort";
 export type { FlowPortProps } from "./components/FlowPort";
 export { default as FlowView } from "./components/FlowView";
-export { LoadingBorder } from "./components/LoadingBorder";
 export { CollapseAllToggle } from "./components/LabeledToolbarToggle";
-export { GridAdjustmentToggle } from "./components/NodeGridControls";
+export { LoadingBorder } from "./components/LoadingBorder";
 export { NodeFormPopover } from "./components/NodeFormPopover";
+export { GridAdjustmentToggle } from "./components/NodeGridControls";
 export { NodeIconPicker } from "./components/NodeIconPicker";
 export {
   DEFAULT_PALETTE,

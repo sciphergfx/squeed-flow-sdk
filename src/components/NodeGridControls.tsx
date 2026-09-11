@@ -14,13 +14,20 @@ export function GridAdjustmentToggle() {
     <LabeledToolbarToggle
       label="Grid adjustment"
       hideLabel
-      helper={available ? "Grid adjustment" : "Enable Collision and Fill to adjust the Grid"}
+      helper={
+        available
+          ? "Grid adjustment"
+          : "Enable Collision and Fill to adjust the Grid"
+      }
       icon={<PiArrowsHorizontal size={20} />}
       checked={available && !!nodeGridOptions?.adjustment?.enabled}
       disabled={!available}
       onChange={(enabled) => {
         if (readOnly || !nodeGridOptions?.fill) return;
-        engineRef.current?.setNodeGridMode(true, { ...nodeGridOptions, adjustment: { ...nodeGridOptions.adjustment, enabled } });
+        engineRef.current?.setNodeGridMode(true, {
+          ...nodeGridOptions,
+          adjustment: { ...nodeGridOptions.adjustment, enabled },
+        });
       }}
     />
   );
@@ -135,9 +142,7 @@ export function NodeGridControls() {
               }}
             />
           )}
-          {nodeGridOptions && options.fill && (
-            <GridAdjustmentToggle />
-          )}
+          {nodeGridOptions && options.fill && <GridAdjustmentToggle />}
         </HStack>
       )}
     </>

@@ -7,7 +7,6 @@ import {
   PiArrowDown,
   PiArrowLeft,
   PiArrowRight,
-  PiArrowsInLineVertical,
   PiArrowsOutCardinal,
   PiArrowUp,
   PiBracketsCurly,
@@ -35,7 +34,7 @@ import { FlowType } from "../types";
 import { CompactPropertyLayoutToggle } from "./CompactPropertyLayoutToggle";
 import { DiagramAppearanceControls } from "./DiagramAppearanceControls";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
-import { CollapseAllToggle, LabeledToolbarToggle } from "./LabeledToolbarToggle";
+import { CollapseAllToggle } from "./LabeledToolbarToggle";
 import { NodeGridControls } from "./NodeGridControls";
 import {
   RecentToolbarAction,
