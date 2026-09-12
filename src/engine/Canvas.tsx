@@ -1160,15 +1160,22 @@ function Canvas(props: CanvasProps) {
         isolate(id, "connections", padding, animate),
       isolateBranch: (id, padding, animate) =>
         isolate(id, "branch", padding, animate),
-      restoreView: (animate = propsRef.current.animateViewport, state) => {
+      restoreView: (animate = propsRef.current.animateViewport, state, afterViewChange = false) => {
         geometryFocus.current = null;
+        const coordinateRestore = afterViewChange && !nodeGridRef.current && !isolatedIdsRef.current;
         const needsLayout =
           propsRef.current.compactPropertyLayout && !!isolatedIdsRef.current;
         isolatedIdsRef.current = null;
         setIsolation(null);
         const previous = state ?? savedViewport.current;
         savedViewport.current = null;
-        if (needsLayout)
+        if (previous && coordinateRestore) {
+          pendingFitRef.current = false;
+          pendingLayoutAction.current = null;
+          resizeAnchor.current = null;
+          geometryFocus.current = () => viewport.transition(previous, animate);
+          scheduleLayout();
+        } else if (needsLayout)
           pendingLayoutAction.current = () => {
             if (previous) viewport.transition(previous, animate);
           };

@@ -56,6 +56,7 @@ export {
   ToolbarTooltip,
 } from "./components/toolbarControls";
 export { ToolbarScrollContainer } from "./components/ToolbarScrollContainer";
+export { PanelDragHandle } from "./components/PanelDragHandle";
 export { default as TooltipIconButton } from "./components/TooltipIconButton";
 export { WorkflowControls } from "./components/WorkflowControls";
 export { createFormNode } from "./core/createFormNode";

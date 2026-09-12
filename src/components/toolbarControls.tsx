@@ -18,6 +18,7 @@ import { getInteractionSurface } from "../theme/interactionShadow";
 import { useCustomColors } from "../theme/useCustomColors";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
 import { useRecentToolbarAction } from "./RecentToolbarAction";
+import { PanelDragHandle } from "./PanelDragHandle";
 
 export function ToolbarTooltip({
   label,
@@ -91,6 +92,7 @@ export function ToolbarSelect({
   popupContent,
   footer,
   pinned = false,
+  draggable = false,
   open: requestedOpen,
   onOpenChange,
   labelCase = "title",
@@ -107,6 +109,7 @@ export function ToolbarSelect({
   popupContent?: ReactNode;
   footer?: ReactNode;
   pinned?: boolean;
+  draggable?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   labelCase?: "title" | "preserve";
@@ -133,6 +136,7 @@ export function ToolbarSelect({
       popupContent={popupContent}
       footer={footer}
       pinned={pinned}
+      draggable={draggable}
       labelCase={labelCase}
       aria-label={label}
     >
@@ -160,6 +164,10 @@ export function ToolbarSelect({
       panel.setAttribute("popover", mode);
     if (wasOpen) {
       panel.showPopover();
+      if (!pinned && panel.dataset.flowPanelMoved) {
+        delete panel.dataset.flowPanelMoved;
+        position();
+      }
       focused?.focus({ preventScroll: true });
       for (const { element, top, left } of scroll) {
         element.scrollTop = top;
@@ -196,6 +204,7 @@ export function ToolbarSelect({
     const anchor = trigger.current?.getBoundingClientRect();
     const panel = menu.current;
     if (!anchor || !panel) return;
+    if (pinned && panel.dataset.flowPanelMoved) return;
     if (trigger.current?.closest("[popover]")) {
       const below = window.innerHeight - anchor.bottom - 16;
       const above = anchor.top - 16;
@@ -216,6 +225,7 @@ export function ToolbarSelect({
   };
   const show = () => {
     if (disabled) return;
+    if (menu.current && !menu.current.matches(":popover-open")) delete menu.current.dataset.flowPanelMoved;
     menu.current?.showPopover();
     position();
     if (popupContent) {
@@ -249,7 +259,7 @@ export function ToolbarSelect({
       window.removeEventListener("resize", position);
       window.removeEventListener("scroll", position, true);
     };
-  }, [open, disabled]);
+  }, [open, disabled, pinned]);
   const surface = `var(--chakra-colors-${background.replace(".", "-")})`;
   return (
     <>
@@ -311,6 +321,7 @@ export function ToolbarSelect({
         ref={menu}
         id={id}
         data-flow-select-pinned={pinned ? "" : undefined}
+        data-flow-floating-panel={draggable && pinned ? "" : undefined}
         role={popupContent ? "dialog" : "listbox"}
         aria-label={label}
         position="fixed"
@@ -322,7 +333,7 @@ export function ToolbarSelect({
           footer && popupContent ? "minmax(0, 1fr)" : undefined
         }
         gridTemplateRows={
-          footer && popupContent ? "minmax(0, 1fr) auto" : undefined
+          footer && popupContent ? `${draggable && pinned ? "auto " : ""}minmax(0, 1fr) auto` : undefined
         }
         overflowY={footer && popupContent ? "hidden" : "auto"}
         bg={background}
@@ -387,6 +398,7 @@ export function ToolbarSelect({
           }
         }}
       >
+        {draggable && pinned && <PanelDragHandle label={label} />}
         {popupContent ??
           options.map((option) => (
             <chakra.button

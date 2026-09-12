@@ -80,8 +80,8 @@ export interface FlowEngine {
   isolateConnections(id: string, padding?: number, animate?: boolean): void;
   /** Temporarily show only this branch and fit it, preserving graph data. */
   isolateBranch(id: string, padding?: number, animate?: boolean): void;
-  /** End isolation and restore the viewport saved when isolation began. */
-  restoreView(animate?: boolean, state?: ViewportState): void;
+  /** End isolation and restore the saved viewport; afterViewChange coordinates a non-Grid preview close with layout. */
+  restoreView(animate?: boolean, state?: ViewportState, afterViewChange?: boolean): void;
   /** Hide/show edge paths, labels and hit targets without changing graph data. */
   setEdgesVisible(visible: boolean): void;
   clientToModel(clientX: number, clientY: number): Point;

@@ -667,6 +667,12 @@ Pass `true` as the fourth argument to `focusBranch`, `focusNode`, or
 `focusConnections` after a view toggle to fit the new geometry together with
 the layout animation. Existing three-argument calls keep their behavior.
 
+For a closing preview in an ordinary document canvas, use
+`engine.restoreView(true, savedViewport, true)` alongside the view change.
+The optional third argument restores the saved viewport in the same transition
+as the closing layout. It does not change Grid/Fill or isolation restoration;
+existing one- and two-argument calls retain their behavior.
+
 Animation defaults to false. Explicit false overrides the config default.
 Transitions interpolate pan and zoom over 300ms; center preserves zoom.
 Reduced-motion preferences disable animation. New viewport commands cancel
