@@ -351,10 +351,16 @@ export function ContentPreview({
             maxW="calc(100% - 16px)"
             opacity={fullscreen ? 1 : 0}
             pointerEvents={fullscreen ? "auto" : "none"}
-            css={fullscreen ? {
-              "@media (hover: hover) and (pointer: fine)": { opacity: nearToolbar ? 1 : 0 },
-              "&:hover, &:focus-within": { opacity: 1 },
-            } : undefined}
+            css={
+              fullscreen
+                ? {
+                    "@media (hover: hover) and (pointer: fine)": {
+                      opacity: nearToolbar ? 1 : 0,
+                    },
+                    "&:hover, &:focus-within": { opacity: 1 },
+                  }
+                : undefined
+            }
           >
             <ToolbarScrollContainer
               background={background}

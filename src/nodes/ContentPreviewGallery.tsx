@@ -110,7 +110,9 @@ export function ContentPreviewGallery({ nodeId }: { nodeId: string }) {
         maxW="calc(100% - 76px)"
         zIndex={2}
         css={{
-          "@media (hover: hover) and (pointer: fine)": { opacity: nearToolbar ? 1 : 0 },
+          "@media (hover: hover) and (pointer: fine)": {
+            opacity: nearToolbar ? 1 : 0,
+          },
           "&:hover, &:focus-within": { opacity: 1 },
         }}
       >
