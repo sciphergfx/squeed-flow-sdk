@@ -202,6 +202,7 @@ export function FlowDiagramProvider({
       node.data.config?.parentContainer ||
       node.data.type === "objectView" ||
       node.data.type === "arrayView" ||
+      node.data.type === "text" ||
       node.data.type === "grid",
   );
   const inferredIconLabel = iconLabelNodes.every((node) =>

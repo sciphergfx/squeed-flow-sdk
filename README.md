@@ -479,6 +479,12 @@ other default object views, and reopen parents. Dots use
 the same per-node actions and remain interactive; there is no global view lock.
 `allNodesIconLabel` reflects the current node modes.
 
+For non-parent Object nodes with Markdown, HTML, or JSX `$content`, the expanded
+header dot reuses `setNodeViewMode(id, "icon-label")`. It does not switch to an
+empty properties header. Reopening reuses `restoreNodeView` and the existing
+header/content rendering; the content source and parent-collapse behavior are
+unchanged.
+
 In `FlowDiagram`, enabling the bulk action also suspends `forms.structured`:
 generated detail nodes and structured form lists disappear without changing the
 workflow data. Disabling it restores the configured `forms.structured` setting
@@ -830,6 +836,14 @@ import {
 | Forms              | `NodeForm`, `NodeFormPopover`, `NodeConfigSummary`, `FormDocumentContext`                                                                                           |
 | Composition        | `FlowDiagramProvider`, `FlowView`, `useFlowDiagramContext`, `useFlowData`, `FlowDiagramContextValue`                                                                |
 | Feedback           | `ErrorToast`                                                                                                                                                        |
+
+`ToolbarSelect` accepts optional `pinned` (default `false`), `open`, and
+`onOpenChange` props. Pinning disables native outside-click dismissal and keeps
+standard option selections open, preserving the existing DOM, position, scroll,
+and focus. The trigger and Escape still close it explicitly. Custom
+`popupContent` owns its selection-close behavior. With `popupContent` and
+`footer`, the footer stays outside the scrolling content. Omit the new props
+to retain the existing uncontrolled dropdown behavior.
 
 Use `useFlowDiagramContext()` inside a child component for mode setters,
 selection, bound edit callbacks and `engineRef`; `useFlowData()` supplies node

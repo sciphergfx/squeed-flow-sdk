@@ -7,6 +7,7 @@ import {
   isValidElement,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -89,6 +90,9 @@ export function ToolbarSelect({
   icon,
   popupContent,
   footer,
+  pinned = false,
+  open: requestedOpen,
+  onOpenChange,
   labelCase = "title",
   "aria-label": label,
   ...triggerProps
@@ -102,6 +106,9 @@ export function ToolbarSelect({
   icon?: ReactNode;
   popupContent?: ReactNode;
   footer?: ReactNode;
+  pinned?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   labelCase?: "title" | "preserve";
   "aria-label": string;
 } & Pick<
@@ -125,6 +132,7 @@ export function ToolbarSelect({
       icon={icon}
       popupContent={popupContent}
       footer={footer}
+      pinned={pinned}
       labelCase={labelCase}
       aria-label={label}
     >
@@ -132,14 +140,31 @@ export function ToolbarSelect({
     </ToolbarSelect>,
     !!icon,
   );
-  useEffect(() => {
+  useLayoutEffect(() => {
     const panel = menu.current!;
-    panel.setAttribute("popover", "auto");
-    const toggle = (event: Event) =>
-      setOpen((event as ToggleEvent).newState === "open");
+    const wasOpen = panel.matches(":popover-open");
+    const focused = document.activeElement instanceof HTMLElement && panel.contains(document.activeElement) ? document.activeElement : null;
+    const scroll = [panel, ...panel.querySelectorAll<HTMLElement>("*")]
+      .filter((element) => element.scrollTop || element.scrollLeft)
+      .map((element) => ({ element, top: element.scrollTop, left: element.scrollLeft }));
+    const mode = pinned ? "manual" : "auto";
+    if (panel.getAttribute("popover") !== mode) panel.setAttribute("popover", mode);
+    if (wasOpen) {
+      panel.showPopover();
+      focused?.focus({ preventScroll: true });
+      for (const { element, top, left } of scroll) {
+        element.scrollTop = top;
+        element.scrollLeft = left;
+      }
+    }
+    const toggle = (event: Event) => {
+      const next = (event as ToggleEvent).newState === "open";
+      setOpen(next);
+      onOpenChange?.(next);
+    };
     panel.addEventListener("toggle", toggle);
     return () => panel.removeEventListener("toggle", toggle);
-  }, []);
+  }, [pinned, onOpenChange]);
   const options = Children.toArray(children)
     .filter(isValidElement)
     .map((child) => {
@@ -198,6 +223,11 @@ export function ToolbarSelect({
     );
     (selected ?? items?.[0])?.focus();
   };
+  useLayoutEffect(() => {
+    if (requestedOpen === undefined) return;
+    if (requestedOpen) show();
+    else close();
+  }, [requestedOpen]);
   useEffect(() => {
     if (!open) return;
     if (disabled) {
@@ -271,6 +301,7 @@ export function ToolbarSelect({
       <chakra.div
         ref={menu}
         id={id}
+        data-flow-select-pinned={pinned ? "" : undefined}
         role={popupContent ? "dialog" : "listbox"}
         aria-label={label}
         position="fixed"
@@ -278,11 +309,14 @@ export function ToolbarSelect({
         p={2}
         minW="180px"
         maxW="calc(100vw - 24px)"
-        overflowY="auto"
+        gridTemplateColumns={footer && popupContent ? "minmax(0, 1fr)" : undefined}
+        gridTemplateRows={footer && popupContent ? "minmax(0, 1fr) auto" : undefined}
+        overflowY={footer && popupContent ? "hidden" : "auto"}
         bg={background}
         color={colorText}
         borderRadius="30px"
         css={{
+          "&:popover-open": { display: footer && popupContent ? "grid" : undefined },
           scrollbarWidth: "none",
           "&::-webkit-scrollbar": { display: "none" },
           '& [role="option"]': menuItemCorners,
@@ -318,6 +352,7 @@ export function ToolbarSelect({
                     items.length;
             items[next]?.focus();
           } else if (event.key === "Escape" || event.key === "Tab") {
+            if (event.key === "Tab" && pinned) return;
             if (event.key === "Escape") {
               event.preventDefault();
               event.stopPropagation();
@@ -359,8 +394,10 @@ export function ToolbarSelect({
               _hover={{ bg: dark ? "whiteAlpha.100" : "blackAlpha.50" }}
               _focusVisible={{ bg: dark ? "whiteAlpha.100" : "blackAlpha.50" }}
               onClick={() => {
-                close();
-                trigger.current?.focus();
+                if (!pinned) {
+                  close();
+                  trigger.current?.focus();
+                }
                 onValueChange(option.value);
               }}
             >

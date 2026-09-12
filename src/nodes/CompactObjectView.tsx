@@ -29,6 +29,19 @@ export const CompactObjectView = (props) => {
         else setProperties(true);
       }
     : undefined;
+  if (!parent && props.data.type === "text" && actions.getNodeViewMode(props.data.id) === "icon-label")
+    return (
+      <CompactNodeView
+        {...props}
+        renderCompact={undefined}
+        data={{
+          ...props.data,
+          config: { ...props.data.config, labelBelow: true, icon: props.data.config?.icon || "PiTextT" },
+        }}
+        toggleLabel="Show text"
+        onExpand={() => actions.restoreNodeView(props.data.id)}
+      />
+      );
   if (!parent && configurable && properties)
     return (
       <ObjectNodeView

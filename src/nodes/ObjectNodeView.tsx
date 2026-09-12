@@ -63,7 +63,13 @@ export const ObjectNodeView = (props) => {
           config: {
             ...props.data.config,
             labelBelow: true,
-            icon: props.data.config?.icon || "PiBracketsCurly",
+            icon: props.data.config?.icon || (hasContent
+              ? props.data.config?.contentFormat === "html"
+                ? "PiFileHtml"
+                : props.data.config?.contentFormat === "jsx"
+                  ? "PiFileJsx"
+                  : "PiMarkdownLogo"
+              : "PiBracketsCurly"),
           },
         }}
         onExpand={() => actions.restoreNodeView(props.data.id)}
