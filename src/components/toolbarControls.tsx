@@ -143,12 +143,21 @@ export function ToolbarSelect({
   useLayoutEffect(() => {
     const panel = menu.current!;
     const wasOpen = panel.matches(":popover-open");
-    const focused = document.activeElement instanceof HTMLElement && panel.contains(document.activeElement) ? document.activeElement : null;
+    const focused =
+      document.activeElement instanceof HTMLElement &&
+      panel.contains(document.activeElement)
+        ? document.activeElement
+        : null;
     const scroll = [panel, ...panel.querySelectorAll<HTMLElement>("*")]
       .filter((element) => element.scrollTop || element.scrollLeft)
-      .map((element) => ({ element, top: element.scrollTop, left: element.scrollLeft }));
+      .map((element) => ({
+        element,
+        top: element.scrollTop,
+        left: element.scrollLeft,
+      }));
     const mode = pinned ? "manual" : "auto";
-    if (panel.getAttribute("popover") !== mode) panel.setAttribute("popover", mode);
+    if (panel.getAttribute("popover") !== mode)
+      panel.setAttribute("popover", mode);
     if (wasOpen) {
       panel.showPopover();
       focused?.focus({ preventScroll: true });
@@ -309,14 +318,20 @@ export function ToolbarSelect({
         p={2}
         minW="180px"
         maxW="calc(100vw - 24px)"
-        gridTemplateColumns={footer && popupContent ? "minmax(0, 1fr)" : undefined}
-        gridTemplateRows={footer && popupContent ? "minmax(0, 1fr) auto" : undefined}
+        gridTemplateColumns={
+          footer && popupContent ? "minmax(0, 1fr)" : undefined
+        }
+        gridTemplateRows={
+          footer && popupContent ? "minmax(0, 1fr) auto" : undefined
+        }
         overflowY={footer && popupContent ? "hidden" : "auto"}
         bg={background}
         color={colorText}
         borderRadius="30px"
         css={{
-          "&:popover-open": { display: footer && popupContent ? "grid" : undefined },
+          "&:popover-open": {
+            display: footer && popupContent ? "grid" : undefined,
+          },
           scrollbarWidth: "none",
           "&::-webkit-scrollbar": { display: "none" },
           '& [role="option"]': menuItemCorners,
