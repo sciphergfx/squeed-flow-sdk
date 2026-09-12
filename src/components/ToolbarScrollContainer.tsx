@@ -54,7 +54,11 @@ export function ToolbarScrollContainer({
       );
     };
     const onWheel = (event: WheelEvent) => {
+      const target = event.target instanceof Element ? event.target : null;
       if (
+        target?.closest("[data-flow-toolbar-scroll]") !== element ||
+        target.closest("[popover], [data-flow-floating-panel]") !==
+          element.closest("[popover], [data-flow-floating-panel]") ||
         event.defaultPrevented ||
         event.ctrlKey ||
         (framed && event.deltaX !== 0) ||

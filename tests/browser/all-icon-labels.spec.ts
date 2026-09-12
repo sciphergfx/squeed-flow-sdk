@@ -2,6 +2,49 @@ import { expect, test } from "@playwright/test";
 import { ready } from "./helpers";
 
 for (const width of [1440, 390]) {
+  for (const format of ["markdown", "html", "jsx"] as const) {
+    test(`content dot reuses icon-label collapse for ${format} at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await ready(page, "graph=basic-json");
+      await page.evaluate((format) => {
+        window.__flowTest.configure({
+          selectionToolbar: false,
+          allNodesIconLabel: false,
+        });
+        window.__flowTest.replaceDocument({
+          $hideRoot: true,
+          alpha: {
+            $view: "object",
+            $label: "Content Preview",
+            $icon: "PiCalendar",
+            $contentFormat: format,
+            $content: format === "jsx" ? [{ type: "text", text: "Preserved content" }] : format === "html" ? "<p>Preserved content</p>" : "Preserved content",
+          },
+        });
+      }, format);
+      const node = page.locator('.flow-sdk-node[data-node-id="root.alpha"]');
+      const content = node.locator("[data-flow-content]");
+      await expect(content).toBeVisible();
+      const before = await page.evaluate(() => JSON.stringify(window.__flowTest.document));
+      for (let cycle = 0; cycle < 2; cycle++) {
+        await node.getByText("Content Preview", { exact: true }).click();
+        await node.getByRole("button", { name: "Show icon", exact: true }).click();
+        await expect(node.locator("[data-flow-icon-label]")).toBeVisible();
+        await expect(node.locator("[data-flow-icon-caption]")).toHaveText("Content Preview");
+        await expect(content).toHaveCount(0);
+        await page.screenshot({ path: test.info().outputPath(`collapsed-${cycle}.png`) });
+        await node.hover();
+        await node.getByRole("button", { name: "Show properties", exact: true }).click();
+        await expect(node.getByText("Content Preview", { exact: true })).toBeVisible();
+        await expect(content).toBeVisible();
+        await expect(node.locator("[data-flow-icon-label]")).toHaveCount(0);
+        expect(await page.evaluate(() => JSON.stringify(window.__flowTest.document))).toBe(before);
+      }
+    });
+  }
+}
+
+for (const width of [1440, 390]) {
   test(`Shift content editing preserves focus and permissions at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await ready(page, "graph=basic-json");

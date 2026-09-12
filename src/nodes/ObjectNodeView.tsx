@@ -101,6 +101,19 @@ export const ObjectNodeView = (props) => {
         const uniformKeyWidth = calculateUniformKeyWidth(data.description);
         const icon = props.data?.config?.icon;
         const content = props.data?.config?.content;
+        const responsiveContent =
+          hasContent &&
+          !objVisible &&
+          data.label === "" &&
+          (data.config?.contentFormat === "html" ||
+            data.config?.contentFormat === "jsx");
+        const sizedContent =
+          hasContent &&
+          !objVisible &&
+          (data.config?.contentFormat === "html" ||
+            data.config?.contentFormat === "jsx") &&
+          data.viewProps?.width !== undefined &&
+          data.viewProps.width !== "100%";
         const borderRadius = data?.viewProps?.borderRadius ?? "53px";
         const borderProps = getNodeBorderProps(
           data?.viewProps,
@@ -123,13 +136,23 @@ export const ObjectNodeView = (props) => {
               backgroundColor: colors.hexbgColor,
               transition: "border-color 0.2s ease-in-out",
             }}
-            width="100%"
+            width={
+              responsiveContent || sizedContent
+                ? data.viewProps?.width !== undefined &&
+                  data.viewProps.width !== "100%"
+                  ? data.viewProps.width
+                  : "max-content"
+                : "100%"
+            }
+            maxW={responsiveContent ? "calc(100vw - 40px)" : undefined}
             minW={
-              hasContent || props.onShowIcon
-                ? uniformKeyWidth +
-                  OBJECT_VALUE_WIDTH +
-                  borderProps.borderWidth * 2
-                : undefined
+              responsiveContent || sizedContent
+                ? 0
+                : hasContent || props.onShowIcon
+                  ? uniformKeyWidth +
+                    OBJECT_VALUE_WIDTH +
+                    borderProps.borderWidth * 2
+                  : undefined
             }
             {...borderProps}
           >
@@ -183,6 +206,7 @@ export const ObjectNodeView = (props) => {
                     content={content}
                     format={props.data?.config?.contentFormat}
                     fillBody={props.fillBody}
+                    autoHeight={responsiveContent}
                     color={data?.viewProps?.textColor || colors.hextextColor}
                   />
                 </Flex>

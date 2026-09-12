@@ -7,12 +7,17 @@ import {
   type MouseEventHandler,
 } from "react";
 import { PiArrowsIn, PiArrowsOut, PiCode } from "react-icons/pi";
-import { useFlowDiagramContext } from "../components/FlowDiagramContext";
+import {
+  useFlowData,
+  useFlowDiagramContext,
+} from "../components/FlowDiagramContext";
 import { LoadingBorder } from "../components/LoadingBorder";
 import { ToolbarIconButton } from "../components/toolbarControls";
 import { ToolbarScrollContainer } from "../components/ToolbarScrollContainer";
+import { useEdgeProximity } from "../hooks/useEdgeProximity";
 import { useCustomColors } from "../theme/useCustomColors";
 import type { ContentFormat, NodeContent } from "../types";
+import { ContentPreviewGallery } from "./ContentPreviewGallery";
 
 export const ContentFullscreenButton = forwardRef<
   HTMLButtonElement,
@@ -48,12 +53,29 @@ export function ContentPreview({
   content,
   format,
   onEdit,
+  autoHeight = false,
+  nodeId,
+  controls = true,
 }: {
   content: NodeContent;
   format: Exclude<ContentFormat, "markdown">;
   onEdit?: () => void;
+  autoHeight?: boolean;
+  nodeId?: string;
+  controls?: boolean;
 }) {
   const { config, colorMode } = useFlowDiagramContext();
+  const { nodeById } = useFlowData();
+  const savedHeight = nodeId
+    ? nodeById.get(nodeId)?.data.viewProps?.height
+    : undefined;
+  const explicitHeight =
+    typeof savedHeight === "number"
+      ? `${savedHeight}px`
+      : typeof savedHeight === "string" && /^\d+(\.\d+)?px$/.test(savedHeight)
+        ? savedHeight
+        : undefined;
+  autoHeight = autoHeight && !explicitHeight;
   const { background, border, colorInactive } = useCustomColors();
   const JsxContent = config.customViews?.jsxContent;
   const source =
@@ -88,7 +110,19 @@ export function ContentPreview({
   const fullscreenButton = useRef<HTMLButtonElement>(null);
   const wasFullscreen = useRef(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const toolbar = useRef<HTMLDivElement>(null);
+  const nearToolbar = useEdgeProximity({
+    edge: "top",
+    enabled: fullscreen,
+    bounds: toolbar,
+    inside: [toolbar],
+    threshold: 90,
+  });
   const [fullscreenError, setFullscreenError] = useState("");
+  const [contentHeight, setContentHeight] = useState<{
+    document: string;
+    height: number;
+  }>();
   const editable = !!onEdit;
   useEffect(() => {
     const changed = () => {
@@ -119,6 +153,7 @@ export function ContentPreview({
     content: string;
     format: string;
     editable: boolean;
+    autoHeight: boolean;
     document?: string;
     error?: string;
   }>();
@@ -129,12 +164,18 @@ export function ContentPreview({
     let cancelled = false;
     import("./contentPreviewDocument")
       .then(({ contentPreviewDocument }) =>
-        contentPreviewDocument(source, format, editable),
+        contentPreviewDocument(source, format, editable, autoHeight),
       )
       .then(
         (document) => {
           if (!cancelled)
-            setPreview({ content: source, format, editable, document });
+            setPreview({
+              content: source,
+              format,
+              editable,
+              autoHeight,
+              document,
+            });
         },
         (error) => {
           if (!cancelled)
@@ -142,6 +183,7 @@ export function ContentPreview({
               content: source,
               format,
               editable,
+              autoHeight,
               error: error instanceof Error ? error.message : String(error),
             });
         },
@@ -149,7 +191,7 @@ export function ContentPreview({
     return () => {
       cancelled = true;
     };
-  }, [source, format, editable]);
+  }, [source, format, editable, autoHeight]);
   useEffect(() => {
     if (!onEdit) return;
     const edit = async (event: MessageEvent) => {
@@ -177,9 +219,35 @@ export function ContentPreview({
   const current =
     preview?.content === source &&
     preview.format === format &&
-    preview.editable === editable
+    preview.editable === editable &&
+    preview.autoHeight === autoHeight
       ? preview
       : undefined;
+  useEffect(() => {
+    if (!autoHeight || format !== "html" || !current?.document) return;
+    const previewDocument = current.document;
+    const resize = (event: MessageEvent) => {
+      const height = event.data?.height;
+      if (
+        !frame.current?.contentWindow ||
+        event.source !== frame.current.contentWindow ||
+        event.data?.type !== "squeed:content-size" ||
+        typeof height !== "number" ||
+        !Number.isFinite(height) ||
+        height <= 0 ||
+        height > 100_000 ||
+        document.fullscreenElement === viewport.current
+      )
+        return;
+      setContentHeight((previous) =>
+        previous?.document === previewDocument && previous.height === height
+          ? previous
+          : { document: previewDocument, height },
+      );
+    };
+    window.addEventListener("message", resize);
+    return () => window.removeEventListener("message", resize);
+  }, [autoHeight, format, current?.document]);
   const frameFailed = !!current && current === failedPreview;
   const loading =
     format !== "jsx" &&
@@ -189,7 +257,23 @@ export function ContentPreview({
   return (
     <div
       data-flow-content-preview=""
-      style={{ width: "100%", height: 360, fontSize: 16, overflow: "auto" }}
+      style={{
+        width: "100%",
+        height: !controls
+          ? autoHeight
+            ? "auto"
+            : "100%"
+          : (explicitHeight ??
+            (autoHeight
+              ? format === "jsx"
+                ? "auto"
+                : contentHeight?.document === current?.document
+                  ? contentHeight?.height
+                  : 360
+              : 360)),
+        fontSize: 16,
+        overflow: "auto",
+      }}
     >
       <pre
         data-flow-preview-source=""
@@ -201,8 +285,8 @@ export function ContentPreview({
         ref={viewport}
         position="relative"
         w="100%"
-        h="100%"
-        aria-busy={format !== "jsx" ? loading : undefined}
+        h={autoHeight && format === "jsx" ? "auto" : "100%"}
+        aria-busy={!fullscreen && format !== "jsx" ? loading : undefined}
         bg={format === "jsx" && colorMode === "dark" ? "gray.900" : "white"}
         onDoubleClick={(event) => {
           if (
@@ -224,7 +308,11 @@ export function ContentPreview({
         onKeyDownCapture={(event) => {
           if (
             event.key !== "Escape" ||
-            document.fullscreenElement !== viewport.current
+            document.fullscreenElement !== viewport.current ||
+            (event.target instanceof Element &&
+              event.target.closest(
+                'input, textarea, select, [contenteditable="true"]',
+              ))
           )
             return;
           event.preventDefault();
@@ -239,7 +327,7 @@ export function ContentPreview({
             maxHeight: "none",
             padding: 0,
           },
-          "&:hover > [data-flow-content-toolbar], &:focus-within > [data-flow-content-toolbar]":
+          "&:not(:fullscreen):hover > [data-flow-content-toolbar], &:not(:fullscreen):focus-within > [data-flow-content-toolbar]":
             { opacity: 1, pointerEvents: "auto" },
           "@media (hover: none)": {
             "& > [data-flow-content-toolbar]": {
@@ -249,74 +337,81 @@ export function ContentPreview({
           },
         }}
       >
-        <Box
-          role="toolbar"
-          aria-label="Content controls"
-          data-flow-content-toolbar=""
-          position="absolute"
-          top="8px"
-          right="8px"
-          zIndex={1}
-          w="max-content"
-          maxW="calc(100% - 16px)"
-          opacity={fullscreen ? 1 : 0}
-          pointerEvents={fullscreen ? "auto" : "none"}
-        >
-          <ToolbarScrollContainer
-            background={background}
-            border={colorMode === "dark" ? border : "gray.300"}
+        {controls && (
+          <Box
+            ref={toolbar}
+            role="toolbar"
+            aria-label="Content controls"
+            data-flow-content-toolbar=""
+            position="absolute"
+            top="8px"
+            right="8px"
+            zIndex={1}
+            w="max-content"
+            maxW="calc(100% - 16px)"
+            opacity={fullscreen ? 1 : 0}
+            pointerEvents={fullscreen ? "auto" : "none"}
+            css={fullscreen ? {
+              "@media (hover: hover) and (pointer: fine)": { opacity: nearToolbar ? 1 : 0 },
+              "&:hover, &:focus-within": { opacity: 1 },
+            } : undefined}
           >
-            <HStack
-              px="8px"
-              gap="8px"
-              h="100%"
-              w="max-content"
-              css={{
-                "& button > svg": {
-                  width: "20px",
-                  height: "20px",
-                  minWidth: "20px",
-                  minHeight: "20px",
-                  flexShrink: 0,
-                },
-              }}
+            <ToolbarScrollContainer
+              background={background}
+              border={colorMode === "dark" ? border : "gray.300"}
             >
-              {onEdit && (
-                <ToolbarIconButton
-                  data-flow-content-edit=""
-                  aria-label="Edit content source"
-                  title="Edit content source"
-                  icon={<PiCode size={20} />}
-                  size="sm"
-                  variant="plain"
-                  bg="transparent"
-                  color={colorInactive}
-                  borderRadius="30px"
-                  w="32px"
-                  h="32px"
-                  minW="32px"
-                  p={0}
+              <HStack
+                px="8px"
+                gap="8px"
+                h="100%"
+                w="max-content"
+                css={{
+                  "& button > svg": {
+                    width: "20px",
+                    height: "20px",
+                    minWidth: "20px",
+                    minHeight: "20px",
+                    flexShrink: 0,
+                  },
+                }}
+              >
+                {onEdit && (!fullscreen || !nodeId) && (
+                  <ToolbarIconButton
+                    data-flow-content-edit=""
+                    aria-label="Edit content source"
+                    title="Edit content source"
+                    icon={<PiCode size={20} />}
+                    size="sm"
+                    variant="plain"
+                    bg="transparent"
+                    color={colorInactive}
+                    borderRadius="30px"
+                    w="32px"
+                    h="32px"
+                    minW="32px"
+                    p={0}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void (async () => {
+                        if (document.fullscreenElement === viewport.current)
+                          await document.exitFullscreen();
+                        onEdit();
+                      })().catch((error) => setFullscreenError(String(error)));
+                    }}
+                  />
+                )}
+                <ContentFullscreenButton
+                  ref={fullscreenButton}
+                  fullscreen={fullscreen}
                   onClick={(event) => {
                     event.stopPropagation();
-                    void (async () => {
-                      if (document.fullscreenElement === viewport.current)
-                        await document.exitFullscreen();
-                      onEdit();
-                    })().catch((error) => setFullscreenError(String(error)));
+                    void toggleFullscreen();
                   }}
                 />
-              )}
-              <ContentFullscreenButton
-                ref={fullscreenButton}
-                fullscreen={fullscreen}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  void toggleFullscreen();
-                }}
-              />
-            </HStack>
-          </ToolbarScrollContainer>
-        </Box>
+              </HStack>
+            </ToolbarScrollContainer>
+          </Box>
+        )}
         {fullscreenError && (
           <Box
             role="alert"
@@ -330,7 +425,9 @@ export function ContentPreview({
             {fullscreenError}
           </Box>
         )}
-        {format === "jsx" ? (
+        {fullscreen && nodeId ? (
+          <ContentPreviewGallery nodeId={nodeId} />
+        ) : format === "jsx" ? (
           contentError ? (
             <pre role="alert" style={{ whiteSpace: "pre-wrap" }}>
               {contentError}
@@ -339,7 +436,7 @@ export function ContentPreview({
             <JsxContent
               components={components}
               colorMode={colorMode}
-              fillHeight
+              fillHeight={!autoHeight || fullscreen}
             />
           ) : (
             <Box role="status" fontSize="14px">
@@ -355,7 +452,7 @@ export function ContentPreview({
             key={current.document}
             ref={frame}
             title={`${format.toUpperCase()} content preview`}
-            sandbox={editable ? "allow-scripts" : ""}
+            sandbox={editable || autoHeight ? "allow-scripts" : ""}
             allowFullScreen
             referrerPolicy="no-referrer"
             srcDoc={current.document}
@@ -371,7 +468,10 @@ export function ContentPreview({
             }}
           />
         ) : null}
-        <LoadingBorder active={loading} label="Loading HTML content" />
+        <LoadingBorder
+          active={!fullscreen && loading}
+          label="Loading HTML content"
+        />
       </Box>
     </div>
   );

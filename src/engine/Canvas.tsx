@@ -1024,6 +1024,7 @@ function Canvas(props: CanvasProps) {
       animate = propsRef.current.animateViewport,
       zoomScale = 1,
       afterViewChange = false,
+      centerId?: string,
     ) => {
       const applyFocus = (positions?: Map<string, Point>) => {
         const graph = layoutGraphRef.current;
@@ -1042,17 +1043,31 @@ function Canvas(props: CanvasProps) {
             (id) => propsRef.current.containerStyle(id).padding,
             containerMinSize,
           );
-        const bounds = unionRects(
+        const targetBounds = new Map(
           [...targetIds].flatMap((id) => {
             const container = targetContainers?.get(id);
-            if (container) return [container];
+            if (container) return [[id, container] as const];
             const position = positions?.get(id);
             const size = sizesRef.current.get(id) || DEFAULT_SIZE;
             const box = position ? { ...position, ...size } : boxFor(id);
-            return box ? [boxToRect(box)] : [];
+            return box ? [[id, boxToRect(box)] as const] : [];
           }),
         );
+        let bounds = unionRects([...targetBounds.values()]);
         if (!bounds) return;
+        const anchor = centerId ? targetBounds.get(centerId) : undefined;
+        if (anchor) {
+          const centerX = (anchor.x1 + anchor.x2) / 2;
+          const centerY = (anchor.y1 + anchor.y2) / 2;
+          const halfWidth = Math.max(centerX - bounds.x1, bounds.x2 - centerX);
+          const halfHeight = Math.max(centerY - bounds.y1, bounds.y2 - centerY);
+          bounds = {
+            x1: centerX - halfWidth,
+            x2: centerX + halfWidth,
+            y1: centerY - halfHeight,
+            y2: centerY + halfHeight,
+          };
+        }
         pendingFitRef.current = false;
         revealedNodes.current = [];
         centerRevealed.current = false;
@@ -1148,9 +1163,22 @@ function Canvas(props: CanvasProps) {
         updateViewport(() =>
           focus(new Set([id]), padding, animate, 0.6, afterViewChange),
         ),
-      focusBranch: (id, padding, animate, afterViewChange) =>
+      focusBranch: (
+        id,
+        padding,
+        animate,
+        afterViewChange,
+        centerOnNode = false,
+      ) =>
         updateViewport(() =>
-          focus(branchIds(id), padding, animate, 1, afterViewChange),
+          focus(
+            branchIds(id),
+            padding,
+            animate,
+            1,
+            afterViewChange,
+            centerOnNode ? id : undefined,
+          ),
         ),
       focusConnections: (id, padding, animate, afterViewChange) =>
         updateViewport(() =>
@@ -2270,7 +2298,9 @@ function Canvas(props: CanvasProps) {
         if (!event.currentTarget.contains(event.target as Node)) return;
         const fullscreenControl =
           event.target instanceof Element &&
-          event.target.closest("button[data-flow-fullscreen]");
+          event.target.closest(
+            "button[data-flow-fullscreen], button[data-flow-content-navigation]",
+          );
         if (
           suppressClickRef.current ||
           (props.readOnly && !fullscreenControl)

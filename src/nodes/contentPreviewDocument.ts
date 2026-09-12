@@ -5,6 +5,7 @@ export async function contentPreviewDocument(
   source: string,
   format: Exclude<ContentFormat, "markdown">,
   editable = false,
+  autoHeight = false,
 ) {
   if (source.length > 100_000)
     throw new Error("Preview source exceeds 100,000 characters.");
@@ -60,6 +61,21 @@ export async function contentPreviewDocument(
       event.preventDefault();
       parent.postMessage({type: 'squeed:content-edit'}, '*');
     });</script>`;
-  const policy = `default-src 'none'; script-src ${format === "jsx" ? `'nonce-${nonce}' 'unsafe-eval'` : editable ? `'nonce-${nonce}'` : "'none'"}; style-src 'unsafe-inline'; img-src data: blob:; media-src https: data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none';`;
+  if (autoHeight)
+    body += `<style>body{display:flow-root}</style><script nonce="${nonce}">(() => {
+      let previous = 0;
+      const report = () => {
+        const height = Math.ceil(Math.max(document.body.getBoundingClientRect().height, document.body.scrollHeight));
+        if (height > 0 && height !== previous) {
+          previous = height;
+          parent.postMessage({type: 'squeed:content-size', height}, '*');
+        }
+      };
+      new ResizeObserver(report).observe(document.body);
+      window.addEventListener('load', report);
+      document.fonts.ready.then(report);
+      report();
+    })();</script>`;
+  const policy = `default-src 'none'; script-src ${format === "jsx" ? `'nonce-${nonce}' 'unsafe-eval'` : editable || autoHeight ? `'nonce-${nonce}'` : "'none'"}; style-src 'unsafe-inline'; img-src data: blob:; media-src https: data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none';`;
   return `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="${policy}"><meta name="referrer" content="no-referrer"><style>html{color-scheme:light}body{margin:0;padding:0;font:16px/1.5 sans-serif;color:#18181b;background:white;overflow-wrap:anywhere}*{box-sizing:border-box}img{max-width:100%}pre{white-space:pre-wrap}</style></head><body>${body}</body></html>`;
 }

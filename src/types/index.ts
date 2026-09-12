@@ -388,6 +388,11 @@ export interface FlowDiagramCallbacks {
   onNodeLabelChange?: (nodeId: string, newLabel: string) => void;
   onNodeSubtitleChange?: (nodeId: string, subtitle: string) => void;
   onNodeContentChange?: (nodeId: string, content: NodeContent) => void;
+  onNodeDimensionChange?: (
+    nodeId: string,
+    dimension: "width" | "height",
+    value: number | undefined,
+  ) => void;
   /** Fires when a node's collapse toggle is clicked */
   onNodeCollapse?: (nodeId: string, collapsed: boolean) => void;
   onNodeParentChange?: (nodeId: string, parentId: string) => void;

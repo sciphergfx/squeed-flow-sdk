@@ -289,6 +289,7 @@ export function FlowDiagramProvider({
       onNodeLabelChange: wrap("onNodeLabelChange"),
       onNodeSubtitleChange: wrap("onNodeSubtitleChange"),
       onNodeContentChange: wrap("onNodeContentChange"),
+      onNodeDimensionChange: wrap("onNodeDimensionChange"),
       onNodeCollapse: wrap("onNodeCollapse"),
       onNodeColorChange: wrap("onNodeColorChange"),
       onNodeBorderColorChange: wrap("onNodeBorderColorChange"),

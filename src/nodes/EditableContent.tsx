@@ -14,6 +14,8 @@ export function EditableContent({
   color,
   format = "markdown",
   fillBody = false,
+  autoHeight = false,
+  previewControls = true,
   editOnMount = false,
   onChange,
   onEditEnd,
@@ -23,6 +25,8 @@ export function EditableContent({
   color: string;
   format?: ContentFormat;
   fillBody?: boolean;
+  autoHeight?: boolean;
+  previewControls?: boolean;
   editOnMount?: boolean;
   onChange?: (content: NodeContent) => void;
   onEditEnd?: () => void;
@@ -105,10 +109,19 @@ export function EditableContent({
   if (!editing || !editable)
     if (format !== "markdown")
       return (
-        <Box ref={wrapperRef} w="100%" position="relative" data-flow-content="">
+        <Box
+          ref={wrapperRef}
+          w="100%"
+          h={!previewControls && !autoHeight ? "100%" : undefined}
+          position="relative"
+          data-flow-content=""
+        >
           <ContentPreview
+            nodeId={nodeId}
             content={content}
             format={format}
+            controls={previewControls}
+            autoHeight={autoHeight && !nodeGridOptions?.fill}
             onEdit={
               directEditable
                 ? () => {

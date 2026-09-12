@@ -214,6 +214,21 @@ export function bindSqueedCallbacks(
         value: radius,
       });
     },
+    onNodeDimensionChange: (id, dimension, value) => {
+      if (
+        (dimension !== "width" && dimension !== "height") ||
+        (value !== undefined && (!Number.isFinite(value) || value <= 0))
+      )
+        return;
+      callbacks.onNodeDimensionChange?.(id, dimension, value);
+      const key = dimension === "width" ? "$width" : "$height";
+      emit(setNodeProp(json, id, key, value), {
+        type: "nodeStyle",
+        address: id,
+        key,
+        value,
+      });
+    },
     onNodeIconChange: (id, icon) => {
       callbacks.onNodeIconChange?.(id, icon);
       emit(setNodeProp(json, id, "$icon", icon), {

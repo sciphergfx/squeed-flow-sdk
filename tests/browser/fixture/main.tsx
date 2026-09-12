@@ -10,8 +10,9 @@ import {
   type FlowEngine,
   type SqueedJson,
 } from "@squeed/flow-sdk";
-import { StrictMode, useMemo, useState } from "react";
+import { createElement, StrictMode, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { arrangeNodesInGrid } from "../../../src/engine/nodeCollisions";
 import MinimalExample from "../../../examples/form-connection/MinimalExample";
 import workflowDocument from "../../../examples/workflow-form/ui.json";
 import stateBindings from "../../../examples/workflow-state/bindings.json";
@@ -73,6 +74,8 @@ const initialEdges: FlowDiagramEdge[] = [
 
 type Event = { name: string; value?: unknown };
 const control = {
+  createElement,
+  arrangeNodesInGrid,
   engine: null as FlowEngine | null,
   events: [] as Event[],
   document: initialDocument as SqueedJson,

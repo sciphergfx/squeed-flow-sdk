@@ -93,6 +93,7 @@ export function CommitInput({
   width = "140px",
   type = "text",
   min,
+  disabled = false,
   onCommit,
 }: {
   value: string;
@@ -101,6 +102,7 @@ export function CommitInput({
   width?: string;
   type?: "text" | "number";
   min?: number;
+  disabled?: boolean;
   onCommit: (v: string) => void;
 }) {
   const { colorText } = useCustomColors();
@@ -126,6 +128,7 @@ export function CommitInput({
       aria-label={ariaLabel}
       type={type}
       min={min}
+      disabled={disabled}
       size="xs"
       fontSize="16px"
       w={width}

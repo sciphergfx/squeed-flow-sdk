@@ -29,6 +29,14 @@ export function ObjectNodeHeader({
   onShowNativeIcon,
 }) {
   const { callbacks } = useFlowDiagramContext();
+  if (
+    hasContent &&
+    !objVisible &&
+    data.label === "" &&
+    (data.config?.contentFormat === "html" ||
+      data.config?.contentFormat === "jsx")
+  )
+    return null;
   const showIcon = props.onShowIcon ?? onShowNativeIcon;
   const toggleLabel = showIcon
     ? "Show icon"

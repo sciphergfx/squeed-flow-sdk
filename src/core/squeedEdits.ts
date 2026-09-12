@@ -33,6 +33,8 @@ export type SqueedNodeKey =
   | "$borderStyle"
   | "$borderWidth"
   | "$borderRadius"
+  | "$width"
+  | "$height"
   | "$fontSize"
   | "$icon"
   | "$content"
@@ -547,6 +549,11 @@ export function compileSqueed(
     }
     if (Number.isFinite(src.$borderRadius) && src.$borderRadius >= 0) {
       data.viewProps = { ...data.viewProps, borderRadius: src.$borderRadius };
+    }
+    for (const dimension of ["width", "height"] as const) {
+      const value = src[`$${dimension}`];
+      if (typeof value === "number" && Number.isFinite(value) && value > 0)
+        data.viewProps = { ...data.viewProps, [dimension]: `${value}px` };
     }
     if (typeof src.$isNodeAnimated === "boolean") {
       data.isNodeAnimated = src.$isNodeAnimated;

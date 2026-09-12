@@ -485,6 +485,19 @@ empty properties header. Reopening reuses `restoreNodeView` and the existing
 header/content rendering; the content source and parent-collapse behavior are
 unchanged.
 
+An explicit `$label: ""` on HTML/JSX content omits the expanded content header
+and its dot. The node sizes to the preview's intrinsic width, capped at the
+viewport width minus 40px, and grows or shrinks with the content height instead
+of using the property-table minimum and fixed 360px preview height.
+Explicit custom widths remain supported; Fill and fullscreen use their allocated
+dimensions. HTML auto-height uses a nonce-protected measurement script and accepts
+size messages only from that preview's iframe. Content scripts remain sanitized
+out, and same-origin access remains disabled.
+Internal HTML/JSX styling remains authoritative. Missing labels, named content,
+Markdown and properties views retain their headers and sizing. Use
+`$borderRadius: 0` independently for square corners. Existing content source and
+fullscreen controls remain available.
+
 In `FlowDiagram`, enabling the bulk action also suspends `forms.structured`:
 generated detail nodes and structured form lists disappear without changing the
 workflow data. Disabling it restores the configured `forms.structured` setting
