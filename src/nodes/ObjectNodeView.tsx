@@ -49,7 +49,7 @@ export const ObjectNodeView = (props) => {
     () => actions.setNodeViewMode(props.data.id, "icon-label"),
   );
   const canShowNativeIcon =
-    !props.onShowIcon && !props.data.config?.parentContainer && !hasContent;
+    !props.onShowIcon && !props.data.config?.parentContainer;
   const onShowNativeIcon = canShowNativeIcon
     ? () => actions.setNodeViewMode(props.data.id, "icon-label")
     : undefined;
