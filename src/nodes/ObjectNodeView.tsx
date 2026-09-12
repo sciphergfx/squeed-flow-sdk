@@ -63,13 +63,15 @@ export const ObjectNodeView = (props) => {
           config: {
             ...props.data.config,
             labelBelow: true,
-            icon: props.data.config?.icon || (hasContent
-              ? props.data.config?.contentFormat === "html"
-                ? "PiFileHtml"
-                : props.data.config?.contentFormat === "jsx"
-                  ? "PiFileJsx"
-                  : "PiMarkdownLogo"
-              : "PiBracketsCurly"),
+            icon:
+              props.data.config?.icon ||
+              (hasContent
+                ? props.data.config?.contentFormat === "html"
+                  ? "PiFileHtml"
+                  : props.data.config?.contentFormat === "jsx"
+                    ? "PiFileJsx"
+                    : "PiMarkdownLogo"
+                : "PiBracketsCurly"),
           },
         }}
         onExpand={() => actions.restoreNodeView(props.data.id)}
@@ -139,7 +141,7 @@ export const ObjectNodeView = (props) => {
               borderWidth={0}
               overflow="hidden"
             >
-              <ObjectNodeHeader
+              {!props.fillBody && <ObjectNodeHeader
                 {...{
                   headerTitle,
                   hasContent,
@@ -159,7 +161,7 @@ export const ObjectNodeView = (props) => {
                   setObjVisible,
                   onShowNativeIcon,
                 }}
-              />
+              />}
               {hasContent && !objVisible ? (
                 <Flex
                   w="100%"

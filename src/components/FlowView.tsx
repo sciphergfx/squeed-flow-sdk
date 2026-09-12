@@ -365,6 +365,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         const ViewComponent = isParentContainer
           ? Views.parentContainer
           : Views[node.data.type] || Views.text;
+        const FillComponent = config.customViews?.fillNode ?? ViewComponent;
         const edgeData = edgeBySource.get(node.data.id);
         const viewProps = {
           ...node,
@@ -397,17 +398,18 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
               key={`${node.data.id}-${themeColor}`}
             />
           ),
-          fillElement: fillRadiusEditedIds.has(node.data.id) ? undefined : (
-            <ViewComponent
+          fillElement: (
+            <FillComponent
               {...viewProps}
+              {...(config.customViews?.fillNode ? { renderNode: ViewComponent } : {})}
               data={{
                 ...node.data,
-                viewProps: { ...node.data.viewProps, borderRadius: 0 },
+                viewProps: { ...node.data.viewProps, borderRadius: fillRadiusEditedIds.has(node.data.id) ? node.data.viewProps?.borderRadius : 0 },
               }}
               containerStyle={
-                viewProps.containerStyle
+                viewProps.containerStyle && !fillRadiusEditedIds.has(node.data.id)
                   ? { ...viewProps.containerStyle, borderRadius: 0 }
-                  : undefined
+                  : viewProps.containerStyle
               }
               key={`${node.data.id}-${themeColor}`}
             />
