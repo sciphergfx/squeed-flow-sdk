@@ -3,11 +3,24 @@ import { useEffect, useRef } from "react";
 import { PiDotsSix } from "react-icons/pi";
 import { useCustomColors } from "../theme/useCustomColors";
 
-export function PanelDragHandle({ label, disabled = false }: { label: string; disabled?: boolean }) {
+export function PanelDragHandle({
+  label,
+  disabled = false,
+}: {
+  label: string;
+  disabled?: boolean;
+}) {
   const handle = useRef<HTMLButtonElement>(null);
-  const drag = useRef<{ pointerId: number; x: number; y: number; left: number; top: number }>();
+  const drag = useRef<{
+    pointerId: number;
+    x: number;
+    y: number;
+    left: number;
+    top: number;
+  }>();
   const { colorInactive } = useCustomColors();
-  const panel = () => handle.current?.closest<HTMLElement>("[data-flow-floating-panel]");
+  const panel = () =>
+    handle.current?.closest<HTMLElement>("[data-flow-floating-panel]");
   const move = (left: number, top: number) => {
     const element = panel();
     if (!element) return;
@@ -23,7 +36,8 @@ export function PanelDragHandle({ label, disabled = false }: { label: string; di
     if (!current) return;
     if (cancelled) move(current.left, current.top);
     drag.current = undefined;
-    if (handle.current?.hasPointerCapture(current.pointerId)) handle.current.releasePointerCapture(current.pointerId);
+    if (handle.current?.hasPointerCapture(current.pointerId))
+      handle.current.releasePointerCapture(current.pointerId);
     if (handle.current) handle.current.style.cursor = "";
   };
   useEffect(() => {
@@ -78,7 +92,13 @@ export function PanelDragHandle({ label, disabled = false }: { label: string; di
         if (!bounds) return;
         event.preventDefault();
         event.stopPropagation();
-        drag.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: bounds.left, top: bounds.top };
+        drag.current = {
+          pointerId: event.pointerId,
+          x: event.clientX,
+          y: event.clientY,
+          left: bounds.left,
+          top: bounds.top,
+        };
         event.currentTarget.setPointerCapture(event.pointerId);
         event.currentTarget.style.cursor = "grabbing";
       }}
@@ -86,19 +106,42 @@ export function PanelDragHandle({ label, disabled = false }: { label: string; di
         const current = drag.current;
         if (!current || current.pointerId !== event.pointerId) return;
         event.stopPropagation();
-        move(current.left + event.clientX - current.x, current.top + event.clientY - current.y);
+        move(
+          current.left + event.clientX - current.x,
+          current.top + event.clientY - current.y,
+        );
       }}
-      onPointerUp={(event) => { if (drag.current?.pointerId === event.pointerId) end(); }}
+      onPointerUp={(event) => {
+        if (drag.current?.pointerId === event.pointerId) end();
+      }}
       onPointerCancel={() => end(true)}
       onLostPointerCapture={() => end()}
       onKeyDown={(event) => {
         const bounds = panel()?.getBoundingClientRect();
-        if (!bounds || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+        if (
+          !bounds ||
+          !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
+            event.key,
+          )
+        )
+          return;
         event.preventDefault();
         event.stopPropagation();
         const step = event.shiftKey ? 40 : 10;
-        move(bounds.left + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0),
-          bounds.top + (event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0));
+        move(
+          bounds.left +
+            (event.key === "ArrowLeft"
+              ? -step
+              : event.key === "ArrowRight"
+                ? step
+                : 0),
+          bounds.top +
+            (event.key === "ArrowUp"
+              ? -step
+              : event.key === "ArrowDown"
+                ? step
+                : 0),
+        );
       }}
     >
       <PiDotsSix size={20} aria-hidden="true" />

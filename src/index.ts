@@ -38,6 +38,7 @@ export {
   NodeGridControls,
 } from "./components/NodeGridControls";
 export { NodeIconPicker } from "./components/NodeIconPicker";
+export { PanelDragHandle } from "./components/PanelDragHandle";
 export {
   DEFAULT_PALETTE,
   EdgeTools,
@@ -56,7 +57,6 @@ export {
   ToolbarTooltip,
 } from "./components/toolbarControls";
 export { ToolbarScrollContainer } from "./components/ToolbarScrollContainer";
-export { PanelDragHandle } from "./components/PanelDragHandle";
 export { default as TooltipIconButton } from "./components/TooltipIconButton";
 export { WorkflowControls } from "./components/WorkflowControls";
 export { createFormNode } from "./core/createFormNode";

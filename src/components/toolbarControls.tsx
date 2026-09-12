@@ -17,8 +17,8 @@ import { PiCaretUp, PiCheck, PiXLight } from "react-icons/pi";
 import { getInteractionSurface } from "../theme/interactionShadow";
 import { useCustomColors } from "../theme/useCustomColors";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
-import { useRecentToolbarAction } from "./RecentToolbarAction";
 import { PanelDragHandle } from "./PanelDragHandle";
+import { useRecentToolbarAction } from "./RecentToolbarAction";
 
 export function ToolbarTooltip({
   label,
@@ -225,7 +225,8 @@ export function ToolbarSelect({
   };
   const show = () => {
     if (disabled) return;
-    if (menu.current && !menu.current.matches(":popover-open")) delete menu.current.dataset.flowPanelMoved;
+    if (menu.current && !menu.current.matches(":popover-open"))
+      delete menu.current.dataset.flowPanelMoved;
     menu.current?.showPopover();
     position();
     if (popupContent) {
@@ -333,7 +334,9 @@ export function ToolbarSelect({
           footer && popupContent ? "minmax(0, 1fr)" : undefined
         }
         gridTemplateRows={
-          footer && popupContent ? `${draggable && pinned ? "auto " : ""}minmax(0, 1fr) auto` : undefined
+          footer && popupContent
+            ? `${draggable && pinned ? "auto " : ""}minmax(0, 1fr) auto`
+            : undefined
         }
         overflowY={footer && popupContent ? "hidden" : "auto"}
         bg={background}
