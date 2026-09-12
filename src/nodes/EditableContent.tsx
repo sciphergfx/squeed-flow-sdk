@@ -13,19 +13,30 @@ export function EditableContent({
   content,
   color,
   format = "markdown",
+  fillBody = false,
+  editOnMount = false,
+  onChange,
+  onEditEnd,
 }: {
   nodeId: string;
   content: NodeContent;
   color: string;
   format?: ContentFormat;
+  fillBody?: boolean;
+  editOnMount?: boolean;
+  onChange?: (content: NodeContent) => void;
+  onEditEnd?: () => void;
 }) {
   const { callbacks, config, readOnly, nodeGridOptions } =
     useFlowDiagramContext();
   const editable = !!config.editable && !readOnly;
-  const directEditable = editable && !nodeGridOptions;
+  const directEditable =
+    editable &&
+    (!nodeGridOptions ||
+      (fillBody && nodeGridOptions.fill && format === "markdown"));
   const source =
     typeof content === "string" ? content : JSON.stringify(content, null, 2);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(editOnMount && editable);
   const [draft, setDraft] = useState(source);
   const [error, setError] = useState("");
   const [size, setSize] = useState<{ width: number; height: number }>();
@@ -50,7 +61,7 @@ export function EditableContent({
   }, [editing, editable]);
 
   const startEditing = (element: HTMLElement, shiftKey = false) => {
-    if (!editable || (nodeGridOptions && !shiftKey)) return;
+    if (!editable || (nodeGridOptions && !directEditable && !shiftKey)) return;
     setSize({ width: element.offsetWidth, height: element.offsetHeight });
     setDraft(source);
     setError("");
@@ -83,8 +94,12 @@ export function EditableContent({
       }
     }
     committedRef.current = true;
-    if (draft !== source) callbacks.onNodeContentChange?.(nodeId, next);
+    if (draft !== source) {
+      if (onChange) onChange(next);
+      else callbacks.onNodeContentChange?.(nodeId, next);
+    }
     setEditing(false);
+    onEditEnd?.();
   };
 
   if (!editing || !editable)
@@ -190,7 +205,7 @@ export function EditableContent({
         onClick={(event) => {
           if (
             !editable ||
-            (nodeGridOptions && !event.shiftKey) ||
+            (nodeGridOptions && !directEditable && !event.shiftKey) ||
             (event.target instanceof Element &&
               event.target.closest("a, button, input"))
           )
@@ -205,7 +220,7 @@ export function EditableContent({
         onKeyDown={(event) => {
           if (
             editable &&
-            (!nodeGridOptions || event.shiftKey) &&
+            (directEditable || event.shiftKey) &&
             event.key === "Enter" &&
             event.target === event.currentTarget
           ) {
@@ -257,6 +272,7 @@ export function EditableContent({
           if (event.key === "Escape") {
             committedRef.current = true;
             setEditing(false);
+            onEditEnd?.();
           }
         }}
         color={color}

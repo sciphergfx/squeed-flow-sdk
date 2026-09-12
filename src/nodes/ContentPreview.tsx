@@ -1,5 +1,11 @@
 import { Box, HStack } from "@chakra-ui/react";
-import { useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useRef,
+  useState,
+  type MouseEventHandler,
+} from "react";
 import { PiArrowsIn, PiArrowsOut, PiCode } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import { LoadingBorder } from "../components/LoadingBorder";
@@ -7,6 +13,36 @@ import { ToolbarIconButton } from "../components/toolbarControls";
 import { ToolbarScrollContainer } from "../components/ToolbarScrollContainer";
 import { useCustomColors } from "../theme/useCustomColors";
 import type { ContentFormat, NodeContent } from "../types";
+
+export const ContentFullscreenButton = forwardRef<
+  HTMLButtonElement,
+  {
+    fullscreen: boolean;
+    onClick: MouseEventHandler<HTMLButtonElement>;
+  }
+>(function ContentFullscreenButton({ fullscreen, onClick }, ref) {
+  const { colorInactive } = useCustomColors();
+  return (
+    <ToolbarIconButton
+      ref={ref}
+      data-flow-fullscreen=""
+      aria-label={fullscreen ? "Exit fullscreen" : "Expand preview"}
+      title={fullscreen ? "Exit fullscreen" : "Expand preview"}
+      aria-expanded={fullscreen}
+      icon={fullscreen ? <PiArrowsIn size={20} /> : <PiArrowsOut size={20} />}
+      size="sm"
+      variant="plain"
+      bg="transparent"
+      color={colorInactive}
+      borderRadius="30px"
+      w="32px"
+      h="32px"
+      minW="32px"
+      p={0}
+      onClick={onClick}
+    />
+  );
+});
 
 export function ContentPreview({
   content,
@@ -270,28 +306,9 @@ export function ContentPreview({
                   }}
                 />
               )}
-              <ToolbarIconButton
+              <ContentFullscreenButton
                 ref={fullscreenButton}
-                data-flow-fullscreen=""
-                aria-label={fullscreen ? "Exit fullscreen" : "Expand preview"}
-                title={fullscreen ? "Exit fullscreen" : "Expand preview"}
-                aria-expanded={fullscreen}
-                icon={
-                  fullscreen ? (
-                    <PiArrowsIn size={20} />
-                  ) : (
-                    <PiArrowsOut size={20} />
-                  )
-                }
-                size="sm"
-                variant="plain"
-                bg="transparent"
-                color={colorInactive}
-                borderRadius="30px"
-                w="32px"
-                h="32px"
-                minW="32px"
-                p={0}
+                fullscreen={fullscreen}
                 onClick={(event) => {
                   event.stopPropagation();
                   void toggleFullscreen();

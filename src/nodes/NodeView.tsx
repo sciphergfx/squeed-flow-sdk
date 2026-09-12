@@ -8,6 +8,7 @@ import TooltipIconButton from "../components/TooltipIconButton";
 import { useNodeHasChildren } from "../hooks/useNodeHasChildren";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
+import { EditableContent } from "./EditableContent";
 
 interface NodeViewProps {
   data: any;
@@ -73,6 +74,89 @@ const NodeView = ({
   const id = nodeData?.id;
   const hasChildren = useNodeHasChildren(id);
   const isActive = selectedNodeIds.includes(id);
+  useEffect(() => {
+    if (
+      !isActive ||
+      selectedNodeIds.length !== 1 ||
+      config.readOnly ||
+      isEditing ||
+      formOpen
+    )
+      return;
+    const enter = (event: KeyboardEvent) => {
+      if (
+        event.key !== "Enter" ||
+        event.defaultPrevented ||
+        event.isComposing ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        event.shiftKey
+      )
+        return;
+      if (
+        event.target instanceof Element &&
+        event.target.closest(
+          'button, input, textarea, select, a, [contenteditable], [role="textbox"], [role="dialog"], [role="menu"], [role="listbox"], [popover], [data-flow-content]',
+        )
+      )
+        return;
+      if (
+        Array.from(
+          document.querySelectorAll<HTMLElement>(
+            'dialog[open], :popover-open, [role="dialog"], [role="menu"], [role="listbox"]',
+          ),
+        ).some(
+          (element) =>
+            element.getClientRects().length &&
+            getComputedStyle(element).visibility !== "hidden",
+        )
+      )
+        return;
+      const toggle = Array.from(
+        nodeRef.current?.querySelectorAll<HTMLButtonElement>(
+          "[data-flow-content-toggle] button, button[data-flow-collapse-control]",
+        ) ?? [],
+      ).find(
+        (button) =>
+          button.closest("[data-node-id]")?.getAttribute("data-node-id") ===
+            id &&
+          !button.disabled &&
+          button.getClientRects().length &&
+          getComputedStyle(button).visibility !== "hidden",
+      );
+      const openDocument =
+        !toggle &&
+        nodeData?.type === "grid" &&
+        nodeData.config?.documentId &&
+        nodeRef.current?.getClientRects().length &&
+        callbacks.onNodeHoverAction &&
+        config.nodeOverlayActions?.find(
+          (action) =>
+            action.id === "open-document" &&
+            (!action.nodeTypes || action.nodeTypes.includes(nodeData.type)),
+        );
+      if (!toggle && !openDocument) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (!event.repeat) {
+        if (toggle) toggle.click();
+        else callbacks.onNodeHoverAction?.(openDocument.id, id, nodeData);
+      }
+    };
+    window.addEventListener("keydown", enter, true);
+    return () => window.removeEventListener("keydown", enter, true);
+  }, [
+    id,
+    isActive,
+    selectedNodeIds.length,
+    config.readOnly,
+    isEditing,
+    formOpen,
+    nodeData,
+    callbacks.onNodeHoverAction,
+    config.nodeOverlayActions,
+  ]);
   const overlayActions = config.nodeOverlayActions?.filter(
     (action) => !action.nodeTypes || action.nodeTypes.includes(nodeData?.type),
   );
@@ -172,7 +256,11 @@ const NodeView = ({
     [hoverLeaveDelay],
   );
 
-  const formAvailable = !!nodeData?.config?.form;
+  const textForm =
+    nodeData?.type === "text" &&
+    !nodeData?.config?.parentContainer &&
+    !nodeData?.config?.form;
+  const formAvailable = !!nodeData?.config?.form || textForm;
   const formHandlers = {
     tabIndex: formAvailable ? 0 : undefined,
     "aria-haspopup": formAvailable ? ("dialog" as const) : undefined,
@@ -181,6 +269,7 @@ const NodeView = ({
       if (
         (!formAvailable && !onOpenView) ||
         config.readOnly ||
+        (textForm && !config.editable) ||
         isEditing ||
         !event.currentTarget.contains(event.target as Node) ||
         (event.target instanceof Element &&
@@ -200,6 +289,7 @@ const NodeView = ({
       if (
         (!formAvailable && !onOpenView) ||
         config.readOnly ||
+        (textForm && !config.editable) ||
         event.target !== event.currentTarget ||
         event.key !== "Enter"
       )
@@ -216,12 +306,23 @@ const NodeView = ({
       nodeAddress={id}
       active={isActive}
       label={nodeData.label || nodeData.headerTitle || "Node"}
-      open={formOpen}
+      open={formOpen && (!textForm || (!!config.editable && !config.readOnly))}
       onClose={() => {
         setFormOpen(false);
         if (isActive) nodeRef.current?.focus({ preventScroll: true });
       }}
-    />
+    >
+      {textForm ? (
+        <EditableContent
+          nodeId={id}
+          content={nodeData.label ?? nodeData.text ?? ""}
+          color={getChakraColorHex(colorText)}
+          editOnMount
+          onChange={(text) => callbacks.onNodeLabelChange?.(id, String(text))}
+          onEditEnd={() => setFormOpen(false)}
+        />
+      ) : undefined}
+    </NodeFormPopover>
   );
   const shapePorts = Array.isArray(nodeData?.config?.ports)
     ? nodeData.config.ports.map((port: FlowPortProps) => (
@@ -299,7 +400,25 @@ const NodeView = ({
                   onMouseLeave={handleMouseLeave}
                   willChange="transform"
                 >
-                  <HStack px={2} gap={2}>
+                  <HStack
+                    px={2}
+                    gap={2}
+                    data-flow-grid-toolbar={
+                      nodeData?.type === "grid" ? "" : undefined
+                    }
+                    css={
+                      nodeData?.type === "grid"
+                        ? {
+                            "& button svg": {
+                              width: "22px",
+                              height: "22px",
+                              minWidth: "22px",
+                              minHeight: "22px",
+                            },
+                          }
+                        : undefined
+                    }
+                  >
                     {overlayActions!.map((action, i) => (
                       <Box key={action.id} display="contents">
                         {i > 0 && (
@@ -468,7 +587,25 @@ const NodeView = ({
                 onMouseLeave={handleMouseLeave}
                 willChange="transform"
               >
-                <HStack px={2} gap={2}>
+                <HStack
+                  px={2}
+                  gap={2}
+                  data-flow-grid-toolbar={
+                    nodeData?.type === "grid" ? "" : undefined
+                  }
+                  css={
+                    nodeData?.type === "grid"
+                      ? {
+                          "& button svg": {
+                            width: "22px",
+                            height: "22px",
+                            minWidth: "22px",
+                            minHeight: "22px",
+                          },
+                        }
+                      : undefined
+                  }
+                >
                   {overlayActions!.map((action, i) => (
                     <Box key={action.id} display="contents">
                       {i > 0 && (

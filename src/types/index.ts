@@ -481,6 +481,7 @@ export interface FlowDiagramCallbacks {
 /** Describes the edit behind an `onJsonChange` */
 export interface SqueedChangeInfo {
   type:
+    | "nodeReplace"
     | "nodeLabel"
     | "nodeContent"
     | "nodeColor"

@@ -641,6 +641,13 @@ center-and-fit; exiting the mode
 centers and fits the restored graph. `arrangeNodesInGrid` returns target `sizes`
 and `bounds` when filling. These overrides never change the saved document.
 
+On initial Fill load, the canvas measures the visible destination and uses the
+existing Fill calculation to allocate cells before mounting node content. This
+skips the preliminary natural-view mount and initial layout debounce. Hidden
+destinations wait until measurable; weighted rows, spacing, nested loading,
+saved viewports, subsequent resizing and natural sizing on exit are preserved.
+Document preparation still uses its existing two-frame loading gate.
+
 ### Animated Viewport Actions
 
 Capture `FlowEngine` through `callbacks.onInit`. Set `config.animateViewport`
@@ -1099,6 +1106,20 @@ and failure or disconnect restores the saved document. The renderer stays in
 the host; this does not enable executable JSX or create a per-chunk MCP command.
 
 With `config.editable: true`, click the content body to edit the original Markdown source. In Collision mode, including filled and embedded Grids, hold Shift when clicking; ordinary clicks retain their selection behavior. Shift is only required to enter the editor. Enter inserts a new line; Ctrl/Cmd+Enter or clicking away saves, and Escape cancels. Read-only mode still prevents editing. Internal JSON refreshes preserve focused editors and unsaved drafts; initial loading and explicit host loading still block interaction. Source whitespace is preserved. The node grows vertically as text is added; label editors grow horizontally within their width limit. Both keep their starting size as a minimum and omit input focus outlines. Clearing the body keeps an empty, editable content view; use `setNodeProp(json, address, "$content", undefined)` to remove the content property. Content nodes use the same minimum width as their object-property rows, and the right-aligned table/article button switches views without changing the document.
+
+With one node selected, Enter activates its own visible dot or collapse control.
+Further presses follow that control's existing open/back sequence. Text inputs,
+focused controls, dialogs, modifier shortcuts and read-only mode keep their
+existing behavior; holding Enter does not repeatedly toggle the view.
+
+An expanded Text node exposes the existing **Show icon** dot on hover or selection;
+**Show text** restores the Text view without rewriting source metadata. Double-click
+an editable Text node without an explicit form to open the existing form popup with
+only the Content text editor. It edits the label, not `$content`, and provides no
+property fields or format selector. Enter inserts a newline, Ctrl/Cmd+Enter or blur
+saves, and Escape cancels. Explicit forms and read-only permissions remain in force.
+In a host's Fill-specific body (`fillBody`), Markdown/plain text also supports
+direct click and focused Enter editing; other Collision views still require Shift.
 
 The node animation toggle supports single and multiple selections. The SVG stroke follows the measured node border without changing layout or intercepting input. Text, array, object/content, and compound nodes support it, including outlined or transparent nodes. It uses the explicit border color or theme accent. Reduced-motion preferences pause the movement; graphs over 200 nodes suppress the trace in performance mode. `readOnly` prevents editing/toggling but still renders configured animation; `selectionToolbar.hide: ["animation"]` hides the toggle.
 

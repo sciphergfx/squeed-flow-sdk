@@ -33,7 +33,9 @@ export function GridAdjustmentToggle() {
   );
 }
 
-export function NodeGridControls() {
+export function NodeGridControls({
+  fillOnly = false,
+}: { fillOnly?: boolean } = {}) {
   const {
     engineRef,
     nodeGridOptions,
@@ -54,7 +56,7 @@ export function NodeGridControls() {
     engineRef.current?.setNodeGridMode(true, { ...options, ...next });
   return (
     <>
-      {config.bottomBarCollision !== false && (
+      {!fillOnly && config.bottomBarCollision !== false && (
         <LabeledToolbarToggle
           label="Collision mode"
           hideLabel
@@ -74,43 +76,45 @@ export function NodeGridControls() {
           gap={2}
           flexShrink={0}
         >
-          {nodeGridOptions && config.nodeGridSpacing !== "layout" && (
-            <>
-              <Box
-                width="96px"
-                flexShrink={0}
-                display="flex"
-                alignItems="center"
-              >
-                <RangeInput
-                  type="range"
-                  aria-label="Collision gap"
-                  title={`Gap: ${gap}`}
-                  min={0}
-                  max={maximum}
-                  step={5}
-                  value={gap}
-                  disabled={readOnly}
-                  style={{
-                    color: getChakraColorHex(themeColor),
-                    backgroundImage: `linear-gradient(to right, currentColor ${(gap / maximum) * 100}%, ${getChakraColorHex(colorInactive)} ${(gap / maximum) * 100}%)`,
-                  }}
-                  onChange={(event) =>
-                    change({ gaps: Number(event.target.value) })
-                  }
-                />
-              </Box>
-              <Text
-                fontSize="xs"
-                color={colorText}
-                width="28px"
-                textAlign="right"
-                fontVariantNumeric="tabular-nums"
-              >
-                {gap}
-              </Text>
-            </>
-          )}
+          {!fillOnly &&
+            nodeGridOptions &&
+            config.nodeGridSpacing !== "layout" && (
+              <>
+                <Box
+                  width="96px"
+                  flexShrink={0}
+                  display="flex"
+                  alignItems="center"
+                >
+                  <RangeInput
+                    type="range"
+                    aria-label="Collision gap"
+                    title={`Gap: ${gap}`}
+                    min={0}
+                    max={maximum}
+                    step={5}
+                    value={gap}
+                    disabled={readOnly}
+                    style={{
+                      color: getChakraColorHex(themeColor),
+                      backgroundImage: `linear-gradient(to right, currentColor ${(gap / maximum) * 100}%, ${getChakraColorHex(colorInactive)} ${(gap / maximum) * 100}%)`,
+                    }}
+                    onChange={(event) =>
+                      change({ gaps: Number(event.target.value) })
+                    }
+                  />
+                </Box>
+                <Text
+                  fontSize="xs"
+                  color={colorText}
+                  width="28px"
+                  textAlign="right"
+                  fontVariantNumeric="tabular-nums"
+                >
+                  {gap}
+                </Text>
+              </>
+            )}
           {config.bottomBarFill !== false && (
             <LabeledToolbarToggle
               label="Fill"
@@ -142,7 +146,9 @@ export function NodeGridControls() {
               }}
             />
           )}
-          {nodeGridOptions && options.fill && <GridAdjustmentToggle />}
+          {!fillOnly && nodeGridOptions && options.fill && (
+            <GridAdjustmentToggle />
+          )}
         </HStack>
       )}
     </>

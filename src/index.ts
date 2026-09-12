@@ -21,7 +21,6 @@ export {
 } from "./components/DiagramAppearanceControls";
 export { ErrorToast } from "./components/ErrorToast";
 export { FlowDiagram } from "./components/FlowDiagram";
-export { isNodeVisible } from "./engine/edgeMode";
 export {
   FlowDiagramProvider,
   useFlowData,
@@ -34,7 +33,10 @@ export { default as FlowView } from "./components/FlowView";
 export { CollapseAllToggle } from "./components/LabeledToolbarToggle";
 export { LoadingBorder } from "./components/LoadingBorder";
 export { NodeFormPopover } from "./components/NodeFormPopover";
-export { GridAdjustmentToggle } from "./components/NodeGridControls";
+export {
+  GridAdjustmentToggle,
+  NodeGridControls,
+} from "./components/NodeGridControls";
 export { NodeIconPicker } from "./components/NodeIconPicker";
 export {
   DEFAULT_PALETTE,
@@ -81,7 +83,9 @@ export { projectJsonPlaybackPreview } from "./core/jsonPlaybackPreview";
 export { createJsonPlayback, createJsonStream } from "./core/jsonStream";
 export type { JsonPlaybackState, JsonStreamOptions } from "./core/jsonStream";
 export { parseTypeScriptForm } from "./core/workflowContract";
+export { isNodeVisible } from "./engine/edgeMode";
 export { useNodeViewActions } from "./hooks/useNodeViewActions";
+export { ContentFullscreenButton } from "./nodes/ContentPreview";
 export { NodeConfigSummary } from "./nodes/NodeConfigSummary";
 export { FormDocumentContext, NodeForm } from "./nodes/NodeForm";
 export { LIGHT_BLACK } from "./theme/colorUtils";

@@ -63,13 +63,15 @@ export const ObjectNodeView = (props) => {
           config: {
             ...props.data.config,
             labelBelow: true,
-            icon: props.data.config?.icon || (hasContent
-              ? props.data.config?.contentFormat === "html"
-                ? "PiFileHtml"
-                : props.data.config?.contentFormat === "jsx"
-                  ? "PiFileJsx"
-                  : "PiMarkdownLogo"
-              : "PiBracketsCurly"),
+            icon:
+              props.data.config?.icon ||
+              (hasContent
+                ? props.data.config?.contentFormat === "html"
+                  ? "PiFileHtml"
+                  : props.data.config?.contentFormat === "jsx"
+                    ? "PiFileJsx"
+                    : "PiMarkdownLogo"
+                : "PiBracketsCurly"),
           },
         }}
         onExpand={() => actions.restoreNodeView(props.data.id)}
@@ -139,27 +141,29 @@ export const ObjectNodeView = (props) => {
               borderWidth={0}
               overflow="hidden"
             >
-              <ObjectNodeHeader
-                {...{
-                  headerTitle,
-                  hasContent,
-                  data,
-                  icon,
-                  colors,
-                  hasConfig,
-                  id,
-                  isActive,
-                  isHovered,
-                  isEditing,
-                  onSelect,
-                  onEditStart,
-                  onEditEnd,
-                  props,
-                  objVisible,
-                  setObjVisible,
-                  onShowNativeIcon,
-                }}
-              />
+              {!props.fillBody && (
+                <ObjectNodeHeader
+                  {...{
+                    headerTitle,
+                    hasContent,
+                    data,
+                    icon,
+                    colors,
+                    hasConfig,
+                    id,
+                    isActive,
+                    isHovered,
+                    isEditing,
+                    onSelect,
+                    onEditStart,
+                    onEditEnd,
+                    props,
+                    objVisible,
+                    setObjVisible,
+                    onShowNativeIcon,
+                  }}
+                />
+              )}
               {hasContent && !objVisible ? (
                 <Flex
                   w="100%"
@@ -178,6 +182,7 @@ export const ObjectNodeView = (props) => {
                     nodeId={id}
                     content={content}
                     format={props.data?.config?.contentFormat}
+                    fillBody={props.fillBody}
                     color={data?.viewProps?.textColor || colors.hextextColor}
                   />
                 </Flex>

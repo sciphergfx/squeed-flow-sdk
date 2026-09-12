@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
-import { useNodeViewActions } from "../hooks/useNodeViewActions";
 import { useCloseOnDeselect } from "../hooks/useCloseOnDeselect";
+import { useNodeViewActions } from "../hooks/useNodeViewActions";
 import { CompactNodeView } from "./CompactNodeView";
 import { ObjectNodeView } from "./ObjectNodeView";
 
@@ -29,19 +29,27 @@ export const CompactObjectView = (props) => {
         else setProperties(true);
       }
     : undefined;
-  if (!parent && props.data.type === "text" && actions.getNodeViewMode(props.data.id) === "icon-label")
+  if (
+    !parent &&
+    props.data.type === "text" &&
+    actions.getNodeViewMode(props.data.id) === "icon-label"
+  )
     return (
       <CompactNodeView
         {...props}
         renderCompact={undefined}
         data={{
           ...props.data,
-          config: { ...props.data.config, labelBelow: true, icon: props.data.config?.icon || "PiTextT" },
+          config: {
+            ...props.data.config,
+            labelBelow: true,
+            icon: props.data.config?.icon || "PiTextT",
+          },
         }}
         toggleLabel="Show text"
         onExpand={() => actions.restoreNodeView(props.data.id)}
       />
-      );
+    );
   if (!parent && configurable && properties)
     return (
       <ObjectNodeView
@@ -61,9 +69,15 @@ export const CompactObjectView = (props) => {
             }
           : undefined
       }
-      toggleLabel={toggleLabel}
+      toggleLabel={
+        !parent && props.data.type === "text" ? "Show icon" : toggleLabel
+      }
       toggleDisabled={parent && readOnly}
-      onExpand={onExpand}
+      onExpand={
+        !parent && props.data.type === "text"
+          ? () => actions.setNodeViewMode(props.data.id, "icon-label")
+          : onExpand
+      }
     />
   );
 };

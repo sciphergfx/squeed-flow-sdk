@@ -4,13 +4,13 @@ import {
   type FlowDiagramEdge,
 } from "../types";
 import { createFormNode } from "./createFormNode";
+import type { FormSchema } from "./forms";
+import { applyFormChange } from "./forms";
 import {
   copySelection,
   duplicateSelection,
   reparentNode,
 } from "./selectionEdits";
-import type { FormSchema } from "./forms";
-import { applyFormChange } from "./forms";
 import {
   addChild,
   addConnection,
@@ -30,6 +30,7 @@ import {
 /** What changed in the Squeed document (delivered alongside the new JSON) */
 export interface SqueedChange {
   type:
+    | "nodeReplace"
     | "documentReplace"
     | "form"
     | "nodeLabel"

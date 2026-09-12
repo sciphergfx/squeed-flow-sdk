@@ -349,6 +349,7 @@ function Canvas(props: CanvasProps) {
   const layoutTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const settleTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const animRef = useRef<(() => void) | null>(null);
+  const fillLayoutTarget = useRef<string>();
   const pendingFitRef = useRef(false);
   const pendingLayoutAction = useRef<(() => void) | null>(null);
   const geometryFocus = useRef<
@@ -408,6 +409,7 @@ function Canvas(props: CanvasProps) {
   const cancelAnim = () => {
     animRef.current?.();
     animRef.current = null;
+    fillLayoutTarget.current = undefined;
   };
 
   const onLayoutStop = () => {
@@ -897,7 +899,10 @@ function Canvas(props: CanvasProps) {
       }
       const resized = viewport.size.w !== w || viewport.size.h !== h;
       viewport.size = { w, h };
-      if (resized && nodeGridRef.current?.options.fill) scheduleLayout();
+      if (resized && nodeGridRef.current?.options.fill) {
+        if (!hasLayoutRunRef.current && w > 0 && h > 0) runLayoutNow();
+        else scheduleLayout();
+      }
       if (
         !hasLayoutRunRef.current &&
         !positionsRef.current.size &&
@@ -1242,6 +1247,16 @@ function Canvas(props: CanvasProps) {
           );
         }
         const result = arrangeNodesInGrid(geometry, gridOptions(options));
+        const fillTarget = result.sizes
+          ? JSON.stringify([[...result.positions], [...result.sizes]])
+          : undefined;
+        if (
+          fillTarget &&
+          fillTarget === fillLayoutTarget.current &&
+          options.animate !== false &&
+          !geometryFocus.current
+        )
+          return result;
         setGridDividers(result.dividers ?? []);
         if (grid) {
           grid.ready = false;
@@ -1269,13 +1284,14 @@ function Canvas(props: CanvasProps) {
             options.animate,
             complete,
             result.bounds && (!grid || !gridSizesRef.current.size)
-              ? () =>
-                  viewport.transition({ zoom: 1, pan: { x: 0, y: 0 } }, false)
+              ? (animate) =>
+                  viewport.transition({ zoom: 1, pan: { x: 0, y: 0 } }, animate)
               : undefined,
             result.sizes,
             !!grid && !result.bounds,
           );
         else complete();
+        fillLayoutTarget.current = fillTarget;
         return result;
       },
       setNodeGridMode: (enabled, options = {}) => {
@@ -2406,6 +2422,8 @@ function Canvas(props: CanvasProps) {
             />
           )}
         {nodes.map((n) => {
+          if (nodeGridRef.current?.options.fill && !hasLayoutRunRef.current)
+            return null;
           const p = positions.get(n.id);
           const c = containers.get(n.id);
           if (c && n.label !== undefined) return null;
