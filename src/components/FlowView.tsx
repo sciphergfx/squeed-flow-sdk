@@ -589,7 +589,13 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           !container ||
           !canvas ||
           !activeEngine ||
-          target !== container ||
+          (target !== container &&
+            (target.closest(".flow-sdk-canvas") !== canvas ||
+              !target.closest(".flow-sdk-node") ||
+              target.querySelector(":scope > .flow-sdk-canvas") ||
+              target.closest(
+                'button, input, textarea, select, a, [contenteditable], [role="button"], [role="textbox"], [role="combobox"], [role="slider"], [role="spinbutton"], [data-flow-content]',
+              ))) ||
           e.defaultPrevented ||
           e.isComposing ||
           e.shiftKey ||
@@ -676,10 +682,13 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         );
         const pan = activeEngine.pan();
         const zoom = activeEngine.zoom();
-        activeEngine.pan({
-          x: pan.x + (center.x - nearest.box.x) * zoom,
-          y: pan.y + (center.y - nearest.box.y) * zoom,
-        });
+        activeEngine.pan(
+          {
+            x: pan.x + (center.x - nearest.box.x) * zoom,
+            y: pan.y + (center.y - nearest.box.y) * zoom,
+          },
+          true,
+        );
         return;
       }
 

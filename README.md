@@ -1422,8 +1422,8 @@ import { PiX } from "react-icons/pi";
 
 The canvas supports pointer panning, wheel zoom, and two-finger pinch zoom. Interactive inputs inside nodes retain their own keyboard behavior.
 
-Click empty canvas to give it keyboard focus. Unmodified arrows select the
-nearest rendered node in the requested direction, starting from the selected
+Click empty canvas or an ordinary node surface to give the diagram keyboard
+focus. Unmodified arrows select the nearest rendered node in the requested direction, starting from the selected
 node or the viewport center when nothing is selected. Hidden nodes and nodes
 inside another canvas are excluded. Panning is immediate and preserves zoom.
 No candidate leaves selection and viewport unchanged. Forms, open menus,

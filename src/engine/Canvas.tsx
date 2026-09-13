@@ -1131,10 +1131,11 @@ function Canvas(props: CanvasProps) {
       geometryFocus.current = null;
       viewport.set(undefined, level);
     }) as FlowEngine["zoom"];
-    const pan = ((p?: Point) => {
+    const pan = ((p?: Point, animate = false) => {
       if (p === undefined) return viewport.pan;
       geometryFocus.current = null;
-      viewport.set(p);
+      if (animate) viewport.transition({ pan: p, zoom: viewport.zoom }, true);
+      else viewport.set(p);
     }) as FlowEngine["pan"];
     const rendered = (clientX: number, clientY: number): Point => {
       const r = rootRef.current?.getBoundingClientRect();

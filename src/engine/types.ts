@@ -44,7 +44,7 @@ export interface FlowEngine {
   /** Set zoom keeping the current pan (like cytoscape `cy.zoom(level)`) */
   zoom(level: number): void;
   pan(): Point;
-  pan(p: Point): void;
+  pan(p: Point, animate?: boolean): void;
   /** Zoom keeping the model point under `renderedPoint` (container px) fixed */
   zoomAt(level: number, renderedPoint: Point): void;
   /** Fit all elements into the container with `padding` rendered px */
