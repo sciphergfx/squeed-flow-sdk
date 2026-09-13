@@ -1169,13 +1169,14 @@ function Canvas(props: CanvasProps) {
         animate,
         afterViewChange,
         centerOnNode = false,
+        zoomScale = 1,
       ) =>
         updateViewport(() =>
           focus(
             branchIds(id),
             padding,
             animate,
-            1,
+            zoomScale,
             afterViewChange,
             centerOnNode ? id : undefined,
           ),

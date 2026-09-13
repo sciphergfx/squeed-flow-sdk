@@ -185,6 +185,22 @@ const NodeView = ({
     (event: React.MouseEvent, viewToggle = false) => {
       if (isEditing || config.readOnly) return;
       if (nodeGridOptions?.fill && !event.shiftKey) return;
+      if (
+        event.detail === 2 &&
+        !!nodeData?.config?.form &&
+        !onOpenView &&
+        !viewToggle &&
+        !isMultiSelectMode &&
+        !selectedEdgeId &&
+        !event.shiftKey &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey &&
+        selectedNodeIds.length === 1 &&
+        selectedNodeIds[0] === id
+      ) {
+        return;
+      }
       const modifiers = {
         shiftKey: event.shiftKey,
         ctrlKey: event.ctrlKey,
@@ -221,6 +237,7 @@ const NodeView = ({
       isMultiSelectMode,
       nodeGridOptions,
       isEditing,
+      onOpenView,
       setSelectedNodeIds,
       setSelectedEdgeId,
       callbacks,
@@ -280,7 +297,9 @@ const NodeView = ({
         return;
       event.preventDefault();
       event.stopPropagation();
-      setSelectedNodeIds([id]);
+      if (selectedNodeIds.length !== 1 || selectedNodeIds[0] !== id) {
+        setSelectedNodeIds([id]);
+      }
       if (onOpenView) onOpenView();
       else setFormOpen(true);
       callbacks.onNodeDoubleClick?.(id, nodeData);

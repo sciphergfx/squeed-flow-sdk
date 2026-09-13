@@ -71,6 +71,7 @@ export interface FlowEngine {
     animate?: boolean,
     afterViewChange?: boolean,
     centerOnNode?: boolean,
+    zoomScale?: number,
   ): void;
   focusConnections(
     id: string,

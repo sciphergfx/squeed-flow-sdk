@@ -714,6 +714,12 @@ Pass `true` as the fourth argument to `focusBranch`, `focusNode`, or
 `focusConnections` after a view toggle to fit the new geometry together with
 the layout animation. Existing three-argument calls keep their behavior.
 
+`focusBranch` accepts `centerOnNode` as its fifth argument and `zoomScale` as
+its sixth (default `1`). For example,
+`engine.focusBranch(nodeId, 40, true, false, true, 0.6)` keeps the selected node
+centered and applies 60% of the fitted zoom, subject to existing zoom limits.
+Omitting the scale preserves the previous branch fit.
+
 For a closing preview in an ordinary document canvas, use
 `engine.restoreView(true, savedViewport, true)` alongside the view change.
 The optional third argument restores the saved viewport in the same transition
