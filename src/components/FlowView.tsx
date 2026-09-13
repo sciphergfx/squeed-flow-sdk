@@ -580,6 +580,61 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
       )
         return;
 
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+        const container = containerRef.current;
+        const activeEngine = engineRef.current;
+        const canvas = container?.querySelector<HTMLElement>(".flow-sdk-canvas");
+        if (
+          !container || !canvas || !activeEngine || target !== container ||
+          e.defaultPrevented || e.isComposing || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey ||
+          isMultiSelectModeRef.current || selectedNodeIdsRef.current.length > 1 ||
+          canvas.querySelector("[data-grid-dragging], .flow-sdk-ghost, .flow-sdk-box") ||
+          Array.from(document.querySelectorAll<HTMLElement>('dialog[open], :popover-open, [role="dialog"], [role="menu"], [role="listbox"]'))
+            .some(element => element.getClientRects().length > 0 && getComputedStyle(element).visibility !== "hidden")
+        ) return;
+        const bounds = canvas.getBoundingClientRect();
+        if (!bounds.width || !bounds.height) return;
+        const center = activeEngine.clientToModel(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2);
+        const selectedId = selectedNodeIdsRef.current[0];
+        const origin = (selectedId && activeEngine.getNodeBox(selectedId)) || center;
+        const horizontal = e.key === "ArrowLeft" || e.key === "ArrowRight";
+        const sign = e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 1;
+        let nearest: { id: string; box: NonNullable<ReturnType<FlowEngine["getNodeBox"]>>; distance: number } | undefined;
+        for (const element of canvas.querySelectorAll<HTMLElement>(".flow-sdk-node")) {
+          if (element.closest(".flow-sdk-canvas") !== canvas) continue;
+          const id = element.getAttribute("data-node-id");
+          if (!id || id === selectedId || !nodeByIdRef.current.has(id)) continue;
+          const rect = element.getBoundingClientRect();
+          const style = getComputedStyle(element);
+          if (!rect.width || !rect.height || style.visibility === "hidden" || style.opacity === "0") continue;
+          const box = activeEngine.getNodeBox(id);
+          if (!box) continue;
+          const deltaX = box.x - origin.x;
+          const deltaY = box.y - origin.y;
+          if ((horizontal ? deltaX : deltaY) * sign <= 0.01) continue;
+          const distance = Math.hypot(deltaX, deltaY);
+          if (!nearest || distance < nearest.distance) nearest = { id, box, distance };
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        if (!nearest) return;
+        if (selectedEdgeIdRef.current) {
+          setSelectedEdgeId(null);
+          callbacks.onEdgeDeselect?.();
+        }
+        setSelectedNodeIds([nearest.id]);
+        callbacks.onNodeSelect?.(nearest.id, nodeByIdRef.current.get(nearest.id)!.data, {
+          shiftKey: false, ctrlKey: false, metaKey: false, altKey: false, keyboardNavigation: true,
+        });
+        const pan = activeEngine.pan();
+        const zoom = activeEngine.zoom();
+        activeEngine.pan({
+          x: pan.x + (center.x - nearest.box.x) * zoom,
+          y: pan.y + (center.y - nearest.box.y) * zoom,
+        });
+        return;
+      }
+
       if (e.key === "z" || e.key === "Z") setIsZoomMode(!isZoomModeRef.current);
       if (e.key === "m" || e.key === "M")
         setIsMultiSelectMode(!isMultiSelectMode);
@@ -671,6 +726,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
 
   // Tap on empty canvas clears node and edge selection
   const handleBackgroundTap = useCallback(() => {
+    containerRef.current?.focus({ preventScroll: true });
     setBackgroundSelected(
       config.bottomBarCollapsed ??
         (selectedNodeIdsRef.current.length > 0 ||
@@ -712,6 +768,34 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     config.bottomBarCollapsed,
     parentIds,
   ]);
+
+  useEffect(() => {
+    if (config.disableKeyboardShortcuts) return;
+    const escape = (event: KeyboardEvent) => {
+      const container = containerRef.current;
+      const canvas = container?.querySelector(".flow-sdk-canvas");
+      const target = event.target;
+      if (
+        event.key !== "Escape" || event.defaultPrevented || event.repeat || event.isComposing ||
+        event.ctrlKey || event.metaKey || event.altKey || event.shiftKey ||
+        configRef.current.readOnly || !selectedNodeIdsRef.current.length ||
+        !container || !canvas || !container.getClientRects().length || document.fullscreenElement ||
+        canvas.querySelector("[data-grid-dragging], .flow-sdk-ghost, .flow-sdk-box")
+      ) return;
+      if (target instanceof Element && (
+        target.closest('input, textarea, select, [contenteditable], [role="textbox"], [role="combobox"], dialog, [role="dialog"], [role="menu"], [role="listbox"], [popover]') ||
+        (target !== document.body && !container.contains(target)) ||
+        (target.closest(".flow-sdk-canvas") && target.closest(".flow-sdk-canvas") !== canvas)
+      )) return;
+      if (Array.from(document.querySelectorAll<HTMLElement>('dialog[open], :popover-open, [role="dialog"], [role="menu"], [role="listbox"]'))
+        .some(element => element.getClientRects().length > 0 && getComputedStyle(element).visibility !== "hidden")) return;
+      event.preventDefault();
+      event.stopPropagation();
+      handleBackgroundTap();
+    };
+    window.addEventListener("keydown", escape, true);
+    return () => window.removeEventListener("keydown", escape, true);
+  }, [config.disableKeyboardShortcuts, handleBackgroundTap]);
 
   const handleBoxSelect = useCallback(
     (ids: string[]) => {
@@ -810,6 +894,7 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
     >
       <Box
         ref={containerRef}
+        tabIndex={0}
         padding={0}
         width="100%"
         height="100%"

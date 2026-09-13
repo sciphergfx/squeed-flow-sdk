@@ -307,6 +307,7 @@ export interface NodeSelectionModifiers {
   metaKey: boolean;
   altKey: boolean;
   viewToggle?: boolean;
+  keyboardNavigation?: boolean;
 }
 
 export interface FlowNodeCreationRequest {

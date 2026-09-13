@@ -1416,10 +1416,26 @@ import { PiX } from "react-icons/pi";
 | `Z`                    | Toggle zoom mode (scroll to zoom) |
 | `M`                    | Toggle multi-select mode          |
 | `D`                    | Toggle drag/pan mode              |
+| Arrow keys             | Select a node in that direction and pan it to center without zooming |
 | `Delete` / `Backspace` | Delete selected non-root nodes    |
-| `Escape`               | Cancel drawing or a label edit    |
+| `Escape`               | Cancel an active editor/gesture first; otherwise reuse graph-background deselection |
 
 The canvas supports pointer panning, wheel zoom, and two-finger pinch zoom. Interactive inputs inside nodes retain their own keyboard behavior.
+
+Click empty canvas to give it keyboard focus. Unmodified arrows select the
+nearest rendered node in the requested direction, starting from the selected
+node or the viewport center when nothing is selected. Hidden nodes and nodes
+inside another canvas are excluded. Panning is immediate and preserves zoom.
+No candidate leaves selection and viewport unchanged. Forms, open menus,
+multi-selection, read-only mode, and disabled keyboard shortcuts retain their
+existing keyboard behavior. Selection callbacks receive
+`keyboardNavigation: true` in `NodeSelectionModifiers`; hosts should not apply
+their mouse-click fit/zoom behavior for that event.
+
+Escape on a selected canvas node reuses the background-click action, including
+preview retraction and the host's viewport restoration. Editors, dialogs, menus,
+fullscreen, and active gestures retain priority. If preview opening focuses its
+label editor, press Escape once to cancel editing and again to close the preview.
 
 ## Theme Utilities
 
