@@ -1411,13 +1411,13 @@ import { PiX } from "react-icons/pi";
 
 ## Keyboard Shortcuts
 
-| Key                    | Action                            |
-| ---------------------- | --------------------------------- |
-| `Z`                    | Toggle zoom mode (scroll to zoom) |
-| `M`                    | Toggle multi-select mode          |
-| `D`                    | Toggle drag/pan mode              |
-| Arrow keys             | Select a node in that direction and pan it to center without zooming |
-| `Delete` / `Backspace` | Delete selected non-root nodes    |
+| Key                    | Action                                                                              |
+| ---------------------- | ----------------------------------------------------------------------------------- |
+| `Z`                    | Toggle zoom mode (scroll to zoom)                                                   |
+| `M`                    | Toggle multi-select mode                                                            |
+| `D`                    | Toggle drag/pan mode                                                                |
+| Arrow keys             | Select a node in that direction and pan it to center without zooming                |
+| `Delete` / `Backspace` | Delete selected non-root nodes                                                      |
 | `Escape`               | Cancel an active editor/gesture first; otherwise reuse graph-background deselection |
 
 The canvas supports pointer panning, wheel zoom, and two-finger pinch zoom. Interactive inputs inside nodes retain their own keyboard behavior.
