@@ -23,39 +23,53 @@ export function resolveContentReferences(
       if (
         typeof address !== "string" ||
         !/^root(?:\.[A-Za-z0-9_%~-]+)*$/.test(address) ||
-        address.split(".").some(part => unsafe.has(part)) ||
+        address.split(".").some((part) => unsafe.has(part)) ||
         !Array.isArray(path) ||
-        path.some(part =>
+        path.some((part) =>
           typeof part === "number"
             ? !Number.isSafeInteger(part) || part < 0
             : typeof part !== "string" || unsafe.has(part),
         ) ||
-        (reference.prefix !== undefined && typeof reference.prefix !== "string") ||
-        (reference.suffix !== undefined && typeof reference.suffix !== "string") ||
-        Object.keys(reference).some(key => !["$contentRef", "path", "prefix", "suffix"].includes(key))
-      ) throw new Error("Invalid content reference.");
+        (reference.prefix !== undefined &&
+          typeof reference.prefix !== "string") ||
+        (reference.suffix !== undefined &&
+          typeof reference.suffix !== "string") ||
+        Object.keys(reference).some(
+          (key) => !["$contentRef", "path", "prefix", "suffix"].includes(key),
+        )
+      )
+        throw new Error("Invalid content reference.");
       const key = JSON.stringify([address, path]);
-      if (trail.includes(key)) throw new Error(`Circular content reference: ${address}.`);
+      if (trail.includes(key))
+        throw new Error(`Circular content reference: ${address}.`);
       if (!parsed.has(address)) {
         const source = readContent(address);
-        parsed.set(address, typeof source === "string" ? JSON.parse(source) : source);
+        parsed.set(
+          address,
+          typeof source === "string" ? JSON.parse(source) : source,
+        );
       }
       let resolved = parsed.get(address);
       for (const part of path) {
-        resolved = resolved && typeof resolved === "object" && Object.prototype.hasOwnProperty.call(resolved, part)
-          ? (resolved as Record<string | number, unknown>)[part]
-          : undefined;
+        resolved =
+          resolved &&
+          typeof resolved === "object" &&
+          Object.prototype.hasOwnProperty.call(resolved, part)
+            ? (resolved as Record<string | number, unknown>)[part]
+            : undefined;
       }
-      if (resolved === undefined) throw new Error(`Content reference not found: ${address}.`);
+      if (resolved === undefined)
+        throw new Error(`Content reference not found: ${address}.`);
       const result = visit(resolved, [...trail, key], depth + 1);
       if (reference.prefix !== undefined || reference.suffix !== undefined) {
-        if (typeof result !== "string") throw new Error("Content reference formatting requires a string.");
+        if (typeof result !== "string")
+          throw new Error("Content reference formatting requires a string.");
         return `${reference.prefix ?? ""}${result}${reference.suffix ?? ""}`;
       }
       return result;
     }
     if (Array.isArray(value)) {
-      const next = value.map(child => visit(child, trail, depth + 1));
+      const next = value.map((child) => visit(child, trail, depth + 1));
       return next.some((child, index) => child !== value[index]) ? next : value;
     }
     const next = { ...value } as Record<string, unknown>;

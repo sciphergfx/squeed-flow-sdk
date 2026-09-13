@@ -81,9 +81,10 @@ export function ContentPreview({
   const source =
     typeof content === "string" ? content : JSON.stringify(content, null, 2);
   let components: Record<string, unknown>[] | undefined;
-  let contentError: string | undefined = format === "jsx" && nodeId
-    ? nodeById.get(nodeId)?.data.config?.contentReferenceError
-    : undefined;
+  let contentError: string | undefined =
+    format === "jsx" && nodeId
+      ? nodeById.get(nodeId)?.data.config?.contentReferenceError
+      : undefined;
   if (format === "jsx" && !contentError) {
     try {
       const parsed =

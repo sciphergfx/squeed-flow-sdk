@@ -505,7 +505,10 @@ Inside JSX `$content`, a value can reference another node's JSX content:
 ```json
 {
   "type": "text",
-  "text": { "$contentRef": "root.navigation", "path": [0, "children", 1, "text"] },
+  "text": {
+    "$contentRef": "root.navigation",
+    "path": [0, "children", 1, "text"]
+  },
   "rawStyle": { "fontSize": "28px" }
 }
 ```

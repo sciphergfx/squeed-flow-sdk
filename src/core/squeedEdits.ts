@@ -6,9 +6,9 @@ import type {
   SqueedConnection,
   SqueedConnectionRef,
 } from "../types";
+import { resolveContentReferences } from "./contentReferences";
 import { createFlowDiagram } from "./createFlowDiagram";
 import { applyParentGroups } from "./parentGroups";
-import { resolveContentReferences } from "./contentReferences";
 import {
   connectionEntries,
   prepareConnections,
@@ -575,9 +575,11 @@ export function compileSqueed(
       data.config.contentFormat = contentFormat;
       if (contentFormat === "jsx") {
         try {
-          const resolved = resolveContentReferences(src.$content, address => {
+          const resolved = resolveContentReferences(src.$content, (address) => {
             const source = getNode(json, address);
-            return source?.$contentFormat === "jsx" ? source.$content : undefined;
+            return source?.$contentFormat === "jsx"
+              ? source.$content
+              : undefined;
           });
           if (resolved !== src.$content) {
             data.config.contentSource = src.$content;
@@ -586,7 +588,10 @@ export function compileSqueed(
         } catch (error) {
           data.config.contentSource = src.$content;
           data.config.content = [];
-          data.config.contentReferenceError = error instanceof Error ? error.message : "Invalid content reference.";
+          data.config.contentReferenceError =
+            error instanceof Error
+              ? error.message
+              : "Invalid content reference.";
         }
       }
       if (!src.$view) data.type = "objectView";
