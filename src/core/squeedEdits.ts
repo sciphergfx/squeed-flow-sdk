@@ -8,6 +8,7 @@ import type {
 } from "../types";
 import { createFlowDiagram } from "./createFlowDiagram";
 import { applyParentGroups } from "./parentGroups";
+import { resolveContentReferences } from "./contentReferences";
 import {
   connectionEntries,
   prepareConnections,
@@ -572,6 +573,22 @@ export function compileSqueed(
           "Invalid content format: expected markdown, html, or jsx.",
         );
       data.config.contentFormat = contentFormat;
+      if (contentFormat === "jsx") {
+        try {
+          const resolved = resolveContentReferences(src.$content, address => {
+            const source = getNode(json, address);
+            return source?.$contentFormat === "jsx" ? source.$content : undefined;
+          });
+          if (resolved !== src.$content) {
+            data.config.contentSource = src.$content;
+            data.config.content = resolved;
+          }
+        } catch (error) {
+          data.config.contentSource = src.$content;
+          data.config.content = [];
+          data.config.contentReferenceError = error instanceof Error ? error.message : "Invalid content reference.";
+        }
+      }
       if (!src.$view) data.type = "objectView";
     }
     if (

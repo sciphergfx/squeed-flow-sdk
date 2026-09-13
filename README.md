@@ -498,6 +498,37 @@ Markdown and properties views retain their headers and sizing. Use
 `$borderRadius: 0` independently for square corners. Existing content source and
 fullscreen controls remain available.
 
+### Live JSX Content References
+
+Inside JSX `$content`, a value can reference another node's JSX content:
+
+```json
+{
+  "type": "text",
+  "text": { "$contentRef": "root.navigation", "path": [0, "children", 1, "text"] },
+  "rawStyle": { "fontSize": "28px" }
+}
+```
+
+`path` is relative to the source node's `$content` array. Omitting it references
+the whole array, for example `"children": { "$contentRef": "root.header" }`.
+Referenced values retain their types; arrays are not implicitly flattened.
+Optional literal `prefix` and `suffix` strings format string values, such as
+keeping an image gradient before a referenced CSS image URL. No code executes.
+
+References resolve within the current document at compilation. Updating the
+source updates the rendered consumer; source JSON and the consumer's other
+styles remain unchanged. The source editor preserves reference JSON rather than
+saving the resolved copy. To detach a value intentionally, replace its reference
+with a literal. Ordinary `$target` edges remain connections, not content bindings.
+Index paths refer to positions: update them when restructuring source components,
+or reference a whole children array when its membership should follow the source.
+
+Only JSX sources are supported. Missing paths, cycles, unsafe property names,
+and expansion beyond 100 levels or 100,000 visits produce an error in the affected
+preview rather than aborting the graph. References do not fetch external data or
+cross document ownership boundaries.
+
 In `FlowDiagram`, enabling the bulk action also suspends `forms.structured`:
 generated detail nodes and structured form lists disappear without changing the
 workflow data. Disabling it restores the configured `forms.structured` setting

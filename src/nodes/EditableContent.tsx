@@ -1,7 +1,7 @@
 import { Box, Textarea } from "@chakra-ui/react";
 import Markdown from "markdown-to-jsx/react";
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useFlowDiagramContext } from "../components/FlowDiagramContext";
+import { useFlowData, useFlowDiagramContext } from "../components/FlowDiagramContext";
 import { useStopPropagation } from "../hooks/useStopPropagation";
 import type { ContentFormat, NodeContent } from "../types";
 import { ContentPreview } from "./ContentPreview";
@@ -38,8 +38,12 @@ export function EditableContent({
     editable &&
     (!nodeGridOptions ||
       (fillBody && nodeGridOptions.fill && format === "markdown"));
+  const { nodeById } = useFlowData();
+  const sourceContent = format === "jsx" && !onChange
+    ? nodeById.get(nodeId)?.data.config?.contentSource ?? content
+    : content;
   const source =
-    typeof content === "string" ? content : JSON.stringify(content, null, 2);
+    typeof sourceContent === "string" ? sourceContent : JSON.stringify(sourceContent, null, 2);
   const [editing, setEditing] = useState(editOnMount && editable);
   const [draft, setDraft] = useState(source);
   const [error, setError] = useState("");
@@ -84,7 +88,7 @@ export function EditableContent({
               !component ||
               typeof component !== "object" ||
               Array.isArray(component) ||
-              typeof component.type !== "string",
+              (typeof component.type !== "string" && typeof component.$contentRef !== "string"),
           )
         )
           throw new Error(
