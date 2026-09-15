@@ -9,6 +9,7 @@ import { NodeText } from "./nodeText";
 import { CompactObjectView } from "./CompactObjectView";
 import { ObjectNodeView } from "./ObjectNodeView";
 import { GridNodeView } from "./GridNodeView";
+import { PromptNodeView } from "./PromptNodeView";
 
 const text = (props) => (
   <CompactObjectView {...props} renderCompact={NodeText} />
@@ -56,6 +57,7 @@ ParentContainerView.displayName = "ParentContainerView";
 
 export default {
   grid: GridNodeView,
+  prompt: PromptNodeView,
   objectView: ObjectNodeView,
   arrayView,
   text,

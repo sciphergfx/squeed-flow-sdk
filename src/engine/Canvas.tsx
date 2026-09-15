@@ -119,6 +119,8 @@ export interface CanvasProps {
   minZoom: number;
   maxZoom: number;
   initialViewport: ViewportState;
+  fixedNodePositions?: FlowDiagramConfig["fixedNodePositions"];
+  onFixedNodePositionsChange?: (positions: Record<string, Point>) => void;
   fitOnInit?: boolean;
   animateViewport?: boolean;
   disableAnimations?: boolean;
@@ -342,7 +344,8 @@ function Canvas(props: CanvasProps) {
     gridSizesRef.current = new Map();
     setGridSizes(gridSizesRef.current);
   };
-  const placedNodes = useRef(new Map<string, Point>());
+  const placedNodes = useRef(new Map(Object.entries(props.fixedNodePositions ?? {})));
+  const configuredFixedIds = useRef(new Set(Object.keys(props.fixedNodePositions ?? {})));
   const resizeAnchor = useRef<{ id: string; position: Point } | null>(null);
   const hasLayoutRunRef = useRef(false);
   const [layoutRevision, setLayoutRevision] = useState(0);
@@ -414,7 +417,7 @@ function Canvas(props: CanvasProps) {
 
   const onLayoutStop = () => {
     geometryFocus.current = null;
-    if (revealedNodes.current.length) centerRevealed.current = true;
+    if (revealedNodes.current.length && !placedNodes.current.size) centerRevealed.current = true;
     if (!hasLayoutRunRef.current && propsRef.current.fitOnInit !== false)
       pendingFitRef.current = true;
     clearTimeout(settleTimerRef.current);
@@ -442,12 +445,12 @@ function Canvas(props: CanvasProps) {
           const previous = from.get(id);
           next.set(
             id,
-            previous
+            placedNodes.current.get(id) ?? (previous
               ? {
                   x: previous.x + (position.x - previous.x) * progress,
                   y: previous.y + (position.y - previous.y) * progress,
                 }
-              : position,
+              : position),
           );
         });
         positionsRef.current = next;
@@ -480,6 +483,7 @@ function Canvas(props: CanvasProps) {
     const p = propsRef.current;
     const connectionSpacing = connectionSpacingRef.current;
     const graph = layoutGraphRef.current;
+    const bodyIds = new Set(p.nodes.filter((node) => node.label === undefined).map((node) => node.id));
     const inputs = graph.nodes.map((n) => {
       const host = elByIdRef.current.get(n.id);
       if (host && (host.offsetWidth || host.offsetHeight))
@@ -488,7 +492,7 @@ function Canvas(props: CanvasProps) {
           h: host.offsetHeight,
         });
       const s = sizesRef.current.get(n.id) || DEFAULT_SIZE;
-      return { id: n.id, parent: n.parent, width: s.w, height: s.h };
+      return { id: n.id, parent: n.parent, width: s.w, height: s.h, hasBody: bodyIds.has(n.id) };
     });
     let target: Map<string, Point>;
     try {
@@ -524,7 +528,10 @@ function Canvas(props: CanvasProps) {
       console.warn("[flow-sdk] layout failed", err);
       return;
     }
-    const anchor = geometryFocus.current ? null : resizeAnchor.current;
+    const fixedAnchor = [...placedNodes.current].find(([id]) => target.has(id));
+    const anchor = fixedAnchor
+      ? { id: fixedAnchor[0], position: fixedAnchor[1] }
+      : geometryFocus.current ? null : resizeAnchor.current;
     resizeAnchor.current = null;
     const anchorTarget = anchor && target.get(anchor.id);
     if (anchor && anchorTarget) {
@@ -540,9 +547,8 @@ function Canvas(props: CanvasProps) {
       );
     }
     for (const [id, position] of placedNodes.current) {
-      if (target.has(id)) target.set(id, position);
-      else if (!p.nodes.some((node) => node.id === id))
-        placedNodes.current.delete(id);
+      if (p.nodes.some((node) => node.id === id)) target.set(id, position);
+      else placedNodes.current.delete(id);
     }
     if (geometryFocus.current) {
       const geometry = JSON.stringify([
@@ -578,6 +584,24 @@ function Canvas(props: CanvasProps) {
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useLayoutEffect(() => {
+    const fixed = props.fixedNodePositions ?? {};
+    let changed = false;
+    for (const id of configuredFixedIds.current) {
+      if (!Object.prototype.hasOwnProperty.call(fixed, id)) changed = placedNodes.current.delete(id) || changed;
+    }
+    for (const [id, position] of Object.entries(fixed)) {
+      if (!nodes.some(node => node.id === id) || !position || ![position.x, position.y].every(Number.isFinite)) continue;
+      const previous = placedNodes.current.get(id);
+      if (previous?.x !== position.x || previous?.y !== position.y) {
+        placedNodes.current.set(id, { ...position });
+        changed = true;
+      }
+    }
+    configuredFixedIds.current = new Set(Object.keys(fixed));
+    if (changed) scheduleLayout();
+  }, [props.fixedNodePositions, nodes, scheduleLayout]);
 
   useLayoutEffect(() => {
     const previous = new Map(
@@ -1486,6 +1510,7 @@ function Canvas(props: CanvasProps) {
         cancelAnim();
         if (!position) {
           placedNodes.current.delete(id);
+          propsRef.current.onFixedNodePositionsChange?.(Object.fromEntries(placedNodes.current));
           scheduleLayout();
           return true;
         }
@@ -1495,9 +1520,11 @@ function Canvas(props: CanvasProps) {
         else placedNodes.current.set(id, { ...position });
         positionsRef.current = next;
         setPositions(next);
+        if (options?.persist !== false) propsRef.current.onFixedNodePositionsChange?.(Object.fromEntries(placedNodes.current));
         if (options?.persist === false) scheduleLayout();
         return true;
       },
+      getFixedNodePositions: () => Object.fromEntries([...placedNodes.current].map(([id, position]) => [id, { ...position }])),
       onViewportChange: (fn) => viewport.onChange(fn),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

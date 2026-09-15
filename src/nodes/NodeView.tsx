@@ -9,6 +9,7 @@ import { useNodeHasChildren } from "../hooks/useNodeHasChildren";
 import { getChakraColorHex } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
 import { EditableContent } from "./EditableContent";
+import { NodeSubtitle } from "./NodeSubtitle";
 
 interface NodeViewProps {
   data: any;
@@ -483,6 +484,7 @@ const NodeView = ({
           onEditStart: () => setIsEditing(true),
           onEditEnd: () => setIsEditing(false),
         })}
+        <NodeSubtitle data={nodeData} />
         {hasChildren &&
           !nodeData?.config?.parentContainer &&
           nodeData?.config?.collapsed !== undefined &&
@@ -743,6 +745,7 @@ const NodeView = ({
           onEditEnd: () => setIsEditing(false),
         })}
       </Box>
+      <NodeSubtitle data={nodeData} caption={!!nodeData.config?.labelBelow && nodeViewModes[id] !== "properties"} />
     </Box>
   );
 };

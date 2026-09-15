@@ -3,10 +3,10 @@ import type {
   FlowDiagramEdge,
   FlowDiagramNode,
   FlowEdgeProperties,
+  NodeEditMetadata,
   SqueedConnection,
   SqueedConnectionRef,
 } from "../types";
-import { resolveContentReferences } from "./contentReferences";
 import { createFlowDiagram } from "./createFlowDiagram";
 import { applyParentGroups } from "./parentGroups";
 import {
@@ -27,6 +27,7 @@ export type SqueedNodeKey =
   | "$view"
   | "$label"
   | "$subtitle"
+  | "$edited"
   | "$form"
   | "$bgColor"
   | "$textColor"
@@ -34,8 +35,6 @@ export type SqueedNodeKey =
   | "$borderStyle"
   | "$borderWidth"
   | "$borderRadius"
-  | "$width"
-  | "$height"
   | "$fontSize"
   | "$icon"
   | "$content"
@@ -60,6 +59,16 @@ export type SqueedEdgeKey =
   | "$edgeColor";
 
 const ROOT = "root";
+export function stampNodeEdit(
+  json: SqueedJson,
+  address: string,
+  edited?: NodeEditMetadata,
+): SqueedJson {
+  if (!edited || getNode(json, address) === undefined) return json;
+  if (!edited.userId || !edited.name.trim()) return json;
+  if (!Number.isFinite(Date.parse(edited.at))) return json;
+  return setNodeProp(json, address, "$edited", edited);
+}
 // ".#" = duplicate-path marker, "{3}" / " 3" = synthetic count nodes emitted by the compiler
 const isDecorator = (seg: string) =>
   seg === "#" || seg.startsWith("{") || /^\s\d*$/.test(seg);
@@ -521,6 +530,10 @@ export function compileSqueed(
       data.config = { ...data.config, form: src.$form };
       data.type = "objectView";
     }
+    if (src.$view === "prompt") {
+      data.type = "prompt";
+      data.config = { ...data.config, typeView: "prompt" };
+    }
     if (Array.isArray(src.$ports)) {
       const ports = src.$ports.filter(
         (port: any) =>
@@ -539,6 +552,13 @@ export function compileSqueed(
     if (typeof src.$subtitle === "string") {
       data.config = { ...data.config, subtitle: src.$subtitle };
     }
+    if (src.$edited && typeof src.$edited === "object") {
+      data.config = { ...data.config, edited: src.$edited };
+      if (data.description) {
+        data.description = { ...data.description };
+        delete data.description.$edited;
+      }
+    }
     if (typeof src.$outline === "boolean") {
       data.viewProps = { ...data.viewProps, outline: src.$outline };
     }
@@ -550,11 +570,6 @@ export function compileSqueed(
     }
     if (Number.isFinite(src.$borderRadius) && src.$borderRadius >= 0) {
       data.viewProps = { ...data.viewProps, borderRadius: src.$borderRadius };
-    }
-    for (const dimension of ["width", "height"] as const) {
-      const value = src[`$${dimension}`];
-      if (typeof value === "number" && Number.isFinite(value) && value > 0)
-        data.viewProps = { ...data.viewProps, [dimension]: `${value}px` };
     }
     if (typeof src.$isNodeAnimated === "boolean") {
       data.isNodeAnimated = src.$isNodeAnimated;
@@ -573,27 +588,6 @@ export function compileSqueed(
           "Invalid content format: expected markdown, html, or jsx.",
         );
       data.config.contentFormat = contentFormat;
-      if (contentFormat === "jsx") {
-        try {
-          const resolved = resolveContentReferences(src.$content, (address) => {
-            const source = getNode(json, address);
-            return source?.$contentFormat === "jsx"
-              ? source.$content
-              : undefined;
-          });
-          if (resolved !== src.$content) {
-            data.config.contentSource = src.$content;
-            data.config.content = resolved;
-          }
-        } catch (error) {
-          data.config.contentSource = src.$content;
-          data.config.content = [];
-          data.config.contentReferenceError =
-            error instanceof Error
-              ? error.message
-              : "Invalid content reference.";
-        }
-      }
       if (!src.$view) data.type = "objectView";
     }
     if (

@@ -8,6 +8,7 @@ export interface LayoutNodeInput {
   parent?: string;
   width: number;
   height: number;
+  hasBody?: boolean;
 }
 
 export interface LayoutEdgeInput {
@@ -43,9 +44,18 @@ export function runDagreLayout(
   opts: LayoutOptions,
 ): Map<string, Point> {
   const ids = new Set(nodes.map((n) => n.id));
+  const byId = new Map(nodes.map((node) => [node.id, node]));
   const parents = new Set<string>();
   for (const n of nodes)
     if (n.parent && ids.has(n.parent)) parents.add(n.parent);
+  const bodyIds = new Map<string, string>();
+  for (const node of nodes) {
+    if (!node.hasBody || !parents.has(node.id)) continue;
+    let bodyId = `${node.id}.$body`;
+    while (ids.has(bodyId)) bodyId += "$";
+    bodyIds.set(node.id, bodyId);
+    ids.add(bodyId);
+  }
 
   const g = new dagre.graphlib.Graph({ multigraph: true, compound: true });
   const compactScale =
@@ -71,9 +81,27 @@ export function runDagreLayout(
     g.setNode(node.id, { width: node.width + 2, height: node.height + 2 });
   for (const n of nodes)
     if (n.parent && ids.has(n.parent)) g.setParent(n.id, n.parent);
+  for (const [parentId, bodyId] of bodyIds) {
+    const node = byId.get(parentId)!;
+    g.setNode(bodyId, { width: node.width + 2, height: node.height + 2 });
+    g.setParent(bodyId, parentId);
+  }
+  for (const node of nodes) {
+    if (parents.has(node.id) && !bodyIds.has(node.id)) continue;
+    let ancestor = node.parent;
+    const seen = new Set<string>();
+    while (ancestor && !bodyIds.has(ancestor) && !seen.has(ancestor)) {
+      seen.add(ancestor);
+      ancestor = byId.get(ancestor)?.parent;
+    }
+    const parentBody = ancestor && bodyIds.get(ancestor);
+    if (parentBody) g.setEdge(parentBody, bodyIds.get(node.id) ?? node.id, { minlen: 1, weight: 1 }, "parent-body");
+  }
   for (const e of edges) {
     if (!ids.has(e.source) || !ids.has(e.target)) continue;
-    if (parents.has(e.source) || parents.has(e.target)) continue;
+    const source = bodyIds.get(e.source) ?? e.source;
+    const target = bodyIds.get(e.target) ?? e.target;
+    if (parents.has(source) || parents.has(target)) continue;
     const label = measureEdgeLabel(
       e.label,
       e.icon ?? e.data?.icon,
@@ -84,8 +112,8 @@ export function runDagreLayout(
       (label.width ? label.width + 2 * LABEL_MARGIN_X : 0) +
       (e.connectorClearance ?? 0);
     g.setEdge(
-      e.source,
-      e.target,
+      source,
+      target,
       {
         minlen: 1,
         weight: 1,
@@ -105,8 +133,8 @@ export function runDagreLayout(
 
   const out = new Map<string, Point>();
   for (const n of nodes) {
-    if (parents.has(n.id)) continue;
-    const d = g.node(n.id);
+    if (parents.has(n.id) && !bodyIds.has(n.id)) continue;
+    const d = g.node(bodyIds.get(n.id) ?? n.id);
     if (d && Number.isFinite(d.x) && Number.isFinite(d.y))
       out.set(n.id, { x: d.x, y: d.y });
   }
@@ -196,7 +224,13 @@ export function computeContainers(
       });
       continue;
     }
-    let r: Rect | null = null;
+    const bodySize = sizes.get(pid);
+    let r: Rect | null = position && bodySize ? {
+      x1: position.x - bodySize.w / 2,
+      y1: position.y - bodySize.h / 2,
+      x2: position.x + bodySize.w / 2,
+      y2: position.y + bodySize.h / 2,
+    } : null;
     for (const cid of children.get(pid) || []) {
       let cr: Rect | undefined = rects.get(cid);
       if (!cr) {

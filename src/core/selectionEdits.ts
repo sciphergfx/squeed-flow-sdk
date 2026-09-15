@@ -7,9 +7,41 @@ import {
 
 export function reparentNode(
   json: SqueedJson,
-  nodeId: string,
+  nodeId: string | readonly string[],
   parentId: string,
 ): SqueedJson {
+  if (Array.isArray(nodeId)) {
+    const ids = new Set(nodeId);
+    if (!getNode(json, parentId) || [...ids].some(id => id === "root" || !getNode(json, id)))
+      throw new Error("The source or Parent no longer exists.");
+    const seen = new Set<string>();
+    let ancestor: string | undefined = parentId;
+    while (ancestor) {
+      if (seen.has(ancestor) || [...ids].some(id => ancestor === id || ancestor!.startsWith(`${id}.`)))
+        throw new Error("A node cannot be moved inside itself or its descendants.");
+      seen.add(ancestor);
+      const explicit = getNode(json, ancestor)?.$parent;
+      ancestor = typeof explicit === "string" ? explicit : ancestor.includes(".") ? ancestor.slice(0, ancestor.lastIndexOf(".")) : undefined;
+    }
+    const visit = (value: SqueedJson, address: string): SqueedJson => {
+      let next = value;
+      const assign = (key: string, child: SqueedJson) => {
+        if (next === value) next = Array.isArray(value) ? [...value] : { ...value };
+        next[key] = child;
+      };
+      if (value && typeof value === "object") {
+        for (const [key, child] of Object.entries(value)) {
+          if (key.startsWith("$") && key !== "$") continue;
+          const result = visit(child, key === "$" ? address : `${address}.${key}`);
+          if (result !== child) assign(key, result);
+        }
+      }
+      if (ids.has(address)) next = { ...(next && typeof next === "object" && !Array.isArray(next) ? next : { $: next }), $parent: parentId };
+      return next;
+    };
+    return setCollapsed(visit(json, "root"), parentId, false);
+  }
+  nodeId = nodeId as string;
   if (nodeId === "root" || !getNode(json, nodeId) || !getNode(json, parentId))
     throw new Error("The source or Parent no longer exists.");
   const seen = new Set<string>();

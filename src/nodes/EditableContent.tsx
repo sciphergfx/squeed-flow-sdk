@@ -1,6 +1,7 @@
 import { Box, Textarea } from "@chakra-ui/react";
 import Markdown from "markdown-to-jsx/react";
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   useFlowData,
   useFlowDiagramContext,
@@ -20,8 +21,11 @@ export function EditableContent({
   autoHeight = false,
   previewControls = true,
   editOnMount = false,
+  plainText = false,
   onChange,
   onEditEnd,
+  onSubmit,
+  onDraftChange,
 }: {
   nodeId: string;
   content: NodeContent;
@@ -31,8 +35,11 @@ export function EditableContent({
   autoHeight?: boolean;
   previewControls?: boolean;
   editOnMount?: boolean;
+  plainText?: boolean;
   onChange?: (content: NodeContent) => void;
   onEditEnd?: () => void;
+  onSubmit?: (content: string) => void;
+  onDraftChange?: (content: string | undefined) => void;
 }) {
   const { callbacks, config, readOnly, nodeGridOptions } =
     useFlowDiagramContext();
@@ -66,18 +73,21 @@ export function EditableContent({
   }, [draft, editing, size]);
 
   useEffect(() => {
-    if (!editable) setEditing(false);
-    else if (editing) {
+    if (!editable) {
+      setEditing(false);
+      onDraftChange?.(undefined);
+    } else if (editing) {
       committedRef.current = false;
       inputRef.current?.focus({ preventScroll: true });
       inputRef.current?.select();
     }
-  }, [editing, editable]);
+  }, [editing, editable, onDraftChange]);
 
   const startEditing = (element: HTMLElement, shiftKey = false) => {
     if (!editable || (nodeGridOptions && !directEditable && !shiftKey)) return;
     setSize({ width: element.offsetWidth, height: element.offsetHeight });
     setDraft(source);
+    onDraftChange?.(source);
     setError("");
     setEditing(true);
   };
@@ -254,29 +264,39 @@ export function EditableContent({
           }
         }}
       >
-        <Markdown
-          options={{
-            forceBlock: true,
-            wrapper: Fragment,
-            disableParsingRawHTML: true,
-            overrides: {
-              a: { props: { target: "_blank", rel: "noopener noreferrer" } },
-              img: {
-                props: { loading: "lazy", referrerPolicy: "no-referrer" },
+        {plainText ? (
+          <Box whiteSpace="pre-wrap" minH="100%">
+            {source || (editable ? "Write your content here" : "")}
+          </Box>
+        ) : (
+          <Markdown
+            options={{
+              forceBlock: true,
+              wrapper: Fragment,
+              disableParsingRawHTML: true,
+              overrides: {
+                a: { props: { target: "_blank", rel: "noopener noreferrer" } },
+                img: {
+                  props: { loading: "lazy", referrerPolicy: "no-referrer" },
+                },
               },
-            },
-          }}
-        >
-          {source ||
-            (config.editable && !readOnly ? "Write your content here" : "")}
-        </Markdown>
+            }}
+          >
+            {source ||
+              (config.editable && !readOnly ? "Write your content here" : "")}
+          </Markdown>
+        )}
       </Box>
     );
 
   return (
     <div
       ref={wrapperRef}
-      style={{ width: size?.width, minHeight: size?.height, maxWidth: "100%" }}
+      style={{
+        width: plainText ? "100%" : size?.width,
+        minHeight: size?.height,
+        maxWidth: "100%",
+      }}
     >
       <Textarea
         ref={inputRef}
@@ -284,11 +304,41 @@ export function EditableContent({
         placeholder="Write your content here"
         value={draft}
         aria-invalid={!!error}
-        onChange={(event) => setDraft(event.target.value)}
+        onChange={(event) => {
+          setDraft(event.target.value);
+          onDraftChange?.(event.target.value);
+        }}
+        onPaste={(event) => {
+          if (plainText && event.clipboardData.files.length) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }}
+        onDrop={(event) => {
+          if (!plainText) return;
+          event.stopPropagation();
+          if (event.dataTransfer.files.length) event.preventDefault();
+        }}
         onBlur={commit}
         onKeyDown={(event) => {
           event.stopPropagation();
           if (event.nativeEvent.isComposing) return;
+          if (
+            onSubmit &&
+            format === "markdown" &&
+            event.key === "Enter" &&
+            !event.shiftKey &&
+            !event.ctrlKey &&
+            !event.metaKey &&
+            !event.altKey
+          ) {
+            event.preventDefault();
+            if (!event.repeat && !committedRef.current && draft.trim()) {
+              flushSync(commit);
+              onSubmit(draft);
+            }
+            return;
+          }
           if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
             event.preventDefault();
             commit();
@@ -296,6 +346,7 @@ export function EditableContent({
           if (event.key === "Escape") {
             committedRef.current = true;
             setEditing(false);
+            onDraftChange?.(undefined);
             onEditEnd?.();
           }
         }}

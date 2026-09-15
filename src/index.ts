@@ -1,5 +1,8 @@
 // @squeed/flow-sdk - Standalone flow diagram renderer
 
+export { stampNodeEdit } from "./core/squeedEdits";
+export type { NodeEditMetadata } from "./types";
+export { formatTimeAgo } from "./utils/relativeTime";
 export { createWorkflowExecution } from "./utils/workflowExecution";
 export type {
   WorkflowExecutionAdapter,
@@ -84,9 +87,7 @@ export { projectJsonPlaybackPreview } from "./core/jsonPlaybackPreview";
 export { createJsonPlayback, createJsonStream } from "./core/jsonStream";
 export type { JsonPlaybackState, JsonStreamOptions } from "./core/jsonStream";
 export { parseTypeScriptForm } from "./core/workflowContract";
-export { isNodeVisible } from "./engine/edgeMode";
 export { useNodeViewActions } from "./hooks/useNodeViewActions";
-export { ContentFullscreenButton } from "./nodes/ContentPreview";
 export { NodeConfigSummary } from "./nodes/NodeConfigSummary";
 export { FormDocumentContext, NodeForm } from "./nodes/NodeForm";
 export { LIGHT_BLACK } from "./theme/colorUtils";
@@ -147,8 +148,10 @@ export {
   getSelectionRoots,
   reparentNode,
 } from "./core/selectionEdits";
+export { isNodeVisible } from "./engine/edgeMode";
 export { useEdgeProximity } from "./hooks/useEdgeProximity";
 export { useStopPropagation } from "./hooks/useStopPropagation";
+export { ContentFullscreenButton } from "./nodes/ContentPreview";
 export { EditableLabel } from "./nodes/EditableLabel";
 export { default as NodeView } from "./nodes/NodeView";
 

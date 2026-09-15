@@ -6,11 +6,7 @@ import {
 import { createFormNode } from "./createFormNode";
 import type { FormSchema } from "./forms";
 import { applyFormChange } from "./forms";
-import {
-  copySelection,
-  duplicateSelection,
-  reparentNode,
-} from "./selectionEdits";
+import { copySelection, duplicateSelection } from "./selectionEdits";
 import {
   addChild,
   addConnection,
@@ -22,6 +18,7 @@ import {
   setEdgeProp,
   setEdgeStyle,
   setNodeProp,
+  stampNodeEdit,
   updateNode,
   type RenderedEdgeRef,
   type SqueedJson,
@@ -30,7 +27,6 @@ import {
 /** What changed in the Squeed document (delivered alongside the new JSON) */
 export interface SqueedChange {
   type:
-    | "nodeReplace"
     | "documentReplace"
     | "form"
     | "nodeLabel"
@@ -50,6 +46,7 @@ export interface SqueedChange {
     | "edgeDelete";
   /** Node address affected (new node's address for nodeCreate) */
   address?: string;
+  nodeAddresses?: string[];
   edge?: RenderedEdgeRef;
   /** `$` key written, when a single key changed */
   key?: string;
@@ -78,6 +75,20 @@ export function bindSqueedCallbacks(
 ): FlowDiagramCallbacks {
   const emit = (next: SqueedJson, change: SqueedChange) => {
     if (next === json) return;
+    const nodeEdit =
+      change.type.startsWith("node") && change.type !== "nodeDelete";
+    const addresses =
+      change.nodeAddresses ??
+      (nodeEdit && change.address ? [change.address] : []);
+    const edited = addresses.length
+      ? callbacks.getNodeEditMetadata?.()
+      : undefined;
+    for (const address of addresses) {
+      const changed =
+        JSON.stringify(getNode(next, address)) !==
+        JSON.stringify(getNode(json, address));
+      if (changed) next = stampNodeEdit(next, address, edited);
+    }
     json = next;
     onJsonChange?.(next, change);
   };
@@ -97,16 +108,6 @@ export function bindSqueedCallbacks(
 
   return {
     ...callbacks,
-    onNodeParentChange: (id, parentId) => {
-      const next = reparentNode(json, id, parentId);
-      callbacks.onNodeParentChange?.(id, parentId);
-      emit(next, {
-        type: "nodeStyle",
-        address: id,
-        key: "$parent",
-        value: parentId,
-      });
-    },
     onNodesCopy: async (ids) => {
       if ((await callbacks.onNodesCopy?.(ids)) === true) return;
       await navigator.clipboard.writeText(
@@ -116,7 +117,11 @@ export function bindSqueedCallbacks(
     onNodesDuplicate: (ids) => {
       if (callbacks.onNodesDuplicate?.(ids) === true) return;
       const duplicated = duplicateSelection(json, ids);
-      emit(duplicated.json, { type: "nodeCreate", address: duplicated.ids[0] });
+      emit(duplicated.json, {
+        type: "nodeCreate",
+        address: duplicated.ids[0],
+        nodeAddresses: duplicated.ids,
+      });
     },
     onFormChange: (event) => {
       const owner = getNode(json, event.nodeAddress);
@@ -125,6 +130,7 @@ export function bindSqueedCallbacks(
       emit(applyFormChange(json, event, callbacks.onFormChange), {
         type: "form",
         address: event.address,
+        nodeAddresses: [event.nodeAddress],
         value: event.value,
       });
     },
@@ -135,15 +141,6 @@ export function bindSqueedCallbacks(
         address: id,
         key: "$label",
         value: label,
-      });
-    },
-    onNodeSubtitleChange: (id, subtitle) => {
-      callbacks.onNodeSubtitleChange?.(id, subtitle);
-      emit(setNodeProp(json, id, "$subtitle", subtitle), {
-        type: "nodeStyle",
-        address: id,
-        key: "$subtitle",
-        value: subtitle,
       });
     },
     onNodeContentChange: (id, content) => {
@@ -214,21 +211,6 @@ export function bindSqueedCallbacks(
         value: radius,
       });
     },
-    onNodeDimensionChange: (id, dimension, value) => {
-      if (
-        (dimension !== "width" && dimension !== "height") ||
-        (value !== undefined && (!Number.isFinite(value) || value <= 0))
-      )
-        return;
-      callbacks.onNodeDimensionChange?.(id, dimension, value);
-      const key = dimension === "width" ? "$width" : "$height";
-      emit(setNodeProp(json, id, key, value), {
-        type: "nodeStyle",
-        address: id,
-        key,
-        value,
-      });
-    },
     onNodeIconChange: (id, icon) => {
       callbacks.onNodeIconChange?.(id, icon);
       emit(setNodeProp(json, id, "$icon", icon), {
@@ -278,33 +260,46 @@ export function bindSqueedCallbacks(
     onNodeCreate: (params) => {
       if (callbacks.onNodeCreate?.(params) === true) return;
       const parent = params.sourceNodeId || "root";
+      const parentNode = getNode(json, parent);
       const firstArrayDraw =
         !!params.sourceNodeId &&
         params.isArrayMode &&
-        !getNode(json, parent)?.$arrayDrawInitialized;
+        !parentNode?.$arrayDrawInitialized;
+      const siblings = Array.isArray(parentNode?.$) ? parentNode.$ : parentNode;
+      const labels = new Set(
+        Object.entries(siblings ?? {})
+          .filter(([key]) => !key.startsWith("$"))
+          .map(([, value]) => (value as { $label?: string } | null)?.$label),
+      );
+      let number = 1;
       let next = json;
       let address: string | undefined;
+      const nodeAddresses: string[] = [];
       let value = params.isArrayMode ? "array" : "set";
       for (let index = 0; index < (firstArrayDraw ? 2 : 1); index++) {
-        const created =
+        const formNode =
           params.sourceNodeId &&
           createFormNode(next, params.sourceNodeId, formSchema);
-        if (created) {
-          next = created.json;
-          address ??= created.address;
+        if (formNode) {
+          next = formNode.json;
+          address ??= formNode.address;
+          nodeAddresses.push(formNode.address);
           value = "form";
-        } else {
-          const key = uniqueKey(
-            getNode(next, parent),
-            params.isArrayMode ? "list" : "node",
-          );
-          const child = params.isArrayMode
-            ? { $bgColor: "gray.500", $: [] }
-            : { $bgColor: "gray.500" };
-          const result = addChild(next, parent, child, key);
-          next = result.json;
-          address ??= result.address;
+          continue;
         }
+        while (labels.has(`Untitled ${number}`)) number++;
+        const label = `Untitled ${number++}`;
+        const key = uniqueKey(
+          getNode(next, parent),
+          params.isArrayMode ? "list" : "node",
+        );
+        const child = params.isArrayMode
+          ? { $bgColor: "gray.500", $label: label, $: [] }
+          : { $bgColor: "gray.500", $label: label };
+        const created = addChild(next, parent, child, key);
+        next = created.json;
+        address ??= created.address;
+        nodeAddresses.push(created.address);
       }
       if (firstArrayDraw)
         next = updateNode(next, parent, (node) =>
@@ -315,6 +310,7 @@ export function bindSqueedCallbacks(
       emit(next, {
         type: "nodeCreate",
         address,
+        nodeAddresses,
         value,
       });
     },

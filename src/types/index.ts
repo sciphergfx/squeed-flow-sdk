@@ -1,3 +1,4 @@
+import type { NodeGridOptions } from "../engine/nodeCollisions";
 import type { FlowEngine } from "../engine/types";
 import type { BuiltInEdgeType, CustomEdgeFactory } from "./edgeTypes";
 export type {
@@ -23,6 +24,11 @@ export type NodeAlignment = "leading" | "center" | "trailing";
 export type NodeViewMode = "default" | "properties" | "icon-label";
 export type ContentFormat = "markdown" | "html" | "jsx";
 export type NodeContent = string | Record<string, unknown>[];
+export interface NodeEditMetadata {
+  userId: string;
+  name: string;
+  at: string;
+}
 export interface JsxContentRendererProps {
   components: { type: string; [key: string]: unknown }[];
   colorMode?: "light" | "dark";
@@ -35,6 +41,7 @@ export const NODE_TYPE_VIEWS = [
   "text",
   "grid",
   "parent",
+  "prompt",
 ] as const;
 export type NodeTypeView = Exclude<(typeof NODE_TYPE_VIEWS)[number], "">;
 export type NodeAnimationVariant = "traveling" | "pulse";
@@ -218,6 +225,8 @@ export interface FlowDiagramConfig {
   bottomBarExtra?: React.ReactNode;
   bottomBarCollapsed?: boolean;
   bottomBarNavigation?: boolean;
+  bottomBarCollision?: boolean;
+  bottomBarFill?: boolean;
   /** Animate fit/center/focus actions for 300ms by default. Per-action flags override this; reduced motion stays instant. */
   animateViewport?: boolean;
   disableAnimations?: boolean;
@@ -235,6 +244,9 @@ export interface FlowDiagramConfig {
   compactPropertyLayout?: boolean;
   nodeViewModes?: Record<string, NodeViewMode>;
   allNodesIconLabel?: boolean;
+  nodeGridSpacing?: "collision" | "layout";
+  nodeGridConnections?: boolean;
+  nodeGrid?: { enabled: boolean; options: NodeGridOptions; order?: string[] };
   workflowContract?: import("../core/workflowContract").WorkflowContract;
   /** Layout algorithm */
   layout?: LayoutAlgorithm;
@@ -252,19 +264,11 @@ export interface FlowDiagramConfig {
   parentNodeStyle?: ParentNodeStyle;
   /** Min zoom level (default: 0.01) */
   minZoom?: number;
-  nodeGridSpacing?: "collision" | "layout";
-  nodeGridConnections?: boolean;
-  nodeGrid?: {
-    enabled: boolean;
-    options: import("../engine/nodeCollisions").NodeGridOptions;
-    order?: string[];
-  };
-  bottomBarCollision?: boolean;
-  bottomBarFill?: boolean;
   /** Max zoom level (default: 1.5) */
   maxZoom?: number;
   /** Initial viewport position and zoom */
   initialViewport?: { pan: { x: number; y: number }; zoom: number };
+  fixedNodePositions?: Record<string, { x: number; y: number }>;
   /** Enable edge drawing handles (default: true) */
   edgeHandles?: boolean;
   /** Disable all interactions */
@@ -306,8 +310,8 @@ export interface NodeSelectionModifiers {
   ctrlKey: boolean;
   metaKey: boolean;
   altKey: boolean;
-  viewToggle?: boolean;
   keyboardNavigation?: boolean;
+  viewToggle?: boolean;
 }
 
 export interface FlowNodeCreationRequest {
@@ -345,12 +349,10 @@ export interface FlowDiagramCallbacks {
   onNodeGridZoomOut?: (
     options: import("../engine/nodeCollisions").NodeGridOptions,
   ) => boolean;
-  onNodeGridFillRequest?: (
-    options: import("../engine/nodeCollisions").NodeGridOptions,
-  ) => boolean;
+  onNodeGridFillRequest?: (options: NodeGridOptions) => boolean;
   onNodeGridModeRequest?: (
     enabled: boolean,
-    options: import("../engine/nodeCollisions").NodeGridOptions,
+    options: NodeGridOptions,
   ) => boolean;
   onNodeGridDrop?: (
     nodeId: string,
@@ -358,6 +360,7 @@ export interface FlowDiagramCallbacks {
     modifiers?: NodeSelectionModifiers,
   ) => boolean;
   // ── Node events ──
+  getNodeEditMetadata?: () => NodeEditMetadata | undefined;
   /** Fires when a node is clicked/selected */
   onNodeSelect?: (
     nodeId: string,
@@ -394,6 +397,13 @@ export interface FlowDiagramCallbacks {
     dimension: "width" | "height",
     value: number | undefined,
   ) => void;
+  onFixedNodePositionsChange?: (
+    positions: Record<string, { x: number; y: number }>,
+  ) => void;
+  onPromptSubmit?: (
+    request: { nodeId: string; prompt: string; temperature?: number },
+    signal: AbortSignal,
+  ) => Promise<void>;
   /** Fires when a node's collapse toggle is clicked */
   onNodeCollapse?: (nodeId: string, collapsed: boolean) => void;
   onNodeParentChange?: (nodeId: string, parentId: string) => void;
@@ -487,6 +497,8 @@ export interface FlowDiagramCallbacks {
 /** Describes the edit behind an `onJsonChange` */
 export interface SqueedChangeInfo {
   type:
+    | "documentReplace"
+    | "form"
     | "nodeReplace"
     | "nodeLabel"
     | "nodeContent"

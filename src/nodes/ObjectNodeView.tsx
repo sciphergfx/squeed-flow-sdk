@@ -137,27 +137,32 @@ export const ObjectNodeView = (props) => {
               transition: "border-color 0.2s ease-in-out",
             }}
             width={
-              responsiveContent || sizedContent
+              props.contentWidth ??
+              (responsiveContent || sizedContent
                 ? data.viewProps?.width !== undefined &&
                   data.viewProps.width !== "100%"
                   ? data.viewProps.width
                   : "max-content"
-                : "100%"
+                : "100%")
             }
             maxW={responsiveContent ? "calc(100vw - 40px)" : undefined}
+            height={props.contentHeight ?? data.viewProps?.height}
             minW={
-              responsiveContent || sizedContent
+              props.contentMinWidth ??
+              (props.contentWidth || responsiveContent || sizedContent
                 ? 0
                 : hasContent || props.onShowIcon
                   ? uniformKeyWidth +
                     OBJECT_VALUE_WIDTH +
                     borderProps.borderWidth * 2
-                  : undefined
+                  : undefined)
             }
             {...borderProps}
           >
             <Flex
               width="100%"
+              height={props.contentHeight !== undefined ? "100%" : undefined}
+              minH={props.contentHeight !== undefined ? 0 : undefined}
               direction="column"
               borderRadius={borderRadius}
               borderColor={colors.hexborderColor}
@@ -200,6 +205,7 @@ export const ObjectNodeView = (props) => {
                   }
                   fontSize="5xl"
                   lineHeight="normal"
+                  {...props.contentProps}
                 >
                   <EditableContent
                     nodeId={id}
@@ -208,6 +214,9 @@ export const ObjectNodeView = (props) => {
                     fillBody={props.fillBody}
                     autoHeight={responsiveContent}
                     color={data?.viewProps?.textColor || colors.hextextColor}
+                    onSubmit={props.onContentSubmit}
+                    onDraftChange={props.onContentDraftChange}
+                    plainText={props.contentPlainText}
                   />
                 </Flex>
               ) : (
@@ -225,6 +234,7 @@ export const ObjectNodeView = (props) => {
                   }}
                 />
               )}
+              {props.footer}
             </Flex>
           </Flex>
         );

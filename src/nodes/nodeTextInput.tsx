@@ -1,4 +1,4 @@
-import { Flex, Text } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import { getChakraColorHex } from "../theme/colorUtils";
 import {
@@ -91,26 +91,6 @@ export const NodeTextInput = ({
             onEditEnd={onEditEnd}
             wrap
           />
-          {typeof data.config?.subtitle === "string" &&
-            data.config.subtitle !== "" && (
-              <Text
-                data-flow-node-subtitle=""
-                color={getChakraColorHex(
-                  data?.viewProps?.textColor || colorText,
-                )}
-                opacity={0.65}
-                fontSize="32px"
-                fontWeight="normal"
-                lineHeight={1.3}
-                width="100%"
-                whiteSpace="nowrap"
-                overflow="hidden"
-                textOverflow="ellipsis"
-                title={data.config.subtitle}
-              >
-                {data.config.subtitle}
-              </Text>
-            )}
         </Flex>
       </Flex>
     );

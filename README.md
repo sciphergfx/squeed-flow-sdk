@@ -249,6 +249,16 @@ caption below the icon, so paths and arrowheads do not cross wrapped labels or
 subtitles. Horizontal connectors still attach to the icon surface. Unmarked
 custom views retain rectangular host bounds.
 
+Node edit attribution is opt-in: provide `callbacks.getNodeEditMetadata()` returning
+`{ userId, name, at }` from the editing session (`at` is an ISO timestamp).
+JSON node edits persist it as `$edited`; raw graphs store the same object in
+`data.config.edited`. Existing `$subtitle` text is preserved. The shared `NodeView`
+renders the editor and relative time using one shared minute timer, including for
+read-only viewers of the saved document. No-op edits leave the timestamp unchanged.
+Use `stampNodeEdit(json, address, metadata)` for custom node commit handlers.
+Metadata is display information, not an authorization or tamper-proof audit record;
+remote mutations must supply their actual editor, never the receiving viewer.
+
 Edge-label placement is scoped to each canvas and skips empty label layers.
 The existing placement is reused while node bounds, edge paths, and label
 dimensions are unchanged. Geometry changes and font loading recheck placement;
@@ -573,6 +583,14 @@ selected explicitly. Closing the modal makes no changes.
 model-space `position`. A workflow template creates a new step through the
 configured collection/identity/dependency fields; an existing reusable retains
 its shared state and connection. Node-mode drawing is unchanged.
+
+Default Set and Array draws label new entries `Untitled 1`, `Untitled 2`, and
+so on, using the next unused number among the parent's existing labels. Both
+modes share that sequence. JSON keys such as `node_1`, `list_1`, and numeric
+array indexes remain unchanged; the display name is stored in `$label` and
+survives serialization. Existing names and form-generated labels are preserved.
+Set mode creates one entry. The first Array draw from a source creates two
+siblings in one update; later draws create one, including after reload.
 
 After layout, `engine.setNodePosition(id, position)` places a measured node at
 the draw endpoint without changing viewport zoom or pan. This renderer-local

@@ -105,6 +105,7 @@ export interface FlowEngine {
     position: Point | undefined,
     options?: { persist?: boolean },
   ): boolean;
+  getFixedNodePositions(): Record<string, Point>;
   onViewportChange(fn: (vp: ViewportState) => void): () => void;
 }
 

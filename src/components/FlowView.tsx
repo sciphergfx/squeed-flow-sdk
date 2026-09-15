@@ -360,9 +360,9 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
         const isParentContainer =
           parentIds.has(node.data.id) && !node.data.parent;
         const nodeLabel = isParentContainer
-          ? (node.data.label ?? node.data.headerTitle ?? "Container")
+          && node.data.type !== "prompt" ? (node.data.label ?? node.data.headerTitle ?? "Container")
           : undefined;
-        const ViewComponent = isParentContainer
+        const ViewComponent = node.data.type === "prompt" ? Views.prompt : isParentContainer
           ? Views.parentContainer
           : Views[node.data.type] || Views.text;
         const FillComponent = config.customViews?.fillNode ?? ViewComponent;
@@ -1014,6 +1014,8 @@ const FlowView = ({ nodes, edges }: FlowViewProps) => {
           minZoom={config.minZoom ?? 0.01}
           maxZoom={config.maxZoom ?? 1.5}
           initialViewport={initialViewport}
+          fixedNodePositions={config.fixedNodePositions}
+          onFixedNodePositionsChange={callbacks.onFixedNodePositionsChange}
           fitOnInit={
             !config.initialViewport &&
             !(config.nodeGrid?.enabled && config.nodeGrid.options.fill)

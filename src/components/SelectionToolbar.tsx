@@ -1,5 +1,5 @@
 import { Box, chakra, HStack, Icon, Input, Text } from "@chakra-ui/react";
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   PiArrowsInLineVertical,
   PiArrowsOutLineVertical,
@@ -32,7 +32,6 @@ import { getChakraColorHex, LIGHT_BLACK } from "../theme/colorUtils";
 import { useCustomColors } from "../theme/useCustomColors";
 import type { SelectionToolbarConfig } from "../types";
 import { AnimationVariantSelect } from "./AnimationVariantSelect";
-import { SliderContent } from "./DiagramAppearanceControls";
 import { useFlowData, useFlowDiagramContext } from "./FlowDiagramContext";
 import { NodeIconPicker } from "./NodeIconPicker";
 import {
@@ -110,7 +109,7 @@ export function CommitInput({
   const committedRef = useRef(false);
   useEffect(() => setV(value), [value]);
   const commit = () => {
-    if (committedRef.current) return;
+    if (disabled || committedRef.current) return;
     committedRef.current = true;
     const t = v.trim();
     if (
@@ -456,68 +455,23 @@ export function BorderRadiusControl({
   ids: string[];
   showDivider?: boolean;
 }) {
-  const {
-    callbacks,
-    config,
-    nodeGridOptions,
-    fillRadiusEditedIds,
-    setNodeRadiusPreview,
-  } = useFlowDiagramContext();
+  const { callbacks, config, nodeGridOptions, fillRadiusEditedIds } =
+    useFlowDiagramContext();
   const { colorInactive } = useCustomColors();
   const { nodeById } = useFlowData();
-  const [draft, setDraft] = useState<number>();
-  const pending = useRef<{ ids: string[]; radius: number }>();
-  const timer = useRef<ReturnType<typeof setTimeout>>();
-  const latest = useRef({ callbacks, readOnly: config.readOnly, nodeById });
-  latest.current = { callbacks, readOnly: config.readOnly, nodeById };
-  const commit = () => {
-    clearTimeout(timer.current);
-    const next = pending.current;
-    pending.current = undefined;
-    if (!next) return;
-    if (!latest.current.readOnly)
-      for (const id of next.ids)
-        if (latest.current.nodeById.has(id))
-          latest.current.callbacks.onNodeBorderRadiusChange?.(id, next.radius);
-    setNodeRadiusPreview(next.ids, undefined);
-    setDraft(undefined);
-  };
-  const flush = useRef(commit);
-  flush.current = commit;
-  useEffect(() => {
-    const save = () => flush.current();
-    window.addEventListener("pagehide", save);
-    return () => {
-      window.removeEventListener("pagehide", save);
-      save();
-    };
-  }, []);
+  const [custom, setCustom] = useState(false);
   const radii = ids.map((id) =>
     nodeGridOptions?.fill && !fillRadiusEditedIds.has(id)
       ? 0
       : nodeById.get(id)?.data.viewProps?.borderRadius,
   );
   const mixed = !radii.every((radius) => radius === radii[0]);
-  const value = draft ?? radii[0] ?? 0;
-  const update = (radius: number | undefined) => {
-    if (config.readOnly) return;
-    if (
-      radius !== undefined &&
-      ids.every((id) => nodeById.get(id)?.data.type === "grid")
-    ) {
-      setDraft(radius);
-      setNodeRadiusPreview(ids, radius);
-      pending.current = { ids: [...ids], radius };
-      clearTimeout(timer.current);
-      timer.current = setTimeout(commit, 150);
-    } else {
-      clearTimeout(timer.current);
-      pending.current = undefined;
-      setDraft(undefined);
-      setNodeRadiusPreview(ids, undefined);
-      ids.forEach((id) => callbacks.onNodeBorderRadiusChange?.(id, radius));
-    }
-  };
+  const value = mixed ? "mixed" : String(radii[0] ?? "");
+  const presets = ["0", "8", "16", "30", "53", "100"];
+  const customMode =
+    custom || (!mixed && value !== "" && !presets.includes(value));
+  const update = (radius: number | undefined) =>
+    ids.forEach((id) => callbacks.onNodeBorderRadiusChange?.(id, radius));
   return (
     <>
       {showDivider && <Divider />}
@@ -546,47 +500,39 @@ export function BorderRadiusControl({
             height: "100%",
             cursor: "pointer",
           }}
-          value="radius"
+          value={customMode ? "custom" : value}
           disabled={config.readOnly}
-          onValueChange={() => {}}
-          popupContent={
-            <>
-              <SliderContent
-                label="Border radius"
-                inputLabel="Node corner radius"
-                min={0}
-                max={Math.max(500, ...radii.map((radius) => radius ?? 0))}
-                step={1}
-                value={value}
-                displayValue={
-                  draft !== undefined
-                    ? `${draft}px`
-                    : mixed
-                      ? "Mixed"
-                      : radii[0] === undefined
-                        ? "Default"
-                        : `${value}px`
-                }
-                onChange={update}
-                onChangeEnd={commit}
-              />
-              <ToolbarTooltip label="Reset border radius">
-                <ToolbarIconButton
-                  aria-label="Reset border radius"
-                  icon={<PiEraser size={20} />}
-                  size="sm"
-                  variant="ghost"
-                  color={colorInactive}
-                  disabled={config.readOnly}
-                  onClick={() => update(undefined)}
-                />
-              </ToolbarTooltip>
-            </>
-          }
+          onValueChange={(next) => {
+            setCustom(next === "custom");
+            if (next !== "custom")
+              update(next === "" ? undefined : Number(next));
+          }}
         >
-          <option value="radius">Border radius</option>
+          <option value="">Default radius</option>
+          {mixed && (
+            <option value="mixed" disabled>
+              Mixed radii
+            </option>
+          )}
+          {presets.map((radius) => (
+            <option key={radius} value={radius}>
+              {radius}px radius
+            </option>
+          ))}
+          <option value="custom">Custom radius</option>
         </ToolbarSelect>
       </Box>
+      {customMode && (
+        <CommitInput
+          ariaLabel="Custom border radius"
+          placeholder={mixed ? "Mixed" : "Auto"}
+          type="number"
+          min={0}
+          width="72px"
+          value={mixed ? "" : value}
+          onCommit={(next) => update(next === "" ? undefined : Number(next))}
+        />
+      )}
     </>
   );
 }
@@ -599,67 +545,57 @@ export function NodeTools({
 }: {
   ids: string[];
   onClose: () => void;
-  afterLabel?: ReactNode;
+  afterLabel?: React.ReactNode;
 }) {
-  const {
-    callbacks,
-    colorMode,
-    themeColor,
-    config,
-    setNodeViewMode,
-    nodeViewModes,
-  } = useFlowDiagramContext();
+  const { callbacks, colorMode, themeColor, config, setNodeViewMode } =
+    useFlowDiagramContext();
   const { colorText, colorInactive } = useCustomColors();
   const { nodeById, parentIds } = useFlowData();
   const { palette, show } = useToolbarConfig();
   const single = ids.length === 1;
   const [selectionError, setSelectionError] = useState("");
   const data = single ? nodeById.get(ids[0])?.data : undefined;
-  const typeViews = ids.map((id) => {
-    const node = nodeById.get(id)?.data;
-    const view = node?.config?.typeView ?? "";
-    if (
-      view === "object" &&
-      node?.config?.content !== undefined &&
-      nodeViewModes[id] !== "properties"
-    )
-      return "content";
-    if (
-      view === "icon-label" &&
-      node?.viewProps?.bgColor === "transparent" &&
-      node?.viewProps?.borderWidth === 0 &&
-      node?.viewProps?.outline === false
-    )
-      return "media";
-    return view;
-  });
+  const typeViews = ids.map(
+    (id) => nodeById.get(id)?.data.config?.typeView ?? "",
+  );
   const mixedTypeView = typeViews.some((view) => view !== typeViews[0]);
   const typeView = mixedTypeView ? "mixed" : (typeViews[0] ?? "");
-  const typeViewChoices = [
-    { value: "text", label: "Text", view: "text", icon: PiTextT },
-    {
-      value: "icon-label",
-      label: "Icon Label",
-      view: "icon-label",
-      icon: PiShapes,
-    },
-    { value: "object", label: "Object", view: "object", icon: PiBracketsCurly },
-    { value: "grid", label: "Grid", view: "grid", icon: PiGridFour },
-    { value: "parent", label: "Parent", view: "parent", icon: PiStack },
-    { value: "media", label: "Media", view: "icon-label", icon: PiFileSvg },
-    {
-      value: "content",
-      label: "Content",
-      view: "object",
-      icon: PiTextAlignLeft,
-    },
-  ] as const;
+  const typeViewChoices = (
+    [
+      { value: "text", label: "Text", view: "text", icon: PiTextT },
+      {
+        value: "icon-label",
+        label: "Icon Label",
+        view: "icon-label",
+        icon: PiShapes,
+      },
+      {
+        value: "object",
+        label: "Object",
+        view: "object",
+        icon: PiBracketsCurly,
+      },
+      { value: "grid", label: "Grid", view: "grid", icon: PiGridFour },
+      { value: "parent", label: "Parent", view: "parent", icon: PiStack },
+      { value: "media", label: "Media", view: "icon-label", icon: PiFileSvg },
+      {
+        value: "content",
+        label: "Content",
+        view: "object",
+        icon: PiTextAlignLeft,
+      },
+      {
+        value: "prompt",
+        label: "Prompt",
+        view: "prompt",
+        icon: PiTextAlignLeft,
+      },
+    ] as const
+  ).filter((choice) => choice.view !== "prompt" || !!callbacks.onPromptSubmit);
   const customTypeView = ids.some((id) => {
     const node = nodeById.get(id)?.data;
     return (
       node &&
-      node.config?.typeView !== "grid" &&
-      node.config?.typeView !== "parent" &&
       (parentIds.has(id) ||
         node.config?.parentContainer ||
         Object.prototype.hasOwnProperty.call(
@@ -751,26 +687,8 @@ export function NodeTools({
             )?.view;
             if (!view) return;
             each((id) => {
-              const node = nodeById.get(id)?.data;
-              if (value === "media") {
-                callbacks.onNodeColorChange?.(id, "bg", "transparent");
-                callbacks.onNodeBorderColorChange?.(id, "#00000000");
-                callbacks.onNodeBorderWidthChange?.(id, 0);
-                callbacks.onNodeOutlineChange?.(id, false);
-              } else if (typeViews[ids.indexOf(id)] === "media") {
-                callbacks.onNodeColorChange?.(id, "bg", "");
-                callbacks.onNodeBorderColorChange?.(id, "");
-                callbacks.onNodeBorderWidthChange?.(id, undefined);
-              }
-              if (value === "content" && node?.config?.content === undefined)
-                callbacks.onNodeContentChange?.(id, "");
               callbacks.onNodeTypeViewChange?.(id, view);
-              setNodeViewMode(
-                id,
-                value === "object" && node?.config?.content !== undefined
-                  ? "properties"
-                  : "default",
-              );
+              setNodeViewMode(id, "default");
               callbacks.onNodeViewToggle?.(id);
             });
           }}
@@ -1022,7 +940,6 @@ export function NodeTools({
           </ToolbarTooltip>
         </>
       )}
-      <Divider />
       <ToolbarTooltip label="Copy selection">
         <ToolbarIconButton
           aria-label="Copy selection"

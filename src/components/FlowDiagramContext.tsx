@@ -2,7 +2,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -140,45 +139,12 @@ export function FlowDiagramProvider({
   const [isPinned, setIsPinned] = useState(true);
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
   const [nodeGridOptions, setLocalNodeGridOptions] =
-    useState<NodeGridOptions | null>(() =>
-      config.nodeGrid?.enabled
-        ? {
-            ...config.nodeGrid.options,
-            ...(config.nodeGrid.order ? { order: config.nodeGrid.order } : {}),
-          }
-        : null,
-    );
+    useState<NodeGridOptions | null>(null);
   const nodeGridOptionsRef = useRef(nodeGridOptions);
   const [lastNodeGridOptions, setLastNodeGridOptions] =
-    useState<NodeGridOptions>(
-      nodeGridOptions ??
-        config.nodeGrid?.options ?? { gaps: 15, fill: false, padding: 0 },
-    );
+    useState<NodeGridOptions>({ gaps: 15, fill: false, padding: 0 });
   const [fillRadiusEditedIds, setFillRadiusEditedIds] = useState<Set<string>>(
     () => new Set(),
-  );
-  const setNodeGridOptions = useCallback((options: NodeGridOptions | null) => {
-    if (!!options?.fill !== !!nodeGridOptionsRef.current?.fill)
-      setFillRadiusEditedIds(new Set());
-    nodeGridOptionsRef.current = options;
-    if (options) setLastNodeGridOptions(options);
-    setLocalNodeGridOptions(options);
-  }, []);
-  const [localEdgeMode, setEdgeMode] = useState<EdgeMode>("auto");
-  const [localCompactPropertyLayout, setCompactPropertyLayout] =
-    useState(false);
-  const compactPropertyLayout =
-    config.compactPropertyLayout ?? localCompactPropertyLayout;
-  const [localNodeViewModes, setLocalNodeViewModes] = useState<
-    Record<string, NodeViewMode>
-  >({});
-  const nodeViewModes = config.nodeViewModes ?? localNodeViewModes;
-  const [localAllNodesIconLabel, setLocalAllNodesIconLabel] = useState<
-    boolean | undefined
-  >(config.allNodesIconLabel);
-  useEffect(
-    () => setLocalAllNodesIconLabel(config.allNodesIconLabel),
-    [config.allNodesIconLabel],
   );
   const [nodeRadiusPreviews, setNodeRadiusPreviews] = useState<
     Record<string, number>
@@ -196,26 +162,38 @@ export function FlowDiagramProvider({
     },
     [],
   );
+  const setNodeGridOptions = useCallback((options: NodeGridOptions | null) => {
+    if (!!options?.fill !== !!nodeGridOptionsRef.current?.fill)
+      setFillRadiusEditedIds(new Set());
+    nodeGridOptionsRef.current = options;
+    if (options) setLastNodeGridOptions(options);
+    setLocalNodeGridOptions(options);
+  }, []);
+  const [localEdgeMode, setEdgeMode] = useState<EdgeMode>("auto");
+  const [localCompactPropertyLayout, setCompactPropertyLayout] =
+    useState(false);
+  const compactPropertyLayout =
+    config.compactPropertyLayout ?? localCompactPropertyLayout;
+  const [localNodeViewModes, setLocalNodeViewModes] = useState<
+    Record<string, NodeViewMode>
+  >({});
+  const nodeViewModes = config.nodeViewModes ?? localNodeViewModes;
   const iconLabelNodes = [...dataValue.nodeById.values()].filter(
     (node) =>
       dataValue.parentIds.has(node.data.id) ||
       node.data.config?.parentContainer ||
       node.data.type === "objectView" ||
-      node.data.type === "arrayView" ||
-      node.data.type === "text" ||
-      node.data.type === "grid",
-  );
-  const inferredIconLabel = iconLabelNodes.every((node) =>
-    dataValue.parentIds.has(node.data.id) || node.data.config?.parentContainer
-      ? !!node.data.config?.collapsed
-      : nodeViewModes[node.data.id] === "icon-label" ||
-        (node.data.type === "grid" &&
-          nodeViewModes[node.data.id] === undefined) ||
-        (node.data.config?.labelBelow &&
-          nodeViewModes[node.data.id] !== "properties"),
+      node.data.type === "arrayView",
   );
   const allNodesIconLabel =
-    localAllNodesIconLabel ?? config.allNodesIconLabel ?? inferredIconLabel;
+    !!iconLabelNodes.length &&
+    iconLabelNodes.every((node) =>
+      dataValue.parentIds.has(node.data.id) || node.data.config?.parentContainer
+        ? !!node.data.config?.collapsed
+        : nodeViewModes[node.data.id] === "icon-label" ||
+          (node.data.config?.labelBelow &&
+            nodeViewModes[node.data.id] !== "properties"),
+    );
   const [localSpacing, setSpacing] = useState<NodeSpacing>("normal");
   const [localEdgeRadius, setEdgeRadius] = useState<number>();
   const requestedEdgeRadius = config.edgeRadius ?? localEdgeRadius;
@@ -229,13 +207,7 @@ export function FlowDiagramProvider({
   const spacing =
     typeof requestedSpacing === "number"
       ? Number.isFinite(requestedSpacing)
-        ? Math.min(
-            2,
-            Math.max(
-              config.nodeGridSpacing === "layout" ? 0 : 0.5,
-              requestedSpacing,
-            ),
-          )
+        ? Math.min(2, Math.max(0.5, requestedSpacing))
         : 1
       : requestedSpacing === "compact"
         ? 0.5
@@ -267,8 +239,11 @@ export function FlowDiagramProvider({
       (key: string) =>
       (...args: any[]) =>
         (callbacksRef.current as any)?.[key]?.(...args);
+    const promptSubmit = wrap("onPromptSubmit");
+    const fixedPositionsChange = wrap("onFixedNodePositionsChange");
     return {
       // Node events
+      getNodeEditMetadata: wrap("getNodeEditMetadata"),
       onNodeSelect: wrap("onNodeSelect"),
       onNodesCopy: wrap("onNodesCopy"),
       onNodesDuplicate: wrap("onNodesDuplicate"),
@@ -278,7 +253,6 @@ export function FlowDiagramProvider({
       onNodeGridFillRequest: wrap("onNodeGridFillRequest"),
       onNodeGridModeRequest: wrap("onNodeGridModeRequest"),
       onNodeGridDrop: wrap("onNodeGridDrop"),
-      onNodeParentChange: wrap("onNodeParentChange"),
       onNodeDeselect: wrap("onNodeDeselect"),
       onNodeDoubleClick: wrap("onNodeDoubleClick"),
       onNodeViewToggle: wrap("onNodeViewToggle"),
@@ -290,6 +264,15 @@ export function FlowDiagramProvider({
       onNodeSubtitleChange: wrap("onNodeSubtitleChange"),
       onNodeContentChange: wrap("onNodeContentChange"),
       onNodeDimensionChange: wrap("onNodeDimensionChange"),
+      onNodeParentChange: wrap("onNodeParentChange"),
+      get onFixedNodePositionsChange() {
+        return callbacksRef.current.onFixedNodePositionsChange
+          ? fixedPositionsChange
+          : undefined;
+      },
+      get onPromptSubmit() {
+        return callbacksRef.current.onPromptSubmit ? promptSubmit : undefined;
+      },
       onNodeCollapse: wrap("onNodeCollapse"),
       onNodeColorChange: wrap("onNodeColorChange"),
       onNodeBorderColorChange: wrap("onNodeBorderColorChange"),
@@ -392,17 +375,20 @@ export function FlowDiagramProvider({
         get bottomBarNavigation() {
           return configRef.current.bottomBarNavigation;
         },
+        get bottomBarCollision() {
+          return configRef.current.bottomBarCollision;
+        },
         get bottomBarFill() {
           return configRef.current.bottomBarFill;
         },
-        get bottomBarCollision() {
-          return configRef.current.bottomBarCollision;
+        get nodeGrid() {
+          return configRef.current.nodeGrid;
         },
         get nodeGridConnections() {
           return configRef.current.nodeGridConnections;
         },
-        get nodeGrid() {
-          return configRef.current.nodeGrid;
+        get nodeGridSpacing() {
+          return configRef.current.nodeGridSpacing;
         },
         get edgeType() {
           return configRef.current.edgeType;
@@ -428,9 +414,6 @@ export function FlowDiagramProvider({
         get minZoom() {
           return configRef.current.minZoom;
         },
-        get nodeGridSpacing() {
-          return configRef.current.nodeGridSpacing;
-        },
         get maxZoom() {
           return configRef.current.maxZoom;
         },
@@ -451,6 +434,9 @@ export function FlowDiagramProvider({
         },
         get initialViewport() {
           return configRef.current.initialViewport;
+        },
+        get fixedNodePositions() {
+          return configRef.current.fixedNodePositions;
         },
         get animateViewport() {
           return configRef.current.animateViewport;
@@ -506,20 +492,18 @@ export function FlowDiagramProvider({
     (nodeId: string, mode: NodeViewMode) => {
       if (mode !== "default" && mode !== "properties" && mode !== "icon-label")
         throw new Error("Unknown node view mode.");
-      setLocalAllNodesIconLabel((current) => current ?? allNodesIconLabel);
       setLocalNodeViewModes((current) =>
         current[nodeId] === mode ? current : { ...current, [nodeId]: mode },
       );
       callbacks.onNodeViewModeChange?.(nodeId, mode);
     },
-    [callbacks.onNodeViewModeChange, allNodesIconLabel],
+    [callbacks.onNodeViewModeChange],
   );
 
   const value: FlowDiagramContextValue = useMemo(
     () => ({
       allNodesIconLabel,
       setAllNodesIconLabel: (enabled) => {
-        setLocalAllNodesIconLabel(enabled);
         if (!enabled)
           for (const [id, mode] of Object.entries(nodeViewModes))
             if (mode === "icon-label" && !dataValue.nodeById.has(id))
@@ -608,9 +592,9 @@ export function FlowDiagramProvider({
       callbacks.onAllNodesIconLabelChange,
       callbacks.onGraphEdgeColorChange,
       nodeViewModes,
-      callbacks.onNodeViewModeChange,
       nodeRadiusPreviews,
       setNodeRadiusPreview,
+      callbacks.onNodeViewModeChange,
       themeColor,
       spacing,
       backgroundVariant,
@@ -647,10 +631,14 @@ export function FlowDiagramProvider({
       config.bottomBarExtra,
       config.bottomBarCollapsed,
       config.bottomBarNavigation,
-      config.bottomBarFill,
       config.bottomBarCollision,
+      config.bottomBarFill,
+      config.nodeGrid,
       config.nodeGridSpacing,
       config.nodeGridConnections,
+      config.fixedNodePositions,
+      callbacks.onFixedNodePositionsChange,
+      callbacks.onPromptSubmit,
       config.compactPropertyLayout,
       compactPropertyLayout,
       stableCallbacks,
