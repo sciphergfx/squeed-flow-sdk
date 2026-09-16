@@ -232,6 +232,8 @@ export interface FlowDiagramConfig {
     nodeId: string,
     data: FlowDiagramNode["data"],
   ) => string | undefined;
+  /** Prompt token allowance for the header-divider budget overlay. */
+  promptBudget?: (nodeId: string) => { used: number; limit: number } | undefined;
   /** Animate fit/center/focus actions for 300ms by default. Per-action flags override this; reduced motion stays instant. */
   animateViewport?: boolean;
   disableAnimations?: boolean;

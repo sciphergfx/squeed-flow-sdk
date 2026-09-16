@@ -166,11 +166,13 @@ export const ObjectNodeView = (props) => {
               height={props.contentHeight !== undefined ? "100%" : undefined}
               minH={props.contentHeight !== undefined ? 0 : undefined}
               direction="column"
+              position="relative"
               borderRadius={borderRadius}
               borderColor={colors.hexborderColor}
               borderWidth={0}
               overflow="hidden"
             >
+              {props.surfaceOverlay}
               {!props.fillBody && (
                 <ObjectNodeHeader
                   {...{
@@ -194,6 +196,7 @@ export const ObjectNodeView = (props) => {
                   }}
                 />
               )}
+              {props.headerOverlay}
               {hasContent && !objVisible ? (
                 <Flex
                   w="100%"

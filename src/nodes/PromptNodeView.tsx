@@ -1,6 +1,7 @@
 import { Box, HStack, Text } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { PiPaperPlaneRight, PiStop } from "react-icons/pi";
+import { LoadingBorder } from "../components/LoadingBorder";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import {
   ToolbarIconButton,
@@ -18,6 +19,12 @@ export function PromptNodeView(props: FlowDiagramNode) {
     useFlowDiagramContext();
   const { canvas, background, border, colorText } = useCustomColors();
   const colors = getColorVars(props.data, themeColor, colorMode);
+  // Header divider overlay: a STATIC trace that tracks the token allowance.
+  const budget = config.promptBudget?.(props.data.id);
+  const budgetPct =
+    budget && budget.limit > 0
+      ? Math.min(100, Math.max(0, (budget.used / budget.limit) * 100))
+      : undefined;
   const controller = useRef<AbortController>();
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
@@ -79,6 +86,26 @@ export function PromptNodeView(props: FlowDiagramNode) {
       }}
       contentPlainText
       contentPlaceholder="How can I assist you?"
+      surfaceOverlay={running ? <LoadingBorder active label="Prompt running" /> : undefined}
+      headerOverlay={
+        budgetPct !== undefined ? (
+          <Box position="relative" h="0" flexShrink={0} aria-hidden="true" data-prompt-budget="">
+            <Box position="absolute" left="0" right="0" top="-1px" h="2px" bg={colors.highlightColor}>
+              <Box
+                className="flow-sdk-edge-trace"
+                h="100%"
+                width={`${budgetPct}%`}
+                style={{
+                  animation: "none",
+                  backgroundImage: "repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 12px)",
+                  color: colors.hextextColor,
+                  opacity: 0.75,
+                }}
+              />
+            </Box>
+          </Box>
+        ) : undefined
+      }
       onContentDraftChange={setDraft}
       onContentSubmit={
         !running && callbacks.onPromptSubmit
