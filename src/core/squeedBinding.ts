@@ -152,6 +152,16 @@ export function bindSqueedCallbacks(
         value: content,
       });
     },
+    onNodeContentFormatChange: (id, format) => {
+      if (!["markdown", "html", "jsx"].includes(format)) return;
+      callbacks.onNodeContentFormatChange?.(id, format);
+      emit(setNodeProp(json, id, "$contentFormat", format), {
+        type: "nodeStyle",
+        address: id,
+        key: "$contentFormat",
+        value: format,
+      });
+    },
     onNodeTypeViewChange: (id, view) => {
       if (view !== undefined && !NODE_TYPE_VIEWS.includes(view)) return;
       callbacks.onNodeTypeViewChange?.(id, view);

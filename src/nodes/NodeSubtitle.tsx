@@ -5,12 +5,15 @@ import { useTimeAgo } from "../utils/relativeTime";
 
 function EditSubtitle({
   edited,
+  relative,
+  helpText,
   fontSize,
 }: {
   edited: NodeEditMetadata;
+  relative?: string;
+  helpText: string;
   fontSize: string;
 }) {
-  const relative = useTimeAgo(edited.at);
   if (!relative || !edited.name) return null;
   return (
     <Text
@@ -18,9 +21,10 @@ function EditSubtitle({
       fontSize={fontSize}
       lineHeight={1.3}
       textTransform="none"
+      title={helpText}
     >
       {edited.name} · edited{" "}
-      <time dateTime={edited.at} title={new Date(edited.at).toLocaleString()}>
+      <time dateTime={edited.at} title={helpText}>
         {relative}
       </time>
     </Text>
@@ -38,6 +42,7 @@ export function NodeSubtitle({
   const subtitle =
     typeof data.config?.subtitle === "string" ? data.config.subtitle : "";
   const edited = data.config?.edited as NodeEditMetadata | undefined;
+  const relative = useTimeAgo(edited?.at);
   const contentCaption =
     caption ||
     typeof data.config?.content === "string" ||
@@ -46,6 +51,13 @@ export function NodeSubtitle({
     data.type === "objectView" || data.config?.labelBelow || contentCaption
       ? "32px"
       : "20px";
+  const helpText = [
+    subtitle,
+    edited?.name,
+    edited ? `edited ${relative ?? ""} · ${new Date(edited.at).toLocaleString()}` : undefined,
+  ]
+    .filter((line): line is string => !!line)
+    .join("\n");
   if (!edited && !contentCaption) return null;
   if (!edited && !subtitle) return null;
   return (
@@ -58,13 +70,20 @@ export function NodeSubtitle({
       maxW="100%"
       textAlign="center"
       overflowWrap="anywhere"
+      title={helpText || undefined}
     >
+      {edited && <EditSubtitle edited={edited} relative={relative} helpText={helpText} fontSize={fontSize} />}
       {subtitle && (
-        <Text data-flow-node-subtitle="" fontSize={fontSize} lineHeight={1.3}>
+        <Text
+          data-flow-node-subtitle=""
+          fontSize={fontSize}
+          lineHeight={1.3}
+          whiteSpace="pre-line"
+          title={helpText}
+        >
           {subtitle}
         </Text>
       )}
-      {edited && <EditSubtitle edited={edited} fontSize={fontSize} />}
     </Box>
   );
 }

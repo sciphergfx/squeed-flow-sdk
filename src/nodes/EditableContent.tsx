@@ -22,6 +22,7 @@ export function EditableContent({
   previewControls = true,
   editOnMount = false,
   plainText = false,
+  placeholder = "Write your content here",
   onChange,
   onEditEnd,
   onSubmit,
@@ -36,6 +37,7 @@ export function EditableContent({
   previewControls?: boolean;
   editOnMount?: boolean;
   plainText?: boolean;
+  placeholder?: string;
   onChange?: (content: NodeContent) => void;
   onEditEnd?: () => void;
   onSubmit?: (content: string) => void;
@@ -266,7 +268,7 @@ export function EditableContent({
       >
         {plainText ? (
           <Box whiteSpace="pre-wrap" minH="100%">
-            {source || (editable ? "Write your content here" : "")}
+            {source || (editable ? placeholder : "")}
           </Box>
         ) : (
           <Markdown
@@ -282,8 +284,7 @@ export function EditableContent({
               },
             }}
           >
-            {source ||
-              (config.editable && !readOnly ? "Write your content here" : "")}
+            {source || (config.editable && !readOnly ? placeholder : "")}
           </Markdown>
         )}
       </Box>
@@ -301,7 +302,7 @@ export function EditableContent({
       <Textarea
         ref={inputRef}
         aria-label="Node content"
-        placeholder="Write your content here"
+        placeholder={placeholder}
         value={draft}
         aria-invalid={!!error}
         onChange={(event) => {

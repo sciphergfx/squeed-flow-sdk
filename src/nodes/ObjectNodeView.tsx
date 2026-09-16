@@ -1,5 +1,6 @@
 import { Flex } from "@chakra-ui/react";
 import { useRef } from "react";
+import { useFlowDiagramContext } from "../components/FlowDiagramContext";
 import { useCloseOnDeselect } from "../hooks/useCloseOnDeselect";
 import { useNodeViewActions } from "../hooks/useNodeViewActions";
 import { CompactNodeView } from "./CompactNodeView";
@@ -17,6 +18,7 @@ import {
 import { useObjectInspection } from "./useObjectInspection";
 
 export const ObjectNodeView = (props) => {
+  const { config: diagramConfig } = useFlowDiagramContext();
   const {
     themeColor,
     colorMode,
@@ -217,6 +219,13 @@ export const ObjectNodeView = (props) => {
                     onSubmit={props.onContentSubmit}
                     onDraftChange={props.onContentDraftChange}
                     plainText={props.contentPlainText}
+                    placeholder={
+                      props.contentPlaceholder ??
+                      diagramConfig.nodePlaceholder?.(
+                        props.data.id,
+                        props.data,
+                      )
+                    }
                   />
                 </Flex>
               ) : (

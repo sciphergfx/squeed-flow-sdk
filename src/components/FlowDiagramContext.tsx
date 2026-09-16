@@ -263,6 +263,7 @@ export function FlowDiagramProvider({
       onNodeLabelChange: wrap("onNodeLabelChange"),
       onNodeSubtitleChange: wrap("onNodeSubtitleChange"),
       onNodeContentChange: wrap("onNodeContentChange"),
+      onNodeContentFormatChange: wrap("onNodeContentFormatChange"),
       onNodeDimensionChange: wrap("onNodeDimensionChange"),
       onNodeParentChange: wrap("onNodeParentChange"),
       get onFixedNodePositionsChange() {

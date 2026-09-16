@@ -78,6 +78,7 @@ export function PromptNodeView(props: FlowDiagramNode) {
         overscrollBehavior: "contain",
       }}
       contentPlainText
+      contentPlaceholder="How can I assist you?"
       onContentDraftChange={setDraft}
       onContentSubmit={
         !running && callbacks.onPromptSubmit
@@ -87,7 +88,12 @@ export function PromptNodeView(props: FlowDiagramNode) {
       data={{
         ...props.data,
         viewProps: { ...props.data.viewProps, containerType: "inline-size" },
-        config: { ...props.data.config, content, contentFormat: "markdown" },
+        config: {
+          ...props.data.config,
+          content,
+          contentFormat: "markdown",
+          icon: props.data.config?.icon ?? "PiBrain",
+        },
       }}
       footer={
         <Box
