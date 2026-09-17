@@ -1788,7 +1788,7 @@ function Canvas(props: CanvasProps) {
     if (!gestureRef.current) suppressClickRef.current = false;
     if ((e.target as Element).closest(".flow-sdk-canvas") !== e.currentTarget)
       return;
-    if (e.button !== 0 || propsRef.current.readOnly) return;
+    if (e.button !== 0) return;
     const target = e.target as Element;
     if (
       target.closest(
@@ -1818,6 +1818,21 @@ function Canvas(props: CanvasProps) {
       }
     }
     if (gestureRef.current) return;
+    if (propsRef.current.readOnly) {
+      // View permission: allow background panning (and pinch above); skip
+      // selection, drawing and grid interactions.
+      if (p.dragMode) {
+        gestureRef.current = {
+          kind: "pan",
+          pointerId: e.pointerId,
+          start: rendered,
+          pan0: viewport.pan,
+          moved: false,
+        };
+        e.currentTarget.setPointerCapture(e.pointerId);
+      }
+      return;
+    }
     const connectionsAllowed = !nodeGridRef.current || !!p.nodeGridConnections;
     const handle = p.drawHandles && target.closest(".flow-sdk-handle");
     const port =
@@ -1909,7 +1924,7 @@ function Canvas(props: CanvasProps) {
 
   const onPointerMove = (e: React.PointerEvent) => {
     const g = gestureRef.current;
-    if (!g || propsRef.current.readOnly) return;
+    if (!g) return;
     const rendered = toRendered(e);
     if (touchesRef.current.has(e.pointerId))
       touchesRef.current.set(e.pointerId, rendered);

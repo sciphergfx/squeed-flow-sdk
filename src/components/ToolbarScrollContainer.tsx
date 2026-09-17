@@ -20,6 +20,27 @@ export function ToolbarScrollContainer({
   framed?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const startRef = useRef<HTMLDivElement>(null);
+  // The start element sizes to its content (max-content) and its measured width
+  // reserves the scroll margin, so growing content (labels, portaled buttons)
+  // can never overlap the scrolled controls whatever the caller estimated.
+  const [measuredStart, setMeasuredStart] = useState(startElementWidth);
+  useLayoutEffect(() => {
+    const node = startRef.current;
+    if (!startElement || !node) return;
+    const update = () => {
+      // 6px box inset + 12px breathing room before the scrolled controls.
+      const width = Math.ceil(node.getBoundingClientRect().width) + 18;
+      setMeasuredStart((previous) =>
+        Math.abs(previous - width) > 1 ? width : previous,
+      );
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [startElement]);
+  const startWidth = startElement ? measuredStart : 0;
   const [hidden, setHidden] = useState({ left: false, right: false });
   useLayoutEffect(() => {
     const element = scrollRef.current!;
@@ -106,7 +127,7 @@ export function ToolbarScrollContainer({
         ...(framed || startElement
           ? {
               "--flow-toolbar-start-width": startElement
-                ? `${startElementWidth}px`
+                ? `${startWidth}px`
                 : "0px",
             }
           : {}),
@@ -121,7 +142,7 @@ export function ToolbarScrollContainer({
         overflowX="auto"
         overflowY="hidden"
         mr={endElement ? "44px" : undefined}
-        ml={startElement ? `${startElementWidth}px` : undefined}
+        ml={startElement ? `${startWidth}px` : undefined}
         borderRadius="inherit"
         css={{
           scrollbarWidth: "none",
@@ -169,11 +190,12 @@ export function ToolbarScrollContainer({
       )}
       {startElement && (
         <Box
+          ref={startRef}
           position="absolute"
           left="6px"
           top={0}
           h="50px"
-          w={`${startElementWidth - 12}px`}
+          w="max-content"
           display="flex"
           alignItems="center"
           justifyContent="center"

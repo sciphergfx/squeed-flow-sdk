@@ -227,7 +227,10 @@ export const ObjectNodeView = (props) => {
                       diagramConfig.nodePlaceholder?.(
                         props.data.id,
                         props.data,
-                      )
+                      ) ??
+                      (props.data.config?.promptTurn
+                        ? "Thinking..."
+                        : undefined)
                     }
                   />
                 </Flex>

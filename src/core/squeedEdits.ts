@@ -559,6 +559,9 @@ export function compileSqueed(
         delete data.description.$edited;
       }
     }
+    if (src.$promptTurn && typeof src.$promptTurn === "object") {
+      data.config = { ...data.config, promptTurn: src.$promptTurn };
+    }
     if (typeof src.$outline === "boolean") {
       data.viewProps = { ...data.viewProps, outline: src.$outline };
     }

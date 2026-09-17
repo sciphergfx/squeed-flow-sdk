@@ -21,6 +21,22 @@ export function PanelDragHandle({
   const { colorInactive } = useCustomColors();
   const panel = () =>
     handle.current?.closest<HTMLElement>("[data-flow-floating-panel]");
+  const storageKey = `flow:panel-position:${label}`;
+  const persist = () => {
+    const element = panel();
+    if (!element?.dataset.flowPanelMoved) return;
+    try {
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          left: parseFloat(element.style.left),
+          top: parseFloat(element.style.top),
+        }),
+      );
+    } catch {
+      /* storage unavailable */
+    }
+  };
   const move = (left: number, top: number) => {
     const element = panel();
     if (!element) return;
@@ -31,10 +47,23 @@ export function PanelDragHandle({
     element.style.bottom = "auto";
     element.dataset.flowPanelMoved = "true";
   };
+  // Re-apply the last dragged position for this panel (persisted per label).
+  useEffect(() => {
+    const element = panel();
+    if (!element || element.dataset.flowPanelMoved) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
+      if (saved && Number.isFinite(saved.left) && Number.isFinite(saved.top))
+        move(saved.left, saved.top);
+    } catch {
+      /* ignore malformed stored position */
+    }
+  }, [storageKey]);
   const end = (cancelled = false) => {
     const current = drag.current;
     if (!current) return;
     if (cancelled) move(current.left, current.top);
+    else persist();
     drag.current = undefined;
     if (handle.current?.hasPointerCapture(current.pointerId))
       handle.current.releasePointerCapture(current.pointerId);
@@ -142,6 +171,7 @@ export function PanelDragHandle({
                 ? step
                 : 0),
         );
+        persist();
       }}
     >
       <PiDotsSix size={20} aria-hidden="true" />

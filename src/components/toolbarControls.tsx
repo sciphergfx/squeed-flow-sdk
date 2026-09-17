@@ -205,6 +205,14 @@ export function ToolbarSelect({
     const panel = menu.current;
     if (!anchor || !panel) return;
     if (pinned && panel.dataset.flowPanelMoved) return;
+    if (pinned) {
+      // Pinned panels dock top-left under the toolbar (next to the logo) until
+      // the user drags them; the drag position is then restored on next open.
+      panel.style.maxHeight = `${Math.max(60, window.innerHeight - 108)}px`;
+      panel.style.left = "20px";
+      panel.style.top = "84px";
+      return;
+    }
     if (trigger.current?.closest("[popover]")) {
       const below = window.innerHeight - anchor.bottom - 16;
       const above = anchor.top - 16;
@@ -223,9 +231,22 @@ export function ToolbarSelect({
     panel.style.left = `${Math.max(12, Math.min(Math.max(toolbar?.left ?? 12, anchor.right - bounds.width), (toolbar?.right ?? window.innerWidth - 12) - bounds.width, window.innerWidth - bounds.width - 12))}px`;
     panel.style.top = `${Math.max(12, verticalAnchor.top >= bounds.height + 36 ? verticalAnchor.top - bounds.height - 24 : Math.min(verticalAnchor.bottom + 24, window.innerHeight - bounds.height - 12))}px`;
   };
+  const storedPosition = () => {
+    try {
+      return localStorage.getItem(`flow:panel-position:${label}`);
+    } catch {
+      return null;
+    }
+  };
   const show = () => {
     if (disabled) return;
-    if (menu.current && !menu.current.matches(":popover-open"))
+    // Clear the moved flag so the panel re-docks — unless the user dragged it
+    // before, in which case the persisted position is restored instead.
+    if (
+      menu.current &&
+      !menu.current.matches(":popover-open") &&
+      !storedPosition()
+    )
       delete menu.current.dataset.flowPanelMoved;
     menu.current?.showPopover();
     position();
@@ -254,6 +275,8 @@ export function ToolbarSelect({
       close();
       return;
     }
+    // Pinning docks the panel (top-left, next to the logo) right away.
+    position();
     window.addEventListener("resize", position);
     window.addEventListener("scroll", position, true);
     return () => {

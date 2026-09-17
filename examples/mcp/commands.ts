@@ -221,6 +221,9 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
       ],
     },
   }),
+  node("content-format", "onNodeContentFormatChange", {
+    format: choice("markdown", "html", "jsx"),
+  }),
   node("collapse", "onNodeCollapse", { collapsed: boolean }),
   node("color", "onNodeColorChange", {
     colorType: choice("text", "bg"),
