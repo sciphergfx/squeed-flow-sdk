@@ -85,7 +85,11 @@ export function ContentPreview({
     format === "jsx" && nodeId
       ? nodeById.get(nodeId)?.data.config?.contentReferenceError
       : undefined;
-  if (format === "jsx" && !contentError) {
+  // Empty content is not invalid JSX: a node switched to the jsx format before
+  // its content is written must render empty, not "Unexpected end of JSON input".
+  const hasContent =
+    typeof content === "string" ? content.trim().length > 0 : content != null;
+  if (format === "jsx" && !contentError && hasContent) {
     try {
       const parsed =
         typeof content === "string" ? JSON.parse(content) : content;
@@ -447,7 +451,7 @@ export function ContentPreview({
               colorMode={colorMode}
               fillHeight={!autoHeight || fullscreen}
             />
-          ) : (
+          ) : !hasContent ? null : (
             <Box role="status" fontSize="14px">
               JSX content renderer is not available.
             </Box>

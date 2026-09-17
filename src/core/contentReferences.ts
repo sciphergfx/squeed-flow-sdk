@@ -82,7 +82,14 @@ export function resolveContentReferences(
     }
     return changed ? next : value;
   };
-  const value = typeof content === "string" ? JSON.parse(content) : content;
+  // Empty content has no references to resolve; parsing it would surface
+  // "Unexpected end of JSON input" before the content is written.
+  const value =
+    typeof content === "string"
+      ? content.trim()
+        ? JSON.parse(content)
+        : content
+      : content;
   const resolved = visit(value, [], 0);
   return resolved === value ? content : resolved;
 }

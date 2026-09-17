@@ -36,25 +36,30 @@ class PreviewBoundary extends React.Component<
 }
 
 try {
-  const source = JSON.parse(document.getElementById("source").textContent);
-  const module = { exports: {} as { default?: React.ComponentType } };
-  const require = (name: string) => {
-    if (name === "react") return React;
-    throw new Error(`Unsupported import: ${name}. Only react is available.`);
-  };
-  new Function("require", "module", "exports", "React", source)(
-    require,
-    module,
-    module.exports,
-    React,
-  );
-  if (!module.exports.default)
-    throw new Error("Export a React component as default.");
-  createRoot(container).render(
-    <PreviewBoundary>
-      {React.createElement(module.exports.default)}
-    </PreviewBoundary>,
-  );
+  const rawSource = document.getElementById("source")?.textContent ?? "";
+  // Nothing written yet (a jsx node before its content lands) — render empty
+  // rather than throwing "Unexpected end of JSON input".
+  if (rawSource.trim()) {
+    const source = JSON.parse(rawSource);
+    const module = { exports: {} as { default?: React.ComponentType } };
+    const require = (name: string) => {
+      if (name === "react") return React;
+      throw new Error(`Unsupported import: ${name}. Only react is available.`);
+    };
+    new Function("require", "module", "exports", "React", source)(
+      require,
+      module,
+      module.exports,
+      React,
+    );
+    if (!module.exports.default)
+      throw new Error("Export a React component as default.");
+    createRoot(container).render(
+      <PreviewBoundary>
+        {React.createElement(module.exports.default)}
+      </PreviewBoundary>,
+    );
+  }
 } catch (error) {
   showError(error);
 }
