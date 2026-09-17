@@ -161,13 +161,14 @@ export function ToolbarScrollContainer({
           bottom={0}
           w="20px"
           pointerEvents="none"
+          zIndex={2}
           borderRadius={side === "left" ? "30px 0 0 30px" : "0 30px 30px 0"}
           style={{
             [side]:
               side === "right" && endElement
                 ? 44
                 : side === "left" && startElement
-                  ? startElementWidth
+                  ? startWidth
                   : 0,
             opacity: hidden[side] ? 1 : 0,
             background: `linear-gradient(to ${side === "left" ? "right" : "left"}, ${color}, transparent)`,
@@ -184,6 +185,9 @@ export function ToolbarScrollContainer({
           display="flex"
           alignItems="center"
           justifyContent="center"
+          background={color}
+          borderRadius={framed ? "0 30px 30px 0" : undefined}
+          zIndex={1}
         >
           {endElement}
         </Box>
@@ -199,6 +203,9 @@ export function ToolbarScrollContainer({
           display="flex"
           alignItems="center"
           justifyContent="center"
+          background={color}
+          borderRadius={framed ? "30px 0 0 30px" : undefined}
+          zIndex={1}
         >
           {startElement}
         </Box>

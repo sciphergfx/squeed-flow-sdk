@@ -68,6 +68,12 @@ const command = (
   method: string,
   fields: FlowCommand["fields"] = {},
 ): FlowCommand => ({ name, description, target, handler, method, fields });
+const fieldHint = (name: string, field: CommandField): string => {
+  const values = Array.isArray(field.enum) ? field.enum.filter((value) => value !== "" && value !== null) : [];
+  return values.length ? `${name}=${values.join("|")}` : name;
+};
+const bodyHint = (idKey: "node" | "edge", fields: FlowCommand["fields"]): string =>
+  `Body: {${[idKey, ...Object.keys(fields).map((name) => fieldHint(name, fields[name]))].join(", ")}}.`;
 const node = (
   name: string,
   method: string,
@@ -75,7 +81,7 @@ const node = (
 ) =>
   command(
     `node-${name}`,
-    `Set node ${name}.`,
+    `Set node ${name}. ${bodyHint("node", fields)}`,
     "node",
     "callback",
     method,
@@ -88,7 +94,7 @@ const edge = (
 ) =>
   command(
     `edge-${name}`,
-    `Set edge ${name}.`,
+    `Set edge ${name}. ${bodyHint("edge", fields)}`,
     "edge",
     "callback",
     method,
@@ -152,7 +158,7 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
   ),
   command(
     "connections-only",
-    "Set Connected nodes mode.",
+    "Set Connected nodes mode. Body: {enabled}.",
     "diagram",
     "host",
     "setConnectionsOnly",
@@ -198,7 +204,7 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
   ),
   command(
     "node-view",
-    "Set default, properties, or icon-label view.",
+    "Set default, properties, or icon-label view. Body: {node, mode=default|properties|icon-label}.",
     "node",
     "context",
     "setNodeViewMode",
@@ -241,11 +247,11 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
   node("animation-variant", "onNodeAnimationVariantChange", {
     variant: choice("traveling", "pulse"),
   }),
-  command("node-select", "Select a node.", "node", "host", "selectNode"),
-  command("node-delete", "Delete a node.", "node", "host", "deleteNode"),
+  command("node-select", "Select a node. Body: {node}.", "node", "host", "selectNode"),
+  command("node-delete", "Delete a node. Body: {node}.", "node", "host", "deleteNode"),
   command(
     "node-create",
-    "Create a node through the host creation callback.",
+    "Create a node through the host creation callback. Body: {x:number, y:number, type:'text'|'content'|'object', label?}.",
     "diagram",
     "host",
     "createNode",
@@ -269,8 +275,8 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
   edge("animation-variant", "onEdgeAnimationVariantChange", {
     variant: choice("dashed", "traveling"),
   }),
-  command("edge-select", "Select an edge.", "edge", "host", "selectEdge"),
-  command("edge-delete", "Delete an edge.", "edge", "host", "deleteEdge"),
+  command("edge-select", "Select an edge. Body: {edge}.", "edge", "host", "selectEdge"),
+  command("edge-delete", "Delete an edge. Body: {edge}.", "edge", "host", "deleteEdge"),
   command(
     "edge-create",
     "Connect two mapped nodes, optionally using property ports.",
@@ -404,7 +410,7 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
   ].map((method) =>
     command(
       method.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`),
-      `${method} without mutating graph data.`,
+      `${method} without mutating graph data. Body must include \`node\` (the node id).`,
       "node",
       "engine",
       method,
@@ -452,21 +458,21 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
   ),
   command(
     "node-inspect",
-    "Return node data and geometry through the browser result event.",
+    "Return node data and geometry through the browser result event. Body: {node} (the node id).",
     "node",
     "host",
     "inspectNode",
   ),
   command(
     "edge-inspect",
-    "Return edge data through the browser result event.",
+    "Return edge data through the browser result event. Body: {edge} (the edge id).",
     "edge",
     "host",
     "inspectEdge",
   ),
   command(
     "coordinates",
-    "Convert model/client coordinates through the browser result event.",
+    "Convert model/client coordinates through the browser result event. Body: {from:'model'|'client', x, y}.",
     "diagram",
     "host",
     "coordinates",
