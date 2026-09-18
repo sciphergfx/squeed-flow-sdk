@@ -72,7 +72,7 @@ export const ObjectNodeView = (props) => {
                   ? "PiFileHtml"
                   : props.data.config?.contentFormat === "jsx"
                     ? "PiFileJsx"
-                    : "PiMarkdownLogo"
+                    : "https://squeed.co/squeed.svg"
                 : "PiBracketsCurly"),
           },
         }}
