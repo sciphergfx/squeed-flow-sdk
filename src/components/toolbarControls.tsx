@@ -189,6 +189,7 @@ export function ToolbarSelect({
         value: string;
         children: ReactNode;
         disabled?: boolean;
+        description?: string;
       };
       return {
         value: String(props.value),
@@ -196,9 +197,13 @@ export function ToolbarSelect({
           typeof props.children === "string" && labelCase === "title"
             ? startCase(props.children)
             : props.children,
+        description: props.description,
         disabled: props.disabled,
       };
     });
+  // Dividers only make sense for rich (title + subtitle) lists such as
+  // integration endpoints; plain option lists stay borderless.
+  const divided = options.some((option) => option.description);
   const close = () => menu.current?.hidePopover();
   const position = () => {
     const anchor = trigger.current?.getBoundingClientRect();
@@ -446,6 +451,12 @@ export function ToolbarSelect({
               color={colorText}
               _hover={{ bg: dark ? "whiteAlpha.100" : "blackAlpha.50" }}
               _focusVisible={{ bg: dark ? "whiteAlpha.100" : "blackAlpha.50" }}
+              {...(divided && {
+                _notLast: {
+                  borderBottom: "1px solid",
+                  borderColor: dark ? "whiteAlpha.100" : "blackAlpha.100",
+                },
+              })}
               onClick={() => {
                 if (!pinned) {
                   close();
@@ -454,7 +465,23 @@ export function ToolbarSelect({
                 onValueChange(option.value);
               }}
             >
-              <span style={{ flex: 1 }}>{option.label}</span>
+              <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 1, minWidth: 0 }}>
+                <span style={{ flexShrink: 0 }}>{option.label}</span>
+                {option.description && (
+                  <span
+                    style={{
+                      opacity: 0.55,
+                      fontFamily: "monospace",
+                      fontSize: 11,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {option.description}
+                  </span>
+                )}
+              </span>
               <PiCheck
                 size={16}
                 color={`var(--chakra-colors-${colorText.replace(".", "-")})`}

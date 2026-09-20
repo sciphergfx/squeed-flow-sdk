@@ -18,6 +18,8 @@ export type FormValue = string | number | boolean | null;
 export interface FormOption {
   label: string;
   value: FormValue;
+  /** Optional secondary line shown beside the label (e.g. method + path). */
+  description?: string;
 }
 export type FormCondition = { $address: string } & (
   | { $equals: FormValue }

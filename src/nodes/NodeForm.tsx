@@ -715,7 +715,11 @@ function Field({
                 : placeholder}
             </option>
             {options?.map((option, index) => (
-              <option key={index} value={index}>
+              <option
+                key={index}
+                value={index}
+                {...(option.description ? { description: option.description } : {})}
+              >
                 {startCase(option.label) || option.label}
               </option>
             ))}
