@@ -1130,8 +1130,18 @@ function Canvas(props: CanvasProps) {
       isolatedIdsRef.current = ids;
       if (propsRef.current.compactPropertyLayout) {
         pendingFitRef.current = false;
-        pendingLayoutAction.current = () =>
-          focus(isolatedIdsRef.current ?? ids, padding, animate);
+        // Stage the fit as a geometry focus so it runs inside the isolation
+        // relayout's viewport transition — reflow and fit animate as one motion
+        // instead of reflowing first, then fitting after the layout settles.
+        focus(isolatedIdsRef.current ?? ids, padding, animate, 1, true);
+        const staged = geometryFocus.current;
+        if (staged) {
+          geometryFocus.current = (positions) => {
+            geometryFocus.current = null;
+            focusedLayout.current = undefined;
+            staged(positions);
+          };
+        }
       }
       setIsolation({ id, mode });
       if (!propsRef.current.compactPropertyLayout) focus(ids, padding, animate);
