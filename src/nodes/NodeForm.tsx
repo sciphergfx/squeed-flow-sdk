@@ -718,7 +718,9 @@ function Field({
               <option
                 key={index}
                 value={index}
-                {...(option.description ? { description: option.description } : {})}
+                {...(option.description
+                  ? { description: option.description }
+                  : {})}
               >
                 {startCase(option.label) || option.label}
               </option>
@@ -848,8 +850,8 @@ function StructuredNodeForm({ nodeAddress }: { nodeAddress: string }) {
   const invalid = path.findIndex(
     (address) => !projection.containers.has(address),
   );
-  const currentPath = invalid < 0 ? path : path.slice(0, invalid);
-  const current = currentPath.at(-1) ?? nodeAddress;
+  const currentPath = invalid < 0 ? path : (path.slice(0, invalid) as any);
+  const current = currentPath?.at(-1) ?? nodeAddress;
   const label = [...projection.slots.values()].find(
     (slot) => slot.nodeId === current,
   )?.label;

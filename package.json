@@ -1,6 +1,6 @@
 {
   "name": "@squeed/flow-sdk",
-  "version": "2.0.44",
+  "version": "2.0.45",
   "description": "Standalone React component for rendering interactive flow diagrams using JSON",
   "license": "AGPL-3.0",
   "author": "seyi ogunbowale",
