@@ -14,12 +14,14 @@ import {
   PiArrowLeft,
   PiArrowCounterClockwise,
   PiCaretDown,
+  PiCheck,
   PiFile,
   PiPlus,
   PiTrash,
   PiUploadSimple,
 } from "react-icons/pi";
 import { useFlowDiagramContext } from "../components/FlowDiagramContext";
+import { NodeFormPopover } from "../components/NodeFormPopover";
 import {
   ToolbarIconButton,
   ToolbarSelect,
@@ -219,6 +221,338 @@ const Fields = styled.div<{ $colorMode: "light" | "dark" }>`
   }
 `;
 
+function ToolPicker({
+  options,
+  onPick,
+  disabled,
+  label,
+  selected,
+}: {
+  options?: FormOption[];
+  onPick: (value: string) => void;
+  disabled: boolean;
+  label: string;
+  selected?: string[];
+}) {
+  const { colorMode } = useFlowDiagramContext();
+  const dark = colorMode === "dark";
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const all = (options ?? []).map((option) => String(option.value));
+  const filtered = all.filter((value) =>
+    value.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+  const close = () => {
+    setOpen(false);
+    setQuery("");
+  };
+  return (
+    <>
+      <button
+        type="button"
+        disabled={disabled}
+        aria-label={`Add ${label}`}
+        aria-haspopup="dialog"
+        onClick={() => setOpen(true)}
+        style={{
+          width: "100%",
+          padding: "8px 12px",
+          borderRadius: 20,
+          border: "1px dashed",
+          borderColor: dark
+            ? "var(--chakra-colors-gray-600)"
+            : "var(--chakra-colors-gray-300)",
+          background: "transparent",
+          color: "inherit",
+          textAlign: "center",
+          cursor: disabled ? "default" : "pointer",
+          fontSize: 14,
+          opacity: disabled ? 0.6 : 1,
+        }}
+      >
+        + Add tool
+      </button>
+      <NodeFormPopover
+        active
+        nodeAddress=""
+        label={`Add ${label}`}
+        open={open}
+        onClose={close}
+        onBack={close}
+        height={440}
+        filter={
+          <input
+            aria-label={`Search ${label}`}
+            placeholder="Search tools..."
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            style={{
+              width: "100%",
+              marginTop: 14,
+              padding: "10px 14px",
+              borderRadius: 20,
+              border: "1px solid",
+              borderColor: dark
+                ? "var(--chakra-colors-gray-600)"
+                : "var(--chakra-colors-gray-200)",
+              background: dark
+                ? "var(--chakra-colors-gray-700)"
+                : "var(--chakra-colors-gray-100)",
+              color: "inherit",
+              fontSize: 15,
+              boxSizing: "border-box",
+            }}
+          />
+        }
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}>
+          {filtered.map((value) => {
+            const isSelected = (selected ?? []).includes(value);
+            const selectedBackground = "color-mix(in srgb, currentColor 10%, transparent)";
+            return (
+              <button
+                key={value}
+                type="button"
+                aria-selected={isSelected}
+                onClick={() => {
+                  onPick(value);
+                }}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  textAlign: "left",
+                  padding: "10px 14px",
+                  borderRadius: 12,
+                  border: 0,
+                  background: isSelected ? selectedBackground : "transparent",
+                  color: "inherit",
+                  cursor: "pointer",
+                  fontSize: 15,
+                  fontWeight: isSelected ? 700 : 400,
+                }}
+                onMouseEnter={(event) => {
+                  if (isSelected) return;
+                  event.currentTarget.style.background = dark
+                    ? "rgba(255,255,255,0.06)"
+                    : "rgba(0,0,0,0.05)";
+                }}
+                onMouseLeave={(event) => {
+                  event.currentTarget.style.background = isSelected ? selectedBackground : "transparent";
+                }}
+              >
+                <span style={{ flex: 1, minWidth: 0 }}>{value}</span>
+                <PiCheck
+                  size={16}
+                  aria-hidden="true"
+                  style={{ flexShrink: 0, visibility: isSelected ? "visible" : "hidden" }}
+                />
+              </button>
+            );
+          })}
+          {filtered.length === 0 && (
+            <span style={{ opacity: 0.55, fontSize: 13, padding: "8px 14px" }}>
+              No tools match “{query}”
+            </span>
+          )}
+        </div>
+      </NodeFormPopover>
+    </>
+  );
+}
+
+function InlineEntries({
+  value,
+  kind,
+  itemKind,
+  nameOnly,
+  options,
+  accent = "currentColor",
+  disabled,
+  label,
+  onChange,
+}: {
+  value: unknown;
+  kind: "object" | "array";
+  itemKind?: string;
+  nameOnly?: boolean;
+  options?: FormOption[];
+  accent?: string;
+  disabled: boolean;
+  label: string;
+  onChange: (next: unknown) => void;
+}) {
+  const rowStyle: React.CSSProperties = {
+    display: "flex",
+    gap: 6,
+    width: "100%",
+    alignItems: "center",
+  };
+  const removeStyle: React.CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    background: "transparent",
+    border: 0,
+    color: "inherit",
+    cursor: disabled ? "default" : "pointer",
+    padding: 2,
+    flexShrink: 0,
+  };
+  const parse = (raw: string): any => {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return raw;
+    }
+  };
+  if (kind === "object") {
+    const obj =
+      value && typeof value === "object" && !Array.isArray(value)
+        ? (value as Record<string, unknown>)
+        : {};
+    const nextKey = () => {
+      let index = Object.keys(obj).length + 1;
+      let key = `entry${index}`;
+      while (Object.prototype.hasOwnProperty.call(obj, key)) key = `entry${++index}`;
+      return key;
+    };
+    // Values that are just a redundant `{ name }` (e.g. a tool registry keyed
+    // by tool name) are edited as a simple list of names — chips plus an add
+    // input that suggests known tools.
+    if (nameOnly) {
+      const names = Object.keys(obj);
+      const addName = (name: string) => {
+        if (!name || Object.prototype.hasOwnProperty.call(obj, name)) return;
+        onChange({ ...obj, [name]: { name } });
+      };
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
+          {names.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {names.map((name, index) => (
+                <span
+                  key={`${index}:${name}`}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "6px 6px 6px 14px",
+                    borderRadius: 24,
+                    color: accent,
+                    background: "color-mix(in srgb, currentColor 12%, transparent)",
+                  }}
+                >
+                  {name}
+                  <button
+                    type="button"
+                    aria-label={`Remove ${label} ${index + 1}`}
+                    disabled={disabled}
+                    style={removeStyle}
+                    onClick={() => {
+                      const next = { ...obj };
+                      delete next[name];
+                      onChange(next);
+                    }}
+                  >
+                    <PiTrash size={12} aria-hidden="true" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <ToolPicker options={options} onPick={addName} disabled={disabled} label={label} selected={names} />
+        </div>
+      );
+    }
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
+        {Object.entries(obj).map(([key, item], index) => (
+          <div style={rowStyle} key={`${index}:${key}`}>
+            <input
+              style={{ flex: 1, minWidth: 0 }}
+              aria-label={`${label} key ${index + 1}`}
+              placeholder="key"
+              value={key}
+              disabled={disabled}
+              onChange={(event) => {
+                const next: Record<string, unknown> = {};
+                for (const [k, v] of Object.entries(obj)) next[k === key ? event.target.value : k] = v;
+                onChange(next);
+              }}
+            />
+            <input
+              style={{ flex: 1, minWidth: 0 }}
+              aria-label={`${label} value ${index + 1}`}
+              placeholder="value"
+              value={typeof item === "string" ? item : JSON.stringify(item)}
+              disabled={disabled}
+              onChange={(event) => onChange({ ...obj, [key]: parse(event.target.value) })}
+            />
+            <button
+              type="button"
+              aria-label={`Remove ${label} ${index + 1}`}
+              disabled={disabled}
+              style={removeStyle}
+              onClick={() => {
+                const next = { ...obj };
+                delete next[key];
+                onChange(next);
+              }}
+            >
+              <PiTrash size={12} aria-hidden="true" />
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onChange({ ...obj, [nextKey()]: "" })}
+        >
+          Add entry
+        </button>
+      </div>
+    );
+  }
+  const arr = Array.isArray(value) ? value : [];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
+      {arr.map((item, index) => (
+        <div style={{ ...rowStyle, alignItems: "flex-start" }} key={index}>
+          <textarea
+            style={{ flex: 1, minWidth: 0 }}
+            aria-label={`${label} item ${index + 1}`}
+            rows={2}
+            value={typeof item === "string" ? item : JSON.stringify(item, null, 2)}
+            disabled={disabled}
+            onChange={(event) => {
+              const next = [...arr];
+              next[index] = parse(event.target.value);
+              onChange(next);
+            }}
+          />
+          <button
+            type="button"
+            aria-label={`Remove ${label} ${index + 1}`}
+            disabled={disabled}
+            style={removeStyle}
+            onClick={() => onChange(arr.filter((_, position) => position !== index))}
+          >
+            <PiTrash size={12} aria-hidden="true" />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onChange([...arr, itemKind === "string" ? "" : {}])}
+      >
+        Add item
+      </button>
+    </div>
+  );
+}
+
 function Field({
   request,
   property,
@@ -257,6 +591,7 @@ function Field({
   const uploadController = useRef<AbortController>();
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [newItem, setNewItem] = useState("");
   const [remote, setRemote] = useState<{
     key: string;
     options: FormOption[];
@@ -350,6 +685,43 @@ function Field({
           ]
         : formOptions(property.type);
   const multiple = property.type.kind === "array";
+  const itemKind =
+    property.type.kind === "array"
+      ? (property.type as { kind: "array"; items: { kind: string } }).items
+          ?.kind
+      : undefined;
+  // Object maps whose values are a bare `{ name }` record (e.g. a tool
+  // registry keyed by name) are redundant to edit as key/value — treat them as
+  // a simple list of names.
+  const recordValue =
+    property.type.kind === "object"
+      ? (property.type as { kind: "object"; additionalProperties?: { kind: string; properties?: Record<string, { kind: string }> } })
+          .additionalProperties
+      : undefined;
+  const nameOnly =
+    (!!recordValue &&
+      recordValue.kind === "object" &&
+      !!recordValue.properties &&
+      Object.keys(recordValue.properties).length === 1 &&
+      recordValue.properties.name?.kind === "string") ||
+    // Fallback: detect from the current value — every member is a bare
+    // `{ name: <key> }` record (e.g. a tool registry keyed by tool name).
+    (!!value &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      Object.keys(value).length > 0 &&
+      Object.entries(value as Record<string, unknown>).every(
+        ([key, entry]) =>
+          !!entry &&
+          typeof entry === "object" &&
+          !Array.isArray(entry) &&
+          (entry as Record<string, unknown>).name === key &&
+          Object.keys(entry as Record<string, unknown>).length === 1,
+      ));
+  // Pills need options to pick from. Without options (e.g. no options
+  // resolver configured) the group would render empty, so fall back to a
+  // manual composer for string arrays and to JSON for anything else.
+  const pillsEmpty = (options?.length ?? 0) === 0 && !loading;
   const control =
     (config.$control === "upload"
       ? "upload"
@@ -735,42 +1107,165 @@ function Field({
           aria-describedby={props["aria-describedby"]}
           style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
         >
-          {options?.map((option, index) => {
-            const selected = multiple
-              ? Array.isArray(value) && value.includes(option.value)
-              : Object.is(value, option.value);
-            return (
-              <button
-                key={index}
-                type="button"
-                disabled={disabled || loading}
-                aria-pressed={selected}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: 24,
-                  border: 0,
-                  color: selected ? accent : "inherit",
-                  background: selected
-                    ? "color-mix(in srgb, currentColor 12%, transparent)"
-                    : "color-mix(in srgb, currentColor 7%, transparent)",
-                }}
-                onClick={() =>
-                  commit(
-                    multiple
-                      ? selected
-                        ? (value as unknown[]).filter(
-                            (item) => item !== option.value,
+          {property.type.kind === "object" && nameOnly ? (
+            <InlineEntries
+              value={value}
+              kind="object"
+              nameOnly
+              options={options}
+              accent={accent}
+              disabled={disabled}
+              label={label}
+              onChange={commit}
+            />
+          ) : pillsEmpty ? (
+            multiple && itemKind === "string" ? (
+              <>
+                {(Array.isArray(value) ? value : []).map(
+                  (item: unknown, index: number) => (
+                    <span
+                      key={index}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "8px 8px 8px 16px",
+                        borderRadius: 24,
+                        border: 0,
+                        color: accent,
+                        background:
+                          "color-mix(in srgb, currentColor 12%, transparent)",
+                      }}
+                    >
+                      {String(item)}
+                      <button
+                        type="button"
+                        aria-label={`Remove ${label} ${index + 1}`}
+                        disabled={disabled}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          background: "transparent",
+                          border: 0,
+                          color: "inherit",
+                          cursor: disabled ? "default" : "pointer",
+                          padding: 2,
+                        }}
+                        onClick={() =>
+                          commit(
+                            (value as unknown[]).filter(
+                              (_, position) => position !== index,
+                            ),
                           )
-                        : [...(Array.isArray(value) ? value : []), option.value]
-                      : option.value,
-                  )
-                }
-              >
-                {startCase(option.label) || option.label}
-              </button>
-            );
-          })}
-          {loading && <span role="status">Loading...</span>}
+                        }
+                      >
+                        <PiTrash size={12} aria-hidden="true" />
+                      </button>
+                    </span>
+                  ),
+                )}
+                <input
+                  aria-label={`Add ${label}`}
+                  placeholder={placeholder}
+                  value={newItem}
+                  disabled={disabled}
+                  onChange={(event) => setNewItem(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return;
+                    event.preventDefault();
+                    const next = newItem.trim();
+                    if (!next) return;
+                    const current = Array.isArray(value) ? value : [];
+                    if (current.some((item) => String(item) === next)) {
+                      setNewItem("");
+                      return;
+                    }
+                    commit([...current, next]);
+                    setNewItem("");
+                  }}
+                />
+                <button
+                  type="button"
+                  disabled={disabled || !newItem.trim()}
+                  onClick={() => {
+                    const next = newItem.trim();
+                    if (!next) return;
+                    const current = Array.isArray(value) ? value : [];
+                    if (!current.some((item) => String(item) === next))
+                      commit([...current, next]);
+                    setNewItem("");
+                  }}
+                >
+                  Add
+                </button>
+              </>
+            ) : multiple ? (
+              <InlineEntries
+                value={value}
+                kind="array"
+                itemKind={itemKind}
+                disabled={disabled}
+                label={label}
+                onChange={commit}
+              />
+            ) : property.type.kind === "object" ? (
+              <InlineEntries
+                value={value}
+                kind="object"
+                nameOnly={nameOnly}
+                disabled={disabled}
+                label={label}
+                onChange={commit}
+              />
+            ) : (
+              <textarea
+                {...props}
+                placeholder={placeholder}
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                onBlur={commitDraft}
+              />
+            )
+          ) : (
+            <>
+              {options?.map((option, index) => {
+                const selected = multiple
+                  ? Array.isArray(value) && value.includes(option.value)
+                  : Object.is(value, option.value);
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    disabled={disabled || loading}
+                    aria-pressed={selected}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: 24,
+                      border: 0,
+                      color: selected ? accent : "inherit",
+                      background: selected
+                        ? "color-mix(in srgb, currentColor 12%, transparent)"
+                        : "color-mix(in srgb, currentColor 7%, transparent)",
+                    }}
+                    onClick={() =>
+                      commit(
+                        multiple
+                          ? selected
+                            ? (value as unknown[]).filter(
+                                (item) => item !== option.value,
+                              )
+                            : [...(Array.isArray(value) ? value : []), option.value]
+                          : option.value,
+                      )
+                    }
+                  >
+                    {startCase(option.label) || option.label}
+                  </button>
+                );
+              })}
+              {loading && <span role="status">Loading...</span>}
+            </>
+          )}
         </div>
       ) : control === "textarea" ? (
         <textarea

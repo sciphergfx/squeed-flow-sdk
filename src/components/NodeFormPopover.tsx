@@ -8,7 +8,8 @@ import { getInteractionSurface } from "../theme/interactionShadow";
 import { useCustomColors } from "../theme/useCustomColors";
 import { resolveStateForm } from "../utils/formState";
 import { useFlowDiagramContext } from "./FlowDiagramContext";
-import { ToolbarCloseButton } from "./toolbarControls";
+import { ToolbarCloseButton, ToolbarIconButton } from "./toolbarControls";
+import { PiArrowLeft } from "react-icons/pi";
 
 const FormDialog = styled.dialog<{ $surface: string; $border: string }>`
   ${(props) => getInteractionSurface(props.$surface, props.$border)}
@@ -90,6 +91,7 @@ export function NodeFormPopover({
   label,
   open = false,
   onClose,
+  onBack,
   children,
   filter,
   height,
@@ -100,6 +102,7 @@ export function NodeFormPopover({
   label: string;
   open?: boolean;
   onClose?: () => void;
+  onBack?: () => void;
   children?: ReactNode;
   filter?: ReactNode;
   height?: number;
@@ -141,7 +144,13 @@ export function NodeFormPopover({
             $surface={surface}
             $border={getChakraColorHex(border)}
             aria-label={`Configure ${label}`}
-            onClose={onClose}
+            onClose={(event: React.SyntheticEvent<HTMLDialogElement>) => {
+              // Nested popovers portal into the React tree, so a child dialog's
+              // close event would otherwise bubble to this form's onClose and
+              // close the form too. Stop it here.
+              event.stopPropagation();
+              onClose?.();
+            }}
             onPointerDown={(event) => event.stopPropagation()}
             onWheel={(event) => event.stopPropagation()}
             onKeyDown={(event) => event.stopPropagation()}
@@ -178,9 +187,28 @@ export function NodeFormPopover({
                     flexShrink: 0,
                   }}
                 >
-                  <strong style={{ overflowWrap: "anywhere", minWidth: 0 }}>
-                    {label}
-                  </strong>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      minWidth: 0,
+                    }}
+                  >
+                    {onBack && (
+                      <ToolbarIconButton
+                        aria-label="Back"
+                        title="Back"
+                        icon={<PiArrowLeft size={18} />}
+                        size="sm"
+                        variant="ghost"
+                        onClick={onBack}
+                      />
+                    )}
+                    <strong style={{ overflowWrap: "anywhere", minWidth: 0 }}>
+                      {label}
+                    </strong>
+                  </div>
                   <ToolbarCloseButton
                     aria-label="Close node configuration"
                     onClick={() => dialog.current?.close()}
