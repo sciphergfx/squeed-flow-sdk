@@ -422,9 +422,15 @@ function InlineEntries({
     // input that suggests known tools.
     if (nameOnly) {
       const names = Object.keys(obj);
-      const addName = (name: string) => {
-        if (!name || Object.prototype.hasOwnProperty.call(obj, name)) return;
-        onChange({ ...obj, [name]: { name } });
+      const toggleName = (name: string) => {
+        if (!name) return;
+        if (Object.prototype.hasOwnProperty.call(obj, name)) {
+          const next = { ...obj };
+          delete next[name];
+          onChange(next);
+        } else {
+          onChange({ ...obj, [name]: { name } });
+        }
       };
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
@@ -461,7 +467,7 @@ function InlineEntries({
               ))}
             </div>
           )}
-          <ToolPicker options={options} onPick={addName} disabled={disabled} label={label} selected={names} />
+          <ToolPicker options={options} onPick={toggleName} disabled={disabled} label={label} selected={names} />
         </div>
       );
     }
