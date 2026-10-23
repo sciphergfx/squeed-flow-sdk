@@ -10,22 +10,22 @@
 [![license](https://img.shields.io/npm/l/@squeed/flow-sdk.svg)](LICENSE)
 
 Squeed Flow renders any JSON document as a diagram you can pan, zoom, select,
-rearrange, and edit — then reports the edit back as JSON. The same document
+rearrange, and edit - then reports the edit back as JSON. The same document
 format powers the hosted editor at [app.squeed.co](https://app.squeed.co), the
 [VS Code preview extension](https://marketplace.visualstudio.com/items?itemName=seyiogunbowalesciphergfx.squeed-flow),
 and agent workflows driven over MCP at [squeed.co/mcp](https://squeed.co/mcp).
 
 ## Features
 
-- **JSON-first** — pass a parsed object or array; no separate schema or graph model.
-- **Interactive canvas** — pan, zoom, drag, multi-select, draw edges, and collapse branches.
-- **Inline editing** — rename nodes, edit Markdown content, change colors, icons, borders, and connections.
-- **Controlled data flow** — every edit returns a new document through `onJsonChange`; you own state.
-- **Flexible layout** — left/right, top/bottom, or centered branch layout with Dagre.
-- **Rich nodes** — Markdown/HTML/JSX content, Phosphor and React Icons, animation, and compound containers.
-- **Extensible** — custom node views, overlays, toolbars, bottom bars, and callbacks.
-- **Themeable** — light/dark modes and Chakra UI color tokens.
-- **Streaming-ready** — incremental JSON preview and playback helpers.
+- **JSON-first** - pass a parsed object or array; no separate schema or graph model.
+- **Interactive canvas** - pan, zoom, drag, multi-select, draw edges, and collapse branches.
+- **Inline editing** - rename nodes, edit Markdown content, change colors, icons, borders, and connections.
+- **Controlled data flow** - every edit returns a new document through `onJsonChange`; you own state.
+- **Flexible layout** - left/right, top/bottom, or centered branch layout with Dagre.
+- **Rich nodes** - Markdown/HTML/JSX content, Phosphor and React Icons, animation, and compound containers.
+- **Extensible** - custom node views, overlays, toolbars, bottom bars, and callbacks.
+- **Themeable** - light/dark modes and Chakra UI color tokens.
+- **Streaming-ready** - incremental JSON preview and playback helpers.
 
 ## Try It
 
@@ -233,4 +233,4 @@ opening a public issue.
 
 ## License
 
-[AGPL-3.0](LICENSE). The bundled diagram renderer is also AGPL-3.0.
+[MIT](LICENSE).

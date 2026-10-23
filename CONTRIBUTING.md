@@ -85,4 +85,4 @@ part of unrelated changes; releases are managed separately.
 
 For vulnerabilities, follow [SECURITY.md](SECURITY.md) instead of posting
 exploit details in public issues. Contributions are provided under the
-repository's [AGPL-3.0 license](LICENSE).
+repository's [MIT license](LICENSE).
