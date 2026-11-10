@@ -224,7 +224,6 @@ const BottomBar = ({
     if (selectedNodeIds.length || selectedEdgeId) {
       setBackgroundSelected(false);
     } else if (!readOnly) {
-      if (backgroundSelected) setIsPinned(true);
       if (config.bottomBarCollapsed === undefined)
         setLocalCollapsed(!backgroundSelected);
     }
@@ -234,7 +233,6 @@ const BottomBar = ({
     selectedEdgeId,
     readOnly,
     setBackgroundSelected,
-    setIsPinned,
     config.bottomBarCollapsed,
   ]);
 
@@ -431,6 +429,7 @@ const BottomBar = ({
                   <ToolbarTooltip label={isPinned ? "Unpin" : "Pin"}>
                     <ToolbarIconButton
                       aria-label="Pin"
+                      aria-pressed={isPinned}
                       icon={
                         <Icon
                           as={isPinned ? PiPushPinFill : PiPushPin}
